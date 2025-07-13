@@ -1,0 +1,190 @@
+/* --- Sidebar Styling --- */
+.sidebar {
+     width: 250px; /* Lebar sidebar default (saat terbuka) */
+    background-color: #2c3e50; /* Dark blue-grey */
+    color: #ecf0f1; /* Light grey text */
+    padding: 20px 0; /* Padding atas bawah, 0 samping */
+    transition: transform 0.3s ease, width 0.3s ease; /* Transisi untuk geser dan lebar */
+    flex-shrink: 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    position: fixed;
+    height: 100%;
+    z-index: 1000;
+    /* Default untuk desktop: terlihat (akan diatur oleh JS saat dimuat) */
+    /* Default untuk mobile: tersembunyi (akan diatur oleh media query di bawah) */
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px 20px 20px; /* Padding di sekitar header sidebar */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 1.5em;
+    white-space: nowrap; /* Mencegah judul pindah baris */
+}
+
+/* --- Sidebar Toggle Button (di dalam sidebar - icon 'X') --- */
+.sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.8em; /* Ukuran ikon */
+    cursor: pointer;
+    padding: 5px; /* Padding untuk area klik */
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: block; /* Selalu tampilkan tombol ini di dalam sidebar */
+    line-height: 1; /* Untuk memastikan ikon rata tengah */
+}
+
+.sidebar-toggle-btn:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-links li a {
+    display: flex; /* Untuk ikon dan teks sejajar */
+    align-items: center;
+    padding: 12px 20px;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nav-links li a:hover,
+.nav-links li a.active {
+    background-color: #34495e; /* Warna hover/active */
+    color: #fff;
+}
+
+.nav-links li a i {
+    margin-right: 10px; /* Jarak antara ikon dan teks */
+    font-size: 1.1em; /* Ukuran ikon */
+    width: 20px; /* Lebar tetap untuk ikon agar rapi saat teks disembunyikan */
+    text-align: center; /* Pusatkan ikon di lebarnya */
+}
+
+
+/* Sembunyikan teks menu saat sidebar kolaps (desktop) */
+.sidebar.collapsed .nav-links li a span {
+    display: none;
+}
+.sidebar.collapsed .nav-links li a {
+    justify-content: center; /* Pusat ikon saat teks disembunyikan */
+    padding: 12px 0; /* Sesuaikan padding saat hanya ikon yang terlihat */
+}
+/* Mengatur tampilan tombol X agar tetap di kanan atas saat collapsed (opsional) */
+.sidebar.collapsed .sidebar-header {
+    justify-content: flex-end; /* Pindahkan tombol ke kanan */
+    padding: 0 5px 20px 5px; /* Kurangi padding header */
+}
+.sidebar.collapsed .sidebar-header h3 {
+    display: none; /* Sembunyikan judul saat kolaps */
+}
+
+
+
+/* --- Media Queries untuk Responsivitas --- */
+
+/* Desktop & Large Screens (min-width: 993px) */
+@media (min-width: 993px) {
+    /* DEFAULT STATE DESKTOP: Sidebar kolaps (tertutup secara visual) */
+    .sidebar {
+        width: 60px; /* Lebar default untuk sidebar kolaps */
+        transform: translateX(0); /* Tetap terlihat di layar */
+    }
+    .main-content {
+        margin-left: 60px; /* Sesuaikan margin awal main-content */
+    }
+    
+    /* Ketika sidebar diperluas dari keadaan kolaps */
+    .sidebar:not(.collapsed) { /* Gunakan :not(.collapsed) untuk keadaan diperluas */
+        width: 250px;
+    }
+    .sidebar:not(.collapsed) + .main-content {
+        margin-left: 250px;
+    }
+
+    /* Ini memastikan tombol hamburger disembunyikan di desktop */
+    .main-sidebar-toggle-btn {
+        display: none;
+    }
+
+    /* Ikon X di sidebar sekarang berfungsi sebagai toggle collapse/expand */
+    .sidebar .sidebar-toggle-btn .fa-times {
+        transform: rotate(0deg); /* Default posisi 'X' */
+        transition: transform 0.3s ease;
+    }
+    .sidebar.collapsed .sidebar-toggle-btn .fa-times {
+        transform: rotate(180deg); /* Putar ikon saat kolaps, bisa juga diubah jadi panah */
+    }
+}
+
+
+/* Mobile & Tablet (max-width: 992px) */
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-250px); /* Sembunyikan sidebar di luar layar */
+        box-shadow: none; /* Hapus bayangan saat tersembunyi */
+    }
+
+    .sidebar.active {
+        transform: translateX(0); /* Tampilkan sidebar saat aktif */
+        box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Tambahkan bayangan saat aktif */
+    }
+
+    /* Pastikan tombol tutup di dalam sidebar terlihat di mobile */
+    .sidebar .sidebar-toggle-btn {
+        display: block;
+    }
+
+    /* Tampilkan tombol hamburger di header utama di mobile */
+    .main-sidebar-toggle-btn {
+        display: block;
+    }
+
+    /* Main content: tidak ada margin kiri karena sidebar mengapung di atasnya */
+    .main-content {
+        margin-left: 0;
+    }
+
+    /* Menyesuaikan padding untuk tampilan mobile agar tidak terlalu lebar */
+    .main-header,
+    section {
+        padding: 15px;
+    }
+    .main-header h1 {
+        font-size: 1.5em; /* Kurangi ukuran judul di mobile */
+    }
+
+
+
+    /* Jika Anda ingin overlay gelap saat sidebar terbuka di mobile */
+    /*
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+    }
+    .overlay.active {
+        display: block;
+    }
+    */
+}

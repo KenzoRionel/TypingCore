@@ -1,0 +1,491 @@
+/* learn-typing.css - REVISI DARI KODE ASLI, HANYA HAPUS FLASH */
+
+/* --- VARIABEL CSS (Diperlukan oleh beberapa bagian, tapi minimal) --- */
+:root {
+    --key-bg-color: #5555550e; /* Dari .key background-color Anda */
+    --active-key-bg-color: #77aaff; /* Dari .key.active background Anda */
+    --active-key-shadow-color: #77aaff80; /* Dari .key.active box-shadow Anda */
+    --next-key-bg-color: #99cc99; /* Dari .key.next-key background Anda */
+    --next-key-text-color: #222; /* Dari .key.next-key color Anda */
+    --next-key-border-color: #77a777; /* Dari .key.next-key border-color Anda */
+    --lesson-key-default-bg: #fff;
+    --lesson-key-default-color: #444;
+    --lesson-key-default-border: #bbb; /* Menambahkan ini agar konsisten */
+    --lesson-key-active-bg: #007bff;
+    --lesson-key-active-color: #fff;
+    --lesson-key-active-border: #1976d2;
+    --inline-key-bg: #1976d2;
+    --inline-key-color: #fff;
+    --inline-key-border: #b0b0b0;
+    --lesson-text-default-color: #888;
+    --lesson-text-correct-color: #4caf50;
+    --lesson-text-incorrect-color: #f44336;
+}
+
+
+.keyboard-container {
+    padding: 12px;
+    background-color: #33333300;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* Hilangkan gap flex, gunakan margin pada row */
+    width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block; /* Agar margin auto bekerja */
+}
+
+/* Jarak antar baris keyboard */
+.keyboard-row {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 10px; /* Tambahkan jarak antar baris keyboard */
+}
+
+/* Hilangkan margin bawah pada baris terakhir */
+.keyboard-row:last-child {
+    margin-bottom: 0;
+}
+
+.key {
+    background-color: var(--key-bg-color); /* Menggunakan variabel */
+    color: rgb(7, 121, 214);
+    padding: 12px 0;
+    border-radius: 4px;
+    min-width: 48px;
+    max-width: 54px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.1em;
+    border: 1px solid #444;
+    box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+    transition: all 0.1s ease;
+    flex: 0 1 50px;
+}
+
+.key-wide {
+    flex-grow: 2;
+}
+
+.key-medium {
+    min-width: 80px;
+    max-width: 100px;
+    padding: 12px 0;
+    flex: 0 1 90px;
+    font-size: 1.05em;
+}
+
+.key-space {
+    flex-grow: 8;
+    min-width: 220px;
+    max-width: 350px;
+    padding: 12px 0;
+}
+
+.key-small {
+    flex: 0 0 48px;
+    min-width: 48px;
+    max-width: 54px;
+    padding: 12px 0;
+    margin: 0; /* Pastikan tidak ada margin ekstra */
+}
+
+.key-spacer {
+    flex: 0 0 14px;
+    min-width: 14px;
+    max-width: 14px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+}
+
+.key.active {
+    background-color: var(--active-key-bg-color); /* Menggunakan variabel */
+    transform: translateY(2px) scale(1.08);
+    box-shadow: 0 0 12px 2px var(--active-key-shadow-color); /* Menggunakan variabel */
+    animation: key-press-pop 0.18s cubic-bezier(.36,.07,.19,.97);
+}
+
+@keyframes key-press-pop {
+    0% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 0 0 0 #77aaff00;
+    }
+    60% {
+        transform: translateY(2px) scale(1.13);
+        box-shadow: 0 0 18px 4px #77aaff80;
+    }
+    100% {
+        transform: translateY(2px) scale(1.08);
+        box-shadow: 0 0 12px 2px #77aaff80;
+    }
+}
+
+.key.next-key {
+    background: var(--next-key-bg-color) !important; /* Menggunakan variabel */
+    color: var(--next-key-text-color) !important; /* Menggunakan variabel */
+    border-color: var(--next-key-border-color) !important; /* Menggunakan variabel */
+    border-radius: 4px;
+    box-shadow: 0 0 12px 2px #99cc9980;
+    /* Tambahkan animasi */
+    animation: highlight-move 0.6s infinite alternate; /* TIDAK DIUBAH, SESUAI PERMINTAAN */
+}
+
+@keyframes highlight-move {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 12px 2px #99cc9980;
+    }
+    100% {
+        transform: scale(1.1);
+        box-shadow: 0 0 24px 4px #99cc99;
+    }
+}
+
+.lesson-text-container {
+    margin-bottom: 20px;
+}
+
+.lesson-text {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 2em;
+    background-color: #f0f0f000;
+    padding: 20px;
+    text-align: center;
+    letter-spacing: 2px;
+    border: none;
+}
+
+.lesson-text span {
+    color: #888; /* Warna default karakter yang belum diketik */
+    transition: color 0.2s;
+}
+
+.lesson-text span.correct {
+    color: #4caf50; /* Hijau untuk benar */
+}
+
+.lesson-text span.incorrect {
+    color: #f44336; /* Merah untuk salah */
+    text-decoration: underline;
+}
+
+.lesson-text span.cursor {
+    background-color: #ddd;
+    border-bottom: 3px solid #333;
+    padding-bottom: 2px;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        background-color: transparent;
+        border-bottom-color: transparent;
+    }
+}
+
+.lesson-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#lesson-instruction {
+    font-size: 1.2em;
+    color: #666;
+}
+
+/* Animasi Error Shake untuk Instruksi */
+#lesson-instruction.error-shake { /* Selektor diperbaiki ke ID */
+    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes shake {
+    10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+    20%, 80% {
+        transform: translate3d(2px, 0, 0);
+    }
+    30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+    40%, 60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+
+.navigation-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay .modal-content {
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: modal-pop 0.3s ease-out;
+}
+
+@keyframes modal-pop {
+    from {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-content h2 {
+    color: #4caf50;
+    font-size: 2.5em;
+}
+
+.next-lesson-keys {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.next-lesson-keys .key {
+    font-size: 1.5em;
+    padding: 20px;
+    background-color: #eee;
+    color: #333;
+}
+
+.keyboard-inline-key {
+    display: inline-block;
+    background: var(--inline-key-bg); /* Menggunakan variabel */
+    color: var(--inline-key-color); /* Menggunakan variabel */
+    border: 1.5px solid var(--inline-key-border); /* Menggunakan variabel */
+    border-radius: 5px;
+    padding: 3px 14px 3px 14px;
+    margin: 0 3px;
+    font-family: 'Segoe UI', 'Courier New', monospace;
+    font-size: 1.1em;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.08);
+    vertical-align: middle;
+    letter-spacing: 1px;
+    user-select: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Animasi menghilang (fade out + scale) */
+.keyboard-inline-key.fade-out {
+    animation: key-fade-out 0.4s forwards;
+}
+
+@keyframes key-fade-out {
+    to {
+        opacity: 0;
+        transform: scale(0.7);
+        filter: blur(2px);
+    }
+}
+
+.lesson-keyboard-sequence {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    /* PENTING untuk animasi slide */
+    overflow: hidden;
+    height: 60px; /* Sesuaikan jika .lesson-keyboard-key terlalu tinggi */
+    position: relative;
+    padding: 5px 0;
+}
+
+.lesson-keyboard-underline {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    margin-top: 4px;
+}
+
+.lesson-keyboard-underline-item {
+    display: block;
+    width: 32px;
+    height: 3px;
+    background: #ccc;
+    border-radius: 2px;
+    transition: background 0.2s;
+}
+
+.lesson-keyboard-underline-item.active {
+    background: #007bff;
+}
+
+.lesson-keyboard-key {
+    display: inline-flex;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 16px;
+    font-size: 1.5em;
+    font-family: 'Segoe UI', 'Courier New', monospace;
+    background: var(--lesson-key-default-bg); /* Menggunakan variabel */
+    color: var(--lesson-key-default-color); /* Menggunakan variabel */
+    border: 2px solid var(--lesson-key-default-border); /* Menggunakan variabel */
+    border-radius: 7px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    margin: 0 2px;
+    position: relative;
+    /* transition: border-color 0.2s, color 0.2s;  <-- Hapus ini jika akan ada animasi slide-in */
+    will-change: transform, opacity; /* Optimalisasi performa untuk animasi */
+}
+
+.lesson-keyboard-key.active {
+    background: var(--lesson-key-active-bg); /* Menggunakan variabel */
+    color: var(--lesson-key-active-color); /* Menggunakan variabel */
+    border-radius: 4px;
+    border-color: var(--lesson-key-active-border); /* Menggunakan variabel */
+}
+
+/* Duplikasi `.lesson-keyboard-key.active, .key.next-key` ini sudah dihapus di bawah,
+   karena tidak lagi relevan setelah pengenalan variabel CSS */
+
+
+/* Tambahkan juga .lesson-keyboard-sequence padding/overflow */
+.lesson-keyboard-sequence {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    overflow: hidden; /* Sembunyikan bagian yang keluar dari area */
+    height: 60px; /* Atur tinggi yang cukup untuk animasi slide */
+    position: relative; /* Penting untuk positioning elemen anak jika diperlukan */
+    padding: 5px 0; /* Memberi sedikit ruang vertikal */
+    align-items: center; /* Pusatkan secara vertikal jika ada sisa ruang */
+}
+
+/* START ADDITION 4 */
+/* Animasi untuk elemen key di Pelajaran 2 */
+.lesson-keyboard-key.active {
+    /* Gaya untuk elemen yang sedang aktif/harus diketik */
+    font-weight: bold;
+    color: var(--primary-color); /* Ganti dengan warna yang Anda inginkan */
+}
+
+/* Animasi Slide Up dan Fade Out */
+.lesson-keyboard-key.slide-up-fade-out {
+    animation: slideUpFadeOut 0.3s forwards;
+    /* 'forwards' menjaga state akhir animasi */
+}
+
+@keyframes slideUpFadeOut {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-100%); /* Geser ke atas */
+        opacity: 0;
+    }
+}
+
+/* Animasi Slide Down dan Fade In */
+.lesson-keyboard-key.slide-down-fade-in {
+    animation: slideDownFadeIn 0.3s forwards;
+}
+
+@keyframes slideDownFadeIn {
+    from {
+        transform: translateY(100%); /* Mulai dari bawah */
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Kelas untuk menonaktifkan animasi pada render awal atau elemen yang sudah diketik */
+.lesson-keyboard-key.no-initial-animation {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none !important; /* Penting: menonaktifkan animasi */
+}
+
+/* Pastikan highlight-move animasi sudah ada di .key.next-key */
+.key.next-key {
+    background-color: var(--highlight-color); /* Contoh warna, sesuaikan */
+    box-shadow: 0 0 10px var(--highlight-color);
+    /* Animasi highlight-move akan ditambahkan/direstart via JS */
+}
+
+@keyframes highlight-move {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Untuk error shake */
+.error-shake {
+    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+    50% { transform: translate3d(-4px, 0, 0); }
+}
+
+/* END ADDITION 4 */
+
+/* Pastikan elemen span instruksi memiliki transisi background-color */
+/* Ini penting agar warna merah bisa "pudar lama" saat kelasnya dihapus */
+#lesson2-sequence-container span {
+    transition: background-color 0.8s ease-out; /* Durasi pudarnya warna merah. Sesuaikan jika ingin lebih lama/cepat. */
+    background-color: transparent; /* Pastikan default-nya transparan */
+}
+
+/* Warna hijau untuk instruksi yang sudah diketik dengan benar */
+#lesson2-sequence-container span.completed-correct {
+    background-color: rgba(168, 237, 147, 0.7); /* Hijau */
+}
+
+/* Warna merah untuk instruksi yang diketik salah */
+#lesson2-sequence-container span.input-incorrect {
+    background-color: rgba(247, 168, 168, 0.7); /* Merah */
+}

@@ -1,0 +1,173 @@
+/* Gaya untuk Container Speedometer */
+/* Ini adalah gaya utama untuk wadah speedometer, yang akan digunakan oleh WPM, Akurasi, dan Waktu */
+.speedometer-container {
+    position: relative;
+    width: 180px; /* Ukuran yang disesuaikan agar muat di kartu */
+    height: 180px; /* Ukuran yang disesuaikan agar muat di kartu */
+    border-radius: 50%;
+    background-color: #444; /* Warna dasar speedometer */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px auto; /* Pusatkan speedometer di dalam stat-item */
+}
+
+.speedometer-gauge-face {
+    position: relative;
+    width: 160px; /* Sedikit lebih kecil dari container untuk efek bingkai */
+    height: 160px;
+    border-radius: 50%;
+    background-color: #2a2a2a; /* Warna muka speedometer */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Penting untuk menjaga elemen di dalamnya tetap bulat */
+}
+
+/* ----- Skala Penanda (Ticks) ----- */
+.speedometer-ticks {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* border: 1px solid rgba(255, 255, 0, 0.2); /* Debugging: Hilangkan setelah selesai */
+}
+
+.tick {
+    position: absolute;
+    width: 1px;       /* Ukuran lebar tick yang tipis */
+    height: 6px;      /* Ukuran tinggi tick */
+    background-color: #666; /* Warna default tick */
+    border-radius: 0.5px; /* Membulatkan sudut tick yang tipis */
+    top: 50%; /* Posisikan tick di tengah-tengah container */
+    left: 50%;
+    /* Transform origin yang berhasil memposisikan tick dengan baik */
+    transform-origin: 100% 0%;
+    /* Transform rotasi dan translateY akan ditambahkan oleh JavaScript */
+}
+
+/* Warna spesifik untuk ticks berdasarkan rentang */
+.tick.green { background-color: #71b12b; }
+.tick.yellow { background-color: #e6c82d; }
+.tick.orange { background-color: #ea7f2f; }
+.tick.red { background-color: #e04422; }
+
+
+/* ----- Jarum Speedometer ----- */
+.speedometer-needle {
+    position: absolute;
+    width: 3px;      /* Lebar jarum */
+    height: 70px;    /* Panjang jarum, disesuaikan dengan ukuran speedometer */
+    background-color: #ffffff; /* Warna jarum */
+    border-radius: 2px;
+    z-index: 10; /* Pastikan jarum di atas ticks */
+
+    top: 50%; /* Posisikan jarum di tengah-tengah */
+    left: 50%;
+    transform-origin: bottom center; /* Titik putar jarum di bagian bawah */
+    /* Variabel CSS untuk sudut rotasi, diatur oleh JavaScript */
+    transform: translate(-50%, -100%) rotate(var(--needle-angle, -150deg));
+    transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1); /* Animasi gerakan jarum */
+}
+
+/* Lingkaran tengah jarum (Pin) */
+.speedometer-center-pin {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    background-color: #333; /* Warna pin tengah */
+    border-radius: 50%;
+    z-index: 11; /* Pastikan pin di atas jarum */
+    border: 2px solid #555;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Pusatkan pin */
+}
+
+/* Angka Kecepatan (WPM), Akurasi (%), dan Waktu (SEC) */
+.speed-display {
+    position: absolute;
+    bottom: 25px; /* Posisikan angka agar terlihat bagus di bawah pin */
+    font-size: 2em; /* Ukuran font angka */
+    font-weight: bold;
+    color: #eee; /* Warna angka */
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+    z-index: 12; /* Pastikan angka di atas semuanya */
+    text-align: center;
+    width: 100%; /* Agar bisa text-align center */
+}
+
+.speed-unit {
+    position: absolute;
+    bottom: 10px; /* Posisikan unit di bawah angka */
+    font-size: 0.8em; /* Ukuran font unit */
+    color: #aaa; /* Warna unit */
+    z-index: 12;
+    text-align: center;
+    width: 100%; /* Agar bisa text-align center */
+}
+
+/* ======================================================= */
+/* INI ADALAH BAGIAN YANG DIMODIFIKASI UNTUK LAYOUT HORIZONTAL */
+/* Menggunakan `.stats-container` sesuai dengan HTML Anda */
+.typing-area-left-side{
+    position: relative;
+}
+
+#stats-container {
+    display: flex; /* Pertahankan ini jika Anda ingin speedometer di dalamnya berjejer */
+    justify-content: center; /* Agar speedometer terpisah secara horizontal */
+    align-items: center; /* Untuk alignment vertikal speedometer */
+    
+    /* --- TAMBAHAN PENTING: Menggunakan properti gap --- */
+    gap: 5px; /* Menambah jarak 80px antar item flex/grid */
+    /* Sesuaikan nilai 80px ini sesuai keinginan Anda */
+
+    /* PENTING: Properti posisi absolut */
+    position: absolute; /* Atau fixed, tergantung kebutuhan Anda */
+    top: 220px;          /* Sesuaikan jarak dari atas */
+    left: 50%;          /* Pusatkan secara horizontal */
+    transform: translateX(-50%); /* Penyesuaian untuk pemusatan horizontal */
+    
+    /* Berikan lebar yang cukup untuk menampung ketiga speedometer */
+    width: 100%; /* 3x180px (speedometer) + 2x80px (gap) = 700px */
+    height: 200px; /* Contoh tinggi yang cukup untuk speedometer */
+
+
+    /* Properti untuk transisi hide (hanya memudar, tidak mempengaruhi layout) */
+    opacity: 0;
+    pointer-events: none; /* Tidak bisa diklik/diinteraksi saat transparan */
+    
+    transition: opacity 0.5s ease-in-out;
+}
+
+#stats-container.show {
+    /* Properti yang berubah saat ditampilkan (hanya memudar) */
+    opacity: 1;
+    pointer-events: auto; /* Bisa diklik/diinteraksi kembali */
+    
+    transition: opacity 0.5s ease-in-out;
+}
+
+#stats-container .stat-item {
+    text-align: center;
+    margin: 10px 15px; /* Margin antar setiap item statistik */
+    min-width: 150px; /* Memberi lebar minimum untuk setiap item agar speedometer tidak terlalu sempit */
+    flex-grow: 1; /* Biarkan item tumbuh mengisi ruang */
+    flex-shrink: 1; /* Izinkan item menyusut */
+}
+/* Media query untuk responsif (opsional tapi sangat disarankan) */
+@media (max-width: 768px) {
+    #stats-container {
+        flex-direction: column; /* Ubah kembali menjadi vertikal untuk layar kecil */
+        align-items: center; /* Pusatkan item saat vertikal */
+    }
+    #stats-container .stat-item {
+        margin-bottom: 20px; /* Beri jarak antar speedometer saat vertikal */
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%; /* Pastikan mengambil lebar penuh saat vertikal */
+        max-width: 200px; /* Batasi lebar agar tidak terlalu besar di ponsel */
+    }
+}

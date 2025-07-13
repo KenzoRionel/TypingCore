@@ -1,0 +1,545 @@
+/* --- Global & Basic Reset --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #f4f7f6; /* Warna latar belakang ringan */
+    color: #333;
+    display: flex; /* Penting untuk layout wrapper yang mengambil seluruh tinggi viewport */
+    min-height: 100vh;
+}
+/*Font Minecraft*/
+@font-face {
+    font-family: 'Minecraft';
+    src: url('../fonts/BlockCraft.otf') format('truetype'); /* Tambahkan fallback TTF */
+    font-weight: normal;
+    font-style: normal;
+}
+.wrapper {
+    display: flex;
+    width: 100%;
+}
+
+/* --- Main Content Styling --- */
+.main-content {
+    flex-grow: 1; /* Memastikan main-content mengambil sisa ruang */
+    padding: 20px;
+    background-color: #f8f9fa; /* Latar belakang untuk main content area, agar kontras dengan body */
+}
+
+/* --- Header Styling --- */
+.site-header {
+    margin-bottom: 25px; /* Jarak dari area mengetik */
+    padding: 1px 1px;
+}
+
+.site-header .navbar-brand img {
+    height: 70px; /* Sesuaikan jika perlu */
+}
+
+/* --- Container utama untuk area mengetik dan statistik --- */
+.main-typing-area {
+    display: flex; /* Mengatur typing-area-left-side dan timer-accuracy-section berdampingan */
+    flex-direction: row; /* Default: berdampingan */
+    gap: 25px; /* Jarak antara text-display/input grup dan kartu stat */
+    width: 100%;
+    align-items: flex-start; /* Sejajarkan di bagian atas */
+    margin-bottom: 25px; /* Jarak antara area mengetik dengan elemen di bawahnya (jika ada) */
+    margin-left: auto; /* Tetap pusatkan di halaman jika parent-nya lebih lebar */
+    margin-right: auto; /* Tetap pusatkan di halaman jika parent-nya lebih lebar */
+}
+
+/* --- Kontainer baru untuk text-display dan input (SISI KIRI) --- */
+.typing-area-left-side {
+    display: flex;
+    flex-direction: column; /* Membuat text-display dan input menumpuk vertikal */
+    flex-grow: 1; /* Biarkan sisi kiri ini mengambil semua ruang yang tersedia */
+    flex-shrink: 1;
+    gap: 20px; /* Jarak antara text-display dan input-controls */
+}
+
+/* --- Styling untuk Timer-Accuracy Section (Gaya Kartu) --- */
+.timer-accuracy-section {
+    background-color: #ffffff; /* Latar belakang putih untuk kartu */
+    border: 1px solid #e0e0e0; /* Border tipis */
+    border-radius: 12px; /* Sudut membulat */
+    padding: 25px; /* Padding di dalam kartu */
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1); /* Bayangan untuk efek mengambang */
+    
+    display: flex;
+    flex-direction: column; /* Item-item di dalamnya menumpuk vertikal (WPM, Accuracy, Time) */
+    justify-content: space-around; /* Distribusikan ruang secara merata antar item stat */
+    align-items: center; /* Pusatkan item stat secara horizontal */
+    
+    width: 220px; /* Lebar tetap untuk kartu stat. Sesuaikan jika perlu. */
+    flex-shrink: 0; /* Pastikan kartu ini tidak menyusut, prioritaskan lebarnya */
+    flex-grow: 0; /* PASTIKAN ini 0 agar tidak mengambil ruang yang tumbuh */
+
+    font-family: 'Segoe UI', sans-serif; /* Font untuk statistik */
+    color: #333; /* Warna teks dasar */
+}
+
+/* Struktur baru untuk stat item */
+.timer-accuracy-section .stat-item {
+    margin-bottom: 20px; /* Jarak antar setiap item stat */
+    text-align: center;
+    width: 100%; /* Memastikan span di dalamnya bisa gunakan display block */
+}
+
+.timer-accuracy-section .stat-item:last-of-type {
+    margin-bottom: 0; /* Hapus margin bottom dari item terakhir */
+}
+
+.timer-accuracy-section .stat-item span:first-child {
+    font-weight: 600; /* Sedikit lebih tebal dari bold */
+    color: #555;
+    display: block; /* Membuat label di baris terpisah dari nilai */
+    font-size: 0.9em; /* Ukuran font untuk label (WPM:, Akurasi:, Waktu:) */
+    margin-bottom: 5px;
+    text-transform: uppercase; /* Membuat label menjadi huruf besar semua */
+}
+
+.timer-accuracy-section .stat-item span:last-child {
+    font-size: 2.2em; /* Ukuran font lebih besar untuk nilai WPM, Accuracy, Time */
+    color: #007bff; /* Warna nilai statistik */
+    font-weight: 700; /* Sangat tebal */
+    line-height: 1; /* Hilangkan spasi ekstra di bawah angka besar */
+}
+
+/* --- Styling untuk tombol restart yang ada di samping input --- */
+#restartButtonBottom {
+    background-color: #007bff; /* Warna biru primer */
+    color: white;
+}
+
+#restartButtonBottom:hover {
+    background-color: #0056b3; /* Biru lebih gelap saat hover */
+    transform: translateY(-2px);
+}
+
+
+/* --- Input Area & Button Styling --- */
+.input-controls {    
+    width: 100%; /* Agar input dan tombol mengisi lebar yang tersedia di parentnya */
+}
+
+.text-input { /* ID #textInput sudah punya kelas .form-control dari Bootstrap */
+    height: 56px; /* Tetapkan tinggi tetap */
+    box-sizing: border-box; /* Penting: Pastikan padding dan border termasuk dalam tinggi */
+    padding: 15px 20px;
+    font-size: 1.6em;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Shadow tetap ada untuk input */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.text-input:focus {
+    border-color: #0056b3; /* Biru lebih gelap saat fokus */
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.6);
+}
+
+.text-input::placeholder {
+    color: #999;
+}
+
+/* --- Animasi --- */
+.text-display.error-shake {
+    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+    50% { transform: translate3d(-4px, 0, 0); }
+}
+
+/* --- General Button Styling --- */
+.btn {
+    border: none;
+    height: 35px; /* Samakan tinggi dengan text-input */
+    box-sizing: border-box; /* Penting: Pastikan padding dan border termasuk dalam tinggi */
+    padding: 0 0px; /* Ubah padding vertikal menjadi 0 atau sangat kecil */
+    font-size: 1.1em;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-decoration: none;
+    display: inline-flex; /* Gunakan inline-flex untuk vertikal align icon/teks */
+    align-items: center; /* Pusatkan icon/teks vertikal */
+    justify-content: center; /* Pusatkan icon/teks horizontal */
+    gap: 5px; /* Jarak antara icon dan teks */
+}
+
+/* --- Modal Styling --- */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1001; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+}
+
+.modal.show {
+    display: flex; /* Display as flexbox when active */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Center modal */
+    padding: 30px;
+    border: 1px solid #888;
+    width: 80%;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative;
+    text-align: center;
+}
+
+.close-button {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #333;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content h2 {
+    color: #007bff;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.modal-content p {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.modal-content p span { /* Untuk nilai di modal */
+    font-weight: bold;
+    color: #333;
+}
+
+#restartButtonModal { /* Ini adalah ID untuk tombol "Coba Lagi" di modal */
+    margin-top: 20px;
+}
+
+/* --- Responsivitas --- */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 15px; /* Kurangi padding di mobile */
+    }
+    .main-typing-area {
+        flex-direction: column; /* Tumpuk vertikal di layar kecil */
+        align-items: center; /* Pusatkan saat menumpuk */
+        gap: 20px; /* Kurangi gap */
+        width: 100%; /* Ambil lebar penuh */
+        padding: 0 15px; /* Sedikit padding horizontal di mobile */
+    }
+
+    /* Di mobile, typing-area-left-side juga akan menjadi kolom */
+    .typing-area-left-side {
+        flex-direction: column;
+        width: 100%; /* Ambil lebar penuh di mobile */
+        gap: 15px;
+    }
+
+    #textDisplay,
+    .timer-accuracy-section {
+        width: 100%; /* Pastikan mengisi lebar */
+        margin: 0; /* Hapus margin auto jika ada */
+    }
+
+    #textDisplay {
+        margin-bottom: 0; /* Sudah diatur oleh gap */
+        padding: 20px; /* Kurangi padding di layar kecil */
+    }
+
+    .timer-accuracy-section {
+        width: 100%; /* Lebar penuh */
+        padding: 20px; /* Kurangi padding */
+    }
+
+    .input-controls {
+        width: 100%; /* Pastikan mengisi lebar */
+        padding: 0 15px; /* Sesuaikan padding agar tidak terlalu lebar */
+        margin-top: 0; /* Hapus margin-top jika ada */
+    }
+
+    .modal-content {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .site-header {
+        padding: 10px;
+    }
+}
+
+/* common.css atau style.css */
+
+#resultsDisplayArea {
+    margin-top: 20px; /* Atur jarak dari elemen di atasnya (area pengetikan) */
+    padding: 20px;
+    background-color: #fff; /* Sesuaikan warna latar belakang */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Pusatkan teks */
+    color: #333;
+    font-size: 1.1em;
+    display: none;
+}
+
+#resultsDisplayArea h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+#resultsDisplayArea p {
+    margin-bottom: 8px;
+}
+
+#resultsDisplayArea span {
+    font-weight: bold;
+    color: #007bff; /* Warna untuk nilai hasil */
+}
+
+#resultsDisplayArea .button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+#resultsDisplayArea .button:hover {
+    background-color: #0056b3;
+}
+
+/* --- Dark Mode Styling --- */
+body.dark-mode {
+    background-color: #181a1b;
+    color: #e0e0e0;
+}
+
+body.dark-mode .main-content {
+    background-color: #23272a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .timer-accuracy-section,
+body.dark-mode .modal-content,
+body.dark-mode #resultsDisplayArea {
+    background-color: #23272a;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .site-header .nav-link {
+    color: #e0e0e0; /* Warna ikon dan teks link menjadi terang */
+}
+
+body.dark-mode .site-header .nav-link:hover {
+    color: #fff; /* Sedikit lebih terang saat hover */
+}
+
+body.dark-mode .site-header .dropdown-menu {
+    background-color: #23272a; /* Latar belakang dropdown */
+    border-color: #444;
+}
+
+body.dark-mode .site-header .dropdown-item {
+    color: #e0e0e0; /* Teks item dropdown */
+}
+
+body.dark-mode .site-header .dropdown-item:hover {
+    background-color: #333; /* Latar belakang item saat hover */
+    color: #fff;
+}
+
+body.dark-mode #MenuButton {
+    background-color: #23272a;
+    border-color: #444;
+}
+
+body.dark-mode .btn-outline-dark,
+body.dark-mode .btn-outline-primary,
+body.dark-mode .btn-outline-success{
+    background-color: #00000000;
+    color: #f3f3f3;
+    border-color: #888;
+}
+body.dark-mode .time-mode-btn.active,
+body.dark-mode .time-mode-btn:hover,
+body.dark-mode .time-mode-btn:focus {
+    background-color: #cccbcb;
+    color: #141414;
+    border-color: #222121;
+}
+body.dark-mode .word-type-btn.active,
+body.dark-mode .word-type-btn:hover,
+body.dark-mode .word-type-btn:focus {
+    background-color: #cccbcb;
+    color: #141414;
+    border-color: #222121;
+}
+
+body.dark-mode .text-display {
+    background-color: #23272a;
+    color: #e0e0e0;
+}
+
+body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.current-word-target {
+    background-color: #333;
+    color: #fff;
+}
+
+body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.word-correct {
+    background-color: #263238;
+    color: #4caf50;
+}
+
+body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.word-incorrect {
+    background-color: #3a2323;
+    color: #f44336;
+}
+
+/* --- Styling untuk Area Hasil Baru --- */
+.results-container {
+    width: 100%;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.chart-container {
+    height: 300px; /* Beri tinggi tetap untuk canvas chart */
+    margin-bottom: 25px;
+}
+
+.results-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.summary-main {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+.summary-item .summary-label {
+    display: block;
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.summary-item .summary-value {
+    display: block;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #333;
+}
+
+.summary-details {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.details-item .details-label {
+    display: block;
+    font-size: 0.8em;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.details-item span:not(.details-label) {
+    font-weight: 600;
+}
+
+/* Mode Malam untuk Area Hasil Baru */
+body.dark-mode .results-container {
+    background-color: #23272a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .summary-main {
+    border-color: #444;
+}
+
+body.dark-mode .summary-item .summary-label,
+body.dark-mode .details-item .details-label {
+    color: #aaa;
+}
+
+body.dark-mode .summary-item .summary-value,
+body.dark-mode .details-item span:not(.details-label) {
+    color: #fff;
+}
+
+body.dark-mode .blinking-cursor {
+    background-color: #e0e0e0; /* Warna kursor abu cerah untuk mode malam */
+}
+
+/* Tambahkan ini di bagian paling bawah file CSS Anda */
+
+/* Sembunyikan main-content saat modal aktif */
+body.modal-active .main-content {
+    display: none !important;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed; /* Menimpa seluruh halaman */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Pastikan modal di atas semua konten */
+}
+
+.modal-overlay .modal-content {
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: modal-pop 0.3s ease-out;
+}
+

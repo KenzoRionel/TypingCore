@@ -1,0 +1,167 @@
+.text-display-container {
+    display: flex; /* Mengaktifkan Flexbox */
+     /* Warna latar belakang abu-abu terang */
+    justify-content: center; /* Menyelaraskan item anak (text-display) di tengah sumbu utama (horizontal) */
+    align-items: center;
+    position: relative; /* Opsional: Menyelaraskan item anak di tengah sumbu silang (vertikal), jika container memiliki tinggi */
+    /* Berikan tinggi pada container jika ingin memusatkan vertikal juga */
+    max-width: 100%;
+}
+/* --- textDisplay Styling --- */
+#textDisplay { /* Menggunakan ID agar spesifik dan menghindari konflik */
+    max-width: 100%;
+    width: 100%;
+    min-height: 120px;
+    margin-left: 0;
+    overflow: hidden; /* Penting untuk efek gulir terkontrol */
+    position: relative; 
+    text-align: left; /* Teks rata kiri */
+    margin-top: 1px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+
+    font-family: monospace; /* Font monospace untuk teks ketik */
+    font-size: 1.6em; /* Ukuran font yang sudah ada */
+    line-height: 1.8; /* Jarak antar baris yang sudah ada */
+    color: #666; /* Warna teks default abu-abu (untuk kata yang belum diketik) */
+    white-space: normal;
+}
+#hiddenTextInput {
+    position: absolute;
+    top: -9999px; /* Pindahkan jauh di luar viewport atas */
+    left: -9999px; /* Pindahkan jauh di luar viewport kiri */
+    width: 1px; /* Beri ukuran sangat kecil */
+    height: 1px; /* Beri ukuran sangat kecil */
+    opacity: 0; /* Pastikan transparan sepenuhnya */
+}
+/* --- Styling untuk Baris Teks di dalam text-display --- */
+.text-line {
+    width: 100%; /* Ambil lebar penuh dari text-display */
+    flex-shrink: 0;
+    flex-grow: 0;
+    
+    display: flex; /* Untuk menata kata-kata dalam satu baris */
+    flex-wrap: wrap; /* Biarkan kata-kata membungkus ke baris berikutnya secara alami */
+    justify-content: flex-start; /* Kata-kata menempel di kiri, jarak normal antar kata */
+    align-items: flex-start;
+}
+
+.text-line.active {
+    background: #f5f5f5;
+    border-radius: 6px;
+}
+
+.word-container {
+    margin-right: 7px; /* Jarak normal antar kata */
+    padding: 2px 0; /* Padding vertikal untuk highlight yang lebih baik */
+    position: relative;
+    white-space: nowrap; /* Mencegah kata terpotong di tengah */
+    transition: background-color 0.1s ease, color 0.1s ease; /* Transisi untuk highlight */
+    border-radius: 4px; /* Default border-radius */
+}
+
+/* Gaya untuk setiap karakter di dalam word-container */
+.word-container span {
+    color: inherit; /* Karakter mewarisi warna dari parent .word-container secara default */
+    transition: color 0.1s ease; /* Transisi untuk perubahan warna karakter */
+}
+
+/* --- ATURAN HIGHLIGHT WARNA --- */
+
+/* --- Gaya untuk Mode Highlight (Default) --- */
+/* Terapkan hanya jika BUKAN mode caret */
+#textDisplay:not(.caret-mode-active) .word-container.current-word-target {
+    background-color: #e0e0e0; /* Abu-abu terang */
+    color: #333; /* Teks lebih gelap agar kontras */
+}
+
+#textDisplay:not(.caret-mode-active) .word-container.current-word-target span.correct {
+    color: #4CAF50; /* Hijau terang */
+}
+
+#textDisplay:not(.caret-mode-active) .word-container.current-word-target span.wrong {
+    color: #F44336; /* Merah */
+}
+
+/* --- Gaya untuk Mode Highlight (Default) --- */
+#textDisplay:not(.caret-mode-active) .word-container.word-correct {
+    background-color: #e3f2fd; /* Biru sangat terang */
+    color: #2196F3; /* Biru */
+}
+
+#textDisplay:not(.caret-mode-active) .word-container.word-incorrect {
+    background-color: #ffebee; /* Merah sangat terang */
+    color: #D32F2F; /* Merah */
+}
+
+/* Gaya untuk spasi yang salah */
+.word-container .space-char.wrong {
+    background-color: #F44336; /* Merah */
+    color: #fff; /* Teks putih untuk kontras */
+    border-radius: 2px; 
+    padding: 0 2px;
+    margin-left: 2px; /* Sedikit spasi agar terlihat terpisah */
+    margin-right: 2px;
+}
+
+.word-container.shake {
+    animation: shake 0.2s;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-4px); }
+    100% { transform: translateX(0); }
+}
+
+/* --- Gaya untuk Kursor Berkedip --- */
+.blinking-cursor {
+    position: absolute;
+    display: inline-block;
+    width: 1.5px; /* Lebar kursor */
+    height: 1.6em; /* Tinggi kursor, sesuaikan dengan line-height */
+    background-color: #333; /* Warna kursor default (abu gelap untuk mode siang) */
+    animation: blink 1s infinite;
+    transition: left 0.08s cubic-bezier(0.25, 0.1, 0.25, 1.0); /* Animasi pergerakan kursor super halus */
+    z-index: 10;
+    top: 0.15em; /* Penyesuaian posisi vertikal */
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* --- Aturan Spesifik untuk Mode Kursor "Caret" --- */
+
+/* Hapus highlight latar belakang untuk kata yang sudah selesai */
+.caret-mode-active .word-container.word-correct,
+.caret-mode-active .word-container.word-incorrect {
+    background-color: transparent;
+}
+
+/* Ubah warna teks untuk kata yang sudah selesai */
+.caret-mode-active .word-container.word-correct {
+    color: #b0b0b0; /* Biru */
+}
+.caret-mode-active .word-container.word-incorrect {
+    color: #D32F2F; /* Merah */
+}
+
+/* Hapus highlight latar belakang untuk kata yang sedang diketik */
+.caret-mode-active .word-container.current-word-target {
+    background-color: transparent;
+}
+
+/* Atur warna karakter untuk kata yang sedang diketik */
+.caret-mode-active .word-container.current-word-target span.correct {
+    color: #b0b0b0; /* Abu-abu cerah */
+}
+
+/* Warna untuk karakter salah tetap sama (merah) */
+.caret-mode-active .word-container.current-word-target span.wrong {
+    color: #F44336; /* Merah */
+}
