@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createKeyboard(keyboardContainer, keyLayout);
 
     // Fungsi utama untuk merender pelajaran dan memfokuskan hiddenInput
-    function doRenderLessonAndFocus() {
+    function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
         renderLesson({
             lessons,
             currentLessonIndex,
@@ -73,7 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
             keyboardContainer,
             lessonTitle,
             lessonInstruction,
-            lessonTextDisplay
+            lessonTextDisplay,
+            feedbackIndex,
+            isCorrect
         });
         setTimeout(() => hiddenInput.focus(), 0);
     }

@@ -2,11 +2,13 @@ import {
     lessons
 } from './learn-typing-lessons.js';
 import {
-    renderLesson,
-    resetLesson2State,
     createKeyboard,
-    highlightNextKey, // Masih diimpor, tapi perannya berubah
-    handleLesson2Input // Import fungsi handler Pelajaran 2 yang baru
+    renderLesson,
+    highlightNextKey, // Ini tidak lagi digunakan secara langsung untuk highlight utama
+    handleLesson2Input,
+    resetLesson2State, // Pastikan ini diimport
+    getSequenceForState // Pastikan ini diimport (meskipun tidak digunakan langsung di sini)
+
 } from './learn-typing-logic.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createKeyboard(keyboardContainer, keyLayout);
 
     // Fungsi utama untuk merender pelajaran dan memfokuskan hiddenInput
-    function doRenderLessonAndFocus() {
+    function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
         renderLesson({
             lessons,
             currentLessonIndex,
@@ -71,11 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
             keyboardContainer,
             lessonTitle,
             lessonInstruction,
-            lessonTextDisplay
-        });
-        // highlightNextKey kini tidak lagi mengatur state, hanya mereset highlight sebelumnya
-        highlightNextKey({
-            keyboardContainer
+            lessonTextDisplay,
+            feedbackIndex,
+            isCorrect
         });
         setTimeout(() => hiddenInput.focus(), 0);
     }
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
             handleLesson2Input({
                 e,
                 doRenderAndHighlight: doRenderLessonAndFocus, // Kirim fungsi untuk merender dan fokus
-                dispatchLesson2FinishedEvent: document.dispatchEvent.bind(document), // Kirim dispatchEvent
+                dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event), // Kirim dispatchEvent dari lessonInstruction
                 lessonInstructionEl: lessonInstruction // Kirim elemen instruksi untuk error shake
             });
             // Tidak perlu preventDefault di sini karena sudah ditangani di handleLesson2Input
@@ -247,20 +247,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Listener event kustom: untuk menampilkan modal setelah Pelajaran 2 selesai
-    document.addEventListener('lesson2-finished', () => {
-        // console.log('--- EVENT LESSON2-FINISHED DITERIMA (di document) ---');
-        lesson2Finished = true; // Set flag agar input di Pelajaran 2 diabaikan
-        if (modal) {
-            setTimeout(() => {
-                modal.style.display = 'flex';
-                if (continueBtn) {
-                    continueBtn.focus();
+    lessonInstruction.addEventListener('lesson2-finished', () => {
+    // console.log('--- EVENT LESSON2-FINISHED DITERIMA (di lessonInstruction) ---');
+    lesson2Finished = true; // Set flag agar input di Pelajaran 2 diabaikan
+
+    if (modal) {
+        console.log('Modal ditemukan. Menyiapkan tampilan dan fokus tombol Lanjutkan...');
+        // Menggunakan setTimeout untuk memberi waktu modal muncul dan dirender
+        setTimeout(() => {
+            modal.style.display = 'flex'; // Tampilkan modal
+            console.log('Modal display diatur ke flex.');
+
+            if (continueBtn) {
+                console.log('Mencoba fokus ke tombol Lanjutkan di dalam modal...');
+                continueBtn.focus(); // Fokus tombol di dalam modal
+                
+                // Opsional: Cek apakah fokus benar-benar berpindah
+                if (document.activeElement === continueBtn) {
+                    console.log('Fokus berhasil diatur ke tombol Lanjutkan di modal.');
+                } else {
+                    console.log('Fokus GAGAL berpindah ke tombol Lanjutkan di modal. Elemen aktif saat ini:', document.activeElement);
                 }
-            }, 400);
-        } else {
-            console.error('ERROR: Modal element #lesson-complete-modal not found!');
-        }
-    });
+            } else {
+                console.error('ERROR: Elemen continueBtn tidak ditemukan di dalam modal!');
+            }
+        }, 600); // <-- MENAIKKAN DURASI TIMEOUT menjadi 600ms (dari 400ms).
+                  // Jika modal ada animasi pembuka, sesuaikan durasi ini agar lebih panjang dari animasi.
+    } else {
+        console.error('ERROR: Elemen modal (#lesson-complete-modal atau id lainnya) tidak ditemukan!');
+    }
+});
 
     // 5. INISIALISASI AWAL APLIKASI
     resetCurrentLessonState();

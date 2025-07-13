@@ -489,3 +489,25 @@
 #lesson2-sequence-container span.input-incorrect {
     background-color: rgba(247, 168, 168, 0.7); /* Merah */
 }
+/* Ganti selektor agar lebih spesifik */
+.lesson-keyboard-sequence .lesson-keyboard-key.completed-correct {
+    background: #a8ed93 !important;
+    border-color: #4CAF50 !important;
+    transform: scale(1.05);
+}
+
+.lesson-keyboard-sequence .lesson-keyboard-key.input-incorrect {
+    background: #f7a8a8 !important;
+    border-color: #f44336 !important;
+    animation: 
+    shake 0.5s,
+    fade-out-red 0.5s 0.5s forwards; /* Animasi memudar setelah 0.5s */
+}
+/* Animasi fade out untuk merah */
+@keyframes fade-out-red {
+    to {
+      background: transparent !important;
+      color: inherit !important;
+      border-color: var(--lesson-key-default-border) !important;
+    }
+  }

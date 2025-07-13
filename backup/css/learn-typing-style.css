@@ -1,3 +1,28 @@
+/* learn-typing.css - REVISI DARI KODE ASLI, HANYA HAPUS FLASH */
+
+/* --- VARIABEL CSS (Diperlukan oleh beberapa bagian, tapi minimal) --- */
+:root {
+    --key-bg-color: #5555550e; /* Dari .key background-color Anda */
+    --active-key-bg-color: #77aaff; /* Dari .key.active background Anda */
+    --active-key-shadow-color: #77aaff80; /* Dari .key.active box-shadow Anda */
+    --next-key-bg-color: #99cc99; /* Dari .key.next-key background Anda */
+    --next-key-text-color: #222; /* Dari .key.next-key color Anda */
+    --next-key-border-color: #77a777; /* Dari .key.next-key border-color Anda */
+    --lesson-key-default-bg: #fff;
+    --lesson-key-default-color: #444;
+    --lesson-key-default-border: #bbb; /* Menambahkan ini agar konsisten */
+    --lesson-key-active-bg: #007bff;
+    --lesson-key-active-color: #fff;
+    --lesson-key-active-border: #1976d2;
+    --inline-key-bg: #1976d2;
+    --inline-key-color: #fff;
+    --inline-key-border: #b0b0b0;
+    --lesson-text-default-color: #888;
+    --lesson-text-correct-color: #4caf50;
+    --lesson-text-incorrect-color: #f44336;
+}
+
+
 .keyboard-container {
     padding: 12px;
     background-color: #33333300;
@@ -26,7 +51,7 @@
 }
 
 .key {
-    background-color: #5555550e;
+    background-color: var(--key-bg-color); /* Menggunakan variabel */
     color: rgb(7, 121, 214);
     padding: 12px 0;
     border-radius: 4px;
@@ -79,9 +104,9 @@
 }
 
 .key.active {
-    background-color: #77aaff;
+    background-color: var(--active-key-bg-color); /* Menggunakan variabel */
     transform: translateY(2px) scale(1.08);
-    box-shadow: 0 0 12px 2px #77aaff80;
+    box-shadow: 0 0 12px 2px var(--active-key-shadow-color); /* Menggunakan variabel */
     animation: key-press-pop 0.18s cubic-bezier(.36,.07,.19,.97);
 }
 
@@ -101,13 +126,13 @@
 }
 
 .key.next-key {
-    background: #99cc99 !important;
-    color: #222 !important;
-    border-color: #77a777 !important;
+    background: var(--next-key-bg-color) !important; /* Menggunakan variabel */
+    color: var(--next-key-text-color) !important; /* Menggunakan variabel */
+    border-color: var(--next-key-border-color) !important; /* Menggunakan variabel */
     border-radius: 4px;
     box-shadow: 0 0 12px 2px #99cc9980;
     /* Tambahkan animasi */
-    animation: highlight-move 0.6s infinite alternate; /* Ubah 1.2s jadi 0.6s */
+    animation: highlight-move 0.6s infinite alternate; /* TIDAK DIUBAH, SESUAI PERMINTAAN */
 }
 
 @keyframes highlight-move {
@@ -173,6 +198,30 @@
     color: #666;
 }
 
+/* Animasi Error Shake untuk Instruksi */
+#lesson-instruction.error-shake { /* Selektor diperbaiki ke ID */
+    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes shake {
+    10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+    20%, 80% {
+        transform: translate3d(2px, 0, 0);
+    }
+    30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+    40%, 60% {
+        transform: translate3d(4px, 0, 0);
+    }
+}
+
+
 .navigation-buttons {
     display: flex;
     justify-content: center;
@@ -236,9 +285,9 @@
 
 .keyboard-inline-key {
     display: inline-block;
-    background: #1976d2;
-    color: #fff;
-    border: 1.5px solid #b0b0b0;
+    background: var(--inline-key-bg); /* Menggunakan variabel */
+    color: var(--inline-key-color); /* Menggunakan variabel */
+    border: 1.5px solid var(--inline-key-border); /* Menggunakan variabel */
     border-radius: 5px;
     padding: 3px 14px 3px 14px;
     margin: 0 3px;
@@ -269,6 +318,11 @@
     display: flex;
     justify-content: center;
     gap: 12px;
+    /* PENTING untuk animasi slide */
+    overflow: hidden;
+    height: 60px; /* Sesuaikan jika .lesson-keyboard-key terlalu tinggi */
+    position: relative;
+    padding: 5px 0;
 }
 
 .lesson-keyboard-underline {
@@ -300,26 +354,160 @@
     padding: 0 16px;
     font-size: 1.5em;
     font-family: 'Segoe UI', 'Courier New', monospace;
-    background: #fff;
-    color: #444;
-    border: 2px solid #bbb;
+    background: var(--lesson-key-default-bg); /* Menggunakan variabel */
+    color: var(--lesson-key-default-color); /* Menggunakan variabel */
+    border: 2px solid var(--lesson-key-default-border); /* Menggunakan variabel */
     border-radius: 7px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.04);
     margin: 0 2px;
     position: relative;
-    transition: border-color 0.2s, color 0.2s;
+    /* transition: border-color 0.2s, color 0.2s;  <-- Hapus ini jika akan ada animasi slide-in */
+    will-change: transform, opacity; /* Optimalisasi performa untuk animasi */
 }
 
 .lesson-keyboard-key.active {
-    background: #007bff;
-    color: #fff;
+    background: var(--lesson-key-active-bg); /* Menggunakan variabel */
+    color: var(--lesson-key-active-color); /* Menggunakan variabel */
     border-radius: 4px;
-    border-color: #1976d2;
+    border-color: var(--lesson-key-active-border); /* Menggunakan variabel */
 }
 
-.lesson-keyboard-key.active,
-.key.next-key {
-    background: #007bff;
-    color: #fff;
-    border-radius: 4px;
+/* Duplikasi `.lesson-keyboard-key.active, .key.next-key` ini sudah dihapus di bawah,
+   karena tidak lagi relevan setelah pengenalan variabel CSS */
+
+
+/* Tambahkan juga .lesson-keyboard-sequence padding/overflow */
+.lesson-keyboard-sequence {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    overflow: hidden; /* Sembunyikan bagian yang keluar dari area */
+    height: 60px; /* Atur tinggi yang cukup untuk animasi slide */
+    position: relative; /* Penting untuk positioning elemen anak jika diperlukan */
+    padding: 5px 0; /* Memberi sedikit ruang vertikal */
+    align-items: center; /* Pusatkan secara vertikal jika ada sisa ruang */
 }
+
+/* START ADDITION 4 */
+/* Animasi untuk elemen key di Pelajaran 2 */
+.lesson-keyboard-key.active {
+    /* Gaya untuk elemen yang sedang aktif/harus diketik */
+    font-weight: bold;
+    color: var(--primary-color); /* Ganti dengan warna yang Anda inginkan */
+}
+
+/* Animasi Slide Up dan Fade Out */
+.lesson-keyboard-key.slide-up-fade-out {
+    animation: slideUpFadeOut 0.3s forwards;
+    /* 'forwards' menjaga state akhir animasi */
+}
+
+@keyframes slideUpFadeOut {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-100%); /* Geser ke atas */
+        opacity: 0;
+    }
+}
+
+/* Animasi Slide Down dan Fade In */
+.lesson-keyboard-key.slide-down-fade-in {
+    animation: slideDownFadeIn 0.3s forwards;
+}
+
+@keyframes slideDownFadeIn {
+    from {
+        transform: translateY(100%); /* Mulai dari bawah */
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Kelas untuk menonaktifkan animasi pada render awal atau elemen yang sudah diketik */
+.lesson-keyboard-key.no-initial-animation {
+    opacity: 1;
+    transform: translateY(0);
+    animation: none !important; /* Penting: menonaktifkan animasi */
+}
+
+/* Pastikan highlight-move animasi sudah ada di .key.next-key */
+.key.next-key {
+    background-color: var(--highlight-color); /* Contoh warna, sesuaikan */
+    box-shadow: 0 0 10px var(--highlight-color);
+    /* Animasi highlight-move akan ditambahkan/direstart via JS */
+}
+
+@keyframes highlight-move {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Untuk error shake */
+.error-shake {
+    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+    50% { transform: translate3d(-4px, 0, 0); }
+}
+
+/* END ADDITION 4 */
+
+/* Pastikan elemen span instruksi memiliki transisi background-color */
+/* Ini penting agar warna merah bisa "pudar lama" saat kelasnya dihapus */
+#lesson2-sequence-container span {
+    transition: background-color 0.8s ease-out; /* Durasi pudarnya warna merah. Sesuaikan jika ingin lebih lama/cepat. */
+    background-color: transparent; /* Pastikan default-nya transparan */
+}
+
+/* Warna hijau untuk instruksi yang sudah diketik dengan benar */
+#lesson2-sequence-container span.completed-correct {
+    background-color: rgba(168, 237, 147, 0.7); /* Hijau */
+}
+
+/* Warna merah untuk instruksi yang diketik salah */
+#lesson2-sequence-container span.input-incorrect {
+    background-color: rgba(247, 168, 168, 0.7); /* Merah */
+}
+/* Ganti selektor agar lebih spesifik */
+.lesson-keyboard-sequence .lesson-keyboard-key.completed-correct {
+    background: #a8ed93 !important;
+    border-color: #4CAF50 !important;
+    transform: scale(1.05);
+}
+
+.lesson-keyboard-sequence .lesson-keyboard-key.input-incorrect {
+    background: #f7a8a8 !important;
+    border-color: #f44336 !important;
+    animation: 
+    shake 0.5s,
+    fade-out-red 0.5s 0.5s forwards; /* Animasi memudar setelah 0.5s */
+}
+/* Animasi fade out untuk merah */
+@keyframes fade-out-red {
+    to {
+      background: transparent !important;
+      color: inherit !important;
+      border-color: var(--lesson-key-default-border) !important;
+    }
+  }

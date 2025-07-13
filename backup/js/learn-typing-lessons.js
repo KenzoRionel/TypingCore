@@ -15,8 +15,6 @@ export const lessons = [
     },
     {
         title: "Pelajaran 2: Latihan F dan J Lebih Banyak",
-        // instruction: "Ulangi urutan 'f' dan 'j' lebih banyak untuk membiasakan posisi jari.", // Ini tidak lagi digunakan
-        // sequence: Array(12).fill(['f', 'j']).flat(), // Ini juga tidak lagi digunakan
         preview: ['f', 'j'] // Preview masih bisa berguna untuk menampilkan di daftar pelajaran
     },
     // Tambahkan lesson berikutnya di sini

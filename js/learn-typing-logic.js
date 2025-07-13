@@ -97,7 +97,7 @@ function clearKeyboardHighlights(keyboardContainer) {
 
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
     if (!keyboardContainer) {
-        console.warn("keyboardContainer is null or undefined in highlightKeyOnKeyboard. Cannot highlight.");
+        console.warn("highlightKeyOnKeyboard called with null or undefined keyboardContainer. Cannot highlight.");
         return;
     }
 
@@ -141,7 +141,9 @@ export function renderLesson({
     keyboardContainer,
     lessonTitle,
     lessonInstruction,
-    lessonTextDisplay
+    lessonTextDisplay,
+    feedbackIndex = -1,
+    isCorrect = null
 }) {
     if (!lessons || !lessons[currentLessonIndex]) return;
     
@@ -165,7 +167,7 @@ export function renderLesson({
         }
     } else if (currentLessonIndex === 1) {
         // Pelajaran 2
-        renderLesson2(lessonInstruction, keyboardContainer);
+        renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
     } else {
         // Pelajaran lainnya
         cleanupLesson2Elements(lessonInstruction);
@@ -174,7 +176,7 @@ export function renderLesson({
 }
 
 // --- FUNGSI RENDER KHUSUS PELAJARAN 2 ---
-function renderLesson2(lessonInstruction, keyboardContainer) {
+function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
     if (!lessonInstruction) return;
     
     // Inisialisasi kontainer jika belum ada
@@ -244,7 +246,7 @@ function renderLesson2(lessonInstruction, keyboardContainer) {
     if (isTransitionState) {
         handleTransitionState();
     } else {
-        handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer);
+        handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex, isCorrect);
     }
 }
 
@@ -276,7 +278,7 @@ function handleTransitionState() {
     highlightKeyOnKeyboard(null, null);
 }
 
-function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer) {
+function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
     if (!lesson2SequenceContainer || !lesson2UnderlineContainer) return;
     
     const requiresRebuild = lesson2SequenceContainer.children.length === 0;
@@ -300,8 +302,9 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
         });
     }
     
-    // Update status aktif
+    // Update status aktif dan feedback
     updateActiveStatus(activeIndex);
+    applyFeedback(feedbackIndex, isCorrect);
     
     if (highlightedKey) {
         highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
@@ -321,6 +324,32 @@ function updateActiveStatus(activeIndex) {
     underlineElements.forEach((underlineEl, idx) => {
         underlineEl.classList.toggle('active', idx === activeIndex);
     });
+}
+
+function applyFeedback(feedbackIndex, isCorrect) {
+    if (feedbackIndex < 0 || isCorrect === null) return;
+    
+    const keyElements = Array.from(lesson2SequenceContainer.children);
+  if (keyElements[feedbackIndex]) {
+    // Hapus class feedback sebelumnya
+    keyElements[feedbackIndex].classList.remove('completed-correct', 'input-incorrect');
+    
+    // Jika benar, tambahkan class hijau permanen
+    if (isCorrect) {
+      keyElements[feedbackIndex].classList.add('completed-correct');
+    } 
+    // Jika salah, tambahkan class merah sementara
+    else {
+      keyElements[feedbackIndex].classList.add('input-incorrect');
+      
+      // Hapus class merah setelah animasi selesai (1 detik)
+      setTimeout(() => {
+        keyElements[feedbackIndex].classList.remove('input-incorrect');
+      }, 500);
+    }
+    
+    void keyElements[feedbackIndex].offsetWidth; // Force re-render
+  }
 }
 
 function cleanupLesson2Elements(lessonInstruction) {
@@ -378,37 +407,33 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
     }
 
     let isCorrect = false;
-    let feedbackIndex = -1; // Inisialisasi feedbackIndex
+    let feedbackIndex = -1;
     let oldState = lesson2State;
 
     // Logika untuk setiap state
     switch (lesson2State) {
         case 0:
             if (e.key.toLowerCase() === 'f') {
-                lesson2FCount++;
                 isCorrect = true;
-                feedbackIndex = lesson2FCount - 1; // Untuk huruf 'f' pertama, index 0, dst.
-                if (lesson2FCount >= 4) {
-                    lesson2State = 1;
-                }
+                feedbackIndex = lesson2FCount;
+                lesson2FCount++;
+                if (lesson2FCount >= 4) lesson2State = 1;
+            } else {
+                feedbackIndex = lesson2FCount;
             }
             break;
-        case 1:
-            // State transisi - abaikan input
-            break;
+
         case 2:
             if (e.key.toLowerCase() === 'j') {
-                lesson2JCount++;
                 isCorrect = true;
-                feedbackIndex = lesson2JCount - 1; // Untuk huruf 'j' pertama, index 0, dst.
-                if (lesson2JCount >= 4) {
-                    lesson2State = 3;
-                }
+                feedbackIndex = lesson2JCount;
+                lesson2JCount++;
+                if (lesson2JCount >= 4) lesson2State = 3;
+            } else {
+                feedbackIndex = lesson2JCount;
             }
             break;
-        case 3:
-            // State transisi - abaikan input
-            break;
+
         case 4:
         case 6:
         case 8:
@@ -417,24 +442,20 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
             const expectedKey = sequence[lesson2SequenceIndex];
             if (e.key.toLowerCase() === expectedKey) {
                 isCorrect = true;
-                feedbackIndex = lesson2SequenceIndex; // Index karakter yang baru diketik
+                feedbackIndex = lesson2SequenceIndex;
                 lesson2SequenceIndex++;
                 if (lesson2SequenceIndex >= 4) {
                     lesson2SequenceIndex = 0;
                     lesson2State++;
                     if (lesson2State === 11) {
-                        // Pelajaran 2 selesai
                         setTimeout(() => {
                             dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
                         }, 300);
                     }
                 }
             } else {
-                feedbackIndex = lesson2SequenceIndex; // Index karakter yang salah diketik
+                feedbackIndex = lesson2SequenceIndex;
             }
-            break;
-        default:
-            // State transisi lainnya - abaikan input
             break;
     }
 
@@ -444,25 +465,18 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
         setTimeout(() => lessonInstructionEl.classList.remove('error-shake'), 200);
     }
 
-    // Re-render jika ada perubahan ATAU ada feedback baru
-    // *** INI ADALAH BAGIAN YANG SANGAT PENTING UNTUK DIGANTI ***
-    if (lesson2State !== oldState || feedbackIndex !== -1) { // Render juga jika ada feedback
-        doRenderAndHighlight(feedbackIndex, isCorrect); // <--- TERUSKAN PARAMETER DI SINI!
+    // Re-render dengan feedback
+    if (lesson2State !== oldState || feedbackIndex !== -1) {
+        doRenderAndHighlight(feedbackIndex, isCorrect);
     }
 
     // Handle transisi state
     if ([1, 3, 5, 7, 9, 11].includes(lesson2State) && lesson2State !== oldState) {
         setTimeout(() => {
-            if (lesson2SequenceContainer) {
-                lesson2SequenceContainer.innerHTML = '';
-            }
-            if (lesson2UnderlineContainer) {
-                lesson2UnderlineContainer.innerHTML = '';
-            }
-            if (lesson2State < 12) { // Pastikan tidak melebihi state terakhir
-                lesson2State++;
-                doRenderAndHighlight(); // Ini adalah panggilan untuk transisi state, tanpa feedback khusus
-            }
+            if (lesson2SequenceContainer) lesson2SequenceContainer.innerHTML = '';
+            if (lesson2UnderlineContainer) lesson2UnderlineContainer.innerHTML = '';
+            if (lesson2State < 12) lesson2State++;
+            doRenderAndHighlight();
         }, 400);
     }
 }
