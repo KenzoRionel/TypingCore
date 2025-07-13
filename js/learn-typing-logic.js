@@ -15,29 +15,38 @@ let lesson2UnderlineContainer = null;
 let currentHighlightedKeyElement = null;
 
 // --- FUNGSI RESET STATE PELAJARAN 2 ---
-export function resetLesson2State() {
+// Tambahkan parameter keyboardContainer
+export function resetLesson2State(keyboardContainer = null) {
     lesson2State = 0;
     lesson2FCount = 0;
     lesson2JCount = 0;
     lesson2SequenceIndex = 0;
     
-    // Reset referensi kontainer dan bersihkan kontennya
-    if (lesson2SequenceContainer && lesson2SequenceContainer.parentNode) {
+    // Reset kontainer dan highlight
+    if (lesson2SequenceContainer?.parentNode) {
         lesson2SequenceContainer.innerHTML = '';
     }
-    if (lesson2UnderlineContainer && lesson2UnderlineContainer.parentNode) {
+    if (lesson2UnderlineContainer?.parentNode) {
         lesson2UnderlineContainer.innerHTML = '';
     }
-    lesson2SequenceContainer = null;
-    lesson2UnderlineContainer = null;
     
-    // Pastikan highlight keyboard juga dihapus saat reset
+    // Reset highlight keyboard (jika container tersedia)
+    if (keyboardContainer) {
+        const highlightedKeys = keyboardContainer.querySelectorAll('.key.next-key');
+        highlightedKeys.forEach(key => {
+            key.classList.remove('next-key');
+            key.style.animation = '';
+        });
+    }
+    
+    // Reset global highlight
     if (currentHighlightedKeyElement) {
         currentHighlightedKeyElement.classList.remove('next-key');
         currentHighlightedKeyElement.style.animation = '';
         currentHighlightedKeyElement = null;
     }
 }
+
 
 // --- FUNGSI UTILITY KEYBOARD ---
 export function createKeyboard(keyboardContainer, keyLayout) {
