@@ -24,14 +24,13 @@
 
 
 .keyboard-container {
-    padding: 12px;
     background-color: #33333300;
     border-radius: 10px;
     box-shadow: 0 8px 16px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
     gap: 0; /* Hilangkan gap flex, gunakan margin pada row */
-    width: 1000px;
+    width: 800px;
     margin-left: auto;
     margin-right: auto;
     display: block; /* Agar margin auto bekerja */
@@ -39,10 +38,12 @@
 
 /* Jarak antar baris keyboard */
 .keyboard-row {
+    height: 40px;
     display: flex;
     justify-content: center;
     gap: 14px;
-    margin-bottom: 10px; /* Tambahkan jarak antar baris keyboard */
+    margin-bottom: 5px; /* Tambahkan jarak antar baris keyboard */
+    width:800px;
 }
 
 /* Hilangkan margin bawah pada baris terakhir */
@@ -53,9 +54,9 @@
 .key {
     background-color: var(--key-bg-color); /* Menggunakan variabel */
     color: rgb(7, 121, 214);
-    padding: 12px 0;
+    padding: 4px 0;
     border-radius: 4px;
-    min-width: 48px;
+    min-width: 24px;
     max-width: 54px;
     text-align: center;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -68,40 +69,47 @@
 }
 
 .key-wide {
-    flex-grow: 2;
+    min-width: 133px;
+    flex: 0 1 110px;
 }
-
+.key-tab{
+    min-width: 92px;
+    max-width: 130px;
+    padding: 11px 0;
+    flex: 0 1 110px;
+    font-size: 1.05em;
+}
 .key-medium {
-    min-width: 80px;
-    max-width: 100px;
-    padding: 12px 0;
-    flex: 0 1 90px;
+    min-width: 104px;
+    max-width: 130px;
+    padding: 5px 0;
+    flex: 0 1 110px;
     font-size: 1.05em;
 }
 
 .key-space {
     flex-grow: 8;
-    min-width: 220px;
-    max-width: 350px;
+    min-width: 230px;
+    max-width: 374px;
     padding: 12px 0;
 }
 
 .key-small {
     flex: 0 0 48px;
-    min-width: 48px;
+    min-width: 50px;
     max-width: 54px;
-    padding: 12px 0;
+    padding: 7px 0;
     margin: 0; /* Pastikan tidak ada margin ekstra */
 }
 
 .key-spacer {
     flex: 0 0 14px;
-    min-width: 14px;
-    max-width: 14px;
-    background: transparent;
+    /* min-width: 14px; */
+    /* max-width: 14px; */
+    /* background: transparent; */
     border: none;
     box-shadow: none;
-    margin: 0;
+    margin: 0px;
 }
 
 .key.active {
@@ -384,7 +392,7 @@
     justify-content: center;
     gap: 12px;
     overflow: hidden; /* Sembunyikan bagian yang keluar dari area */
-    height: 74px; /* Atur tinggi yang cukup untuk animasi slide */
+    height: 78px; /* Atur tinggi yang cukup untuk animasi slide */
     position: relative; /* Penting untuk positioning elemen anak jika diperlukan */
     padding: 5px 0; /* Memberi sedikit ruang vertikal */
     align-items: end; /* Pusatkan secara vertikal jika ada sisa ruang */
