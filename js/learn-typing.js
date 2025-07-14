@@ -294,5 +294,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. INISIALISASI AWAL APLIKASI
     resetCurrentLessonState();
-    doRenderLessonAndFocus();
+    doRenderLessonAndFocus()
 });

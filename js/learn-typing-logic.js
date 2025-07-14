@@ -14,6 +14,37 @@ let lesson2UnderlineContainer = null;
 // Global variable untuk melacak elemen yang sedang di-highlight
 let currentHighlightedKeyElement = null;
 
+// --- PROGRESS BAR UTILITIES ---
+export function calculateLessonProgress(currentLessonIndex, currentStepIndex, currentCharIndex, lesson2State, lesson2SequenceIndex, lesson) {
+    // Pelajaran 1 (Step-based)
+    if (currentLessonIndex === 0) {
+        const totalSteps = lesson.steps.length;
+        return (currentStepIndex / totalSteps) * 100;
+    }
+    // Pelajaran 2 (State-based)
+    else if (currentLessonIndex === 1) {
+        const TOTAL_STATES = 12; // Total state di Pelajaran 2
+        const SEQUENCE_PER_STATE = 6; // 6 sequence per state
+        const totalSteps = (TOTAL_STATES * SEQUENCE_PER_STATE);
+        const currentStepIndex = (lesson2State * SEQUENCE_PER_STATE) + lesson2SequenceIndex;
+        return (currentStepIndex / totalSteps) * 100;
+    }
+    // Pelajaran Lain (Character-based)
+    else {
+        if (!lesson.sequence) return 0;
+        return (currentCharIndex / lesson.sequence.length) * 100;
+    }
+}
+
+export function updateProgressBar(progress) {
+    const progressBar = document.getElementById('lesson-progress-bar');
+    const progressText = document.getElementById('progress-percentage');
+    if (progressBar && progressText) {
+        progressBar.style.width = `${progress}%`;
+        progressText.textContent = `${Math.round(progress)}%`;
+    }
+}
+
 // --- FUNGSI RESET STATE PELAJARAN 2 ---
 // Tambahkan parameter keyboardContainer
 export function resetLesson2State(keyboardContainer=null) {
@@ -195,7 +226,30 @@ export function renderLesson({lessons, currentLessonIndex, currentStepIndex, cur
         // Pelajaran lainnya
         cleanupLesson2Elements(lessonInstruction);
         renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
+        // Update progress untuk pelajaran non-2
+    if (currentLessonIndex !== 1) { // Pastikan ini diakses dari parent function
+        const progress = calculateLessonProgress(
+            currentLessonIndex,
+            0, // currentStepIndex tidak digunakan
+            currentCharIndex,
+            0, // lesson2State tidak digunakan
+            0, // lesson2SequenceIndex tidak digunakan
+            lesson
+        );
+        updateProgressBar(progress);
     }
+    }
+
+    // Update progress bar
+    const progress = calculateLessonProgress(
+        currentLessonIndex,
+        currentStepIndex,
+        currentCharIndex,
+        lesson2State,
+        lesson2SequenceIndex,
+        lessons[currentLessonIndex]
+    );
+    updateProgressBar(progress);
 }
 
 // --- FUNGSI RENDER KHUSUS PELAJARAN 2 ---
@@ -447,9 +501,21 @@ export function handleLesson2Input({e, doRenderAndHighlight, dispatchLesson2Fini
             isCorrect = true;
             feedbackIndex = lesson2SequenceIndex;
             lesson2SequenceIndex++;
+            if (lesson2State !== oldState || isCorrect) {
+        const progress = calculateLessonProgress(
+            1, // currentLessonIndex untuk Pelajaran 2
+            0, // currentStepIndex tidak digunakan
+            0, // currentCharIndex tidak digunakan
+            lesson2State,
+            lesson2SequenceIndex,
+            lessons[1] // Ambil data Pelajaran 2
+        );
+        updateProgressBar(progress);
+    }
             if (lesson2SequenceIndex >= 6) {
                 lesson2SequenceIndex = 0;
                 lesson2State++;
+                // Tambahkan setelah lesson2State++ atau sequence update
                 if (lesson2State === 11) {
                     setTimeout( () => {
                         dispatchLesson2FinishedEvent(new Event('lesson2-finished'));

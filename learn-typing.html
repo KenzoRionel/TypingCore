@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belajar Mengetik - TypingCore</title>
     <link rel="icon" href="img/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/learn-typing-style.css">
 </head>
+
 <body>
     <div class="wrapper">
         <main class="main-content learn-typing-content">
@@ -25,7 +27,8 @@
                                     <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="learn-typing.html"><i class="fas fa-graduation-cap"></i></a>
+                                    <a class="nav-link active" href="learn-typing.html"><i
+                                            class="fas fa-graduation-cap"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
@@ -35,7 +38,8 @@
                         <div class="navbar-collapse justify-content-end" id="navbarSupportedContent2">
                             <ul class="navbar-nav align-items-center">
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-globe"></i> Bahasa
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
@@ -44,13 +48,16 @@
                                     </ul>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-user-circle"></i> User
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
                                         <li><a class="dropdown-item" href="#">Profil</a></li>
                                         <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
                                         <li><a class="dropdown-item" href="#">Logout</a></li>
                                     </ul>
                                 </li>
@@ -71,9 +78,18 @@
                 </div>
                 <div class="navigation-buttons">
                     <button id="prev-lesson-btn" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i>   Sebelumnya</button>
+                        <i class="fas fa-arrow-left"></i> Sebelumnya</button>
+
+                    <!-- Progress Bar -->
+                    <div class="lesson-progress">
+                        <div class="progress-container">
+                            <div class="progress-bar" id="lesson-progress-bar"></div>
+                        </div>
+                        <span class="progress-text" id="progress-percentage">0%</span>
+                    </div>
+
                     <button id="next-lesson-btn" class="btn btn-primary">
-                        Selanjutnya   <i class="fas fa-arrow-right"></i></button>
+                        Selanjutnya <i class="fas fa-arrow-right"></i></button>
                 </div>
             </section>
 
@@ -95,4 +111,5 @@
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="js/learn-typing.js" type="module"></script>
 </body>
+
 </html>
