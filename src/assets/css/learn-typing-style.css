@@ -1,178 +1,4 @@
 
-.keyboard-container {
-    background-color: #33333300;
-    display: flex;
-    flex-direction: column;
-    gap: 0; /* Hilangkan gap flex, gunakan margin pada row */
-    width: 800px;
-    margin-left: auto;
-    margin-right: auto;
-    display: block; /* Agar margin auto bekerja */
-}
-
-/* Jarak antar baris keyboard */
-.keyboard-row {
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    gap: 14px;
-    margin-bottom: 5px; /* Tambahkan jarak antar baris keyboard */
-    width:800px;
-}
-
-/* Hilangkan margin bawah pada baris terakhir */
-.keyboard-row:last-child {
-    margin-bottom: 0;
-}
-
-.key {
-    background-color: var(--key-bg-color); /* Menggunakan variabel */
-    color: rgb(7, 121, 214);
-    padding: 4px 0;
-    border-radius: 4px;
-    min-width: 24px;
-    max-width: 54px;
-    text-align: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
-    border: 1px solid #444;
-    transition: all 0.1s ease;
-    flex: 0 1 50px;
-    transition: all 0.3s ease; /* Untuk perubahan yang smooth */
-}
-
-.key-wide {
-    min-width: 133px;
-    flex: 0 1 110px;
-}
-.key-tab{
-    min-width: 86px;
-    max-width: 130px;
-    padding: 11px 0;
-    flex: 0 1 110px;
-    font-size: 1.05em;
-}
-.key-medium {
-    min-width: 104px;
-    max-width: 130px;
-    padding: 5px 0;
-    flex: 0 1 110px;
-    font-size: 1.05em;
-}
-
-.key-space {
-    flex-grow: 8;
-    min-width: 230px;
-    max-width: 374px;
-    padding: 12px 0;
-}
-
-.key-small {
-    flex: 0 0 48px;
-    min-width: 50px;
-    max-width: 54px;
-    padding: 7px 0;
-    margin: 0; /* Pastikan tidak ada margin ekstra */
-}
-
-.key-spacer {
-    flex: 0 0 14px;
-    /* min-width: 14px; */
-    /* max-width: 14px; */
-    /* background: transparent; */
-    border: none;
-    box-shadow: none;
-    margin: 0px;
-}
-
-.key.active {
-    background-color: var(--active-key-bg-color); /* Menggunakan variabel */
-    transform: translateY(2px) scale(1.08);
-    box-shadow: 0 0 12px 2px var(--active-key-shadow-color); /* Menggunakan variabel */
-    animation: key-press-pop 0.18s cubic-bezier(.36,.07,.19,.97);
-}
-
-@keyframes key-press-pop {
-    0% {
-        transform: translateY(0) scale(1);
-        box-shadow: 0 0 0 0 #77aaff00;
-    }
-    60% {
-        transform: translateY(2px) scale(1.13);
-        box-shadow: 0 0 18px 4px #77aaff80;
-    }
-    100% {
-        transform: translateY(2px) scale(1.08);
-        box-shadow: 0 0 12px 2px #77aaff80;
-    }
-}
-
-.key.next-key {
-    background: var(--next-key-bg-color) !important; /* Menggunakan variabel */
-    color: var(--next-key-text-color) !important; /* Menggunakan variabel */
-    border-color: var(--next-key-border-color) !important; /* Menggunakan variabel */
-    border-radius: 4px;
-    box-shadow: 0 0 12px 2px #99cc9980;
-    /* Tambahkan animasi */
-    animation: highlight-move 0.6s infinite alternate; /* TIDAK DIUBAH, SESUAI PERMINTAAN */
-}
-
-@keyframes highlight-move {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 10px var(--highlight-color);
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px var(--highlight-color);
-  }
-}
-
-.key.active {
-  animation: key-press-pop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-
-.lesson-text-container {
-    margin-bottom: 20px;
-}
-
-.lesson-text {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: clamp(1.2rem, 3vw, 2rem);
-    background-color: #f0f0f000;
-    padding: 20px;
-    text-align: center;
-    letter-spacing: 2px;
-    border: none;
-}
-
-.lesson-text span {
-    color: #888; /* Warna default karakter yang belum diketik */
-    transition: color 0.2s;
-}
-
-.lesson-text span.correct {
-    color: #4caf50; /* Hijau untuk benar */
-}
-
-.lesson-text span.incorrect {
-    color: #f44336; /* Merah untuk salah */
-    text-decoration: underline;
-}
-
-.lesson-text span.cursor {
-    background-color: #ddd;
-    border-bottom: 3px solid #333;
-    padding-bottom: 2px;
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-    50% {
-        background-color: transparent;
-        border-bottom-color: transparent;
-    }
-}
 
 .lesson-header {
     text-align: center;
@@ -192,20 +18,7 @@
     perspective: 1000px;
 }
 
-@keyframes shake {
-    10%, 90% {
-        transform: translate3d(-1px, 0, 0);
-    }
-    20%, 80% {
-        transform: translate3d(2px, 0, 0);
-    }
-    30%, 50%, 70% {
-        transform: translate3d(-4px, 0, 0);
-    }
-    40%, 60% {
-        transform: translate3d(4px, 0, 0);
-    }
-}
+
 
 
 .navigation-buttons {
@@ -239,16 +52,7 @@
     animation: modal-pop 0.3s ease-out;
 }
 
-@keyframes modal-pop {
-    from {
-        transform: scale(0.7);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
+
 
 .modal-content h2 {
     color: #4caf50;
@@ -292,13 +96,7 @@
     animation: key-fade-out 0.4s forwards;
 }
 
-@keyframes key-fade-out {
-    to {
-        opacity: 0;
-        transform: scale(0.7);
-        filter: blur(2px);
-    }
-}
+
 
 .lesson-keyboard-sequence {
     display: flex;
@@ -389,32 +187,12 @@
     /* 'forwards' menjaga state akhir animasi */
 }
 
-@keyframes slideUpFadeOut {
-    from {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateY(-100%); /* Geser ke atas */
-        opacity: 0;
-    }
-}
-
 /* Animasi Slide Down dan Fade In */
 .lesson-keyboard-key.slide-down-fade-in {
     animation: slideDownFadeIn 0.3s forwards;
 }
 
-@keyframes slideDownFadeIn {
-    from {
-        transform: translateY(100%); /* Mulai dari bawah */
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
+
 
 /* Kelas untuk menonaktifkan animasi pada render awal atau elemen yang sudah diketik */
 .lesson-keyboard-key.no-initial-animation {
@@ -431,17 +209,7 @@
     color: rgb(19, 18, 18) !important; /* Teks putih saat di-highlight */
 }
 
-@keyframes highlight-move {
-    0% {
-        transform: scale(1.0);
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(1.3);
-    }
-}
+
 
 /* Untuk error shake */
 .error-shake {
@@ -451,13 +219,7 @@
     perspective: 1000px;
 }
 
-@keyframes shake {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
-    50% { transform: translate3d(-4px, 0, 0); }
-}
+
 
 /* END ADDITION 4 */
 
@@ -493,13 +255,7 @@
     fade-out-red 0.5s 0.5s forwards; /* Animasi memudar setelah 0.5s */
 }
 /* Animasi fade out untuk merah */
-@keyframes fade-out-red {
-    to {
-      background: transparent !important;
-      color: inherit !important;
-      border-color: var(--lesson-key-default-border) !important;
-    }
-  }
+
   .lesson-keyboard-key.completed-correct::after {
     content: "✓";
     position: absolute;
@@ -512,11 +268,6 @@
     animation: check-pop 0.3s ease-out;
   }
   
-  @keyframes check-pop {
-    0% { transform: scale(0); opacity: 0; }
-    80% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
 
   /* Progress Bar Styles */
 .lesson-progress {
