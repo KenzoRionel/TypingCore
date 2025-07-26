@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belajar Mengetik - TypingCore</title>
     <link rel="icon" href="img/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="src/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/learn-typing-style.css">
+    <link href="src/assets/css/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="src/assets/css/learn-typing.css">
 </head>
 
 <body>
@@ -91,13 +91,7 @@
                     <button id="next-lesson-btn" class="btn btn-primary">
                         Selanjutnya <i class="fas fa-arrow-right"></i></button>
                 </div>
-            </section>
-
-        </main>
-    </div>
-
-    <!-- Modal Notifikasi (di luar main) -->
-    <div id="lesson-complete-modal" class="modal-overlay" style="display: none;">
+            <div id="lesson-complete-modal" style="display: none;">
         <div class="modal-content">
             <h2>Kerja Bagus!</h2>
             <p>Selanjutnya kita akan belajar:</p>
@@ -106,7 +100,13 @@
             </div>
             <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
         </div>
+            </section>
+        </main>
+    
     </div>
+    </div>
+
+    
 
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="js/learn-typing.js" type="module"></script>

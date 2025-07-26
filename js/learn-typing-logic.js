@@ -89,12 +89,8 @@ export function createKeyboard(keyboardContainer, keyLayout) {
         const rowElement = document.createElement('div');
         rowElement.classList.add('keyboard-row');
         row.forEach(key => {
-            if (key === '') {
-                const spacer = document.createElement('div');
-                spacer.classList.add('key-spacer');
-                rowElement.appendChild(spacer);
-                return;
-            }
+            if (key === '') return; // Lewati key kosong tanpa membuat spacer
+            
             const keyElement = document.createElement('div');
             keyElement.classList.add('key');
             let lowerKey = key.toLowerCase();
@@ -118,7 +114,7 @@ export function createKeyboard(keyboardContainer, keyLayout) {
             keyElement.textContent = displayKey;
             keyElement.setAttribute('data-key', lowerKey);
 
-            if (['Backspace', 'Tab', 'CapsLock', 'Enter', 'ShiftLeft', 'ShiftRight'].includes(key)) {
+            if (['Backspace', 'CapsLock', 'Enter'].includes(key)) {
                 keyElement.classList.add('key-medium');
             }
             if (key === 'Space') {
@@ -127,12 +123,15 @@ export function createKeyboard(keyboardContainer, keyLayout) {
             if (['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'ContextMenu'].includes(key)) {
                 keyElement.classList.add('key-small');
             }
+            if (key === 'ShiftLeft' || key === 'ShiftRight') {
+                keyElement.classList.add('key-wide'); // Tambahkan class key-wide untuk Shift
+            }
+            if (key === 'Tab') {
+                keyElement.classList.add('key-tab');}
             rowElement.appendChild(keyElement);
-        }
-        );
+        });
         keyboardContainer.appendChild(rowElement);
-    }
-    );
+    });
 }
 
 function clearKeyboardHighlights(keyboardContainer) {

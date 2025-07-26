@@ -80,13 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => hiddenInput.focus(), 0);
     }
 
-    // Fungsi untuk mereset state pelajaran saat ini
+    // Di dalam fungsi resetCurrentLessonState:
     function resetCurrentLessonState() {
         currentCharIndex = 0;
         currentStepIndex = 0;
         waitingForAnim.value = false;
-        lesson2Finished = false; // Reset flag saat pelajaran direset
-        resetLesson2State(); // Panggil fungsi reset state Pelajaran 2 dari learn-typing-logic.js
+        lesson2Finished = false;
+        resetLesson2State(keyboardContainer); // <- Tambahkan parameter di sini
     }
 
     // 4. EVENT LISTENERS UTAMA
@@ -248,37 +248,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listener event kustom: untuk menampilkan modal setelah Pelajaran 2 selesai
     lessonInstruction.addEventListener('lesson2-finished', () => {
-    // console.log('--- EVENT LESSON2-FINISHED DITERIMA (di lessonInstruction) ---');
-    lesson2Finished = true; // Set flag agar input di Pelajaran 2 diabaikan
 
-    if (modal) {
-        console.log('Modal ditemukan. Menyiapkan tampilan dan fokus tombol Lanjutkan...');
-        // Menggunakan setTimeout untuk memberi waktu modal muncul dan dirender
-        setTimeout(() => {
-            modal.style.display = 'flex'; // Tampilkan modal
-            console.log('Modal display diatur ke flex.');
+        // console.log('--- EVENT LESSON2-FINISHED DITERIMA (di lessonInstruction) ---');
+        lesson2Finished = true; // Set flag agar input di Pelajaran 2 diabaikan
 
-            if (continueBtn) {
-                console.log('Mencoba fokus ke tombol Lanjutkan di dalam modal...');
-                continueBtn.focus(); // Fokus tombol di dalam modal
-                
-                // Opsional: Cek apakah fokus benar-benar berpindah
-                if (document.activeElement === continueBtn) {
-                    console.log('Fokus berhasil diatur ke tombol Lanjutkan di modal.');
+        if (modal) {
+            console.log('Modal ditemukan. Menyiapkan tampilan dan fokus tombol Lanjutkan...');
+            // Menggunakan setTimeout untuk memberi waktu modal muncul dan dirender
+            setTimeout(() => {
+                modal.style.display = 'flex'; // Tampilkan modal
+                console.log('Modal display diatur ke flex.');
+
+                if (continueBtn) {
+                    console.log('Mencoba fokus ke tombol Lanjutkan di dalam modal...');
+                    continueBtn.focus(); // Fokus tombol di dalam modal
+
+                    // Opsional: Cek apakah fokus benar-benar berpindah
+                    if (document.activeElement === continueBtn) {
+                        console.log('Fokus berhasil diatur ke tombol Lanjutkan di modal.');
+                    } else {
+                        console.log('Fokus GAGAL berpindah ke tombol Lanjutkan di modal. Elemen aktif saat ini:', document.activeElement);
+                    }
                 } else {
-                    console.log('Fokus GAGAL berpindah ke tombol Lanjutkan di modal. Elemen aktif saat ini:', document.activeElement);
+                    console.error('ERROR: Elemen continueBtn tidak ditemukan di dalam modal!');
                 }
-            } else {
-                console.error('ERROR: Elemen continueBtn tidak ditemukan di dalam modal!');
-            }
-        }, 600); // <-- MENAIKKAN DURASI TIMEOUT menjadi 600ms (dari 400ms).
-                  // Jika modal ada animasi pembuka, sesuaikan durasi ini agar lebih panjang dari animasi.
-    } else {
-        console.error('ERROR: Elemen modal (#lesson-complete-modal atau id lainnya) tidak ditemukan!');
-    }
-});
+            }, 600); // <-- MENAIKKAN DURASI TIMEOUT menjadi 600ms (dari 400ms).
+            // Jika modal ada animasi pembuka, sesuaikan durasi ini agar lebih panjang dari animasi.
+        } else {
+            console.error('ERROR: Elemen modal (#lesson-complete-modal atau id lainnya) tidak ditemukan!');
+        }
+        const keys = document.querySelectorAll('#virtual-keyboard .key');
+        keys.forEach(key => {
+            key.style.animation = 'none';
+            key.classList.remove('next-key');
+        });
+
+        // 2. Reset state
+        lesson2Finished = true;
+
+        // 3. Tampilkan modal
+        modal.style.display = 'flex';
+        continueBtn.focus();
+
+    });
 
     // 5. INISIALISASI AWAL APLIKASI
     resetCurrentLessonState();
-    doRenderLessonAndFocus();
+    doRenderLessonAndFocus()
 });
