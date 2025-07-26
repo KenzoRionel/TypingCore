@@ -1,27 +1,3 @@
-/* learn-typing.css - REVISI DARI KODE ASLI, HANYA HAPUS FLASH */
-
-/* --- VARIABEL CSS (Diperlukan oleh beberapa bagian, tapi minimal) --- */
-:root {
-    --key-bg-color: #5555550e; /* Dari .key background-color Anda */
-    --active-key-bg-color: #77aaff; /* Dari .key.active background Anda */
-    --active-key-shadow-color: #77aaff80; /* Dari .key.active box-shadow Anda */
-    --next-key-bg-color: #99cc99; /* Dari .key.next-key background Anda */
-    --next-key-text-color: #222; /* Dari .key.next-key color Anda */
-    --next-key-border-color: #77a777; /* Dari .key.next-key border-color Anda */
-    --lesson-key-default-bg: #fff;
-    --lesson-key-default-color: #444;
-    --lesson-key-default-border: #bbb; /* Menambahkan ini agar konsisten */
-    --lesson-key-active-bg: #007bff;
-    --lesson-key-active-color: #fff;
-    --lesson-key-active-border: #1976d2;
-    --inline-key-bg: #1976d2;
-    --inline-key-color: #fff;
-    --inline-key-border: #b0b0b0;
-    --lesson-text-default-color: #888;
-    --lesson-text-correct-color: #4caf50;
-    --lesson-text-incorrect-color: #f44336;
-}
-
 
 .keyboard-container {
     background-color: #33333300;
