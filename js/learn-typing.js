@@ -5,12 +5,11 @@ import {
     createKeyboard,
     renderLesson,
     resetLesson2State,
-    // handleLesson2Input, // TIDAK PERLU DI SINI LAGI, SUDAH DI input-handler.js
-    // showLessonCompleteModal // TIDAK PERLU DI SINI LAGI, SUDAH DI input-handler.js
+    showLessonCompleteModal // IMPORT FUNGSI INI KEMBALI DI SINI
 } from './learn-typing-logic.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
-import { handleKeyboardInput } from './input-handler.js'; // IMPORT FUNGSI BARU INI
+import { handleKeyboardInput } from './input-handler.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const {
@@ -170,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lessonInstruction) {
         lessonInstruction.addEventListener('lesson2-finished', (event) => {
             updateState('lesson2Finished', true);
+            // Panggil showLessonCompleteModal di sini
             showLessonCompleteModal(modal, continueBtn, keyboardContainer);
         });
     }

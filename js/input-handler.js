@@ -1,8 +1,9 @@
-// input-handler.js
+// input-handler.js (DIUPDATE)
 
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
-import { handleLesson2Input, showLessonCompleteModal } from './learn-typing-logic.js';
+// Import showLessonCompleteModal di sini karena dipanggil di dalam handleKeyboardInput
+import { handleLesson2Input, showLessonCompleteModal } from './learn-typing-logic.js'; 
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const { lessonInstruction, modal, continueBtn, keyboardContainer } = domElements;
@@ -49,12 +50,14 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
                     updateState('waitingForAnim', false);
                     updateState('currentStepIndex', 2);
                     doRenderAndHighlight();
+                    // Panggil showLessonCompleteModal di sini
                     showLessonCompleteModal(modal, continueBtn, keyboardContainer);
                 }, 300);
             } else {
                 updateState('waitingForAnim', false);
                 updateState('currentStepIndex', 2);
                 doRenderAndHighlight();
+                // Panggil showLessonCompleteModal di sini
                 showLessonCompleteModal(modal, continueBtn, keyboardContainer);
             }
         } else if (e.key.length === 1) { // Jika bukan 'f' atau 'j' yang diharapkan
@@ -97,6 +100,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         }
 
         if (getState('currentCharIndex') >= currentLesson.sequence.length) {
+            // Panggil showLessonCompleteModal di sini
             showLessonCompleteModal(modal, continueBtn, keyboardContainer);
         }
         doRenderAndHighlight();
