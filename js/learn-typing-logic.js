@@ -3,52 +3,26 @@
 import { lessons } from './learn-typing-lessons.js';
 import { updateUnderlineStatus } from './underline-logic.js';
 import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
-// Import fungsi spesifik Pelajaran 2 dari file baru
 import {
     getSequenceForState,
     renderLesson2,
     cleanupLesson2Elements,
     handleLesson2Input,
 } from './lesson2-logic.js';
+// Import fungsi progress bar dari file baru
+import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 
-// Global variable untuk melacak elemen kunci keyboard yang sedang di-highlight
-let currentHighlightedKeyElement = null; // Ini tetap di sini karena highlight universal
+let currentHighlightedKeyElement = null;
 
-// --- PROGRESS BAR UTILITIES ---
-// Fungsi ini tetap di sini karena menghitung progress untuk semua pelajaran
-export function calculateLessonProgress(currentLessonIndex, currentStepIndex, currentCharIndex, lesson2State, lesson2SequenceIndex, lesson) {
-    if (currentLessonIndex === 0) {
-        const totalSteps = lesson.steps.length;
-        return (currentStepIndex / totalSteps) * 100;
-    }
-    else if (currentLessonIndex === 1) { // Logika Pelajaran 2 tetap di sini karena terhubung dengan calculateLessonProgress
-        const TOTAL_CHARACTER_STEPS_LESSON2 = 36;
-        const currentProgressStep = (lesson2State / 2) * getSequenceForState(0).length + lesson2SequenceIndex;
-        return (currentProgressStep / TOTAL_CHARACTER_STEPS_LESSON2) * 100;
-    }
-    else {
-        if (!lesson.sequence || lesson.sequence.length === 0) return 0;
-        return (currentCharIndex / lesson.sequence.length) * 100;
-    }
-}
-
-export function updateProgressBar(progress) {
-    const progressBar = document.getElementById('lesson-progress-bar');
-    const progressText = document.getElementById('progress-percentage');
-    if (progressBar && progressText) {
-        progressBar.style.width = `${progress}%`;
-        progressText.textContent = `${Math.round(progress)}%`;
-    }
-}
+// --- PROGRESS BAR UTILITIES (SUDAH DIPINDAHKAN KE progress-bar.js) ---
+// Bagian ini sekarang kosong karena sudah dipindahkan.
 
 // --- FUNGSI RESET STATE PELAJARAN 2 ---
-// Fungsi ini tetap di sini karena dipanggil dari learn-typing.js
 export function resetLesson2State(keyboardContainer) {
     updateState('lesson2State', 0);
     updateState('lesson2SequenceIndex', 0);
 
-    // cleanupLesson2Elements dipanggil di sini untuk membersihkan DOM Pelajaran 2
-    cleanupLesson2Elements(document.getElementById('lesson-instruction')); // Pastikan ada referensi lessonInstruction
+    cleanupLesson2Elements(document.getElementById('lesson-instruction'));
 
     if (keyboardContainer) {
         const highlightedKeys = keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key');
@@ -66,7 +40,6 @@ export function resetLesson2State(keyboardContainer) {
 }
 
 // --- FUNGSI UTILITY KEYBOARD ---
-// Ini adalah fungsi umum, jadi tetap di sini
 export function createKeyboard(keyboardContainer, keyLayout) {
     if (!keyboardContainer) {
         console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
@@ -179,7 +152,6 @@ export function renderLesson({
 
     if (currentLessonIndex === 0) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-        // Panggil cleanupLesson2Elements dari lesson2-logic.js
         cleanupLesson2Elements(lessonInstruction);
 
         if (lessonInstruction) {
@@ -196,14 +168,13 @@ export function renderLesson({
         }
     } else if (currentLessonIndex === 1) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-        // Panggil renderLesson2 dari lesson2-logic.js
         renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
     } else {
-        // Panggil cleanupLesson2Elements dari lesson2-logic.js
         cleanupLesson2Elements(lessonInstruction);
         renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
     }
 
+    // Panggil fungsi calculateLessonProgress dari progress-bar.js
     const progress = calculateLessonProgress(
         currentLessonIndex,
         currentStepIndex,
@@ -212,13 +183,12 @@ export function renderLesson({
         lesson2SequenceIndex,
         lessons[currentLessonIndex]
     );
+    // Panggil fungsi updateProgressBar dari progress-bar.js
     updateProgressBar(progress);
 }
 
 // --- FUNGSI UNTUK MENAMPILKAN MODAL PENYELESAIAN PELAJARAN ---
-// Fungsi ini tetap di sini karena bersifat umum untuk semua pelajaran
 export function showLessonCompleteModal(modal, continueBtn, keyboardContainer) {
-    // Hapus highlight tombol keyboard saat modal muncul
     const keys = keyboardContainer.querySelectorAll('.key');
     keys.forEach(key => {
         key.style.animation = 'none';
@@ -239,7 +209,6 @@ export function showLessonCompleteModal(modal, continueBtn, keyboardContainer) {
     }
 }
 
-// Fungsi ini juga bersifat umum untuk pelajaran selain 0 dan 1
 function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer) {
     if (!lessonTextDisplay || !lessonInstruction) return;
 
@@ -266,6 +235,3 @@ function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonI
         }
     }
 }
-
-// export function highlightNextKey (dihapus karena tidak digunakan lagi)
-// console.warn("highlightNextKey is a placeholder and its logic is now managed by renderLesson. Consider removing if not needed.");
