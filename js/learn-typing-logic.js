@@ -1,31 +1,23 @@
-// learn-typing-logic.js (Diperbaiki)
+// learn-typing-logic.js
 import { lessons } from './learn-typing-lessons.js';
 import { updateUnderlineStatus } from './underline-logic.js';
-// Impor state Pelajaran 2 dari learn-typing-state.js
 import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
 
-
-// Variabel untuk menyimpan referensi kontainer Pelajaran 2
 let lesson2SequenceContainer = null;
 let lesson2UnderlineContainer = null;
-
-// Global variable untuk melacak elemen kunci keyboard yang sedang di-highlight
 let currentHighlightedKeyElement = null;
 
 // --- PROGRESS BAR UTILITIES ---
 export function calculateLessonProgress(currentLessonIndex, currentStepIndex, currentCharIndex, lesson2State, lesson2SequenceIndex, lesson) {
-    // Pelajaran 1 (Step-based)
     if (currentLessonIndex === 0) {
         const totalSteps = lesson.steps.length;
         return (currentStepIndex / totalSteps) * 100;
     }
-    // Pelajaran 2 (State-based)
     else if (currentLessonIndex === 1) {
-        const TOTAL_CHARACTER_STEPS_LESSON2 = 36; // 6 states x 6 characters per state
+        const TOTAL_CHARACTER_STEPS_LESSON2 = 36;
         const currentProgressStep = (lesson2State / 2) * getSequenceForState(0).length + lesson2SequenceIndex;
         return (currentProgressStep / TOTAL_CHARACTER_STEPS_LESSON2) * 100;
     }
-    // Pelajaran Lain (Character-based)
     else {
         if (!lesson.sequence || lesson.sequence.length === 0) return 0;
         return (currentCharIndex / lesson.sequence.length) * 100;
@@ -43,8 +35,8 @@ export function updateProgressBar(progress) {
 
 // --- FUNGSI RESET STATE PELAJARAN 2 ---
 export function resetLesson2State(keyboardContainer) {
-    updateState('lesson2State', 0); // Update state melalui fungsi
-    updateState('lesson2SequenceIndex', 0); // Update sequence index melalui fungsi
+    updateState('lesson2State', 0);
+    updateState('lesson2SequenceIndex', 0);
 
     if (lesson2SequenceContainer && lesson2SequenceContainer.parentNode) {
         lesson2SequenceContainer.remove();
@@ -173,7 +165,7 @@ export function renderLesson({
     currentLessonIndex,
     currentStepIndex,
     currentCharIndex,
-    waitingForAnim, // Ini tetap sebagai reference type di state
+    waitingForAnim,
     keyboardContainer,
     lessonTitle,
     lessonInstruction,
@@ -191,10 +183,8 @@ export function renderLesson({
 
     clearKeyboardHighlights(keyboardContainer);
 
-    // Ambil state pelajaran 2 dari learn-typing-state
     const lesson2State = getState('lesson2State');
     const lesson2SequenceIndex = getState('lesson2SequenceIndex');
-
 
     if (currentLessonIndex === 0) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
@@ -224,8 +214,8 @@ export function renderLesson({
         currentLessonIndex,
         currentStepIndex,
         currentCharIndex,
-        lesson2State, // Gunakan state yang diimpor
-        lesson2SequenceIndex, // Gunakan state yang diimpor
+        lesson2State,
+        lesson2SequenceIndex,
         lessons[currentLessonIndex]
     );
     updateProgressBar(progress);
@@ -238,7 +228,6 @@ function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1,
         return;
     }
 
-    // Ambil state pelajaran 2 dari learn-typing-state
     const lesson2State = getState('lesson2State');
     const lesson2SequenceIndex = getState('lesson2SequenceIndex');
 
@@ -378,6 +367,29 @@ function applyFeedback(feedbackIndex, isCorrect) {
     }
 }
 
+export function showLessonCompleteModal(modal, continueBtn, keyboardContainer) {
+    // Hapus highlight tombol keyboard saat modal muncul
+    const keys = keyboardContainer.querySelectorAll('.key'); // Ganti dengan .key saja
+    keys.forEach(key => {
+        key.style.animation = 'none';
+        key.classList.remove('next-key', 'correct-key', 'wrong-key');
+    });
+
+    if (modal) {
+        setTimeout(() => {
+            modal.style.display = 'flex';
+            if (continueBtn) {
+                continueBtn.focus();
+            } else {
+                console.error('ERROR: Elemen continueBtn tidak ditemukan saat mencoba fokus!');
+            }
+        }, 600);
+    } else {
+        console.error('ERROR: Elemen modal (#lesson-complete-modal) tidak ditemukan!');
+    }
+}
+
+
 function cleanupLesson2Elements(lessonInstruction) {
     if (lesson2SequenceContainer && lesson2SequenceContainer.parentNode) {
         lesson2SequenceContainer.remove();
@@ -441,10 +453,8 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
 
     let isCorrect = false;
     let feedbackIndex = -1;
-    // Ambil state pelajaran 2 dari learn-typing-state
     let lesson2State = getState('lesson2State');
     let lesson2SequenceIndex = getState('lesson2SequenceIndex');
-
 
     if (lesson2State % 2 === 0 && lesson2State < 12) {
         const sequence = getSequenceForState(lesson2State);
@@ -453,17 +463,17 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
         if (e.key.toLowerCase() === expectedKey) {
             isCorrect = true;
             feedbackIndex = lesson2SequenceIndex;
-            updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1); // Update state melalui fungsi
-            lesson2SequenceIndex = getState('lesson2SequenceIndex'); // Ambil nilai terbaru
+            updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1);
+            lesson2SequenceIndex = getState('lesson2SequenceIndex');
 
             if (lesson2SequenceIndex >= sequence.length) {
-                updateState('lesson2SequenceIndex', 0); // Reset melalui fungsi
-                updateState('lesson2State', lesson2State + 1); // Pindah ke state transisi (ganjil) melalui fungsi
+                updateState('lesson2SequenceIndex', 0);
+                updateState('lesson2State', lesson2State + 1);
                 doRenderAndHighlight(feedbackIndex, isCorrect);
 
                 setTimeout(() => {
-                    updateState('lesson2State', getState('lesson2State') + 1); // Pindah ke state aktif berikutnya (genap) melalui fungsi
-                    if (getState('lesson2State') >= 12) { // Pelajaran 2 selesai
+                    updateState('lesson2State', getState('lesson2State') + 1);
+                    if (getState('lesson2State') >= 12) {
                         dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
                     } else {
                         doRenderAndHighlight();

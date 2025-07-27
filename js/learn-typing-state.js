@@ -1,6 +1,13 @@
-// learn-typing-state.js (FILE BARU)
-// Ini adalah tempat semua deklarasi elemen DOM dan variabel state utama aplikasi
-let hiddenInput; // Deklarasi di sini agar bisa diakses secara global di modul ini
+// learn-typing-state.js
+// Deklarasikan variabel state di top-level scope agar bisa diakses oleh semua fungsi di modul ini
+let hiddenInput;
+let currentLessonIndex = 0;
+let currentStepIndex = 0;
+let currentCharIndex = 0;
+let waitingForAnim = { value: false };
+let lesson2Finished = false;
+let lesson2State = 0;
+let lesson2SequenceIndex = 0;
 
 export function initDOMAndState() {
     // 1. DEKLARASI ELEMEN DOM
@@ -12,15 +19,14 @@ export function initDOMAndState() {
     const nextLessonBtn = document.getElementById('next-lesson-btn');
     const modal = document.getElementById('lesson-complete-modal');
     const continueBtn = document.getElementById('continue-to-next-lesson-btn');
-    const nextLessonPreview = document.getElementById('next-lesson-preview'); // Pertahankan jika digunakan di HTML
+    const nextLessonPreview = document.getElementById('next-lesson-preview');
     const progressBar = document.getElementById('lesson-progress-bar');
     const progressText = document.getElementById('progress-percentage');
-
 
     // **PENTING**: Verifikasi semua elemen DOM ditemukan
     if (!keyboardContainer || !lessonTitle || !lessonInstruction || !lessonTextDisplay || !prevLessonBtn || !nextLessonBtn || !modal || !continueBtn || !progressBar || !progressText) {
         console.error("ERROR: Satu atau lebih elemen DOM tidak ditemukan. Pastikan ID di HTML sudah benar.");
-        return null; // Mengembalikan null jika ada elemen vital yang hilang
+        return null;
     }
 
     // Inisialisasi hidden input di sini
@@ -40,20 +46,6 @@ export function initDOMAndState() {
     // Pastikan hiddenInput langsung fokus setelah dibuat/ditemukan
     setTimeout(() => hiddenInput.focus(), 0);
 
-
-    // 2. DEKLARASI STATE APLIKASI UTAMA
-    let currentLessonIndex = 0;
-    let currentStepIndex = 0;
-    let currentCharIndex = 0;
-    let waitingForAnim = { value: false }; // Masih ok karena reference type
-    let lesson2Finished = false; // Flag untuk menandai apakah pelajaran 2 sudah selesai
-
-    // STATE PELAJARAN 2 (Module-scoped di learn-typing-logic, tapi bisa diinisialisasi di sini)
-    // Akan di-export dan di-import oleh learn-typing-logic.js
-    let lesson2State = 0;
-    let lesson2SequenceIndex = 0;
-
-
     return {
         // Elemen DOM
         keyboardContainer,
@@ -65,27 +57,14 @@ export function initDOMAndState() {
         modal,
         continueBtn,
         nextLessonPreview,
-        hiddenInput, // Sertakan hiddenInput
+        hiddenInput,
         progressBar,
         progressText,
-
-        // Variabel State
-        currentLessonIndex,
-        currentStepIndex,
-        currentCharIndex,
-        waitingForAnim,
-        lesson2Finished,
-        lesson2State, // Export state pelajaran 2
-        lesson2SequenceIndex // Export sequence index pelajaran 2
     };
 }
 
-// Fungsi untuk memperbarui nilai state dari luar (jika diperlukan)
-// Ini adalah cara untuk memodifikasi state yang dideklarasikan di sini
+// Fungsi untuk memperbarui nilai state dari luar
 export function updateState(key, value) {
-    // Karena variabel ini let dan ada di scope modul ini, kita bisa langsung memodifikasinya
-    // Ini adalah pendekatan yang lebih sederhana daripada getters/setters yang rumit
-    // untuk kasus sederhana seperti ini.
     switch (key) {
         case 'currentLessonIndex':
             currentLessonIndex = value;

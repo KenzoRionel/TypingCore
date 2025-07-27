@@ -1,0 +1,108 @@
+// input-handler.js
+
+import { getState, updateState } from './learn-typing-state.js';
+import { lessons } from './learn-typing-lessons.js';
+import { handleLesson2Input, showLessonCompleteModal } from './learn-typing-logic.js';
+
+export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
+    const { lessonInstruction, modal, continueBtn, keyboardContainer } = domElements;
+
+    const currentLessonIndex = getState('currentLessonIndex');
+    const currentStepIndex = getState('currentStepIndex');
+    const currentCharIndex = getState('currentCharIndex');
+    const waitingForAnim = getState('waitingForAnim');
+    const lesson2Finished = getState('lesson2Finished');
+
+    // Mencegah input saat modal aktif, animasi berjalan, atau Pelajaran 2 selesai
+    if ((modal && modal.style.display === 'flex') || waitingForAnim.value || lesson2Finished) {
+        e.preventDefault();
+        return;
+    }
+
+    const currentLesson = lessons[currentLessonIndex];
+    let preventDefault = true; // Defaultnya adalah mencegah perilaku default browser
+
+    if (currentLessonIndex === 0) { // Logika untuk Pelajaran 1
+        if (currentStepIndex === 0 && e.key.toLowerCase() === 'f') {
+            updateState('waitingForAnim', true);
+            const inlineKeyF = document.getElementById('inlineKeyF');
+            if (inlineKeyF) {
+                inlineKeyF.classList.add('fade-out');
+                setTimeout(() => {
+                    inlineKeyF.style.display = 'none';
+                    updateState('waitingForAnim', false);
+                    updateState('currentStepIndex', 1);
+                    doRenderAndHighlight();
+                }, 300);
+            } else {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 1);
+                doRenderAndHighlight();
+            }
+        } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'j') {
+            updateState('waitingForAnim', true);
+            const inlineKeyJ = document.getElementById('inlineKeyJ');
+            if (inlineKeyJ) {
+                inlineKeyJ.classList.add('fade-out');
+                setTimeout(() => {
+                    inlineKeyJ.style.display = 'none';
+                    updateState('waitingForAnim', false);
+                    updateState('currentStepIndex', 2);
+                    doRenderAndHighlight();
+                    showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+                }, 300);
+            } else {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 2);
+                doRenderAndHighlight();
+                showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+            }
+        } else if (e.key.length === 1) { // Jika bukan 'f' atau 'j' yang diharapkan
+            if (lessonInstruction) {
+                lessonInstruction.classList.add('error-shake');
+                setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
+            }
+            doRenderAndHighlight();
+        } else {
+            preventDefault = false; // Biarkan default untuk tombol lain (misal: F5, Ctrl+R)
+        }
+    } else if (currentLessonIndex === 1) { // Logika untuk Pelajaran 2
+        handleLesson2Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+        });
+        preventDefault = false; // handleLesson2Input sudah mengatur preventDefault
+    } else { // Logika untuk pelajaran umum (selain Pelajaran 1 & 2)
+        if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
+            console.warn("Pelajaran tidak valid atau sudah selesai. Mengabaikan input.");
+            e.preventDefault(); // Tetap cegah input kalau pelajaran sudah selesai
+            return;
+        }
+
+        const expectedChar = currentLesson.sequence[currentCharIndex];
+
+        if (e.key === ' ' && expectedChar === ' ') {
+            updateState('currentCharIndex', currentCharIndex + 1);
+        } else if (e.key === 'Escape') {
+            preventDefault = false; // Biarkan Esc berfungsi
+        } else if (e.key.toLowerCase() === expectedChar.toLowerCase()) {
+            updateState('currentCharIndex', currentCharIndex + 1);
+        } else { // Jika karakter salah
+            if (lessonInstruction) {
+                lessonInstruction.classList.add('error-shake');
+                setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
+            }
+        }
+
+        if (getState('currentCharIndex') >= currentLesson.sequence.length) {
+            showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+        }
+        doRenderAndHighlight();
+    }
+
+    if (preventDefault) {
+        e.preventDefault();
+    }
+}
