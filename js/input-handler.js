@@ -2,8 +2,8 @@
 
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
-import { showLessonCompleteModal } from './learn-typing-logic.js'; // showLessonCompleteModal tetap dari sini
-import { handleLesson2Input } from './lesson2-logic.js'; // IMPORT handleLesson2Input dari file baru
+import { showLessonCompleteModal } from './learn-typing-logic.js';
+import { handleLesson2Input } from './lesson2-logic.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const { lessonInstruction, modal, continueBtn, keyboardContainer } = domElements;
@@ -41,7 +41,10 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             }
         } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'j') {
             updateState('waitingForAnim', true);
-            const inlineKeyJ = document('inlineKeyJ');
+            // Ganti baris ini:
+            // const inlineKeyJ = document('inlineKeyJ');
+            // Menjadi:
+            const inlineKeyJ = document.getElementById('inlineKeyJ'); // <--- INI PERBAIKANNYA!
             if (inlineKeyJ) {
                 inlineKeyJ.classList.add('fade-out');
                 setTimeout(() => {
@@ -67,7 +70,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             preventDefault = false;
         }
     } else if (currentLessonIndex === 1) {
-        handleLesson2Input({ // Ini sekarang diimpor dari lesson2-logic.js
+        handleLesson2Input({
             e,
             doRenderAndHighlight: doRenderAndHighlight,
             dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
