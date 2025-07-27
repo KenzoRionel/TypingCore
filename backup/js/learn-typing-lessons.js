@@ -1,6 +1,6 @@
 export const lessons = [
     {
-        title: "Pengenalan Tombol Baru",
+        title: "Pelajaran 1: Tombol F dan J",
         steps: [
             {
                 key: 'f',
@@ -14,7 +14,7 @@ export const lessons = [
         preview: ['f', 'j']
     },
     {
-        title: "",
+        title: "Pelajaran 2: Latihan F dan J Lebih Banyak",
         preview: ['f', 'j'] // Preview masih bisa berguna untuk menampilkan di daftar pelajaran
     },
     // Tambahkan lesson berikutnya di sini
