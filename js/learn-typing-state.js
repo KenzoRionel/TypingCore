@@ -1,6 +1,9 @@
-// learn-typing-state.js
+// learn-typing-state.js (DIUPDATE)
+
+import { getDOMReferences } from './dom-elements.js'; // Import fungsi baru ini
+
 // Deklarasikan variabel state di top-level scope agar bisa diakses oleh semua fungsi di modul ini
-let hiddenInput;
+let hiddenInput = null; // Inisialisasi null dulu
 let currentLessonIndex = 0;
 let currentStepIndex = 0;
 let currentCharIndex = 0;
@@ -10,57 +13,14 @@ let lesson2State = 0;
 let lesson2SequenceIndex = 0;
 
 export function initDOMAndState() {
-    // 1. DEKLARASI ELEMEN DOM
-    const keyboardContainer = document.getElementById('virtual-keyboard');
-    const lessonTitle = document.getElementById('lesson-title');
-    const lessonInstruction = document.getElementById('lesson-instruction');
-    const lessonTextDisplay = document.getElementById('lesson-text-display');
-    const prevLessonBtn = document.getElementById('prev-lesson-btn');
-    const nextLessonBtn = document.getElementById('next-lesson-btn');
-    const modal = document.getElementById('lesson-complete-modal');
-    const continueBtn = document.getElementById('continue-to-next-lesson-btn');
-    const nextLessonPreview = document.getElementById('next-lesson-preview');
-    const progressBar = document.getElementById('lesson-progress-bar');
-    const progressText = document.getElementById('progress-percentage');
+    // Panggil fungsi dari dom-elements.js untuk mendapatkan semua referensi DOM
+    const domReferences = getDOMReferences();
 
-    // **PENTING**: Verifikasi semua elemen DOM ditemukan
-    if (!keyboardContainer || !lessonTitle || !lessonInstruction || !lessonTextDisplay || !prevLessonBtn || !nextLessonBtn || !modal || !continueBtn || !progressBar || !progressText) {
-        console.error("ERROR: Satu atau lebih elemen DOM tidak ditemukan. Pastikan ID di HTML sudah benar.");
-        return null;
+    if (domReferences) {
+        hiddenInput = domReferences.hiddenInput; // Simpan referensi hiddenInput ke variabel top-level
+        return domReferences; // Kembalikan semua referensi DOM
     }
-
-    // Inisialisasi hidden input di sini
-    hiddenInput = document.getElementById('learnTypingHiddenInput');
-    if (!hiddenInput) {
-        hiddenInput = document.createElement('input');
-        hiddenInput.type = 'text';
-        hiddenInput.id = 'learnTypingHiddenInput';
-        hiddenInput.style.position = 'absolute';
-        hiddenInput.style.opacity = '0';
-        hiddenInput.style.pointerEvents = 'none';
-        hiddenInput.autocapitalize = 'off';
-        hiddenInput.autocomplete = 'off';
-        hiddenInput.spellcheck = false;
-        document.body.appendChild(hiddenInput);
-    }
-    // Pastikan hiddenInput langsung fokus setelah dibuat/ditemukan
-    setTimeout(() => hiddenInput.focus(), 0);
-
-    return {
-        // Elemen DOM
-        keyboardContainer,
-        lessonTitle,
-        lessonInstruction,
-        lessonTextDisplay,
-        prevLessonBtn,
-        nextLessonBtn,
-        modal,
-        continueBtn,
-        nextLessonPreview,
-        hiddenInput,
-        progressBar,
-        progressText,
-    };
+    return null; // Jika ada masalah dengan DOM, kembalikan null
 }
 
 // Fungsi untuk memperbarui nilai state dari luar
@@ -115,6 +75,8 @@ export function getState(key) {
     }
 }
 
+// Fungsi ini tetap ada untuk memberikan akses ke hiddenInput dari luar,
+// karena hiddenInput sekarang diinisialisasi melalui getDOMReferences()
 export function getHiddenInput() {
     return hiddenInput;
 }
