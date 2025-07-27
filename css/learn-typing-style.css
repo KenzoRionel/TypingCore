@@ -323,38 +323,6 @@
     }
 }
 
-.lesson-keyboard-sequence {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    /* PENTING untuk animasi slide */
-    overflow: hidden;
-    height: 74px; /* Sesuaikan jika .lesson-keyboard-key terlalu tinggi */
-    position: relative;
-    padding: 5px 0;
-    align-items: end;
-}
-
-.lesson-keyboard-underline {
-    display: flex;
-    justify-content: center;
-    gap: 28px;
-    margin-top: 4px;
-}
-
-.lesson-keyboard-underline-item {
-    display: block;
-    width: 32px;
-    height: 3px;
-    background: #ccc;
-    border-radius: 2px;
-    transition: background 0.2s;
-}
-
-.lesson-keyboard-underline-item.active {
-    background: #007bff;
-}
-
 .lesson-keyboard-key {
     display: inline-flex;
     align-items: flex-end;

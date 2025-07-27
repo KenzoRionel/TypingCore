@@ -1,17 +1,16 @@
-// Logic terpisah untuk learn-typing - DIPERBAIKI
+// learn-typing-logic.js - DIPERBAIKI (Versi 2)
 import {lessons} from './learn-typing-lessons.js';
+import { updateUnderlineStatus } from './underline-logic.js';
 
 // --- STATE PELAJARAN 2 (MODULE-SCOPED) ---
 let lesson2State = 0;
-let lesson2FCount = 0;
-let lesson2JCount = 0;
 let lesson2SequenceIndex = 0;
 
-// Tambahkan variabel untuk menyimpan referensi kontainer Pelajaran 2
+// Variabel untuk menyimpan referensi kontainer Pelajaran 2
 let lesson2SequenceContainer = null;
 let lesson2UnderlineContainer = null;
 
-// Global variable untuk melacak elemen yang sedang di-highlight
+// Global variable untuk melacak elemen kunci keyboard yang sedang di-highlight
 let currentHighlightedKeyElement = null;
 
 // --- PROGRESS BAR UTILITIES ---
@@ -23,15 +22,19 @@ export function calculateLessonProgress(currentLessonIndex, currentStepIndex, cu
     }
     // Pelajaran 2 (State-based)
     else if (currentLessonIndex === 1) {
-        const TOTAL_STATES = 12; // Total state di Pelajaran 2
-        const SEQUENCE_PER_STATE = 6; // 6 sequence per state
-        const totalSteps = (TOTAL_STATES * SEQUENCE_PER_STATE);
-        const currentStepIndex = (lesson2State * SEQUENCE_PER_STATE) + lesson2SequenceIndex;
-        return (currentStepIndex / totalSteps) * 100;
+        // PERBAIKAN: Jangan akses lesson.sequence.length untuk Pelajaran 2
+        // Kita hitung berdasarkan state dan sequence index
+        // Ada 6 state aktif (0,2,4,6,8,10), masing-masing 6 karakter. Total 36 karakter.
+        const TOTAL_CHARACTER_STEPS_LESSON2 = 36; // 6 states x 6 characters per state
+        // Hitung langkah progres saat ini
+        // Setiap state aktif (genap) berkontribusi 6 langkah.
+        // lesson2State / 2 memberikan jumlah siklus penuh (misal: 0, 1, 2, 3, 4, 5)
+        const currentProgressStep = (lesson2State / 2) * getSequenceForState(0).length + lesson2SequenceIndex;
+        return (currentProgressStep / TOTAL_CHARACTER_STEPS_LESSON2) * 100;
     }
     // Pelajaran Lain (Character-based)
     else {
-        if (!lesson.sequence) return 0;
+        if (!lesson.sequence || lesson.sequence.length === 0) return 0;
         return (currentCharIndex / lesson.sequence.length) * 100;
     }
 }
@@ -46,32 +49,28 @@ export function updateProgressBar(progress) {
 }
 
 // --- FUNGSI RESET STATE PELAJARAN 2 ---
-// Tambahkan parameter keyboardContainer
-export function resetLesson2State(keyboardContainer=null) {
+export function resetLesson2State(keyboardContainer) {
     lesson2State = 0;
-    lesson2FCount = 0;
-    lesson2JCount = 0;
     lesson2SequenceIndex = 0;
 
-    // Reset kontainer dan highlight
-    if (lesson2SequenceContainer?.parentNode) {
-        lesson2SequenceContainer.innerHTML = '';
+    if (lesson2SequenceContainer && lesson2SequenceContainer.parentNode) {
+        lesson2SequenceContainer.remove();
     }
-    if (lesson2UnderlineContainer?.parentNode) {
-        lesson2UnderlineContainer.innerHTML = '';
-    }
+    lesson2SequenceContainer = null;
 
-    // Reset highlight keyboard (jika container tersedia)
+    if (lesson2UnderlineContainer && lesson2UnderlineContainer.parentNode) {
+        lesson2UnderlineContainer.remove();
+    }
+    lesson2UnderlineContainer = null;
+
     if (keyboardContainer) {
-        const highlightedKeys = keyboardContainer.querySelectorAll('.key.next-key');
+        const highlightedKeys = keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key');
         highlightedKeys.forEach(key => {
-            key.classList.remove('next-key');
+            key.classList.remove('next-key', 'correct-key', 'wrong-key');
             key.style.animation = '';
-        }
-        );
+        });
     }
 
-    // Reset global highlight
     if (currentHighlightedKeyElement) {
         currentHighlightedKeyElement.classList.remove('next-key');
         currentHighlightedKeyElement.style.animation = '';
@@ -81,8 +80,10 @@ export function resetLesson2State(keyboardContainer=null) {
 
 // --- FUNGSI UTILITY KEYBOARD ---
 export function createKeyboard(keyboardContainer, keyLayout) {
-    if (!keyboardContainer)
+    if (!keyboardContainer) {
+        console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
         return;
+    }
 
     keyboardContainer.innerHTML = '';
     keyLayout.forEach(row => {
@@ -100,16 +101,11 @@ export function createKeyboard(keyboardContainer, keyLayout) {
             let lowerKey = key.toLowerCase();
             let displayKey = key;
 
-            if (key === 'ShiftLeft' || key === 'ShiftRight')
-                displayKey = 'Shift';
-            if (key === 'ControlLeft' || key === 'ControlRight')
-                displayKey = 'Ctrl';
-            if (key === 'AltLeft' || key === 'AltRight')
-                displayKey = 'Alt';
-            if (key === 'MetaLeft' || key === 'MetaRight')
-                displayKey = 'Win';
-            if (key === 'ContextMenu')
-                displayKey = 'Menu';
+            if (key === 'ShiftLeft' || key === 'ShiftRight') displayKey = 'Shift';
+            if (key === 'ControlLeft' || key === 'ControlRight') displayKey = 'Ctrl';
+            if (key === 'AltLeft' || key === 'AltRight') displayKey = 'Alt';
+            if (key === 'MetaLeft' || key === 'MetaRight') displayKey = 'Win';
+            if (key === 'ContextMenu') displayKey = 'Menu';
             if (key === 'Space') {
                 displayKey = '';
                 lowerKey = ' ';
@@ -128,43 +124,38 @@ export function createKeyboard(keyboardContainer, keyLayout) {
                 keyElement.classList.add('key-small');
             }
             rowElement.appendChild(keyElement);
-        }
-        );
+        });
         keyboardContainer.appendChild(rowElement);
-    }
-    );
+    });
 }
 
 function clearKeyboardHighlights(keyboardContainer) {
-    if (!keyboardContainer)
-        return;
-    keyboardContainer.querySelectorAll('.key.next-key').forEach(el => {
-        el.classList.remove('next-key');
-        el.classList.remove('key-highlight-animation');
-    }
-    );
+    if (!keyboardContainer) return;
+    keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key').forEach(el => {
+        el.classList.remove('next-key', 'correct-key', 'wrong-key');
+        el.style.animation = '';
+    });
+    currentHighlightedKeyElement = null;
 }
 
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
+    // PERBAIKAN: Tambahkan cek null untuk keyboardContainer di awal
     if (!keyboardContainer) {
-        console.warn("highlightKeyOnKeyboard called with null or undefined keyboardContainer. Cannot highlight.");
+        console.warn("highlightKeyOnKeyboard: keyboardContainer is null or undefined. Cannot highlight.");
         return;
     }
 
-    // Hapus highlight dari elemen sebelumnya jika ada
     if (currentHighlightedKeyElement) {
-        currentHighlightedKeyElement.classList.remove('next-key');
+        currentHighlightedKeyElement.classList.remove('next-key', 'correct-key', 'wrong-key');
         currentHighlightedKeyElement.style.animation = '';
         currentHighlightedKeyElement = null;
     }
 
-    // Hanya highlight jika keyChar adalah string yang valid dan tidak kosong
     if (typeof keyChar === 'string' && keyChar.length > 0) {
         const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
         if (targetKeyElement) {
             targetKeyElement.classList.add('next-key');
             void targetKeyElement.offsetWidth;
-            // Force reflow
             targetKeyElement.style.animation = 'highlight-move 0.6s ease-out infinite';
             currentHighlightedKeyElement = targetKeyElement;
         }
@@ -174,73 +165,64 @@ export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
 // --- FUNGSI MENDAPATKAN URUTAN KARAKTER UNTUK PELAJARAN 2 ---
 export function getSequenceForState(state) {
     switch (state) {
-    case 0:
-        return ['f', 'f', 'f', 'f', 'j', 'j'];
-    case 2:
-        return ['j', 'j', 'f', 'f', 'f', 'f'];
-    case 4:
-        return ['j', 'j', 'j', 'j', 'f', 'f'];
-    case 6:
-        return ['j', 'j', 'f', 'f', 'j', 'j'];
-    case 8:
-        return ['f', 'j', 'f', 'j', 'j', 'f'];
-    case 10:
-        return ['j', 'f', 'f', 'j', 'f', 'j'];
-    default:
-        return [];
+        case 0: return ['f', 'f', 'f', 'f', 'j', 'j'];
+        case 2: return ['j', 'j', 'f', 'f', 'f', 'f'];
+        case 4: return ['j', 'j', 'j', 'j', 'f', 'f'];
+        case 6: return ['j', 'j', 'f', 'f', 'j', 'j'];
+        case 8: return ['f', 'j', 'f', 'j', 'j', 'f'];
+        case 10: return ['j', 'f', 'f', 'j', 'f', 'j'];
+        default: return [];
     }
 }
 
-// --- FUNGSI RENDER PELAJARAN ---
-export function renderLesson({lessons, currentLessonIndex, currentStepIndex, currentCharIndex, waitingForAnim, keyboardContainer, lessonTitle, lessonInstruction, lessonTextDisplay, feedbackIndex=-1, isCorrect=null}) {
-    if (!lessons || !lessons[currentLessonIndex])
+// --- FUNGSI UTAMA RENDER PELAJARAN ---
+export function renderLesson({
+    lessons,
+    currentLessonIndex,
+    currentStepIndex,
+    currentCharIndex,
+    waitingForAnim,
+    keyboardContainer,
+    lessonTitle,
+    lessonInstruction,
+    lessonTextDisplay,
+    feedbackIndex = -1,
+    isCorrect = null
+}) {
+    if (!lessons || !lessons[currentLessonIndex]) {
+        console.error("Pelajaran tidak ditemukan atau indeks tidak valid.");
         return;
+    }
 
     const lesson = lessons[currentLessonIndex];
-    if (lessonTitle)
-        lessonTitle.textContent = lesson.title;
+    if (lessonTitle) lessonTitle.textContent = lesson.title;
 
     clearKeyboardHighlights(keyboardContainer);
 
     if (currentLessonIndex === 0) {
-        // Pelajaran 1
-        if (lessonTextDisplay)
-            lessonTextDisplay.style.display = 'none';
+        if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+        cleanupLesson2Elements(lessonInstruction);
 
-        if (currentStepIndex === 0) {
-            if (lessonInstruction)
+        if (lessonInstruction) {
+            if (currentStepIndex === 0) {
                 lessonInstruction.innerHTML = lesson.steps[0].instruction;
-            highlightKeyOnKeyboard(keyboardContainer, 'f');
-        } else if (currentStepIndex === 1) {
-            if (lessonInstruction)
+                highlightKeyOnKeyboard(keyboardContainer, 'f'); // Pastikan keyboardContainer dilewatkan
+            } else if (currentStepIndex === 1) {
                 lessonInstruction.innerHTML = lesson.steps[1].instruction;
-            highlightKeyOnKeyboard(keyboardContainer, 'j');
-        } else if (currentStepIndex === 2) {
-            if (lessonInstruction)
+                highlightKeyOnKeyboard(keyboardContainer, 'j'); // Pastikan keyboardContainer dilewatkan
+            } else if (currentStepIndex === 2) {
                 lessonInstruction.textContent = 'Pelajaran 1 Selesai! Klik "Lanjutkan" untuk ke pelajaran berikutnya.';
+                highlightKeyOnKeyboard(keyboardContainer, null); // Pastikan keyboardContainer dilewatkan
+            }
         }
     } else if (currentLessonIndex === 1) {
-        // Pelajaran 2
-        renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
+        if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+        renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect); // keyboardContainer dilewatkan
     } else {
-        // Pelajaran lainnya
         cleanupLesson2Elements(lessonInstruction);
-        renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
-        // Update progress untuk pelajaran non-2
-    if (currentLessonIndex !== 1) { // Pastikan ini diakses dari parent function
-        const progress = calculateLessonProgress(
-            currentLessonIndex,
-            0, // currentStepIndex tidak digunakan
-            currentCharIndex,
-            0, // lesson2State tidak digunakan
-            0, // lesson2SequenceIndex tidak digunakan
-            lesson
-        );
-        updateProgressBar(progress);
-    }
+        renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer); // keyboardContainer dilewatkan
     }
 
-    // Update progress bar
     const progress = calculateLessonProgress(
         currentLessonIndex,
         currentStepIndex,
@@ -253,15 +235,16 @@ export function renderLesson({lessons, currentLessonIndex, currentStepIndex, cur
 }
 
 // --- FUNGSI RENDER KHUSUS PELAJARAN 2 ---
-function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex=-1, isCorrect=null) {
-    if (!lessonInstruction)
+function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
+    if (!lessonInstruction) {
+        console.error("renderLesson2: lessonInstruction tidak ditemukan.");
         return;
+    }
 
-    // Inisialisasi kontainer jika belum ada
     if (!lesson2SequenceContainer || !lessonInstruction.contains(lesson2SequenceContainer)) {
         lesson2SequenceContainer = document.createElement('div');
         lesson2SequenceContainer.classList.add('lesson-keyboard-sequence');
-        lessonInstruction.appendChild(lesson2SequenceContainer);
+        lessonInstruction.insertBefore(lesson2SequenceContainer, lessonInstruction.firstChild);
     }
     if (!lesson2UnderlineContainer || !lessonInstruction.contains(lesson2UnderlineContainer)) {
         lesson2UnderlineContainer = document.createElement('div');
@@ -274,45 +257,24 @@ function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex=-1, i
     let activeIndex = -1;
     let highlightedKey = null;
 
-    const isTransitionState = [1, 3, 5, 7, 9, 11].includes(lesson2State);
-    // Tentukan konten berdasarkan state
-    switch (lesson2State) {
-    case 0:
-    case 2:
-    case 4:
-    case 6:
-    case 8:
-    case 10:
-        const sequence = getSequenceForState(lesson2State);
+    const sequence = getSequenceForState(lesson2State);
+    if (sequence.length > 0) {
         keysToDisplay = sequence;
         activeIndex = lesson2SequenceIndex;
         highlightedKey = sequence[lesson2SequenceIndex];
-        break;
-    case 1:
-        instructionText = '';
-        break;
-    case 3:
-        instructionText = '';
-        break;
-    case 5:
-    case 7:
-    case 9:
-    case 11:
-        instructionText = (lesson2State === 11) ? '' : '';
-        break;
-    default:
-        instructionText = '';
-        break;
     }
 
-    // Update teks instruksi
+    if (lesson2State === 0) instructionText = lessons[1].instruction || 'Tekan tombol f dan j secara bergantian sesuai urutan.';
+    if (lesson2State === 11) instructionText = 'Hebat! Pelajaran F dan J selesai!';
+
     updateInstructionText(lessonInstruction, instructionText);
 
-    // Handle tampilan berdasarkan state
-    if (isTransitionState) {
+    if (lesson2State % 2 !== 0 && lesson2State < 12) {
         handleTransitionState();
-    } else {
+    } else if (lesson2State < 12) {
         handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex, isCorrect);
+    } else {
+        cleanupLesson2Elements(lessonInstruction);
     }
 }
 
@@ -322,40 +284,37 @@ function updateInstructionText(lessonInstruction, text) {
         if (node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.classList.contains('lesson-keyboard-sequence') && !node.classList.contains('lesson-keyboard-underline'))) {
             node.remove();
         }
+    });
+    if (text) {
+        lessonInstruction.prepend(document.createTextNode(text));
     }
-    );
-    lessonInstruction.prepend(document.createTextNode(text));
 }
 
 function handleTransitionState() {
     if (lesson2SequenceContainer) {
         Array.from(lesson2SequenceContainer.children).forEach(keyEl => {
-            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation');
+            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect');
             keyEl.classList.add('slide-up-fade-out');
             void keyEl.offsetWidth;
-            keyEl.addEventListener('animationend', () => keyEl.remove(), {
-                once: true
-            });
-        }
-        );
+            keyEl.addEventListener('animationend', () => keyEl.remove(), { once: true });
+        });
     }
     if (lesson2UnderlineContainer) {
         lesson2UnderlineContainer.innerHTML = '';
     }
-    highlightKeyOnKeyboard(null, null);
+    // Tidak perlu highlightKeyOnKeyboard(null, null) di sini, sudah di `clearKeyboardHighlights` di `renderLesson`
 }
 
-function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex=-1, isCorrect=null) {
-    if (!lesson2SequenceContainer || !lesson2UnderlineContainer)
-        return;
+function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
+    if (!lesson2SequenceContainer || !lesson2UnderlineContainer) return;
 
-    const requiresRebuild = lesson2SequenceContainer.children.length === 0;
+    const requiresRebuild = lesson2SequenceContainer.children.length === 0 || keysToDisplay.join('') !== Array.from(lesson2SequenceContainer.children).map(el => el.textContent).join('');
 
     if (requiresRebuild) {
         lesson2SequenceContainer.innerHTML = '';
         lesson2UnderlineContainer.innerHTML = '';
 
-        keysToDisplay.forEach( (keyChar, idx) => {
+        keysToDisplay.forEach((keyChar, idx) => {
             const keyEl = document.createElement('span');
             keyEl.classList.add('lesson-keyboard-key');
             keyEl.textContent = keyChar;
@@ -366,63 +325,67 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
             lesson2UnderlineContainer.appendChild(underlineEl);
 
             keyEl.classList.add('slide-down-fade-in');
+            // Pastikan elemen sudah ada di DOM dan di-layout awal
             void keyEl.offsetWidth;
-        }
-        );
+        });
+
+        // PERBAIKAN UTAMA DI SINI: Gunakan DOMRect untuk pengukuran yang lebih akurat
+        // Kita tunda eksekusi sampai browser selesai me-layout semua elemen
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => { // requestAnimationFrame ganda untuk akurasi lebih tinggi
+                const keyElements = Array.from(lesson2SequenceContainer.children);
+                const underlineElements = Array.from(lesson2UnderlineContainer.children);
+
+                keyElements.forEach((keyEl, idx) => {
+                    const underlineEl = underlineElements[idx];
+                    if (keyEl && underlineEl) {
+                        const keyRect = keyEl.getBoundingClientRect();
+                        const underlineRect = underlineEl.getBoundingClientRect();
+
+                        // Hitung target posisi tengah horizontal underline
+                        // Kita ingin pusat underline sejajar dengan pusat keyEl
+                        const targetUnderlineCenterX = keyRect.left + (keyRect.width / 2);
+
+                        // Hitung posisi tengah underline saat ini
+                        const currentUnderlineCenterX = underlineRect.left + (underlineRect.width / 2);
+
+                        // Hitung pergeseran yang dibutuhkan
+                        const translateXValue = targetUnderlineCenterX - currentUnderlineCenterX;
+
+                        underlineEl.style.transform = `translateX(${translateXValue}px)`;
+                    }
+                });
+            });
+        });
+
     }
 
-    // Update status aktif dan feedback
-    updateActiveStatus(activeIndex);
+     updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
     applyFeedback(feedbackIndex, isCorrect);
 
     if (highlightedKey) {
-        highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+        highlightKeyOnKeyboard(keyboardContainer, highlightedKey); // keyboardContainer dilewatkan
     }
-}
-
-function updateActiveStatus(activeIndex) {
-    if (!lesson2SequenceContainer || !lesson2UnderlineContainer)
-        return;
-
-    const keyElements = Array.from(lesson2SequenceContainer.children);
-    const underlineElements = Array.from(lesson2UnderlineContainer.children);
-
-    keyElements.forEach( (keyEl, idx) => {
-        keyEl.classList.toggle('active', idx === activeIndex);
-    }
-    );
-
-    underlineElements.forEach( (underlineEl, idx) => {
-        underlineEl.classList.toggle('active', idx === activeIndex);
-    }
-    );
 }
 
 function applyFeedback(feedbackIndex, isCorrect) {
-    if (feedbackIndex < 0 || isCorrect === null)
-        return;
+    if (feedbackIndex < 0 || isCorrect === null || !lesson2SequenceContainer) return;
 
     const keyElements = Array.from(lesson2SequenceContainer.children);
     if (keyElements[feedbackIndex]) {
-        // Hapus class feedback sebelumnya
         keyElements[feedbackIndex].classList.remove('completed-correct', 'input-incorrect');
 
-        // Jika benar, tambahkan class hijau permanen
         if (isCorrect) {
             keyElements[feedbackIndex].classList.add('completed-correct');
-        }// Jika salah, tambahkan class merah sementara
-        else {
+        } else {
             keyElements[feedbackIndex].classList.add('input-incorrect');
-
-            // Hapus class merah setelah animasi selesai (1 detik)
-            setTimeout( () => {
-                keyElements[feedbackIndex].classList.remove('input-incorrect');
-            }
-            , 500);
+            setTimeout(() => {
+                if (keyElements[feedbackIndex]) {
+                    keyElements[feedbackIndex].classList.remove('input-incorrect');
+                }
+            }, 500);
         }
-
         void keyElements[feedbackIndex].offsetWidth;
-        // Force re-render
     }
 }
 
@@ -435,48 +398,52 @@ function cleanupLesson2Elements(lessonInstruction) {
         lesson2UnderlineContainer.remove();
         lesson2UnderlineContainer = null;
     }
+    Array.from(lessonInstruction.childNodes).forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            node.remove();
+        }
+    });
+
     if (currentHighlightedKeyElement) {
-        currentHighlightedKeyElement.classList.remove('next-key');
+        currentHighlightedKeyElement.classList.remove('next-key', 'correct-key', 'wrong-key');
         currentHighlightedKeyElement.style.animation = '';
         currentHighlightedKeyElement = null;
     }
 }
 
 function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer) {
-    if (lessonTextDisplay)
-        lessonTextDisplay.style.display = '';
-    if (lessonInstruction)
-        lessonInstruction.textContent = lesson.instruction || '';
-    if (lessonTextDisplay)
-        lessonTextDisplay.innerHTML = '';
+    if (!lessonTextDisplay || !lessonInstruction) return;
 
-    if (lesson.sequence && lessonTextDisplay) {
-        lesson.sequence.forEach( (char, idx) => {
+    lessonTextDisplay.style.display = '';
+    lessonInstruction.textContent = lesson.instruction || '';
+
+    lessonTextDisplay.innerHTML = '';
+
+    if (lesson.sequence && lesson.sequence.length > 0) {
+        lesson.sequence.forEach((char, idx) => {
             const span = document.createElement('span');
-            span.textContent = char;
+            span.textContent = char === ' ' ? '\u00A0' : char;
             if (idx < currentCharIndex) {
                 span.classList.add('correct');
             } else if (idx === currentCharIndex) {
                 span.classList.add('cursor');
             }
             lessonTextDisplay.appendChild(span);
-            if (idx < lesson.sequence.length - 1 && char !== ' ') {
-                lessonTextDisplay.appendChild(document.createTextNode(' '));
-            }
-        }
-        );
+        });
         if (currentCharIndex < lesson.sequence.length) {
             highlightKeyOnKeyboard(keyboardContainer, lesson.sequence[currentCharIndex]);
+        } else {
+            highlightKeyOnKeyboard(keyboardContainer, null); // Pastikan dilewatkan
         }
     }
 }
 
-// --- FUNGSI UNTUK MENGHIGHLIGHT KUNCI BERIKUTNYA ---
-export function highlightNextKey({keyboardContainer}) {// Placeholder - logika highlight sudah ditangani di renderLesson
+export function highlightNextKey({keyboardContainer}) {
+    console.warn("highlightNextKey is a placeholder and its logic is now managed by renderLesson. Consider removing if not needed.");
 }
 
-// --- FUNGSI INPUT HANDLER UNTUK PELAJARAN 2 - DIPERBAIKI ---
-export function handleLesson2Input({e, doRenderAndHighlight, dispatchLesson2FinishedEvent, lessonInstructionEl}) {
+// --- FUNGSI INPUT HANDLER UNTUK PELAJARAN 2 ---
+export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2FinishedEvent, lessonInstructionEl }) { // Hapus setStepIndex, setLesson2Finished
     if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
         e.preventDefault();
     } else {
@@ -487,70 +454,42 @@ export function handleLesson2Input({e, doRenderAndHighlight, dispatchLesson2Fini
     let feedbackIndex = -1;
     let oldState = lesson2State;
 
-    // Logika untuk setiap state
-    switch (lesson2State) {
-    case 0:
-    case 2:
-    case 4:
-    case 6:
-    case 8:
-    case 10:
+    if (lesson2State % 2 === 0 && lesson2State < 12) {
         const sequence = getSequenceForState(lesson2State);
         const expectedKey = sequence[lesson2SequenceIndex];
+
         if (e.key.toLowerCase() === expectedKey) {
             isCorrect = true;
             feedbackIndex = lesson2SequenceIndex;
             lesson2SequenceIndex++;
-            if (lesson2State !== oldState || isCorrect) {
-        const progress = calculateLessonProgress(
-            1, // currentLessonIndex untuk Pelajaran 2
-            0, // currentStepIndex tidak digunakan
-            0, // currentCharIndex tidak digunakan
-            lesson2State,
-            lesson2SequenceIndex,
-            lessons[1] // Ambil data Pelajaran 2
-        );
-        updateProgressBar(progress);
-    }
-            if (lesson2SequenceIndex >= 6) {
+
+            if (lesson2SequenceIndex >= sequence.length) {
                 lesson2SequenceIndex = 0;
-                lesson2State++;
-                // Tambahkan setelah lesson2State++ atau sequence update
-                if (lesson2State === 11) {
-                    setTimeout( () => {
+                lesson2State++; // Pindah ke state transisi (ganjil)
+                doRenderAndHighlight(feedbackIndex, isCorrect); // Render dengan feedback terakhir
+
+                setTimeout(() => {
+                    lesson2State++; // Pindah ke state aktif berikutnya (genap)
+                    if (lesson2State >= 12) { // Pelajaran 2 selesai
+                        // setLesson2Finished(true); // Tidak perlu set di sini, karena dispatch event sudah cukup
                         dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
+                        // Tidak perlu panggil doRenderAndHighlight() lagi karena akan dipanggil dari learn-typing.js setelah modal
+                    } else {
+                        doRenderAndHighlight(); // Render state aktif berikutnya
                     }
-                    , 300);
-                }
+                }, 400);
+            } else {
+                doRenderAndHighlight(feedbackIndex, isCorrect);
             }
         } else {
             feedbackIndex = lesson2SequenceIndex;
+            isCorrect = false;
+            doRenderAndHighlight(feedbackIndex, isCorrect);
+
+            if (lessonInstructionEl) {
+                lessonInstructionEl.classList.add('error-shake');
+                setTimeout(() => lessonInstructionEl.classList.remove('error-shake'), 200);
+            }
         }
-        break;
-    }
-
-    // Error shake jika input salah
-    if (!isCorrect && lessonInstructionEl) {
-        lessonInstructionEl.classList.add('error-shake');
-        setTimeout( () => lessonInstructionEl.classList.remove('error-shake'), 200);
-    }
-
-    // Re-render dengan feedback
-    if (lesson2State !== oldState || feedbackIndex !== -1) {
-        doRenderAndHighlight(feedbackIndex, isCorrect);
-    }
-
-    // Handle transisi state
-    if ([1, 3, 5, 7, 9, 11].includes(lesson2State) && lesson2State !== oldState) {
-        setTimeout( () => {
-            if (lesson2SequenceContainer)
-                lesson2SequenceContainer.innerHTML = '';
-            if (lesson2UnderlineContainer)
-                lesson2UnderlineContainer.innerHTML = '';
-            if (lesson2State < 12)
-                lesson2State++;
-            doRenderAndHighlight();
-        }
-        , 400);
     }
 }
