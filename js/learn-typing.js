@@ -1,61 +1,34 @@
-import {
-    lessons
-} from './learn-typing-lessons.js';
+// learn-typing.js (Diperbaiki)
+import { lessons } from './learn-typing-lessons.js';
 import {
     createKeyboard,
     renderLesson,
     resetLesson2State,
     handleLesson2Input
 } from './learn-typing-logic.js';
+import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js'; // Import dari file baru
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. DEKLARASI ELEMEN DOM
-    const keyboardContainer = document.getElementById('virtual-keyboard');
-    const lessonTitle = document.getElementById('lesson-title');
-    const lessonInstruction = document.getElementById('lesson-instruction');
-    const lessonTextDisplay = document.getElementById('lesson-text-display');
-    const prevLessonBtn = document.getElementById('prev-lesson-btn');
-    const nextLessonBtn = document.getElementById('next-lesson-btn');
-    const modal = document.getElementById('lesson-complete-modal');
-    const continueBtn = document.getElementById('continue-to-next-lesson-btn');
-    const nextLessonPreview = document.getElementById('next-lesson-preview'); // Pertahankan jika digunakan di HTML
+    // Inisialisasi semua elemen DOM dan state aplikasi dari learn-typing-state.js
+    const {
+        keyboardContainer,
+        lessonTitle,
+        lessonInstruction,
+        lessonTextDisplay,
+        prevLessonBtn,
+        nextLessonBtn,
+        modal,
+        continueBtn,
+        hiddenInput, // Ambil hiddenInput dari sini
+        // Variabel state diambil via getState/updateState, tidak perlu didekonstruksi di sini
+    } = initDOMAndState();
 
-    let hiddenInput; // Deklarasi di sini agar bisa diakses di seluruh scope DOMContentLoaded
-
-    // **PENTING**: Verifikasi semua elemen DOM ditemukan
-    if (!keyboardContainer || !lessonTitle || !lessonInstruction || !lessonTextDisplay || !prevLessonBtn || !nextLessonBtn || !modal || !continueBtn) {
-        console.error("ERROR: Satu atau lebih elemen DOM tidak ditemukan. Pastikan ID di HTML sudah benar.");
-        // Anda bisa menambahkan logika untuk menghentikan eksekusi atau menampilkan pesan kesalahan ke pengguna
-        return; // Menghentikan eksekusi script jika ada elemen vital yang hilang
+    if (!keyboardContainer) {
+        // initDOMAndState sudah mencetak error, kita hanya perlu menghentikan eksekusi
+        return;
     }
 
-    // 2. DEKLARASI STATE APLIKASI UTAMA
-    let currentLessonIndex = 0;
-    let currentStepIndex = 0;
-    let currentCharIndex = 0;
-    let waitingForAnim = {
-        value: false
-    }; // Masih ok karena reference type
-    let lesson2Finished = false; // Flag untuk menandai apakah pelajaran 2 sudah selesai
-
     // 3. INISIALISASI KOMPONEN & FUNGSI PEMBANTU
-    const initHiddenInput = () => {
-        hiddenInput = document.getElementById('learnTypingHiddenInput');
-        if (!hiddenInput) {
-            hiddenInput = document.createElement('input');
-            hiddenInput.type = 'text';
-            hiddenInput.id = 'learnTypingHiddenInput';
-            hiddenInput.style.position = 'absolute';
-            hiddenInput.style.opacity = '0';
-            hiddenInput.style.pointerEvents = 'none';
-            hiddenInput.autocapitalize = 'off';
-            hiddenInput.autocomplete = 'off';
-            hiddenInput.spellcheck = false;
-            document.body.appendChild(hiddenInput);
-        }
-        hiddenInput.focus();
-    };
-
     const keyLayout = [
         ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
         ['Tab', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\'],
@@ -66,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fungsi utama untuk merender pelajaran dan memfokuskan hiddenInput
     function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
+        // Ambil state terbaru dari learn-typing-state
+        const currentLessonIndex = getState('currentLessonIndex');
+        const currentStepIndex = getState('currentStepIndex');
+        const currentCharIndex = getState('currentCharIndex');
+        const waitingForAnim = getState('waitingForAnim');
+
         renderLesson({
             lessons,
             currentLessonIndex,
@@ -80,17 +59,18 @@ document.addEventListener('DOMContentLoaded', () => {
             isCorrect
         });
         // Pastikan hiddenInput sudah terinisialisasi sebelum fokus
-        if (hiddenInput) {
-            setTimeout(() => hiddenInput.focus(), 0);
+        const input = getHiddenInput();
+        if (input) {
+            setTimeout(() => input.focus(), 0);
         }
     }
 
     // Fungsi untuk mereset state pelajaran saat ini
     function resetCurrentLessonState() {
-        currentCharIndex = 0;
-        currentStepIndex = 0;
-        waitingForAnim.value = false;
-        lesson2Finished = false; // Reset flag saat pindah pelajaran
+        updateState('currentCharIndex', 0);
+        updateState('currentStepIndex', 0);
+        updateState('waitingForAnim', false);
+        updateState('lesson2Finished', false); // Reset flag saat pindah pelajaran
         // Panggil resetLesson2State selalu untuk memastikan bersih
         resetLesson2State(keyboardContainer);
     }
@@ -104,18 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
             key.classList.remove('next-key', 'correct-key', 'wrong-key'); // Hapus semua kelas highlight
         });
 
-        // Pastikan modal ditemukan sebelum menampilkan dan fokus
         if (modal) {
-            // Menggunakan setTimeout untuk memberi waktu browser merender perubahan display
             setTimeout(() => {
                 modal.style.display = 'flex';
-                // Cek ulang continueBtn sebelum fokus
                 if (continueBtn) {
                     continueBtn.focus();
                 } else {
                     console.error('ERROR: Elemen continueBtn tidak ditemukan saat mencoba fokus!');
                 }
-            }, 600); // Durasi timeout bisa disesuaikan dengan animasi modal
+            }, 600);
         } else {
             console.error('ERROR: Elemen modal (#lesson-complete-modal) tidak ditemukan!');
         }
@@ -125,10 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fokus hiddenInput saat jendela kembali aktif
     window.addEventListener('focus', () => {
-        if (hiddenInput) { // Cek hiddenInput sebelum fokus
+        const input = getHiddenInput();
+        if (input) {
             setTimeout(() => {
-                if (document.activeElement !== hiddenInput) {
-                    hiddenInput.focus();
+                if (document.activeElement !== input) {
+                    input.focus();
                 }
             }, 10);
         }
@@ -138,15 +116,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousedown', (e) => {
         const clickedElement = e.target;
         const isDirectlyNavigationButton = clickedElement.tagName === 'BUTTON' && clickedElement.closest('.navigation-buttons');
-        const isModalContentActive = clickedElement.closest('.modal-overlay') && modal && modal.style.display === 'flex'; // Tambahkan cek `modal`
+        const isModalContentActive = clickedElement.closest('.modal-overlay') && modal && modal.style.display === 'flex';
 
         const isUIElementThatShouldKeepFocus = isDirectlyNavigationButton || isModalContentActive;
+        const input = getHiddenInput();
 
         if (!isUIElementThatShouldKeepFocus) {
-            if (hiddenInput) { // Cek hiddenInput sebelum fokus
+            if (input) {
                 setTimeout(() => {
-                    if (document.activeElement !== hiddenInput) {
-                        hiddenInput.focus();
+                    if (document.activeElement !== input) {
+                        input.focus();
                     }
                 }, 0);
             }
@@ -155,52 +134,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Navigasi pelajaran
     prevLessonBtn.addEventListener('click', () => {
+        let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex > 0) {
-            currentLessonIndex--;
+            updateState('currentLessonIndex', currentLessonIndex - 1);
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         }
-        if (hiddenInput) { // Cek hiddenInput sebelum fokus
-            setTimeout(() => hiddenInput.focus(), 0);
+        const input = getHiddenInput();
+        if (input) {
+            setTimeout(() => input.focus(), 0);
         }
     });
 
     nextLessonBtn.addEventListener('click', () => {
+        let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex < lessons.length - 1) {
-            currentLessonIndex++;
+            updateState('currentLessonIndex', currentLessonIndex + 1);
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         }
-        if (hiddenInput) { // Cek hiddenInput sebelum fokus
-            setTimeout(() => hiddenInput.focus(), 0);
+        const input = getHiddenInput();
+        if (input) {
+            setTimeout(() => input.focus(), 0);
         }
     });
 
     // Tombol Lanjutkan di modal
     continueBtn.addEventListener('click', () => {
-        if (modal) { // Pastikan modal ditemukan sebelum diinteraksi
+        if (modal) {
             modal.style.display = 'none';
         }
 
+        let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex < lessons.length - 1) {
-            currentLessonIndex++;
+            updateState('currentLessonIndex', currentLessonIndex + 1);
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         } else {
             console.log("Semua pelajaran selesai!");
         }
-        if (hiddenInput) { // Cek hiddenInput sebelum fokus
-            setTimeout(() => hiddenInput.focus(), 0);
+        const input = getHiddenInput();
+        if (input) {
+            setTimeout(() => input.focus(), 0);
         }
     });
 
     // Event handler keydown utama pada hidden input
-    // Pastikan hiddenInput diinisialisasi sebelum menambahkan listener ini
-    initHiddenInput(); // Panggil di sini atau di awal DOMContentLoaded
-    if (hiddenInput) { // Tambahkan cek if (hiddenInput)
-        hiddenInput.addEventListener('keydown', (e) => {
+    const input = getHiddenInput(); // Ambil referensi hiddenInput sekali
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            const currentLessonIndex = getState('currentLessonIndex');
+            const currentStepIndex = getState('currentStepIndex');
+            const currentCharIndex = getState('currentCharIndex');
+            const waitingForAnim = getState('waitingForAnim');
+            const lesson2Finished = getState('lesson2Finished');
+
+
             // Mencegah input saat modal terbuka atau animasi sedang berjalan
-            if ((modal && modal.style.display === 'flex') || waitingForAnim.value) { // Tambahkan cek `modal`
+            if ((modal && modal.style.display === 'flex') || waitingForAnim.value || lesson2Finished) {
                 e.preventDefault();
                 return;
             }
@@ -210,36 +201,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (currentLessonIndex === 0) { // Logika Pelajaran 1 (f dan j)
                 if (currentStepIndex === 0 && e.key.toLowerCase() === 'f') {
-                    waitingForAnim.value = true;
+                    updateState('waitingForAnim', true);
                     const inlineKeyF = document.getElementById('inlineKeyF');
                     if (inlineKeyF) {
                         inlineKeyF.classList.add('fade-out');
                         setTimeout(() => {
                             inlineKeyF.style.display = 'none';
-                            waitingForAnim.value = false;
-                            currentStepIndex = 1;
+                            updateState('waitingForAnim', false);
+                            updateState('currentStepIndex', 1);
                             doRenderLessonAndFocus();
                         }, 300);
                     } else { // Fallback jika inlineKeyF tidak ditemukan
-                        waitingForAnim.value = false;
-                        currentStepIndex = 1;
+                        updateState('waitingForAnim', false);
+                        updateState('currentStepIndex', 1);
                         doRenderLessonAndFocus();
                     }
                 } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'j') {
-                    waitingForAnim.value = true;
+                    updateState('waitingForAnim', true);
                     const inlineKeyJ = document.getElementById('inlineKeyJ');
                     if (inlineKeyJ) {
                         inlineKeyJ.classList.add('fade-out');
                         setTimeout(() => {
                             inlineKeyJ.style.display = 'none';
-                            waitingForAnim.value = false;
-                            currentStepIndex = 2; // Selesai Pelajaran 1
+                            updateState('waitingForAnim', false);
+                            updateState('currentStepIndex', 2); // Selesai Pelajaran 1
                             doRenderLessonAndFocus();
                             showLessonCompleteModal(); // Panggil fungsi modal
                         }, 300);
                     } else { // Fallback jika inlineKeyJ tidak ditemukan
-                        waitingForAnim.value = false;
-                        currentStepIndex = 2;
+                        updateState('waitingForAnim', false);
+                        updateState('currentStepIndex', 2);
                         doRenderLessonAndFocus();
                         showLessonCompleteModal(); // Panggil fungsi modal
                     }
@@ -251,19 +242,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     preventDefault = false; // Izinkan tombol non-karakter seperti Shift, Alt, Ctrl
                 }
             } else if (currentLessonIndex === 1) { // Logika Pelajaran 2
-                // Delegasikan ke fungsi handler baru di learn-typing-logic.js
                 handleLesson2Input({
                     e,
-                    doRenderAndHighlight: doRenderLessonAndFocus, // Kirim fungsi untuk merender dan fokus
-                    dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event), // Kirim dispatchEvent
-                    lessonInstructionEl: lessonInstruction, // Kirim elemen instruksi untuk error shake
-                    currentStepIndex: currentStepIndex, // Kirim state currentStepIndex Pelajaran 2
-                    setStepIndex: (newIndex) => currentStepIndex = newIndex, // Fungsi untuk update currentStepIndex
-                    setLesson2Finished: (status) => lesson2Finished = status // Fungsi untuk update lesson2Finished
+                    doRenderAndHighlight: doRenderLessonAndFocus,
+                    dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+                    lessonInstructionEl: lessonInstruction,
                 });
                 preventDefault = false; // handleLesson2Input sudah menangani preventDefault
             } else { // Logika untuk pelajaran selanjutnya (umum)
-                // Pastikan currentLesson dan sequence ada
                 if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
                     console.warn("Pelajaran tidak valid atau sudah selesai. Mengabaikan input.");
                     e.preventDefault();
@@ -272,46 +258,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const expectedChar = currentLesson.sequence[currentCharIndex];
 
-                // Handle khusus untuk ' ' (spasi) dan tombol Escape
                 if (e.key === ' ' && expectedChar === ' ') {
-                    currentCharIndex++;
+                    updateState('currentCharIndex', currentCharIndex + 1);
                 } else if (e.key === 'Escape') {
-                    // Biarkan default
                     preventDefault = false;
                 } else if (e.key.toLowerCase() === expectedChar.toLowerCase()) {
-                    currentCharIndex++;
+                    updateState('currentCharIndex', currentCharIndex + 1);
                 } else { // Input salah
                     lessonInstruction.classList.add('error-shake');
                     setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
                 }
 
                 // Cek apakah pelajaran selesai
-                if (currentCharIndex >= currentLesson.sequence.length) {
-                    showLessonCompleteModal(); // Panggil fungsi modal
+                if (getState('currentCharIndex') >= currentLesson.sequence.length) {
+                    showLessonCompleteModal();
                 }
                 doRenderLessonAndFocus();
             }
 
             if (preventDefault) {
-                e.preventDefault(); // Mencegah input muncul di hidden input kecuali di kasus tertentu
+                e.preventDefault();
             }
         });
     }
 
 
     // Listener event kustom: untuk menampilkan modal setelah Pelajaran 2 selesai
-    // Ini dipicu dari learn-typing-logic.js
-    if (lessonInstruction) { // Tambahkan cek if (lessonInstruction)
+    if (lessonInstruction) {
         lessonInstruction.addEventListener('lesson2-finished', (event) => {
-            lesson2Finished = true; // Set flag agar input di Pelajaran 2 diabaikan
-            showLessonCompleteModal(); // Panggil fungsi modal
+            updateState('lesson2Finished', true); // Set flag agar input di Pelajaran 2 diabaikan
+            showLessonCompleteModal();
         });
     }
 
     // 5. INISIALISASI AWAL APLIKASI
-    // initHiddenInput(); // Sudah dipanggil di atas sebelum event listener keydown
-    createKeyboard(keyboardContainer, keyLayout); // Buat keyboard
-    resetCurrentLessonState(); // Reset state awal
-    doRenderLessonAndFocus(); // Render pelajaran pertama
-
+    // createKeyboard akan tetap di sini karena ia membuat DOM yang tergantung pada keyboardContainer
+    createKeyboard(keyboardContainer, keyLayout);
+    resetCurrentLessonState();
+    doRenderLessonAndFocus();
 });

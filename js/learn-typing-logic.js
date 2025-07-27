@@ -1,10 +1,9 @@
-// learn-typing-logic.js - DIPERBAIKI (Versi 2)
-import {lessons} from './learn-typing-lessons.js';
+// learn-typing-logic.js (Diperbaiki)
+import { lessons } from './learn-typing-lessons.js';
 import { updateUnderlineStatus } from './underline-logic.js';
+// Impor state Pelajaran 2 dari learn-typing-state.js
+import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
 
-// --- STATE PELAJARAN 2 (MODULE-SCOPED) ---
-let lesson2State = 0;
-let lesson2SequenceIndex = 0;
 
 // Variabel untuk menyimpan referensi kontainer Pelajaran 2
 let lesson2SequenceContainer = null;
@@ -22,13 +21,7 @@ export function calculateLessonProgress(currentLessonIndex, currentStepIndex, cu
     }
     // Pelajaran 2 (State-based)
     else if (currentLessonIndex === 1) {
-        // PERBAIKAN: Jangan akses lesson.sequence.length untuk Pelajaran 2
-        // Kita hitung berdasarkan state dan sequence index
-        // Ada 6 state aktif (0,2,4,6,8,10), masing-masing 6 karakter. Total 36 karakter.
         const TOTAL_CHARACTER_STEPS_LESSON2 = 36; // 6 states x 6 characters per state
-        // Hitung langkah progres saat ini
-        // Setiap state aktif (genap) berkontribusi 6 langkah.
-        // lesson2State / 2 memberikan jumlah siklus penuh (misal: 0, 1, 2, 3, 4, 5)
         const currentProgressStep = (lesson2State / 2) * getSequenceForState(0).length + lesson2SequenceIndex;
         return (currentProgressStep / TOTAL_CHARACTER_STEPS_LESSON2) * 100;
     }
@@ -50,8 +43,8 @@ export function updateProgressBar(progress) {
 
 // --- FUNGSI RESET STATE PELAJARAN 2 ---
 export function resetLesson2State(keyboardContainer) {
-    lesson2State = 0;
-    lesson2SequenceIndex = 0;
+    updateState('lesson2State', 0); // Update state melalui fungsi
+    updateState('lesson2SequenceIndex', 0); // Update sequence index melalui fungsi
 
     if (lesson2SequenceContainer && lesson2SequenceContainer.parentNode) {
         lesson2SequenceContainer.remove();
@@ -139,7 +132,6 @@ function clearKeyboardHighlights(keyboardContainer) {
 }
 
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
-    // PERBAIKAN: Tambahkan cek null untuk keyboardContainer di awal
     if (!keyboardContainer) {
         console.warn("highlightKeyOnKeyboard: keyboardContainer is null or undefined. Cannot highlight.");
         return;
@@ -181,7 +173,7 @@ export function renderLesson({
     currentLessonIndex,
     currentStepIndex,
     currentCharIndex,
-    waitingForAnim,
+    waitingForAnim, // Ini tetap sebagai reference type di state
     keyboardContainer,
     lessonTitle,
     lessonInstruction,
@@ -199,6 +191,11 @@ export function renderLesson({
 
     clearKeyboardHighlights(keyboardContainer);
 
+    // Ambil state pelajaran 2 dari learn-typing-state
+    const lesson2State = getState('lesson2State');
+    const lesson2SequenceIndex = getState('lesson2SequenceIndex');
+
+
     if (currentLessonIndex === 0) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
         cleanupLesson2Elements(lessonInstruction);
@@ -206,29 +203,29 @@ export function renderLesson({
         if (lessonInstruction) {
             if (currentStepIndex === 0) {
                 lessonInstruction.innerHTML = lesson.steps[0].instruction;
-                highlightKeyOnKeyboard(keyboardContainer, 'f'); // Pastikan keyboardContainer dilewatkan
+                highlightKeyOnKeyboard(keyboardContainer, 'f');
             } else if (currentStepIndex === 1) {
                 lessonInstruction.innerHTML = lesson.steps[1].instruction;
-                highlightKeyOnKeyboard(keyboardContainer, 'j'); // Pastikan keyboardContainer dilewatkan
+                highlightKeyOnKeyboard(keyboardContainer, 'j');
             } else if (currentStepIndex === 2) {
                 lessonInstruction.textContent = 'Pelajaran 1 Selesai! Klik "Lanjutkan" untuk ke pelajaran berikutnya.';
-                highlightKeyOnKeyboard(keyboardContainer, null); // Pastikan keyboardContainer dilewatkan
+                highlightKeyOnKeyboard(keyboardContainer, null);
             }
         }
     } else if (currentLessonIndex === 1) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-        renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect); // keyboardContainer dilewatkan
+        renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
     } else {
         cleanupLesson2Elements(lessonInstruction);
-        renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer); // keyboardContainer dilewatkan
+        renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
     }
 
     const progress = calculateLessonProgress(
         currentLessonIndex,
         currentStepIndex,
         currentCharIndex,
-        lesson2State,
-        lesson2SequenceIndex,
+        lesson2State, // Gunakan state yang diimpor
+        lesson2SequenceIndex, // Gunakan state yang diimpor
         lessons[currentLessonIndex]
     );
     updateProgressBar(progress);
@@ -240,6 +237,10 @@ function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1,
         console.error("renderLesson2: lessonInstruction tidak ditemukan.");
         return;
     }
+
+    // Ambil state pelajaran 2 dari learn-typing-state
+    const lesson2State = getState('lesson2State');
+    const lesson2SequenceIndex = getState('lesson2SequenceIndex');
 
     if (!lesson2SequenceContainer || !lessonInstruction.contains(lesson2SequenceContainer)) {
         lesson2SequenceContainer = document.createElement('div');
@@ -302,7 +303,6 @@ function handleTransitionState() {
     if (lesson2UnderlineContainer) {
         lesson2UnderlineContainer.innerHTML = '';
     }
-    // Tidak perlu highlightKeyOnKeyboard(null, null) di sini, sudah di `clearKeyboardHighlights` di `renderLesson`
 }
 
 function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
@@ -325,14 +325,11 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
             lesson2UnderlineContainer.appendChild(underlineEl);
 
             keyEl.classList.add('slide-down-fade-in');
-            // Pastikan elemen sudah ada di DOM dan di-layout awal
             void keyEl.offsetWidth;
         });
 
-        // PERBAIKAN UTAMA DI SINI: Gunakan DOMRect untuk pengukuran yang lebih akurat
-        // Kita tunda eksekusi sampai browser selesai me-layout semua elemen
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => { // requestAnimationFrame ganda untuk akurasi lebih tinggi
+            requestAnimationFrame(() => {
                 const keyElements = Array.from(lesson2SequenceContainer.children);
                 const underlineElements = Array.from(lesson2UnderlineContainer.children);
 
@@ -341,17 +338,9 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
                     if (keyEl && underlineEl) {
                         const keyRect = keyEl.getBoundingClientRect();
                         const underlineRect = underlineEl.getBoundingClientRect();
-
-                        // Hitung target posisi tengah horizontal underline
-                        // Kita ingin pusat underline sejajar dengan pusat keyEl
                         const targetUnderlineCenterX = keyRect.left + (keyRect.width / 2);
-
-                        // Hitung posisi tengah underline saat ini
                         const currentUnderlineCenterX = underlineRect.left + (underlineRect.width / 2);
-
-                        // Hitung pergeseran yang dibutuhkan
                         const translateXValue = targetUnderlineCenterX - currentUnderlineCenterX;
-
                         underlineEl.style.transform = `translateX(${translateXValue}px)`;
                     }
                 });
@@ -360,11 +349,11 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
 
     }
 
-     updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
+    updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
     applyFeedback(feedbackIndex, isCorrect);
 
     if (highlightedKey) {
-        highlightKeyOnKeyboard(keyboardContainer, highlightedKey); // keyboardContainer dilewatkan
+        highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
     }
 }
 
@@ -433,17 +422,17 @@ function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonI
         if (currentCharIndex < lesson.sequence.length) {
             highlightKeyOnKeyboard(keyboardContainer, lesson.sequence[currentCharIndex]);
         } else {
-            highlightKeyOnKeyboard(keyboardContainer, null); // Pastikan dilewatkan
+            highlightKeyOnKeyboard(keyboardContainer, null);
         }
     }
 }
 
-export function highlightNextKey({keyboardContainer}) {
+export function highlightNextKey({ keyboardContainer }) {
     console.warn("highlightNextKey is a placeholder and its logic is now managed by renderLesson. Consider removing if not needed.");
 }
 
 // --- FUNGSI INPUT HANDLER UNTUK PELAJARAN 2 ---
-export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2FinishedEvent, lessonInstructionEl }) { // Hapus setStepIndex, setLesson2Finished
+export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2FinishedEvent, lessonInstructionEl }) {
     if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
         e.preventDefault();
     } else {
@@ -452,7 +441,10 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
 
     let isCorrect = false;
     let feedbackIndex = -1;
-    let oldState = lesson2State;
+    // Ambil state pelajaran 2 dari learn-typing-state
+    let lesson2State = getState('lesson2State');
+    let lesson2SequenceIndex = getState('lesson2SequenceIndex');
+
 
     if (lesson2State % 2 === 0 && lesson2State < 12) {
         const sequence = getSequenceForState(lesson2State);
@@ -461,21 +453,20 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
         if (e.key.toLowerCase() === expectedKey) {
             isCorrect = true;
             feedbackIndex = lesson2SequenceIndex;
-            lesson2SequenceIndex++;
+            updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1); // Update state melalui fungsi
+            lesson2SequenceIndex = getState('lesson2SequenceIndex'); // Ambil nilai terbaru
 
             if (lesson2SequenceIndex >= sequence.length) {
-                lesson2SequenceIndex = 0;
-                lesson2State++; // Pindah ke state transisi (ganjil)
-                doRenderAndHighlight(feedbackIndex, isCorrect); // Render dengan feedback terakhir
+                updateState('lesson2SequenceIndex', 0); // Reset melalui fungsi
+                updateState('lesson2State', lesson2State + 1); // Pindah ke state transisi (ganjil) melalui fungsi
+                doRenderAndHighlight(feedbackIndex, isCorrect);
 
                 setTimeout(() => {
-                    lesson2State++; // Pindah ke state aktif berikutnya (genap)
-                    if (lesson2State >= 12) { // Pelajaran 2 selesai
-                        // setLesson2Finished(true); // Tidak perlu set di sini, karena dispatch event sudah cukup
+                    updateState('lesson2State', getState('lesson2State') + 1); // Pindah ke state aktif berikutnya (genap) melalui fungsi
+                    if (getState('lesson2State') >= 12) { // Pelajaran 2 selesai
                         dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
-                        // Tidak perlu panggil doRenderAndHighlight() lagi karena akan dipanggil dari learn-typing.js setelah modal
                     } else {
-                        doRenderAndHighlight(); // Render state aktif berikutnya
+                        doRenderAndHighlight();
                     }
                 }, 400);
             } else {
