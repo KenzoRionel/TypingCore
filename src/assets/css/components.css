@@ -166,9 +166,3 @@
     animation: blink 1s infinite;
 }
 
-@keyframes blink {
-    50% {
-        background-color: transparent;
-        border-bottom-color: transparent;
-    }
-}

@@ -1,19 +1,25 @@
 import {
     lessons
 } from './learn-typing-lessons.js';
-import {
-    createKeyboard,
+import { 
     renderLesson,
-    highlightNextKey, // Ini tidak lagi digunakan secara langsung untuk highlight utama
     handleLesson2Input,
-    resetLesson2State, // Pastikan ini diimport
-    getSequenceForState // Pastikan ini diimport (meskipun tidak digunakan langsung di sini)
-
+    resetLesson2State,
+    getSequenceForState 
 } from './learn-typing-logic.js';
+import { 
+    initKeyboard,
+    highlightKey,
+    focusKeyboard,
+    setupFocusHandlers
+} from './keyboard-module.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. DEKLARASI ELEMEN DOM
-    const keyboardContainer = document.getElementById('virtual-keyboard');
+    // 1. Inisialisasi Keyboard
+    initKeyboard();
+    setupFocusHandlers();
+
+    // 2. DEKLARASI ELEMEN DOM
     const lessonTitle = document.getElementById('lesson-title');
     const lessonInstruction = document.getElementById('lesson-instruction');
     const lessonTextDisplay = document.getElementById('lesson-text-display');
@@ -23,9 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const continueBtn = document.getElementById('continue-to-next-lesson-btn');
     const nextLessonPreview = document.getElementById('next-lesson-preview'); // Pertahankan jika digunakan di HTML
 
-    let hiddenInput; // Deklarasikan di sini agar bisa diakses di seluruh scope DOMContentLoaded
-
-    // 2. DEKLARASI STATE APLIKASI UTAMA
+    // 3. DEKLARASI STATE APLIKASI UTAMA
     let currentLessonIndex = 0;
     let currentStepIndex = 0;
     let currentCharIndex = 0;
@@ -34,33 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }; // Masih ok karena reference type
     let lesson2Finished = false; // Flag untuk menandai apakah pelajaran 2 sudah selesai
 
-    // 3. INISIALISASI KOMPONEN & FUNGSI PEMBANTU
-    const initHiddenInput = () => {
-        hiddenInput = document.getElementById('learnTypingHiddenInput');
-        if (!hiddenInput) {
-            hiddenInput = document.createElement('input');
-            hiddenInput.type = 'text';
-            hiddenInput.id = 'learnTypingHiddenInput';
-            hiddenInput.style.position = 'absolute';
-            hiddenInput.style.opacity = '0';
-            hiddenInput.style.pointerEvents = 'none';
-            hiddenInput.autocapitalize = 'off';
-            hiddenInput.autocomplete = 'off';
-            hiddenInput.spellcheck = false;
-            document.body.appendChild(hiddenInput);
+    // 4. Event Listeners (tanpa keyboard handlers)
+    prevLessonBtn.addEventListener('click', () => {
+        if (currentLessonIndex > 0) {
+            currentLessonIndex--;
+            resetCurrentLessonState();
+            doRenderLessonAndFocus();
         }
-        hiddenInput.focus();
-    };
-    initHiddenInput();
-
-    const keyLayout = [
-        ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
-        ['Tab', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\\'],
-        ['CapsLock', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'", 'Enter'],
-        ['ShiftLeft', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'ShiftRight'],
-        ['ControlLeft', 'MetaLeft', 'AltLeft', '', 'Space', '', 'AltRight', 'MetaRight', 'ContextMenu', 'ControlRight']
-    ];
-    createKeyboard(keyboardContainer, keyLayout);
+        focusKeyboard();
+    });
 
     // Fungsi utama untuk merender pelajaran dan memfokuskan hiddenInput
     function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
@@ -70,14 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
             currentStepIndex,
             currentCharIndex,
             waitingForAnim,
-            keyboardContainer,
             lessonTitle,
             lessonInstruction,
             lessonTextDisplay,
             feedbackIndex,
             isCorrect
         });
-        setTimeout(() => hiddenInput.focus(), 0);
+        setTimeout(() => focusKeyboard(), 0);
     }
 
     // Di dalam fungsi resetCurrentLessonState:
@@ -86,42 +71,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentStepIndex = 0;
         waitingForAnim.value = false;
         lesson2Finished = false;
-        resetLesson2State(keyboardContainer); // <- Tambahkan parameter di sini
+        resetLesson2State(); // Reset state Pelajaran 2
     }
-
-    // 4. EVENT LISTENERS UTAMA
-
-    window.addEventListener('focus', () => {
-        setTimeout(() => {
-            if (document.activeElement !== hiddenInput) {
-                hiddenInput.focus();
-            }
-        }, 10);
-    });
-
-    document.addEventListener('mousedown', (e) => {
-        const clickedElement = e.target;
-        const isDirectlyNavigationButton = clickedElement.tagName === 'BUTTON' && clickedElement.closest('.navigation-buttons');
-        const isModalContentActive = clickedElement.closest('.modal-overlay') && modal.style.display === 'flex';
-
-        const isUIElementThatShouldKeepFocus = isDirectlyNavigationButton || isModalContentActive;
-
-        if (!isUIElementThatShouldKeepFocus) {
-            setTimeout(() => {
-                if (document.activeElement !== hiddenInput) {
-                    hiddenInput.focus();
-                }
-            }, 0);
-        }
-    });
-
+    
     prevLessonBtn.addEventListener('click', () => {
         if (currentLessonIndex > 0) {
             currentLessonIndex--;
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         }
-        setTimeout(() => hiddenInput.focus(), 0);
+        setTimeout(() => focusKeyboard(), 0);
     });
 
     nextLessonBtn.addEventListener('click', () => {
@@ -130,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         }
-        setTimeout(() => hiddenInput.focus(), 0);
+        setTimeout(() => focusKeyboard(), 0);
     });
 
     continueBtn.addEventListener('click', () => {
@@ -140,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         }
-        setTimeout(() => hiddenInput.focus(), 0);
+        setTimeout(() => focusKeyboard(), 0);
     });
 
 

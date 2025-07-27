@@ -1,5 +1,6 @@
 // Logic terpisah untuk learn-typing - DIPERBAIKI
 import {lessons} from './learn-typing-lessons.js';
+import { highlightKey } from './keyboard-module.js';
 
 // --- STATE PELAJARAN 2 (MODULE-SCOPED) ---
 let lesson2State = 0;
@@ -10,9 +11,6 @@ let lesson2SequenceIndex = 0;
 // Tambahkan variabel untuk menyimpan referensi kontainer Pelajaran 2
 let lesson2SequenceContainer = null;
 let lesson2UnderlineContainer = null;
-
-// Global variable untuk melacak elemen yang sedang di-highlight
-let currentHighlightedKeyElement = null;
 
 // --- PROGRESS BAR UTILITIES ---
 export function calculateLessonProgress(currentLessonIndex, currentStepIndex, currentCharIndex, lesson2State, lesson2SequenceIndex, lesson) {
@@ -79,97 +77,6 @@ export function resetLesson2State(keyboardContainer=null) {
     }
 }
 
-// --- FUNGSI UTILITY KEYBOARD ---
-export function createKeyboard(keyboardContainer, keyLayout) {
-    if (!keyboardContainer)
-        return;
-
-    keyboardContainer.innerHTML = '';
-    keyLayout.forEach(row => {
-        const rowElement = document.createElement('div');
-        rowElement.classList.add('keyboard-row');
-        row.forEach(key => {
-            if (key === '') return; // Lewati key kosong tanpa membuat spacer
-            
-            const keyElement = document.createElement('div');
-            keyElement.classList.add('key');
-            let lowerKey = key.toLowerCase();
-            let displayKey = key;
-
-            if (key === 'ShiftLeft' || key === 'ShiftRight')
-                displayKey = 'Shift';
-            if (key === 'ControlLeft' || key === 'ControlRight')
-                displayKey = 'Ctrl';
-            if (key === 'AltLeft' || key === 'AltRight')
-                displayKey = 'Alt';
-            if (key === 'MetaLeft' || key === 'MetaRight')
-                displayKey = 'Win';
-            if (key === 'ContextMenu')
-                displayKey = 'Menu';
-            if (key === 'Space') {
-                displayKey = '';
-                lowerKey = ' ';
-            }
-
-            keyElement.textContent = displayKey;
-            keyElement.setAttribute('data-key', lowerKey);
-
-            if (['Backspace', 'CapsLock', 'Enter'].includes(key)) {
-                keyElement.classList.add('key-medium');
-            }
-            if (key === 'Space') {
-                keyElement.classList.add('key-space');
-            }
-            if (['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'ContextMenu'].includes(key)) {
-                keyElement.classList.add('key-small');
-            }
-            if (key === 'ShiftLeft' || key === 'ShiftRight') {
-                keyElement.classList.add('key-wide'); // Tambahkan class key-wide untuk Shift
-            }
-            if (key === 'Tab') {
-                keyElement.classList.add('key-tab');}
-            rowElement.appendChild(keyElement);
-        });
-        keyboardContainer.appendChild(rowElement);
-    });
-}
-
-function clearKeyboardHighlights(keyboardContainer) {
-    if (!keyboardContainer)
-        return;
-    keyboardContainer.querySelectorAll('.key.next-key').forEach(el => {
-        el.classList.remove('next-key');
-        el.classList.remove('key-highlight-animation');
-    }
-    );
-}
-
-export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
-    if (!keyboardContainer) {
-        console.warn("highlightKeyOnKeyboard called with null or undefined keyboardContainer. Cannot highlight.");
-        return;
-    }
-
-    // Hapus highlight dari elemen sebelumnya jika ada
-    if (currentHighlightedKeyElement) {
-        currentHighlightedKeyElement.classList.remove('next-key');
-        currentHighlightedKeyElement.style.animation = '';
-        currentHighlightedKeyElement = null;
-    }
-
-    // Hanya highlight jika keyChar adalah string yang valid dan tidak kosong
-    if (typeof keyChar === 'string' && keyChar.length > 0) {
-        const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
-        if (targetKeyElement) {
-            targetKeyElement.classList.add('next-key');
-            void targetKeyElement.offsetWidth;
-            // Force reflow
-            targetKeyElement.style.animation = 'highlight-move 0.6s ease-out infinite';
-            currentHighlightedKeyElement = targetKeyElement;
-        }
-    }
-}
-
 // --- FUNGSI MENDAPATKAN URUTAN KARAKTER UNTUK PELAJARAN 2 ---
 export function getSequenceForState(state) {
     switch (state) {
@@ -209,11 +116,11 @@ export function renderLesson({lessons, currentLessonIndex, currentStepIndex, cur
         if (currentStepIndex === 0) {
             if (lessonInstruction)
                 lessonInstruction.innerHTML = lesson.steps[0].instruction;
-            highlightKeyOnKeyboard(keyboardContainer, 'f');
+            highlightKey( 'f');
         } else if (currentStepIndex === 1) {
             if (lessonInstruction)
                 lessonInstruction.innerHTML = lesson.steps[1].instruction;
-            highlightKeyOnKeyboard(keyboardContainer, 'j');
+            highlightKey( 'j');
         } else if (currentStepIndex === 2) {
             if (lessonInstruction)
                 lessonInstruction.textContent = 'Pelajaran 1 Selesai! Klik "Lanjutkan" untuk ke pelajaran berikutnya.';
@@ -375,7 +282,7 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
     applyFeedback(feedbackIndex, isCorrect);
 
     if (highlightedKey) {
-        highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+        highlightKey( highlightedKey);
     }
 }
 
@@ -465,7 +372,7 @@ function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonI
         }
         );
         if (currentCharIndex < lesson.sequence.length) {
-            highlightKeyOnKeyboard(keyboardContainer, lesson.sequence[currentCharIndex]);
+            highlightKey( lesson.sequence[currentCharIndex]);
         }
     }
 }
