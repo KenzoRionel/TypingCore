@@ -1,0 +1,71 @@
+/* lesson-complete-notification.css*/
+.lesson-complete-notification {
+    /* Atur posisi dan ukuran agar menempati ruang keyboard */
+    /* Misalnya, jika keyboard-container memiliki lebar tertentu, notifikasi ini bisa mengikutinya */
+    display: flex; /* Default hidden, but flex to align content when visible */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* Sesuaikan tinggi sesuai kebutuhan, mungkin sama dengan tinggi keyboard */
+    /* Contoh: */
+    min-height: 250px; /* Sesuaikan ini agar notifikasi punya ruang */
+    background-color: #f8f9fa; /* Warna latar belakang notifikasi */
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    margin-top: 20px; /* Jarak dari elemen di atasnya */
+
+    /* Animasi fade in/out */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px); /* Efek slide up sedikit */
+    transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.5s ease;
+}
+
+.lesson-complete-notification.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lesson-complete-notification .notification-content {
+    /* Gaya untuk konten di dalam notifikasi (misalnya, judul, paragraf, tombol) */
+    max-width: 400px; /* Batasi lebar konten agar tidak terlalu lebar */
+    width: 100%;
+}
+
+.lesson-complete-notification h2 {
+    margin-bottom: 15px;
+    color: #28a745; /* Warna hijau untuk "Kerja Bagus!" */
+    font-size: 2rem;
+}
+
+.lesson-complete-notification p {
+    margin-bottom: 20px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.lesson-complete-notification .next-lesson-keys {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.lesson-complete-notification .next-lesson-keys .highlight-key-modal {
+    padding: 5px 10px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    background-color: #e9f5ff;
+}
+
+.lesson-complete-notification .btn-success {
+    padding: 10px 25px;
+    font-size: 1.1rem;
+    border-radius: 7px;
+}

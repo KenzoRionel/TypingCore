@@ -11,8 +11,8 @@
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/learn-typing-style.css">
     <link rel="stylesheet" href="css/underline-styles.css">
-    <link rel="stylesheet" href="css/lesson-complete-modal.css">
-</head>
+    <link rel="stylesheet" href="css/lesson-complete-notification.css">
+    </head>
 
 <body>
     <div class="wrapper">
@@ -77,6 +77,17 @@
                 <div id="lesson-text-display" class="lesson-text"></div>
                 <div id="virtual-keyboard" class="keyboard-container">
                     </div>
+
+                <div id="lesson-complete-notification" class="lesson-complete-notification" style="display: none;">
+                    <div class="notification-content">
+                        <h2>Kerja Bagus!</h2>
+                        <p>Selanjutnya kita akan belajar:</p>
+                        <div id="next-lesson-preview" class="next-lesson-keys">
+                            </div>
+                        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+                    </div>
+                </div>
+
                 <div class="navigation-buttons">
                     <button id="prev-lesson-btn" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Sebelumnya</button>
@@ -94,15 +105,6 @@
             </section>
 
         </main>
-    </div>
-
-    <div id="lesson-complete-modal" class="modal-overlay"> <div class="modal-content">
-            <h2>Kerja Bagus!</h2>
-            <p>Selanjutnya kita akan belajar:</p>
-            <div id="next-lesson-preview" class="next-lesson-keys">
-                </div>
-            <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
-        </div>
     </div>
 
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>

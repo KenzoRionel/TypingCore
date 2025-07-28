@@ -1,12 +1,16 @@
-// input-handler.js (DIUPDATE)
+// input-handler.js (PERBAIKAN LENGKAP)
 
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
-import { showLessonCompleteModal } from './learn-typing-logic.js';
+import {
+    showLessonCompleteNotification // UBAH: Mengimpor fungsi dengan nama baru
+} from './learn-typing-logic.js';
 import { handleLesson2Input } from './lesson2-logic.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
-    const { lessonInstruction, modal, continueBtn, keyboardContainer } = domElements;
+    // UBAH: Menggunakan nama parameter yang baru, yaitu lessonCompleteNotification
+    const { lessonInstruction, lessonCompleteNotification, continueBtn, keyboardContainer, nextLessonPreview } = domElements; 
+    // Tambahkan nextLessonPreview karena dibutuhkan oleh showLessonCompleteNotification
 
     const currentLessonIndex = getState('currentLessonIndex');
     const currentStepIndex = getState('currentStepIndex');
@@ -14,7 +18,8 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
 
-    if ((modal && modal.style.display === 'flex') || waitingForAnim.value || lesson2Finished) {
+    // UBAH: Memeriksa elemen notifikasi baru dan class 'active'
+    if ((lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) || waitingForAnim.value || lesson2Finished) {
         e.preventDefault();
         return;
     }
@@ -41,10 +46,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             }
         } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'j') {
             updateState('waitingForAnim', true);
-            // Ganti baris ini:
-            // const inlineKeyJ = document('inlineKeyJ');
-            // Menjadi:
-            const inlineKeyJ = document.getElementById('inlineKeyJ'); // <--- INI PERBAIKANNYA!
+            const inlineKeyJ = document.getElementById('inlineKeyJ');
             if (inlineKeyJ) {
                 inlineKeyJ.classList.add('fade-out');
                 setTimeout(() => {
@@ -52,13 +54,29 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
                     updateState('waitingForAnim', false);
                     updateState('currentStepIndex', 2);
                     doRenderAndHighlight();
-                    showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+                    // UBAH: Memanggil fungsi dengan nama baru dan parameter baru
+                    showLessonCompleteNotification(
+                        lessonCompleteNotification,
+                        continueBtn,
+                        keyboardContainer,
+                        lessons, // Kirim array lessons
+                        currentLessonIndex, // Kirim currentLessonIndex
+                        nextLessonPreview // Kirim nextLessonPreview
+                    );
                 }, 300);
             } else {
                 updateState('waitingForAnim', false);
                 updateState('currentStepIndex', 2);
                 doRenderAndHighlight();
-                showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+                // UBAH: Memanggil fungsi dengan nama baru dan parameter baru
+                showLessonCompleteNotification(
+                    lessonCompleteNotification,
+                    continueBtn,
+                    keyboardContainer,
+                    lessons, // Kirim array lessons
+                    currentLessonIndex, // Kirim currentLessonIndex
+                    nextLessonPreview // Kirim nextLessonPreview
+                );
             }
         } else if (e.key.length === 1) {
             if (lessonInstruction) {
@@ -100,7 +118,15 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         }
 
         if (getState('currentCharIndex') >= currentLesson.sequence.length) {
-            showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+            // UBAH: Memanggil fungsi dengan nama baru dan parameter baru
+            showLessonCompleteNotification(
+                lessonCompleteNotification,
+                continueBtn,
+                keyboardContainer,
+                lessons, // Kirim array lessons
+                currentLessonIndex, // Kirim currentLessonIndex
+                nextLessonPreview // Kirim nextLessonPreview
+            );
         }
         doRenderAndHighlight();
     }

@@ -5,7 +5,7 @@ import {
     createKeyboard,
     renderLesson,
     resetLesson2State,
-    showLessonCompleteModal // IMPORT FUNGSI INI KEMBALI DI SINI
+    showLessonCompleteNotification // UBAH IMPORT DARI showLessonCompleteModal
 } from './learn-typing-logic.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
@@ -19,8 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
         lessonTextDisplay,
         prevLessonBtn,
         nextLessonBtn,
-        modal,
-        continueBtn,
+        // Hapus 'modal' dari destructuring karena kita tidak lagi menggunakan elemen modal itu
+        // Tambahkan elemen notifikasi baru
+        lessonCompleteNotification,
+        continueBtn, // ContinueBtn masih relevan karena ada di dalam notifikasi
+        nextLessonPreview, // Pastikan ini juga diambil dari initDOMAndState
         hiddenInput,
     } = initDOMAndState();
 
@@ -36,8 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
         lessonTextDisplay,
         prevLessonBtn,
         nextLessonBtn,
-        modal,
+        // UBAH: Gunakan lessonCompleteNotification, bukan modal
+        lessonCompleteNotification,
         continueBtn,
+        nextLessonPreview, // Pastikan ini ada di domElements
         hiddenInput,
     };
 
@@ -47,6 +52,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentStepIndex = getState('currentStepIndex');
         const currentCharIndex = getState('currentCharIndex');
         const waitingForAnim = getState('waitingForAnim');
+
+        // PASTIKAN NOTIFIKASI DISEMBUNYIKAN SAAT MERENDER PELAJARAN BARU
+        if (lessonCompleteNotification) {
+            lessonCompleteNotification.classList.remove('active');
+            lessonCompleteNotification.style.display = 'none'; // Sembunyikan secara eksplisit
+        }
+        // Pastikan keyboard ditampilkan kembali
+        if (keyboardContainer) {
+            keyboardContainer.style.display = ''; // Reset ke default display (biasanya block atau flex)
+        }
+
 
         renderLesson({
             lessons,
@@ -81,7 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fokus hiddenInput saat jendela kembali aktif
     window.addEventListener('focus', () => {
         const input = getHiddenInput();
-        if (input) {
+        // Hanya fokus jika notifikasi tidak aktif
+        if (input && (!lessonCompleteNotification || !lessonCompleteNotification.classList.contains('active'))) {
             setTimeout(() => {
                 if (document.activeElement !== input) {
                     input.focus();
@@ -94,9 +111,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousedown', (e) => {
         const clickedElement = e.target;
         const isDirectlyNavigationButton = clickedElement.tagName === 'BUTTON' && clickedElement.closest('.navigation-buttons');
-        const isModalContentActive = clickedElement.closest('.modal-overlay') && modal && modal.style.display === 'flex';
+        // UBAH: Cek notifikasi baru, bukan modal
+        const isNotificationActive = clickedElement.closest('.lesson-complete-notification') && lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
 
-        const isUIElementThatShouldKeepFocus = isDirectlyNavigationButton || isModalContentActive;
+        const isUIElementThatShouldKeepFocus = isDirectlyNavigationButton || isNotificationActive;
         const input = getHiddenInput();
 
         if (!isUIElementThatShouldKeepFocus) {
@@ -137,10 +155,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Tombol Lanjutkan di modal
+    // Tombol Lanjutkan di notifikasi
     continueBtn.addEventListener('click', () => {
-        if (modal) {
-            modal.style.display = 'none';
+        // UBAH: Sembunyikan notifikasi dengan menghapus class 'active'
+        if (lessonCompleteNotification) {
+            lessonCompleteNotification.classList.remove('active');
+            // Sedikit delay untuk animasi, lalu set display none
+            setTimeout(() => {
+                lessonCompleteNotification.style.display = 'none';
+            }, 500); // Sesuaikan dengan durasi transisi CSS
         }
 
         let currentLessonIndex = getState('currentLessonIndex');
@@ -169,8 +192,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lessonInstruction) {
         lessonInstruction.addEventListener('lesson2-finished', (event) => {
             updateState('lesson2Finished', true);
-            // Panggil showLessonCompleteModal di sini
-            showLessonCompleteModal(modal, continueBtn, keyboardContainer);
+            // Panggil showLessonCompleteNotification di sini
+            const currentLessonIndex = getState('currentLessonIndex');
+            showLessonCompleteNotification(
+                lessonCompleteNotification,
+                continueBtn,
+                keyboardContainer,
+                lessons,
+                currentLessonIndex,
+                nextLessonPreview
+            );
         });
     }
 
