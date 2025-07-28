@@ -11,6 +11,7 @@
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/learn-typing-style.css">
     <link rel="stylesheet" href="css/underline-styles.css">
+    <link rel="stylesheet" href="css/lesson-complete-modal.css">
 </head>
 
 <body>
@@ -29,7 +30,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link active" href="learn-typing.html"><i
-                                            class="fas fa-graduation-cap"></i></a>
+                                                class="fas fa-graduation-cap"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
@@ -75,13 +76,11 @@
                 </div>
                 <div id="lesson-text-display" class="lesson-text"></div>
                 <div id="virtual-keyboard" class="keyboard-container">
-                    <!-- Keyboard akan dibuat oleh JavaScript -->
-                </div>
+                    </div>
                 <div class="navigation-buttons">
                     <button id="prev-lesson-btn" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Sebelumnya</button>
 
-                    <!-- Progress Bar -->
                     <div class="lesson-progress">
                         <div class="progress-container">
                             <div class="progress-bar" id="lesson-progress-bar"></div>
@@ -97,14 +96,11 @@
         </main>
     </div>
 
-    <!-- Modal Notifikasi (di luar main) -->
-    <div id="lesson-complete-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
+    <div id="lesson-complete-modal" class="modal-overlay"> <div class="modal-content">
             <h2>Kerja Bagus!</h2>
             <p>Selanjutnya kita akan belajar:</p>
             <div id="next-lesson-preview" class="next-lesson-keys">
-                <!-- Pratinjau tombol pelajaran berikutnya akan diisi oleh JS -->
-            </div>
+                </div>
             <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
         </div>
     </div>
