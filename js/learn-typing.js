@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // TAMBAH: Destructuring semua elemen baru dari initDOMAndState
     const {
         keyboardContainer,
+        lessonHeader,
         lessonTitle,
         lessonInstruction,
         lessonTextDisplay,
@@ -26,9 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar,
         progressText,
         thumbAnimationContainer,
-        successAnimationSvg, // TAMBAHKAN INI
-        circlePath,          // TAMBAHKAN INI
-        checkPath,           // TAMBAHKAN INI
+        successAnimationSvg, 
+        circlePath,          
+        checkPath,           
         hiddenInput,
     } = initDOMAndState();
 
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Buat objek domElements yang lengkap
     const domElements = {
         keyboardContainer,
+        lessonHeader,
         lessonTitle,
         lessonInstruction,
         lessonTextDisplay,
@@ -52,9 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar,
         progressText,
         thumbAnimationContainer,
-        successAnimationSvg, // TAMBAHKAN INI
-        circlePath,          // TAMBAHKAN INI
-        checkPath,           // TAMBAHKAN INI
+        successAnimationSvg, 
+        circlePath,          
+        checkPath,           
         hiddenInput,
     };
 
@@ -164,6 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
             lessonCompleteNotification.classList.remove('active');
             setTimeout(() => {
                 lessonCompleteNotification.style.display = 'none';
+                // Tambahkan baris ini untuk menampilkan kembali header pelajaran
+                if (domElements.lessonHeader) {
+                    domElements.lessonHeader.style.display = '';
+                }
             }, 500);
         }
         let currentLessonIndex = getState('currentLessonIndex');

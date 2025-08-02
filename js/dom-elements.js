@@ -12,6 +12,12 @@ export function getDOMReferences() {
         return null;
     }
 
+    const lessonHeader = document.getElementById('lesson-header');
+    if (!lessonHeader) {
+        console.error("ERROR: Elemen DOM penting #lesson-header tidak ditemukan.");
+        return null;
+    }
+
     const lessonTitle = document.getElementById('lesson-title');
     if (!lessonTitle) {
         console.error("ERROR: Elemen DOM penting #lesson-title tidak ditemukan.");
@@ -113,6 +119,7 @@ export function getDOMReferences() {
 
     return {
         keyboardContainer,
+        lessonHeader,
         lessonTitle,
         lessonInstruction,
         lessonTextDisplay,

@@ -189,9 +189,9 @@ export function renderLesson({
 }
 
 // --- FUNGSI UNTUK MENAMPILKAN MODAL PENYELESAIAN PELAJARAN ---
-// MODIFIKASI FUNGSI INI
 export function showLessonCompleteNotification(lessons, currentLessonIdx, domElements) {
     const {
+        lessonHeader,
         lessonCompleteNotification,
         continueBtn,
         keyboardContainer,
@@ -199,6 +199,11 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         successAnimationSvg,
         circlePath
     } = domElements;
+
+    // Tambahkan baris ini untuk menyembunyikan header pelajaran
+    if (lessonHeader) {
+        lessonHeader.style.display = 'none';
+    }
 
     // Sembunyikan keyboard virtual
     if (keyboardContainer) {
