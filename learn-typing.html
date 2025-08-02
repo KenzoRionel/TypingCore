@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 
@@ -79,14 +80,19 @@
                     </div>
 
                 <div id="lesson-complete-notification" class="lesson-complete-notification" style="display: none;">
-                    <div class="notification-content">
-                        <h2>Kerja Bagus!</h2>
-                        <p>Selanjutnya kita akan belajar:</p>
-                        <div id="next-lesson-preview" class="next-lesson-keys">
-                            </div>
-                        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
-                    </div>
-                </div>
+    <div class="notification-content">
+        
+        <div id="thumb-animation-container" class="thumb-animation-container">
+            <svg id="success-animation-svg" class="success-animation-svg" viewBox="-27 -27 150 150" xmlns="http://www.w3.org/2000/svg">
+                <circle id="background-circle" cx="50" cy="50" r="60" fill="#BDCFFA" />
+                <path id="circle-path" class="circle-path" d="M50 2 C76.48 2 98 23.52 98 50 C98 76.48 76.48 98 50 98 C23.52 98 2 76.48 2 50 C2 23.52 23.52 2 50 2 Z" fill="none" stroke-width="10" stroke-linecap="round" stroke-miterlimit="10"/>
+                <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10"/>
+            </svg>
+        </div>
+        <h2>Kerja Bagus!</h2>
+        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+    </div>
+</div>
 
                 <div class="navigation-buttons">
                     <button id="prev-lesson-btn" class="btn btn-secondary">

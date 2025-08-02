@@ -1,3 +1,4 @@
+//learn-typing-lessons.js
 export const lessons = [
     {
         title: "Pengenalan Tombol Baru",

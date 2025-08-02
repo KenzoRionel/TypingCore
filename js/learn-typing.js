@@ -12,6 +12,7 @@ import { keyLayout } from './keyboard-layout.js';
 import { handleKeyboardInput } from './input-handler.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // TAMBAH: Destructuring semua elemen baru dari initDOMAndState
     const {
         keyboardContainer,
         lessonTitle,
@@ -19,19 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
         lessonTextDisplay,
         prevLessonBtn,
         nextLessonBtn,
-        // Hapus 'modal' dari destructuring karena kita tidak lagi menggunakan elemen modal itu
-        // Tambahkan elemen notifikasi baru
         lessonCompleteNotification,
-        continueBtn, // ContinueBtn masih relevan karena ada di dalam notifikasi
-        nextLessonPreview, // Pastikan ini juga diambil dari initDOMAndState
+        continueBtn,
+        nextLessonPreview,
+        progressBar,
+        progressText,
+        thumbAnimationContainer,
+        successAnimationSvg, // TAMBAHKAN INI
+        circlePath,          // TAMBAHKAN INI
+        checkPath,           // TAMBAHKAN INI
         hiddenInput,
     } = initDOMAndState();
 
-    if (!keyboardContainer) {
+    // Verifikasi penting: Pastikan semua elemen kunci ada
+    if (!keyboardContainer || !lessonCompleteNotification) {
+        console.error("ERROR: Elemen DOM kunci (keyboard atau notifikasi) tidak ditemukan. Aplikasi tidak dapat berjalan.");
         return;
     }
 
-    // Buat objek domElements agar mudah diteruskan ke input-handler
+    // Buat objek domElements yang lengkap
     const domElements = {
         keyboardContainer,
         lessonTitle,
@@ -39,10 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
         lessonTextDisplay,
         prevLessonBtn,
         nextLessonBtn,
-        // UBAH: Gunakan lessonCompleteNotification, bukan modal
         lessonCompleteNotification,
         continueBtn,
-        nextLessonPreview, // Pastikan ini ada di domElements
+        nextLessonPreview,
+        progressBar,
+        progressText,
+        thumbAnimationContainer,
+        successAnimationSvg, // TAMBAHKAN INI
+        circlePath,          // TAMBAHKAN INI
+        checkPath,           // TAMBAHKAN INI
         hiddenInput,
     };
 
@@ -56,13 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // PASTIKAN NOTIFIKASI DISEMBUNYIKAN SAAT MERENDER PELAJARAN BARU
         if (lessonCompleteNotification) {
             lessonCompleteNotification.classList.remove('active');
-            lessonCompleteNotification.style.display = 'none'; // Sembunyikan secara eksplisit
+            lessonCompleteNotification.style.display = 'none';
         }
-        // Pastikan keyboard ditampilkan kembali
         if (keyboardContainer) {
-            keyboardContainer.style.display = ''; // Reset ke default display (biasanya block atau flex)
+            keyboardContainer.style.display = '';
         }
-
 
         renderLesson({
             lessons,
@@ -93,11 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. EVENT LISTENERS UTAMA
-
-    // Fokus hiddenInput saat jendela kembali aktif
     window.addEventListener('focus', () => {
         const input = getHiddenInput();
-        // Hanya fokus jika notifikasi tidak aktif
         if (input && (!lessonCompleteNotification || !lessonCompleteNotification.classList.contains('active'))) {
             setTimeout(() => {
                 if (document.activeElement !== input) {
@@ -107,11 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Fokus hiddenInput saat klik di luar tombol navigasi/modal
     document.addEventListener('mousedown', (e) => {
         const clickedElement = e.target;
         const isDirectlyNavigationButton = clickedElement.tagName === 'BUTTON' && clickedElement.closest('.navigation-buttons');
-        // UBAH: Cek notifikasi baru, bukan modal
         const isNotificationActive = clickedElement.closest('.lesson-complete-notification') && lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
 
         const isUIElementThatShouldKeepFocus = isDirectlyNavigationButton || isNotificationActive;
@@ -128,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Navigasi pelajaran
     prevLessonBtn.addEventListener('click', () => {
         let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex > 0) {
@@ -155,17 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Tombol Lanjutkan di notifikasi
     continueBtn.addEventListener('click', () => {
-        // UBAH: Sembunyikan notifikasi dengan menghapus class 'active'
         if (lessonCompleteNotification) {
             lessonCompleteNotification.classList.remove('active');
-            // Sedikit delay untuk animasi, lalu set display none
             setTimeout(() => {
                 lessonCompleteNotification.style.display = 'none';
-            }, 500); // Sesuaikan dengan durasi transisi CSS
+            }, 500);
         }
-
         let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex < lessons.length - 1) {
             updateState('currentLessonIndex', currentLessonIndex + 1);
@@ -180,11 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event handler keydown utama pada hidden input
     const input = getHiddenInput();
     if (input) {
         input.addEventListener('keydown', (e) => {
-            // Panggil fungsi handleKeyboardInput dari file terpisah
             handleKeyboardInput(e, domElements, doRenderLessonAndFocus);
         });
     }
@@ -192,16 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lessonInstruction) {
         lessonInstruction.addEventListener('lesson2-finished', (event) => {
             updateState('lesson2Finished', true);
-            // Panggil showLessonCompleteNotification di sini
             const currentLessonIndex = getState('currentLessonIndex');
-            showLessonCompleteNotification(
-                lessonCompleteNotification,
-                continueBtn,
-                keyboardContainer,
-                lessons,
-                currentLessonIndex,
-                nextLessonPreview
-            );
+            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         });
     }
 

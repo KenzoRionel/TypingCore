@@ -7,35 +7,89 @@
  */
 export function getDOMReferences() {
     const keyboardContainer = document.getElementById('virtual-keyboard');
-    const lessonTitle = document.getElementById('lesson-title');
-    const lessonInstruction = document.getElementById('lesson-instruction');
-    const lessonTextDisplay = document.getElementById('lesson-text-display');
-    const prevLessonBtn = document.getElementById('prev-lesson-btn');
-    const nextLessonBtn = document.getElementById('next-lesson-btn');
-    // UBAH: Mengambil elemen notifikasi yang baru, bukan modal
-    const lessonCompleteNotification = document.getElementById('lesson-complete-notification');
-    const continueBtn = document.getElementById('continue-to-next-lesson-btn');
-    const nextLessonPreview = document.getElementById('next-lesson-preview');
-    const progressBar = document.getElementById('lesson-progress-bar');
-    const progressText = document.getElementById('progress-percentage');
+    if (!keyboardContainer) {
+        console.error("ERROR: Elemen DOM penting #virtual-keyboard tidak ditemukan.");
+        return null;
+    }
 
-    // **PENTING**: Verifikasi semua elemen DOM ditemukan
-    // nextLessonPreview bisa jadi null jika belum ada di HTML untuk pelajaran awal,
-    // tapi itu akan diisi nanti. Jadi, tidak perlu divalidasi ketat.
-    if (!keyboardContainer || !lessonTitle || !lessonInstruction || !lessonTextDisplay || !prevLessonBtn || !nextLessonBtn || !lessonCompleteNotification || !continueBtn || !progressBar || !progressText) {
-        console.error("ERROR: Satu atau lebih elemen DOM penting tidak ditemukan. Pastikan ID di HTML sudah benar.");
-        // Log elemen yang hilang untuk debugging yang lebih mudah
-        if (!keyboardContainer) console.error("Missing: #virtual-keyboard");
-        if (!lessonTitle) console.error("Missing: #lesson-title");
-        if (!lessonInstruction) console.error("Missing: #lesson-instruction");
-        if (!lessonTextDisplay) console.error("Missing: #lesson-text-display");
-        if (!prevLessonBtn) console.error("Missing: #prev-lesson-btn");
-        if (!nextLessonBtn) console.error("Missing: #next-lesson-btn");
-        // UBAH: Log notifikasi yang hilang
-        if (!lessonCompleteNotification) console.error("Missing: #lesson-complete-notification");
-        if (!continueBtn) console.error("Missing: #continue-to-next-lesson-btn");
-        if (!progressBar) console.error("Missing: #lesson-progress-bar");
-        if (!progressText) console.error("Missing: #progress-percentage");
+    const lessonTitle = document.getElementById('lesson-title');
+    if (!lessonTitle) {
+        console.error("ERROR: Elemen DOM penting #lesson-title tidak ditemukan.");
+        return null;
+    }
+
+    const lessonInstruction = document.getElementById('lesson-instruction');
+    if (!lessonInstruction) {
+        console.error("ERROR: Elemen DOM penting #lesson-instruction tidak ditemukan.");
+        return null;
+    }
+
+    const lessonTextDisplay = document.getElementById('lesson-text-display');
+    if (!lessonTextDisplay) {
+        console.error("ERROR: Elemen DOM penting #lesson-text-display tidak ditemukan.");
+        return null;
+    }
+
+    const prevLessonBtn = document.getElementById('prev-lesson-btn');
+    if (!prevLessonBtn) {
+        console.error("ERROR: Elemen DOM penting #prev-lesson-btn tidak ditemukan.");
+        return null;
+    }
+
+    const nextLessonBtn = document.getElementById('next-lesson-btn');
+    if (!nextLessonBtn) {
+        console.error("ERROR: Elemen DOM penting #next-lesson-btn tidak ditemukan.");
+        return null;
+    }
+
+    const lessonCompleteNotification = document.getElementById('lesson-complete-notification');
+    if (!lessonCompleteNotification) {
+        console.error("ERROR: Elemen DOM penting #lesson-complete-notification tidak ditemukan.");
+        return null;
+    }
+
+    const continueBtn = document.getElementById('continue-to-next-lesson-btn');
+    if (!continueBtn) {
+        console.error("ERROR: Elemen DOM penting #continue-to-next-lesson-btn tidak ditemukan.");
+        return null;
+    }
+
+    const nextLessonPreview = document.getElementById('next-lesson-preview');
+    // nextLessonPreview bisa null untuk pelajaran awal, jadi tidak perlu divalidasi
+    
+    const progressBar = document.getElementById('lesson-progress-bar');
+    if (!progressBar) {
+        console.error("ERROR: Elemen DOM penting #lesson-progress-bar tidak ditemukan.");
+        return null;
+    }
+
+    const progressText = document.getElementById('progress-percentage');
+    if (!progressText) {
+        console.error("ERROR: Elemen DOM penting #progress-percentage tidak ditemukan.");
+        return null;
+    }
+
+    const thumbAnimationContainer = document.getElementById('thumb-animation-container');
+    if (!thumbAnimationContainer) {
+        console.error("ERROR: Elemen DOM penting #thumb-animation-container tidak ditemukan.");
+        return null;
+    }
+
+    const successAnimationSvg = document.getElementById('success-animation-svg');
+    if (!successAnimationSvg) {
+        console.error("ERROR: Elemen DOM penting #success-animation-svg tidak ditemukan.");
+        return null;
+    }
+
+    const circlePath = document.getElementById('circle-path');
+    if (!circlePath) {
+        console.error("ERROR: Elemen DOM penting #circle-path tidak ditemukan.");
+        return null;
+    }
+
+    const checkPath = document.getElementById('check-path');
+    if (!checkPath) {
+        console.error("ERROR: Elemen DOM penting #check-path tidak ditemukan.");
         return null;
     }
 
@@ -44,20 +98,16 @@ export function getDOMReferences() {
         hiddenInput = document.createElement('input');
         hiddenInput.type = 'text';
         hiddenInput.id = 'learnTypingHiddenInput';
-        // Atur styling untuk membuatnya tidak terlihat dan tidak mengganggu layout
         hiddenInput.style.position = 'absolute';
         hiddenInput.style.opacity = '0';
         hiddenInput.style.pointerEvents = 'none';
-        hiddenInput.style.width = '1px'; // Minimal width/height agar bisa difokuskan di beberapa browser
+        hiddenInput.style.width = '1px';
         hiddenInput.style.height = '1px';
-        hiddenInput.style.top = '-9999px'; // Pindahkan jauh dari layar
+        hiddenInput.style.top = '-9999px';
         hiddenInput.style.left = '-9999px';
-        
-        // Atribut untuk pengalaman mengetik yang lebih baik
         hiddenInput.autocapitalize = 'off';
         hiddenInput.autocomplete = 'off';
         hiddenInput.spellcheck = false;
-        hiddenInput.setAttribute('aria-hidden', 'true'); // Sembunyikan dari screen reader jika tidak relevan
         document.body.appendChild(hiddenInput);
     }
 
@@ -68,12 +118,15 @@ export function getDOMReferences() {
         lessonTextDisplay,
         prevLessonBtn,
         nextLessonBtn,
-        // UBAH: Mengembalikan elemen notifikasi yang baru
         lessonCompleteNotification,
         continueBtn,
         nextLessonPreview,
         hiddenInput,
         progressBar,
         progressText,
+        thumbAnimationContainer,
+        successAnimationSvg,
+        circlePath,
+        checkPath,
     };
 }

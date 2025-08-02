@@ -183,18 +183,6 @@ export function cleanupLesson2Elements(lessonInstruction) {
             node.remove();
         }
     });
-
-    // Perlu juga menghapus highlight keyboard yang mungkin aktif dari Pelajaran 2
-    // Ini seharusnya sudah di-handle di clearKeyboardHighlights atau highlightKeyOnKeyboard(null)
-    // Tapi jika ada edge case, bisa ditambahkan di sini secara eksplisit
-    // Misalnya:
-    // const keyboardContainer = document.getElementById('virtual-keyboard');
-    // if (keyboardContainer) {
-    //     keyboardContainer.querySelectorAll('.key.next-key').forEach(el => {
-    //         el.classList.remove('next-key');
-    //         el.style.animation = '';
-    //     });
-    // }
 }
 
 

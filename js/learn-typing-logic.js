@@ -190,51 +190,77 @@ export function renderLesson({
 
 // --- FUNGSI UNTUK MENAMPILKAN MODAL PENYELESAIAN PELAJARAN ---
 // MODIFIKASI FUNGSI INI
-export function showLessonCompleteNotification(notificationElement, continueBtn, keyboardContainer, allLessons, currentLessonIdx, nextLessonPreviewElement) {
+export function showLessonCompleteNotification(lessons, currentLessonIdx, domElements) {
+    const {
+        lessonCompleteNotification,
+        continueBtn,
+        keyboardContainer,
+        nextLessonPreview,
+        successAnimationSvg,
+        circlePath
+    } = domElements;
+
     // Sembunyikan keyboard virtual
     if (keyboardContainer) {
         keyboardContainer.style.display = 'none';
-        // Hentikan animasi dan bersihkan highlight keyboard
         const keys = keyboardContainer.querySelectorAll('.key');
         keys.forEach(key => {
-            key.style.animation = 'none'; // Hentikan animasi
+            key.style.animation = 'none';
             key.classList.remove('next-key', 'correct-key', 'wrong-key');
         });
     }
 
-    if (notificationElement) {
-        // Tampilkan pratinjau pelajaran berikutnya di notifikasi
-        if (nextLessonPreviewElement) {
-            const nextLessonIndex = currentLessonIdx + 1;
-            if (nextLessonIndex < allLessons.length) {
-                const nextLesson = allLessons[nextLessonIndex];
-                let previewText = '';
+    if (lessonCompleteNotification) {
+        const currentLesson = lessons[currentLessonIdx];
 
-                // Logika untuk menampilkan pratinjau kunci/karakter pelajaran berikutnya
-                if (nextLessonIndex === 0) { // Jika pelajaran berikutnya adalah pelajaran F & J
+        // Ganti judul notifikasi
+        const h2 = lessonCompleteNotification.querySelector('h2');
+        if (h2) {
+            h2.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
+        }
+        
+        // Reset dan jalankan animasi SVG
+        if (successAnimationSvg && circlePath) {
+            successAnimationSvg.classList.remove('animate-circle', 'animate-check');
+            // Pastikan animasi di-reset dengan memaksa browser untuk merender ulang
+            void successAnimationSvg.offsetWidth; 
+            successAnimationSvg.classList.add('animate-circle');
+            
+            // Gunakan setTimeout untuk memulai animasi ceklis setelah animasi lingkaran selesai
+            setTimeout(() => {
+                successAnimationSvg.classList.add('animate-check');
+            }, 1000); // Durasi animasi lingkaran di CSS adalah 1 detik (1000ms)
+        }
+
+        // Tampilkan pratinjau pelajaran berikutnya
+        if (nextLessonPreview) {
+            const nextLessonIndex = currentLessonIdx + 1;
+            if (nextLessonIndex < lessons.length) {
+                const nextLesson = lessons[nextLessonIndex];
+                let previewText = '';
+                if (nextLessonIndex === 0) {
                     previewText = `Ketik huruf: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span>`;
-                } else if (nextLessonIndex === 1) { // Jika pelajaran berikutnya adalah pelajaran 2 (kata acak)
+                } else if (nextLessonIndex === 1) {
                     previewText = `Ketik kata acak: <span class="highlight-key-modal">huruf acak</span>`;
-                } else { // Untuk pelajaran lain, tampilkan beberapa karakter pertama
+                } else {
                     const previewChars = nextLesson.sequence ? nextLesson.sequence.slice(0, 5).join('') : '';
                     previewText = `Ketik: <span class="highlight-key-modal">${previewChars}...</span>`;
                 }
-                nextLessonPreviewElement.innerHTML = previewText;
+                nextLessonPreview.innerHTML = previewText;
             } else {
-                nextLessonPreviewElement.textContent = "Anda telah menyelesaikan semua pelajaran!";
+                nextLessonPreview.textContent = "Anda telah menyelesaikan semua pelajaran!";
             }
         }
         
-        // Tampilkan notifikasi dengan menambahkan class 'active'
-        notificationElement.style.display = 'flex'; // Pastikan display-nya flex
+        lessonCompleteNotification.style.display = 'flex';
         setTimeout(() => {
-            notificationElement.classList.add('active');
+            lessonCompleteNotification.classList.add('active');
             if (continueBtn) {
                 continueBtn.focus();
             } else {
                 console.error('ERROR: Elemen continueBtn tidak ditemukan saat mencoba fokus!');
             }
-        }, 50); // Sedikit delay untuk transisi
+        }, 50);
     } else {
         console.error('ERROR: Elemen notifikasi (#lesson-complete-notification) tidak ditemukan!');
     }

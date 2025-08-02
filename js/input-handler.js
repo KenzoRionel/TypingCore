@@ -3,14 +3,12 @@
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import {
-    showLessonCompleteNotification // UBAH: Mengimpor fungsi dengan nama baru
+    showLessonCompleteNotification
 } from './learn-typing-logic.js';
 import { handleLesson2Input } from './lesson2-logic.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
-    // UBAH: Menggunakan nama parameter yang baru, yaitu lessonCompleteNotification
-    const { lessonInstruction, lessonCompleteNotification, continueBtn, keyboardContainer, nextLessonPreview } = domElements; 
-    // Tambahkan nextLessonPreview karena dibutuhkan oleh showLessonCompleteNotification
+    const { lessonInstruction, lessonCompleteNotification, continueBtn } = domElements; 
 
     const currentLessonIndex = getState('currentLessonIndex');
     const currentStepIndex = getState('currentStepIndex');
@@ -18,7 +16,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
 
-    // UBAH: Memeriksa elemen notifikasi baru dan class 'active'
     if ((lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) || waitingForAnim.value || lesson2Finished) {
         e.preventDefault();
         return;
@@ -54,29 +51,15 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
                     updateState('waitingForAnim', false);
                     updateState('currentStepIndex', 2);
                     doRenderAndHighlight();
-                    // UBAH: Memanggil fungsi dengan nama baru dan parameter baru
-                    showLessonCompleteNotification(
-                        lessonCompleteNotification,
-                        continueBtn,
-                        keyboardContainer,
-                        lessons, // Kirim array lessons
-                        currentLessonIndex, // Kirim currentLessonIndex
-                        nextLessonPreview // Kirim nextLessonPreview
-                    );
+                    // PERBAIKAN: Memanggil fungsi dengan parameter yang benar
+                    showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
                 }, 300);
             } else {
                 updateState('waitingForAnim', false);
                 updateState('currentStepIndex', 2);
                 doRenderAndHighlight();
-                // UBAH: Memanggil fungsi dengan nama baru dan parameter baru
-                showLessonCompleteNotification(
-                    lessonCompleteNotification,
-                    continueBtn,
-                    keyboardContainer,
-                    lessons, // Kirim array lessons
-                    currentLessonIndex, // Kirim currentLessonIndex
-                    nextLessonPreview // Kirim nextLessonPreview
-                );
+                // PERBAIKAN: Memanggil fungsi dengan parameter yang benar
+                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
             }
         } else if (e.key.length === 1) {
             if (lessonInstruction) {
@@ -118,15 +101,8 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         }
 
         if (getState('currentCharIndex') >= currentLesson.sequence.length) {
-            // UBAH: Memanggil fungsi dengan nama baru dan parameter baru
-            showLessonCompleteNotification(
-                lessonCompleteNotification,
-                continueBtn,
-                keyboardContainer,
-                lessons, // Kirim array lessons
-                currentLessonIndex, // Kirim currentLessonIndex
-                nextLessonPreview // Kirim nextLessonPreview
-            );
+            // PERBAIKAN: Memanggil fungsi dengan parameter yang benar
+            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         }
         doRenderAndHighlight();
     }
