@@ -4,6 +4,7 @@ import {
     createKeyboard,
     renderLesson,
     resetLesson2State,
+    resetLesson3State, // DITAMBAHKAN
     showLessonCompleteNotification
 } from './learn-typing-logic.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
@@ -91,12 +92,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // FUNGSI INI DIUBAH AGAR BISA MERESET STATE SEMUA PELAJARAN
     function resetCurrentLessonState() {
         updateState('currentCharIndex', 0);
         updateState('currentStepIndex', 0);
         updateState('waitingForAnim', false);
         updateState('lesson2Finished', false);
+        updateState('lesson3Finished', false); // DITAMBAHKAN
+
         resetLesson2State(keyboardContainer);
+        resetLesson3State(keyboardContainer); // DITAMBAHKAN
     }
     
     function goToNextLesson() {
@@ -124,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isNavigationButton = clickedElement.closest('.navigation-buttons') !== null;
         const isNotificationActive = lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
 
-        // PERBAIKAN: Pastikan klik bukan di dalam keyboard atau tombol navigasi dan notifikasi tidak aktif
         if (!isNotificationActive && !isNavigationButton && clickedElement.closest('#virtual-keyboard') === null) {
             const input = getHiddenInput();
             if (input && document.activeElement !== input) {
@@ -183,6 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (lessonInstruction) {
         lessonInstruction.addEventListener('lesson2-finished', (event) => {
             updateState('lesson2Finished', true);
+            const currentLessonIndex = getState('currentLessonIndex');
+            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+        });
+        
+        // EVENT LISTENER BARU UNTUK PELAJARAN 3
+        lessonInstruction.addEventListener('lesson3-finished', (event) => {
+            updateState('lesson3Finished', true);
             const currentLessonIndex = getState('currentLessonIndex');
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         });

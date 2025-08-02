@@ -9,12 +9,12 @@ let lesson3UnderlineContainer = null;
 
 export function getSequenceForState(state) {
     switch (state) {
-        case 0: return ['f', ' ', 'j', ' ', 'f', ' '];
-        case 2: return ['j', ' ', 'f', ' ', 'j', ' '];
-        case 4: return ['f', ' ', 'j', ' ', 'j', ' '];
-        case 6: return ['j', ' ', 'f', ' ', 'f', ' '];
-        case 8: return ['f', ' ', 'f', ' ', 'j', ' '];
-        case 10: return ['j', ' ', 'j', ' ', 'f', ' '];
+        case 0: return ['f', ' ', 'f', ' ', 'j', ' ', 'j'];
+        case 2: return [' ', 'f', 'f', ' ', ' ', 'f', 'f'];
+        case 4: return ['j', 'j', ' ', 'j', 'j', ' ', 'f'];
+        case 6: return ['j', ' ', 'j', 'f', ' ', 'f', 'f'];
+        case 8: return [' ', 'j', 'j', ' ', ' ', 'j', 'j'];
+        case 10: return ['f', 'f', ' ', ' ', 'f', 'f', ' '];
         default: return [];
     }
 }
@@ -25,8 +25,8 @@ export function renderLesson3(lessonInstruction, keyboardContainer, feedbackInde
         return;
     }
 
-    const lesson2State = getState('lesson2State');
-    const lesson2SequenceIndex = getState('lesson2SequenceIndex');
+    const lesson3State = getState('lesson3State');
+    const lesson3SequenceIndex = getState('lesson3SequenceIndex');
 
     if (!lesson3SequenceContainer || !lessonInstruction.contains(lesson3SequenceContainer)) {
         lesson3SequenceContainer = document.createElement('div');
@@ -45,21 +45,21 @@ export function renderLesson3(lessonInstruction, keyboardContainer, feedbackInde
     let activeIndex = -1;
     let highlightedKey = null;
 
-    const sequence = getSequenceForState(lesson2State);
+    const sequence = getSequenceForState(lesson3State);
     if (sequence.length > 0) {
         keysToDisplay = sequence;
-        activeIndex = lesson2SequenceIndex;
-        highlightedKey = sequence[lesson2SequenceIndex];
+        activeIndex = lesson3SequenceIndex;
+        highlightedKey = sequence[lesson3SequenceIndex];
     }
 
-    if (lesson2State === 0) instructionText = lessons[2].instruction;
-    if (lesson2State === 11) instructionText = 'Hebat! Pelajaran F dan J selesai!';
+    if (lesson3State === 0) instructionText = lessons[2].instruction;
+    if (lesson3State === 11) instructionText = 'Hebat! Pelajaran F dan J selesai!';
     
     updateInstructionText(lessonInstruction, instructionText);
 
-    if (lesson2State % 2 !== 0 && lesson2State < 12) {
+    if (lesson3State % 2 !== 0 && lesson3State < 12) {
         handleTransitionState();
-    } else if (lesson2State < 12) {
+    } else if (lesson3State < 12) {
         handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex, isCorrect);
     } else {
         cleanupLesson3Elements(lessonInstruction);
@@ -94,8 +94,10 @@ function handleTransitionState() {
 function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
     if (!lesson3SequenceContainer || !lesson3UnderlineContainer) return;
 
-    const requiresRebuild = lesson3SequenceContainer.children.length === 0 || keysToDisplay.join('') !== Array.from(lesson3SequenceContainer.children).map(el => el.textContent).join('');
-
+    // LOGIKA PERBAIKAN BUG DI SINI
+    const currentDisplayedSequence = Array.from(lesson3SequenceContainer.children).map(el => el.textContent === '\u00A0' ? ' ' : el.textContent).join('');
+    const requiresRebuild = lesson3SequenceContainer.children.length === 0 || keysToDisplay.join('') !== currentDisplayedSequence;
+    
     if (requiresRebuild) {
         lesson3SequenceContainer.innerHTML = '';
         lesson3UnderlineContainer.innerHTML = '';
@@ -143,17 +145,18 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
     }
 }
 
+// FUNGSI INI SUDAH DIPERBAIKI UNTUK BUG WARNA TIDAK LENGKET
 function applyFeedback(feedbackIndex, isCorrect) {
     if (feedbackIndex < 0 || isCorrect === null || !lesson3SequenceContainer) return;
 
     const keyElements = Array.from(lesson3SequenceContainer.children);
     if (keyElements[feedbackIndex]) {
-        keyElements[feedbackIndex].classList.remove('completed-correct', 'input-incorrect');
-
         if (isCorrect) {
             keyElements[feedbackIndex].classList.add('completed-correct');
+            keyElements[feedbackIndex].classList.remove('input-incorrect');
         } else {
             keyElements[feedbackIndex].classList.add('input-incorrect');
+            keyElements[feedbackIndex].classList.remove('completed-correct');
             setTimeout(() => {
                 if (keyElements[feedbackIndex]) {
                     keyElements[feedbackIndex].classList.remove('input-incorrect');
@@ -189,27 +192,27 @@ export function handleLesson3Input({ e, doRenderAndHighlight, dispatchLesson3Fin
 
     let isCorrect = false;
     let feedbackIndex = -1;
-    let lesson2State = getState('lesson2State');
-    let lesson2SequenceIndex = getState('lesson2SequenceIndex');
+    let lesson3State = getState('lesson3State');
+    let lesson3SequenceIndex = getState('lesson3SequenceIndex');
 
-    if (lesson2State % 2 === 0 && lesson2State < 12) {
-        const sequence = getSequenceForState(lesson2State);
-        const expectedKey = sequence[lesson2SequenceIndex];
+    if (lesson3State % 2 === 0 && lesson3State < 12) {
+        const sequence = getSequenceForState(lesson3State);
+        const expectedKey = sequence[lesson3SequenceIndex];
 
         if (e.key.toLowerCase() === expectedKey) {
             isCorrect = true;
-            feedbackIndex = lesson2SequenceIndex;
-            updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1);
-            lesson2SequenceIndex = getState('lesson2SequenceIndex');
+            feedbackIndex = lesson3SequenceIndex;
+            updateState('lesson3SequenceIndex', lesson3SequenceIndex + 1);
+            lesson3SequenceIndex = getState('lesson3SequenceIndex');
 
-            if (lesson2SequenceIndex >= sequence.length) {
-                updateState('lesson2SequenceIndex', 0);
-                updateState('lesson2State', lesson2State + 1);
+            if (lesson3SequenceIndex >= sequence.length) {
+                updateState('lesson3SequenceIndex', 0);
+                updateState('lesson3State', lesson3State + 1);
                 doRenderAndHighlight(feedbackIndex, isCorrect);
 
                 setTimeout(() => {
-                    updateState('lesson2State', getState('lesson2State') + 1);
-                    if (getState('lesson2State') >= 12) {
+                    updateState('lesson3State', getState('lesson3State') + 1);
+                    if (getState('lesson3State') >= 12) {
                         dispatchLesson3FinishedEvent(new Event('lesson3-finished'));
                     } else {
                         doRenderAndHighlight();
@@ -219,7 +222,7 @@ export function handleLesson3Input({ e, doRenderAndHighlight, dispatchLesson3Fin
                 doRenderAndHighlight(feedbackIndex, isCorrect);
             }
         } else {
-            feedbackIndex = lesson2SequenceIndex;
+            feedbackIndex = lesson3SequenceIndex;
             isCorrect = false;
             doRenderAndHighlight(feedbackIndex, isCorrect);
 

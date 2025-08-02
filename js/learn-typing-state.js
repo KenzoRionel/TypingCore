@@ -1,9 +1,7 @@
-// learn-typing-state.js (DIUPDATE)
+// learn-typing-state.js
+import { getDOMReferences } from './dom-elements.js';
 
-import { getDOMReferences } from './dom-elements.js'; // Import fungsi baru ini
-
-// Deklarasikan variabel state di top-level scope agar bisa diakses oleh semua fungsi di modul ini
-let hiddenInput = null; // Inisialisasi null dulu
+let hiddenInput = null;
 let currentLessonIndex = 0;
 let currentStepIndex = 0;
 let currentCharIndex = 0;
@@ -11,19 +9,20 @@ let waitingForAnim = { value: false };
 let lesson2Finished = false;
 let lesson2State = 0;
 let lesson2SequenceIndex = 0;
+let lesson3Finished = false; // BARIS BARU
+let lesson3State = 0; // BARIS BARU
+let lesson3SequenceIndex = 0; // BARIS BARU
 
 export function initDOMAndState() {
-    // Panggil fungsi dari dom-elements.js untuk mendapatkan semua referensi DOM
     const domReferences = getDOMReferences();
 
     if (domReferences) {
-        hiddenInput = domReferences.hiddenInput; // Simpan referensi hiddenInput ke variabel top-level
-        return domReferences; // Kembalikan semua referensi DOM
+        hiddenInput = domReferences.hiddenInput;
+        return domReferences;
     }
-    return null; // Jika ada masalah dengan DOM, kembalikan null
+    return null;
 }
 
-// Fungsi untuk memperbarui nilai state dari luar
 export function updateState(key, value) {
     switch (key) {
         case 'currentLessonIndex':
@@ -47,12 +46,20 @@ export function updateState(key, value) {
         case 'lesson2SequenceIndex':
             lesson2SequenceIndex = value;
             break;
+        case 'lesson3Finished': // BARIS BARU
+            lesson3Finished = value;
+            break;
+        case 'lesson3State': // BARIS BARU
+            lesson3State = value;
+            break;
+        case 'lesson3SequenceIndex': // BARIS BARU
+            lesson3SequenceIndex = value;
+            break;
         default:
             console.warn(`Attempted to update unknown state key: ${key}`);
     }
 }
 
-// Fungsi untuk mendapatkan nilai state dari luar
 export function getState(key) {
     switch (key) {
         case 'currentLessonIndex':
@@ -69,14 +76,18 @@ export function getState(key) {
             return lesson2State;
         case 'lesson2SequenceIndex':
             return lesson2SequenceIndex;
+        case 'lesson3Finished': // BARIS BARU
+            return lesson3Finished;
+        case 'lesson3State': // BARIS BARU
+            return lesson3State;
+        case 'lesson3SequenceIndex': // BARIS BARU
+            return lesson3SequenceIndex;
         default:
             console.warn(`Attempted to get unknown state key: ${key}`);
             return undefined;
     }
 }
 
-// Fungsi ini tetap ada untuk memberikan akses ke hiddenInput dari luar,
-// karena hiddenInput sekarang diinisialisasi melalui getDOMReferences()
 export function getHiddenInput() {
     return hiddenInput;
 }

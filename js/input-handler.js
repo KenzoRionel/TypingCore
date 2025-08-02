@@ -99,8 +99,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             lessonInstructionEl: lessonInstruction,
         });
         preventDefault = false;
-    } 
-    else if (currentLessonIndex === 2) { // BARIS BARU UNTUK PELAJARAN 3
+    } else if (currentLessonIndex === 2) {
         handleLesson3Input({
             e,
             doRenderAndHighlight: doRenderAndHighlight,
@@ -108,8 +107,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             lessonInstructionEl: lessonInstruction,
         });
         preventDefault = false;
-    }
-    else {
+    } else {
         if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
             console.warn("Pelajaran tidak valid atau sudah selesai. Mengabaikan input.");
             e.preventDefault();
