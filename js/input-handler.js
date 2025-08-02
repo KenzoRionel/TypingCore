@@ -89,7 +89,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         } else {
             preventDefault = false;
         }
-    } else if (currentLessonIndex === 1) {
+    } else if (currentLessonIndex === 1 || currentLessonIndex === 2) {
         handleLesson2Input({
             e,
             doRenderAndHighlight: doRenderAndHighlight,

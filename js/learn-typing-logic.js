@@ -159,7 +159,7 @@ export function renderLesson({
                 highlightKeyOnKeyboard(keyboardContainer, null);
             }
         }
-    } else if (currentLessonIndex === 1) {
+    } else if (currentLessonIndex === 1 || currentLessonIndex === 2) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
         renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
     } else {

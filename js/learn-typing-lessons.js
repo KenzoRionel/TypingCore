@@ -19,5 +19,10 @@ export const lessons = [
         instruction: 'Tekan tombol "f" dan "j" secara bergantian sesuai urutan di bawah ini.',
         preview: ['f', 'j']
     },
+    {
+        title: "Pelajaran 3: Latihan Kata F dan J Lanjutan",
+        instruction: 'Teruslah berlatih! Ketik tombol "f" dan "j" secara bergantian sesuai urutan di bawah ini.',
+        preview: ['f', 'j']
+    }
     // Tambahkan lesson berikutnya di sini
 ];
