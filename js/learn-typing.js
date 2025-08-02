@@ -9,6 +9,7 @@ import {
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
 import { handleKeyboardInput } from './input-handler.js';
+import { handleLesson3Input } from './lesson3-logic.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const {

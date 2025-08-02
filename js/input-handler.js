@@ -5,6 +5,7 @@ import {
     showLessonCompleteNotification
 } from './learn-typing-logic.js';
 import { handleLesson2Input } from './lesson2-logic.js';
+import { handleLesson3Input } from './lesson3-logic.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput } = domElements; 
@@ -14,6 +15,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const currentCharIndex = getState('currentCharIndex');
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
+    const lesson3Finished = getState('lesson3Finished');
     
     // PERBAIKAN: Tangani event "Enter" secara terpisah saat notifikasi aktif
     // Ini harus dieksekusi sebelum pengecekan "waitingForAnim"
@@ -30,7 +32,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     }
     
     // Pengecekan status aplikasi, harus di bawah pengecekan "Enter"
-    if (waitingForAnim.value || lesson2Finished) {
+    if (waitingForAnim.value || lesson2Finished || lesson3Finished) {
         e.preventDefault();
         console.log('Aplikasi sedang dalam transisi atau Pelajaran 2 selesai. Input diabaikan.');
         return;
@@ -89,7 +91,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         } else {
             preventDefault = false;
         }
-    } else if (currentLessonIndex === 1 || currentLessonIndex === 2) {
+    } else if (currentLessonIndex === 1) {
         handleLesson2Input({
             e,
             doRenderAndHighlight: doRenderAndHighlight,
@@ -97,7 +99,17 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             lessonInstructionEl: lessonInstruction,
         });
         preventDefault = false;
-    } else {
+    } 
+    else if (currentLessonIndex === 2) { // BARIS BARU UNTUK PELAJARAN 3
+        handleLesson3Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson3FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+        });
+        preventDefault = false;
+    }
+    else {
         if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
             console.warn("Pelajaran tidak valid atau sudah selesai. Mengabaikan input.");
             e.preventDefault();

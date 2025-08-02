@@ -7,6 +7,10 @@ import {
     renderLesson2,
     cleanupLesson2Elements,
 } from './lesson2-logic.js';
+import {
+    renderLesson3, // BARIS BARU
+    cleanupLesson3Elements, // BARIS BARU
+} from './lesson3-logic.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 
 let currentHighlightedKeyElement = null;
@@ -159,9 +163,12 @@ export function renderLesson({
                 highlightKeyOnKeyboard(keyboardContainer, null);
             }
         }
-    } else if (currentLessonIndex === 1 || currentLessonIndex === 2) {
+    } else if (currentLessonIndex === 1) { 
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
         renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
+    } else if (currentLessonIndex === 2) { 
+        if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+        renderLesson3(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
     } else {
         cleanupLesson2Elements(lessonInstruction);
         renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
