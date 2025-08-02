@@ -1,5 +1,4 @@
-// learn-typing-logic.js (DIUPDATE)
-
+// js/learn-typing-logic.js
 import { lessons } from './learn-typing-lessons.js';
 import { updateUnderlineStatus } from './underline-logic.js';
 import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
@@ -7,14 +6,11 @@ import {
     getSequenceForState,
     renderLesson2,
     cleanupLesson2Elements,
-    // handleLesson2Input tidak digunakan langsung di sini, tapi di input-handler.js
 } from './lesson2-logic.js';
-// Import fungsi progress bar dari file baru
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 
 let currentHighlightedKeyElement = null;
 
-// --- FUNGSI RESET STATE PELAJARAN 2 ---
 export function resetLesson2State(keyboardContainer) {
     updateState('lesson2State', 0);
     updateState('lesson2SequenceIndex', 0);
@@ -25,18 +21,17 @@ export function resetLesson2State(keyboardContainer) {
         const highlightedKeys = keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key');
         highlightedKeys.forEach(key => {
             key.classList.remove('next-key', 'correct-key', 'wrong-key');
-            key.style.animation = ''; // Pastikan animasi direset
+            key.style.animation = '';
         });
     }
 
     if (currentHighlightedKeyElement) {
         currentHighlightedKeyElement.classList.remove('next-key');
-        currentHighlightedKeyElement.style.animation = ''; // Pastikan animasi direset
+        currentHighlightedKeyElement.style.animation = '';
         currentHighlightedKeyElement = null;
     }
 }
 
-// --- FUNGSI UTILITY KEYBOARD ---
 export function createKeyboard(keyboardContainer, keyLayout) {
     if (!keyboardContainer) {
         console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
@@ -49,9 +44,6 @@ export function createKeyboard(keyboardContainer, keyLayout) {
         rowElement.classList.add('keyboard-row');
         row.forEach(key => {
             if (key === '') {
-                const spacer = document.createElement('div');
-                spacer.classList.add('key-spacer');
-                rowElement.appendChild(spacer);
                 return;
             }
             const keyElement = document.createElement('div');
@@ -59,22 +51,26 @@ export function createKeyboard(keyboardContainer, keyLayout) {
             let lowerKey = key.toLowerCase();
             let displayKey = key;
 
-            // Handle special keys for display
             if (key === 'ShiftLeft' || key === 'ShiftRight') displayKey = 'Shift';
             if (key === 'ControlLeft' || key === 'ControlRight') displayKey = 'Ctrl';
             if (key === 'AltLeft' || key === 'AltRight') displayKey = 'Alt';
             if (key === 'MetaLeft' || key === 'MetaRight') displayKey = 'Win';
             if (key === 'ContextMenu') displayKey = 'Menu';
             if (key === 'Space') {
-                displayKey = ''; // Space bar usually doesn't show text
-                lowerKey = ' '; // Data key for space is a single space character
+                displayKey = '';
+                lowerKey = ' ';
             }
 
             keyElement.textContent = displayKey;
             keyElement.setAttribute('data-key', lowerKey);
 
-            // Add specific classes for styling
-            if (['Backspace', 'Tab', 'CapsLock', 'Enter', 'ShiftLeft', 'ShiftRight'].includes(key)) {
+            if (['ShiftLeft', 'ShiftRight'].includes(key)) {
+                keyElement.classList.add('key-wide');
+            }
+            if (['Tab'].includes(key)) {
+                keyElement.classList.add('key-tab');
+            }
+            if (['CapsLock', 'Backspace', 'Enter'].includes(key)) {
                 keyElement.classList.add('key-medium');
             }
             if (key === 'Space') {
@@ -93,12 +89,12 @@ function clearKeyboardHighlights(keyboardContainer) {
     if (!keyboardContainer) return;
     keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key').forEach(el => {
         el.classList.remove('next-key', 'correct-key', 'wrong-key');
-        el.style.animation = ''; // Pastikan semua animasi dihapus
+        el.style.animation = '';
     });
     if (currentHighlightedKeyElement) {
-        currentHighlightedKeyElement.style.animation = ''; // Clear animation if still active
+        currentHighlightedKeyElement.style.animation = '';
     }
-    currentHighlightedKeyElement = null; // Reset the reference
+    currentHighlightedKeyElement = null;
 }
 
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
@@ -107,14 +103,12 @@ export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
         return;
     }
 
-    // Always clear previous highlight before applying new one
-    clearKeyboardHighlights(keyboardContainer); // Call the dedicated function
+    clearKeyboardHighlights(keyboardContainer);
 
     if (typeof keyChar === 'string' && keyChar.length > 0) {
         const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
         if (targetKeyElement) {
             targetKeyElement.classList.add('next-key');
-            // Force reflow to restart animation if element already has class
             void targetKeyElement.offsetWidth; 
             targetKeyElement.style.animation = 'highlight-move 0.6s ease-out infinite';
             currentHighlightedKeyElement = targetKeyElement;
@@ -123,13 +117,12 @@ export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
 }
 
 
-// --- FUNGSI UTAMA RENDER PELAJARAN ---
 export function renderLesson({
     lessons,
     currentLessonIndex,
     currentStepIndex,
     currentCharIndex,
-    waitingForAnim, // Pastikan ini hanya diisi dengan true/false, bukan objek Ref
+    waitingForAnim,
     keyboardContainer,
     lessonTitle,
     lessonInstruction,
@@ -145,14 +138,14 @@ export function renderLesson({
     const lesson = lessons[currentLessonIndex];
     if (lessonTitle) lessonTitle.textContent = lesson.title;
 
-    clearKeyboardHighlights(keyboardContainer); // Bersihkan highlight setiap render
+    clearKeyboardHighlights(keyboardContainer);
 
     const lesson2State = getState('lesson2State');
     const lesson2SequenceIndex = getState('lesson2SequenceIndex');
 
-    if (currentLessonIndex === 0) { // Pelajaran 1: F dan J
+    if (currentLessonIndex === 0) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-        cleanupLesson2Elements(lessonInstruction); // Pastikan elemen pelajaran 2 dibersihkan
+        cleanupLesson2Elements(lessonInstruction);
 
         if (lessonInstruction) {
             if (currentStepIndex === 0) {
@@ -162,33 +155,29 @@ export function renderLesson({
                 lessonInstruction.innerHTML = lesson.steps[1].instruction;
                 highlightKeyOnKeyboard(keyboardContainer, 'j');
             } else if (currentStepIndex === 2) {
-                // Ini adalah state setelah F dan J berhasil diketik
-                lessonInstruction.textContent = 'Pelajaran 1 Selesai! Klik "Lanjutkan" untuk ke pelajaran berikutnya.';
-                highlightKeyOnKeyboard(keyboardContainer, null); // Hapus highlight keyboard
+                lessonInstruction.textContent = 'GOOD JOB! Klik "Lanjutkan" untuk ke pelajaran berikutnya.';
+                highlightKeyOnKeyboard(keyboardContainer, null);
             }
         }
-    } else if (currentLessonIndex === 1) { // Pelajaran 2
+    } else if (currentLessonIndex === 1) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
         renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
-    } else { // Pelajaran lainnya (umum)
-        cleanupLesson2Elements(lessonInstruction); // Pastikan elemen pelajaran 2 dibersihkan
+    } else {
+        cleanupLesson2Elements(lessonInstruction);
         renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
     }
 
-    // Panggil fungsi calculateLessonProgress dari progress-bar.js
     const progress = calculateLessonProgress(
         currentLessonIndex,
         currentStepIndex,
         currentCharIndex,
         lesson2State,
         lesson2SequenceIndex,
-        lessons[currentLessonIndex] // Berikan objek pelajaran saat ini
+        lessons[currentLessonIndex]
     );
-    // Panggil fungsi updateProgressBar dari progress-bar.js
     updateProgressBar(progress);
 }
 
-// --- FUNGSI UNTUK MENAMPILKAN MODAL PENYELESAIAN PELAJARAN ---
 export function showLessonCompleteNotification(lessons, currentLessonIdx, domElements) {
     const {
         lessonHeader,
@@ -197,15 +186,15 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         keyboardContainer,
         nextLessonPreview,
         successAnimationSvg,
-        circlePath
+        prevLessonBtn,
+        nextLessonBtn,
+        hiddenInput
     } = domElements;
 
-    // Tambahkan baris ini untuk menyembunyikan header pelajaran
     if (lessonHeader) {
         lessonHeader.style.display = 'none';
     }
 
-    // Sembunyikan keyboard virtual
     if (keyboardContainer) {
         keyboardContainer.style.display = 'none';
         const keys = keyboardContainer.querySelectorAll('.key');
@@ -215,29 +204,27 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         });
     }
 
+    if (prevLessonBtn) prevLessonBtn.style.display = 'none';
+    if (nextLessonBtn) nextLessonBtn.style.display = 'none';
+
     if (lessonCompleteNotification) {
         const currentLesson = lessons[currentLessonIdx];
 
-        // Ganti judul notifikasi
         const h2 = lessonCompleteNotification.querySelector('h2');
         if (h2) {
             h2.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
         }
         
-        // Reset dan jalankan animasi SVG
-        if (successAnimationSvg && circlePath) {
+        if (successAnimationSvg) {
             successAnimationSvg.classList.remove('animate-circle', 'animate-check');
-            // Pastikan animasi di-reset dengan memaksa browser untuk merender ulang
             void successAnimationSvg.offsetWidth; 
             successAnimationSvg.classList.add('animate-circle');
             
-            // Gunakan setTimeout untuk memulai animasi ceklis setelah animasi lingkaran selesai
             setTimeout(() => {
                 successAnimationSvg.classList.add('animate-check');
-            }, 1000); // Durasi animasi lingkaran di CSS adalah 1 detik (1000ms)
+            }, 1000);
         }
 
-        // Tampilkan pratinjau pelajaran berikutnya
         if (nextLessonPreview) {
             const nextLessonIndex = currentLessonIdx + 1;
             if (nextLessonIndex < lessons.length) {
@@ -260,6 +247,8 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         lessonCompleteNotification.style.display = 'flex';
         setTimeout(() => {
             lessonCompleteNotification.classList.add('active');
+            // PERBAIKAN: Fokus pada hiddenInput dihapus dari sini
+            // dan akan ditangani oleh event listener "continueBtn" di learn-typing.js
             if (continueBtn) {
                 continueBtn.focus();
             } else {
@@ -274,15 +263,14 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
 function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer) {
     if (!lessonTextDisplay || !lessonInstruction) return;
 
-    lessonTextDisplay.style.display = ''; // Pastikan display text lessons terlihat
-    lessonInstruction.textContent = lesson.instruction || ''; // Set instruksi pelajaran
+    lessonTextDisplay.style.display = '';
+    lessonInstruction.textContent = lesson.instruction || '';
 
-    lessonTextDisplay.innerHTML = ''; // Kosongkan tampilan teks pelajaran
+    lessonTextDisplay.innerHTML = '';
 
     if (lesson.sequence && lesson.sequence.length > 0) {
         lesson.sequence.forEach((char, idx) => {
             const span = document.createElement('span');
-            // Untuk spasi, gunakan non-breaking space agar terlihat
             span.textContent = char === ' ' ? '\u00A0' : char; 
             if (idx < currentCharIndex) {
                 span.classList.add('correct');
@@ -291,11 +279,10 @@ function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonI
             }
             lessonTextDisplay.appendChild(span);
         });
-        // Highlight karakter berikutnya yang harus diketik
         if (currentCharIndex < lesson.sequence.length) {
             highlightKeyOnKeyboard(keyboardContainer, lesson.sequence[currentCharIndex]);
         } else {
-            highlightKeyOnKeyboard(keyboardContainer, null); // Hapus highlight jika pelajaran selesai
+            highlightKeyOnKeyboard(keyboardContainer, null);
         }
     }
 }

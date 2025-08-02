@@ -15,8 +15,9 @@ export const lessons = [
         preview: ['f', 'j']
     },
     {
-        title: "",
-        preview: ['f', 'j'] // Preview masih bisa berguna untuk menampilkan di daftar pelajaran
+        title: "Pelajaran 2: Huruf F dan J",
+        instruction: 'Tekan tombol "f" dan "j" secara bergantian sesuai urutan di bawah ini.',
+        preview: ['f', 'j']
     },
     // Tambahkan lesson berikutnya di sini
 ];

@@ -1,5 +1,4 @@
-// input-handler.js (PERBAIKAN LENGKAP)
-
+// input-handler.js
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import {
@@ -8,17 +7,39 @@ import {
 import { handleLesson2Input } from './lesson2-logic.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
-    const { lessonInstruction, lessonCompleteNotification, continueBtn } = domElements; 
+    const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput } = domElements; 
 
     const currentLessonIndex = getState('currentLessonIndex');
     const currentStepIndex = getState('currentStepIndex');
     const currentCharIndex = getState('currentCharIndex');
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
-
-    if ((lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) || waitingForAnim.value || lesson2Finished) {
+    
+    // PERBAIKAN: Tangani event "Enter" secara terpisah saat notifikasi aktif
+    // Ini harus dieksekusi sebelum pengecekan "waitingForAnim"
+    if (lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) {
+        console.log('Notifikasi aktif, mengecek tombol Enter.');
+        if (e.key === 'Enter') {
+            console.log('Enter ditekan, memicu klik pada tombol Lanjutkan.');
+            e.preventDefault(); // Mencegah perilaku default Enter
+            if (continueBtn) {
+                continueBtn.click(); // Simulasikan klik pada tombol "Lanjutkan"
+            }
+            return; // Hentikan eksekusi lebih lanjut
+        }
+    }
+    
+    // Pengecekan status aplikasi, harus di bawah pengecekan "Enter"
+    if (waitingForAnim.value || lesson2Finished) {
         e.preventDefault();
+        console.log('Aplikasi sedang dalam transisi atau Pelajaran 2 selesai. Input diabaikan.');
         return;
+    }
+    
+    // Pastikan hiddenInput terlihat untuk Pelajaran 2
+    if (hiddenInput && hiddenInput.style.display === 'none') {
+        hiddenInput.style.display = '';
+        setTimeout(() => hiddenInput.focus(), 0);
     }
 
     const currentLesson = lessons[currentLessonIndex];
@@ -51,14 +72,12 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
                     updateState('waitingForAnim', false);
                     updateState('currentStepIndex', 2);
                     doRenderAndHighlight();
-                    // PERBAIKAN: Memanggil fungsi dengan parameter yang benar
                     showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
                 }, 300);
             } else {
                 updateState('waitingForAnim', false);
                 updateState('currentStepIndex', 2);
                 doRenderAndHighlight();
-                // PERBAIKAN: Memanggil fungsi dengan parameter yang benar
                 showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
             }
         } else if (e.key.length === 1) {
@@ -101,7 +120,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         }
 
         if (getState('currentCharIndex') >= currentLesson.sequence.length) {
-            // PERBAIKAN: Memanggil fungsi dengan parameter yang benar
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         }
         doRenderAndHighlight();

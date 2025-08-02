@@ -1,18 +1,16 @@
-// learn-typing.js (DIUPDATE)
-
+// js/learn-typing.js
 import { lessons } from './learn-typing-lessons.js';
 import {
     createKeyboard,
     renderLesson,
     resetLesson2State,
-    showLessonCompleteNotification // UBAH IMPORT DARI showLessonCompleteModal
+    showLessonCompleteNotification
 } from './learn-typing-logic.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
 import { handleKeyboardInput } from './input-handler.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // TAMBAH: Destructuring semua elemen baru dari initDOMAndState
     const {
         keyboardContainer,
         lessonHeader,
@@ -27,19 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar,
         progressText,
         thumbAnimationContainer,
-        successAnimationSvg, 
-        circlePath,          
-        checkPath,           
+        successAnimationSvg,
+        circlePath,
+        checkPath,
         hiddenInput,
     } = initDOMAndState();
 
-    // Verifikasi penting: Pastikan semua elemen kunci ada
     if (!keyboardContainer || !lessonCompleteNotification) {
         console.error("ERROR: Elemen DOM kunci (keyboard atau notifikasi) tidak ditemukan. Aplikasi tidak dapat berjalan.");
         return;
     }
 
-    // Buat objek domElements yang lengkap
     const domElements = {
         keyboardContainer,
         lessonHeader,
@@ -54,20 +50,18 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar,
         progressText,
         thumbAnimationContainer,
-        successAnimationSvg, 
-        circlePath,          
-        checkPath,           
+        successAnimationSvg,
+        circlePath,
+        checkPath,
         hiddenInput,
     };
 
-    // Fungsi utama untuk merender pelajaran dan memfokuskan hiddenInput
     function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
         const currentLessonIndex = getState('currentLessonIndex');
         const currentStepIndex = getState('currentStepIndex');
         const currentCharIndex = getState('currentCharIndex');
         const waitingForAnim = getState('waitingForAnim');
 
-        // PASTIKAN NOTIFIKASI DISEMBUNYIKAN SAAT MERENDER PELAJARAN BARU
         if (lessonCompleteNotification) {
             lessonCompleteNotification.classList.remove('active');
             lessonCompleteNotification.style.display = 'none';
@@ -75,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (keyboardContainer) {
             keyboardContainer.style.display = '';
         }
-
+        
         renderLesson({
             lessons,
             currentLessonIndex,
@@ -89,13 +83,13 @@ document.addEventListener('DOMContentLoaded', () => {
             feedbackIndex,
             isCorrect
         });
+
         const input = getHiddenInput();
-        if (input) {
+        if (input && !lessonCompleteNotification.classList.contains('active')) {
             setTimeout(() => input.focus(), 0);
         }
     }
 
-    // Fungsi untuk mereset state pelajaran saat ini
     function resetCurrentLessonState() {
         updateState('currentCharIndex', 0);
         updateState('currentStepIndex', 0);
@@ -103,34 +97,39 @@ document.addEventListener('DOMContentLoaded', () => {
         updateState('lesson2Finished', false);
         resetLesson2State(keyboardContainer);
     }
-
-    // 4. EVENT LISTENERS UTAMA
+    
+    function goToNextLesson() {
+        let currentLessonIndex = getState('currentLessonIndex');
+        if (currentLessonIndex < lessons.length - 1) {
+            updateState('currentLessonIndex', currentLessonIndex + 1);
+            resetCurrentLessonState();
+            doRenderLessonAndFocus();
+        } else {
+            console.log("Semua pelajaran selesai!");
+        }
+    }
+    
     window.addEventListener('focus', () => {
         const input = getHiddenInput();
-        if (input && (!lessonCompleteNotification || !lessonCompleteNotification.classList.contains('active'))) {
-            setTimeout(() => {
-                if (document.activeElement !== input) {
-                    input.focus();
-                }
-            }, 10);
+        if (input && !lessonCompleteNotification.classList.contains('active')) {
+            if (document.activeElement !== input) {
+                input.focus();
+            }
         }
     });
 
     document.addEventListener('mousedown', (e) => {
         const clickedElement = e.target;
-        const isDirectlyNavigationButton = clickedElement.tagName === 'BUTTON' && clickedElement.closest('.navigation-buttons');
-        const isNotificationActive = clickedElement.closest('.lesson-complete-notification') && lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
+        const isNavigationButton = clickedElement.closest('.navigation-buttons') !== null;
+        const isNotificationActive = lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
 
-        const isUIElementThatShouldKeepFocus = isDirectlyNavigationButton || isNotificationActive;
-        const input = getHiddenInput();
-
-        if (!isUIElementThatShouldKeepFocus) {
-            if (input) {
+        // PERBAIKAN: Pastikan klik bukan di dalam keyboard atau tombol navigasi dan notifikasi tidak aktif
+        if (!isNotificationActive && !isNavigationButton && clickedElement.closest('#virtual-keyboard') === null) {
+            const input = getHiddenInput();
+            if (input && document.activeElement !== input) {
                 setTimeout(() => {
-                    if (document.activeElement !== input) {
-                        input.focus();
-                    }
-                }, 0);
+                    input.focus();
+                }, 10);
             }
         }
     });
@@ -142,23 +141,12 @@ document.addEventListener('DOMContentLoaded', () => {
             resetCurrentLessonState();
             doRenderLessonAndFocus();
         }
-        const input = getHiddenInput();
-        if (input) {
-            setTimeout(() => input.focus(), 0);
-        }
     });
 
     nextLessonBtn.addEventListener('click', () => {
-        let currentLessonIndex = getState('currentLessonIndex');
-        if (currentLessonIndex < lessons.length - 1) {
-            updateState('currentLessonIndex', currentLessonIndex + 1);
-            resetCurrentLessonState();
-            doRenderLessonAndFocus();
-        }
-        const input = getHiddenInput();
-        if (input) {
-            setTimeout(() => input.focus(), 0);
-        }
+        setTimeout(() => {
+            goToNextLesson();
+        }, 50);
     });
 
     continueBtn.addEventListener('click', () => {
@@ -166,23 +154,21 @@ document.addEventListener('DOMContentLoaded', () => {
             lessonCompleteNotification.classList.remove('active');
             setTimeout(() => {
                 lessonCompleteNotification.style.display = 'none';
-                // Tambahkan baris ini untuk menampilkan kembali header pelajaran
                 if (domElements.lessonHeader) {
                     domElements.lessonHeader.style.display = '';
                 }
+                
+                if (domElements.prevLessonBtn) domElements.prevLessonBtn.style.display = '';
+                if (domElements.nextLessonBtn) domElements.nextLessonBtn.style.display = '';
+                
+                const input = getHiddenInput();
+                if (input) {
+                    input.style.display = '';
+                    input.focus();
+                }
+
+                goToNextLesson();
             }, 500);
-        }
-        let currentLessonIndex = getState('currentLessonIndex');
-        if (currentLessonIndex < lessons.length - 1) {
-            updateState('currentLessonIndex', currentLessonIndex + 1);
-            resetCurrentLessonState();
-            doRenderLessonAndFocus();
-        } else {
-            console.log("Semua pelajaran selesai!");
-        }
-        const input = getHiddenInput();
-        if (input) {
-            setTimeout(() => input.focus(), 0);
         }
     });
 
