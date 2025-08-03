@@ -12,6 +12,7 @@ import {
     cleanupLesson3Elements,
 } from './lesson3-logic.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
+import { updateHandVisualizer } from './hand-visualizer.js';
 
 let currentHighlightedKeyElement = null;
 
@@ -123,23 +124,28 @@ function clearKeyboardHighlights(keyboardContainer) {
     currentHighlightedKeyElement = null;
 }
 
+// FUNGSI INI SUDAH DIPERBAIKI
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
-    if (!keyboardContainer) {
-        console.warn("highlightKeyOnKeyboard: keyboardContainer is null or undefined. Cannot highlight.");
-        return;
-    }
+    if (!keyboardContainer) {
+        console.warn("highlightKeyOnKeyboard: keyboardContainer is null or undefined. Cannot highlight.");
+        return;
+    }
 
-    clearKeyboardHighlights(keyboardContainer);
-
-    if (typeof keyChar === 'string' && keyChar.length > 0) {
-        const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
-        if (targetKeyElement) {
-            targetKeyElement.classList.add('next-key');
-            void targetKeyElement.offsetWidth; 
-            targetKeyElement.style.animation = 'highlight-move 0.6s ease-out infinite';
-            currentHighlightedKeyElement = targetKeyElement;
-        }
-    }
+    // --- LOGIKA PENYOROTAN TOMBOL ---
+    clearKeyboardHighlights(keyboardContainer);
+    if (typeof keyChar === 'string' && keyChar.length > 0) {
+        const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
+        if (targetKeyElement) {
+            targetKeyElement.classList.add('next-key');
+            void targetKeyElement.offsetWidth;
+            targetKeyElement.style.animation = 'highlight-move 0.6s ease-out infinite';
+            currentHighlightedKeyElement = targetKeyElement;
+        }
+    }
+    
+    // --- MEMANGGIL FUNGSI DARI FILE BARU UNTUK MENGATUR POSISI TANGAN ---
+    // Logika gambar tangan yang lama sudah dihapus dari sini.
+    updateHandVisualizer(keyboardContainer, keyChar);
 }
 
 

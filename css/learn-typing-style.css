@@ -538,3 +538,26 @@
     min-width: 40px;
     text-align: center;
 }
+
+/* Di file CSS */
+#hand-visualizer-container {
+position: relative;
+height: 100px; /* Sesuaikan tinggi sesuai ukuran gambar */
+width: 100%;
+margin-bottom: 20px;
+}
+
+.hand-image {
+position: absolute;
+top: 50%;
+left: 38%;
+transform: translate(-80%, 100%);
+width: 20%;
+height: auto;
+opacity: 0; /* Sembunyikan secara default */
+transition: opacity 0.3s ease-in-out;
+}
+
+.hand-image.active {
+opacity: 1; /* Tampilkan saat aktif */
+}

@@ -5,7 +5,8 @@ import {
     renderLesson,
     resetLesson2State,
     resetLesson3State, // DITAMBAHKAN
-    showLessonCompleteNotification
+    showLessonCompleteNotification,
+    highlightKeyOnKeyboard // DITAMBAHKAN AGAR BISA DIPAKAI DI LUAR
 } from './learn-typing-logic.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
@@ -202,4 +203,23 @@ document.addEventListener('DOMContentLoaded', () => {
     createKeyboard(keyboardContainer, keyLayout);
     resetCurrentLessonState();
     doRenderLessonAndFocus();
+
+    // --- KODE BARU UNTUK UPDATE POSISI TANGAN SAAT LAYAR DIUBAH UKURANNYA ---
+    window.addEventListener('resize', () => {
+        const currentLessonIndex = getState('currentLessonIndex');
+        const lesson = lessons[currentLessonIndex];
+        let keyCharToHighlight = null;
+        
+        // Tentukan karakter yang harus disorot berdasarkan pelajaran saat ini
+        if (lesson && lesson.sequence && lesson.sequence.length > 0) {
+            const currentCharIndex = getState('currentCharIndex');
+            if (currentCharIndex < lesson.sequence.length) {
+                keyCharToHighlight = lesson.sequence[currentCharIndex];
+            }
+        }
+        
+        // Panggil fungsi penyorotan untuk memperbarui posisi tangan
+        highlightKeyOnKeyboard(keyboardContainer, keyCharToHighlight);
+    });
+    // --- AKHIR KODE BARU ---
 });
