@@ -4,9 +4,9 @@ import {
     createKeyboard,
     renderLesson,
     resetLesson2State,
-    resetLesson3State, // DITAMBAHKAN
+    resetLesson3State,
     showLessonCompleteNotification,
-    highlightKeyOnKeyboard // DITAMBAHKAN AGAR BISA DIPAKAI DI LUAR
+    highlightKeyOnKeyboard,
 } from './learn-typing-logic.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
@@ -93,16 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // FUNGSI INI DIUBAH AGAR BISA MERESET STATE SEMUA PELAJARAN
     function resetCurrentLessonState() {
         updateState('currentCharIndex', 0);
         updateState('currentStepIndex', 0);
         updateState('waitingForAnim', false);
         updateState('lesson2Finished', false);
-        updateState('lesson3Finished', false); // DITAMBAHKAN
-
+        updateState('lesson3Finished', false);
+        
         resetLesson2State(keyboardContainer);
-        resetLesson3State(keyboardContainer); // DITAMBAHKAN
+        resetLesson3State(keyboardContainer);
     }
     
     function goToNextLesson() {
@@ -116,6 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // --- SETUP AWAL APLIKASI, HANYA DIPANGGIL SEKALI ---
+    createKeyboard(keyboardContainer, keyLayout); // MENGGUNAKAN keyLayout YANG DI-IMPORT
+
+    resetCurrentLessonState();
+    doRenderLessonAndFocus();
+    // ---------------------------------------------------
+
     window.addEventListener('focus', () => {
         const input = getHiddenInput();
         if (input && !lessonCompleteNotification.classList.contains('active')) {
@@ -192,34 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         });
         
-        // EVENT LISTENER BARU UNTUK PELAJARAN 3
         lessonInstruction.addEventListener('lesson3-finished', (event) => {
             updateState('lesson3Finished', true);
             const currentLessonIndex = getState('currentLessonIndex');
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         });
     }
-
-    createKeyboard(keyboardContainer, keyLayout);
-    resetCurrentLessonState();
-    doRenderLessonAndFocus();
-
-    // --- KODE BARU UNTUK UPDATE POSISI TANGAN SAAT LAYAR DIUBAH UKURANNYA ---
-    window.addEventListener('resize', () => {
-        const currentLessonIndex = getState('currentLessonIndex');
-        const lesson = lessons[currentLessonIndex];
-        let keyCharToHighlight = null;
-        
-        // Tentukan karakter yang harus disorot berdasarkan pelajaran saat ini
-        if (lesson && lesson.sequence && lesson.sequence.length > 0) {
-            const currentCharIndex = getState('currentCharIndex');
-            if (currentCharIndex < lesson.sequence.length) {
-                keyCharToHighlight = lesson.sequence[currentCharIndex];
-            }
-        }
-        
-        // Panggil fungsi penyorotan untuk memperbarui posisi tangan
-        highlightKeyOnKeyboard(keyboardContainer, keyCharToHighlight);
-    });
-    // --- AKHIR KODE BARU ---
 });

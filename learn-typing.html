@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/learn-typing-style.css">
     <link rel="stylesheet" href="css/underline-styles.css">
     <link rel="stylesheet" href="css/lesson-complete-notification.css">
-    </head>
+</head>
 
 <body>
     <div class="wrapper">
@@ -30,7 +30,7 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link active" href="learn-typing.html"><i
-                                                class="fas fa-graduation-cap"></i></a>
+                                            class="fas fa-graduation-cap"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
@@ -74,46 +74,50 @@
                     <h2 id="lesson-title">Pelajaran 1: Tombol F dan J</h2>
                     <p id="lesson-instruction">Tekan tombol 'f' menggunakan jari telunjuk kiri Anda.</p>
                 </div>
+                
+                <input type="text" id="hidden-input" class="hidden-input" autofocus>
+                
                 <div id="lesson-text-display" class="lesson-text"></div>
-                <div id="hand-visualizer-container">
-                    <img id="hand-f" src="img/hand_f.png" alt="Jari Telunjuk Kiri Menuju F" class="hand-image">
-                    <img id="hand-j" src="img/hand_j.png" alt="Jari Telunjuk Kanan Menuju J" class="hand-image">
-                    <img id="hand-space" src="img/hand_space.png" alt="Jempol Menuju Spasi" class="hand-image">
-                </div>
+                
                 <div id="virtual-keyboard" class="keyboard-container">
+                    <div id="hand-visualizer-container">
+                        <img id="hand-f" class="hand-image" src="img/hand_f.png" alt="Tangan untuk tombol F">
+                        <img id="hand-j" class="hand-image" src="img/hand_j.png" alt="Tangan untuk tombol J">
+                        <img id="hand-space" class="hand-image" src="img/hand_space.png" alt="Tangan untuk tombol spasi">
                     </div>
-
+                </div>
+                
                 <div id="lesson-complete-notification" class="lesson-complete-notification" style="display: none;">
-    <div class="notification-content">
-        
-        <div id="thumb-animation-container" class="thumb-animation-container">
-            <svg id="success-animation-svg" class="success-animation-svg" viewBox="-27 -27 150 150" xmlns="http://www.w3.org/2000/svg">
-                <circle id="background-circle" cx="50" cy="50" r="60" fill="#BDCFFA" />
-                <path id="circle-path" class="circle-path" d="M50 2 C76.48 2 98 23.52 98 50 C98 76.48 76.48 98 50 98 C23.52 98 2 76.48 2 50 C2 23.52 23.52 2 50 2 Z" fill="none" stroke-width="10" stroke-linecap="round" stroke-miterlimit="10"/>
-                <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none" stroke-width="6" stroke-linecap="round" stroke-miterlimit="10"/>
-            </svg>
-        </div>
-        <h2>Kerja Bagus!</h2>
-        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
-    </div>
-</div>
+                    <div class="notification-content">
+                        <div id="thumb-animation-container" class="thumb-animation-container">
+                            <svg id="success-animation-svg" class="success-animation-svg" viewBox="-27 -27 150 150"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <circle id="background-circle" cx="50" cy="50" r="60" fill="#BDCFFA" />
+                                <path id="circle-path" class="circle-path"
+                                    d="M50 2 C76.48 2 98 23.52 98 50 C98 76.48 76.48 98 50 98 C23.52 98 2 76.48 2 50 C2 23.52 23.52 2 50 2 Z"
+                                    fill="none" stroke-width="10" stroke-linecap="round" stroke-miterlimit="10" />
+                                <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none"
+                                    stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" />
+                            </svg>
+                        </div>
+                        <h2>Kerja Bagus!</h2>
+                        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+                    </div>
+                </div>
 
                 <div class="navigation-buttons" id="navigation-buttons">
                     <button id="prev-lesson-btn" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Sebelumnya</button>
-
                     <div class="lesson-progress">
                         <div class="progress-container">
                             <div class="progress-bar" id="lesson-progress-bar"></div>
                         </div>
                         <span class="progress-text" id="progress-percentage">0%</span>
                     </div>
-
                     <button id="next-lesson-btn" class="btn btn-primary">
                         Selanjutnya <i class="fas fa-arrow-right"></i></button>
                 </div>
             </section>
-
         </main>
     </div>
 
