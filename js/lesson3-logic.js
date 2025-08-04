@@ -2,7 +2,7 @@
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import { updateUnderlineStatus } from './underline-logic.js';
-import { highlightKeyOnKeyboard } from './learn-typing-logic.js';
+import { highlightKeyOnKeyboard } from './learn-typing-ui.js';
 
 let lesson3SequenceContainer = null;
 let lesson3UnderlineContainer = null;

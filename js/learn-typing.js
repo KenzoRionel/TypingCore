@@ -1,14 +1,16 @@
 // js/learn-typing.js
 import { lessons } from './learn-typing-lessons.js';
 import {
-    createKeyboard,
     renderLesson,
     resetLesson2State,
     resetLesson3State,
     resetLesson4State,
+} from './learn-typing-logic.js';
+import {
+    createKeyboard,
     showLessonCompleteNotification,
     highlightKeyOnKeyboard,
-} from './learn-typing-logic.js';
+} from './learn-typing-ui.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
 import { handleKeyboardInput } from './input-handler.js';

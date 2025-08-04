@@ -1,7 +1,7 @@
 // js/lesson4-logic.js
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
-import { highlightKeyOnKeyboard } from './learn-typing-logic.js';
+import { highlightKeyOnKeyboard } from './learn-typing-ui.js';
 
 export function renderLesson4(lessonInstruction, keyboardContainer) {
     if (!lessonInstruction) {

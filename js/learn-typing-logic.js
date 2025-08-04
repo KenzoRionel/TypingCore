@@ -17,10 +17,10 @@ import {
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 import {
     clearKeyboardHighlights,
-    highlightKeyOnKeyboard,
     renderOtherLessons,
     showLessonCompleteNotification,
-    createKeyboard
+    createKeyboard,
+    highlightKeyOnKeyboard,
 } from './learn-typing-ui.js';
 
 function cleanupSpecialLessons(lessonInstruction) {
