@@ -32,7 +32,20 @@ export function calculateLessonProgress(currentLessonIndex, currentStepIndex, cu
         let progress = (totalTypedChars / TOTAL_CHARS_FOR_LESSON3) * 100;
         return Math.min(100, progress);
     }
-    // Logika untuk Pelajaran lainnya (indeks > 2)
+    // Logika untuk Pelajaran 4
+    else if (currentLessonIndex === 3) {
+        const completedPhases = Math.floor(lesson4State / 2);
+        let totalTypedChars = completedPhases * 7;
+        if (lesson4State % 2 === 0 && lesson4State < 12) {
+            totalTypedChars += lesson4SequenceIndex;
+        } else if (lesson4State === 11) {
+            totalTypedChars = 42; // Total karakter: 6 fase * 7 karakter/fase
+        }
+        const TOTAL_CHARS_FOR_LESSON4 = 42;
+        let progress = (totalTypedChars / TOTAL_CHARS_FOR_LESSON4) * 100;
+        return Math.min(100, progress);
+    }
+    // Logika untuk Pelajaran lainnya (indeks > 3)
     else {
         if (!lesson || !lesson.sequence || lesson.sequence.length === 0) return 0;
         let progress = (currentCharIndex / lesson.sequence.length) * 100;

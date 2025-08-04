@@ -12,6 +12,9 @@ let lesson2SequenceIndex = 0;
 let lesson3Finished = false; // BARIS BARU
 let lesson3State = 0; // BARIS BARU
 let lesson3SequenceIndex = 0; // BARIS BARU
+let lesson4Finished = false; 
+let lesson4State = 0; 
+let lesson4SequenceIndex = 0;
 
 export function initDOMAndState() {
     const domReferences = getDOMReferences();
@@ -55,6 +58,15 @@ export function updateState(key, value) {
         case 'lesson3SequenceIndex': // BARIS BARU
             lesson3SequenceIndex = value;
             break;
+        case 'lesson4Finished': 
+            lesson4Finished = value;
+            break;
+        case 'lesson4State': 
+            lesson4State = value;
+            break;
+        case 'lesson4SequenceIndex': 
+            lesson4SequenceIndex = value;
+            break;
         default:
             console.warn(`Attempted to update unknown state key: ${key}`);
     }
@@ -82,6 +94,12 @@ export function getState(key) {
             return lesson3State;
         case 'lesson3SequenceIndex': // BARIS BARU
             return lesson3SequenceIndex;
+        case 'lesson4Finished': 
+            return lesson4Finished;
+        case 'lesson4State': 
+            return lesson4State;
+        case 'lesson4SequenceIndex': 
+            return lesson4SequenceIndex;
         default:
             console.warn(`Attempted to get unknown state key: ${key}`);
             return undefined;

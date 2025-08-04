@@ -6,6 +6,7 @@ import {
 } from './learn-typing-logic.js';
 import { handleLesson2Input } from './lesson2-logic.js';
 import { handleLesson3Input } from './lesson3-logic.js';
+import { handleLesson4Input } from './lesson4-logic.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput } = domElements; 
@@ -16,6 +17,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
     const lesson3Finished = getState('lesson3Finished');
+    const lesson4Finished = getState('lesson4Finished');
     
     // PERBAIKAN: Tangani event "Enter" secara terpisah saat notifikasi aktif
     // Ini harus dieksekusi sebelum pengecekan "waitingForAnim"
@@ -107,7 +109,17 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             lessonInstructionEl: lessonInstruction,
         });
         preventDefault = false;
-    } else {
+    } 
+    else if (currentLessonIndex === 3) {
+        handleLesson4Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson4FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+        });
+        preventDefault = false;
+    }
+    else {
         if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
             console.warn("Pelajaran tidak valid atau sudah selesai. Mengabaikan input.");
             e.preventDefault();

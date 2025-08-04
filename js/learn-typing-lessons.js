@@ -23,6 +23,11 @@ export const lessons = [
         title: "Pelajaran 3: Latihan Kata F dan J Lanjutan",
         instruction: 'Teruslah berlatih! Ketik tombol "f" dan "j" secara bergantian sesuai urutan di bawah ini.',
         preview: ['f', 'j']
+    },
+    {
+        title: "Pelajaran 4: Latihan Huruf G dan H",
+        instruction: 'Sekarang coba huruf "g" dan "h"! Gunakan jari telunjuk untuk G dan jari telunjuk kanan untuk H.',
+        preview: ['g', 'h']
     }
     // Tambahkan lesson berikutnya di sini
 ];

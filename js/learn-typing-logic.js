@@ -11,12 +11,15 @@ import {
     renderLesson3,
     cleanupLesson3Elements,
 } from './lesson3-logic.js';
+import {
+    renderLesson4,
+    cleanupLesson4Elements,
+} from './lesson4-logic.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 import { updateHandVisualizer } from './hand-visualizer.js';
 
 let currentHighlightedKeyElement = null;
 
-// FUNGSI BARU UNTUK MEMBUAT ELEMEN GAMBAR TANGAN SECARA DINAMIS
 function createHandVisualizerElement() {
     const visualizerContainer = document.createElement('div');
     visualizerContainer.id = 'hand-visualizer-container';
@@ -88,25 +91,42 @@ export function resetLesson3State(keyboardContainer) {
     }
 }
 
+export function resetLesson4State(keyboardContainer) {
+    updateState('lesson4State', 0);
+    updateState('lesson4SequenceIndex', 0);
+    
+    cleanupLesson4Elements(document.getElementById('lesson-instruction'));
+
+    if (keyboardContainer) {
+        const highlightedKeys = keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key');
+        highlightedKeys.forEach(key => {
+            key.classList.remove('next-key', 'correct-key', 'wrong-key');
+            key.style.animation = '';
+        });
+    }
+
+    if (currentHighlightedKeyElement) {
+        currentHighlightedKeyElement.classList.remove('next-key');
+        currentHighlightedKeyElement.style.animation = '';
+        currentHighlightedKeyElement = null;
+    }
+}
+
 export function createKeyboard(keyboardContainer, keyLayout) {
     if (!keyboardContainer) {
         console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
         return;
     }
 
-    // CARI ATAU BUAT KEMBALI ELEMEN GAMBAR TANGAN
     let handVisualizer = keyboardContainer.querySelector('#hand-visualizer-container');
     if (!handVisualizer) {
         handVisualizer = createHandVisualizerElement();
-        // Tambahkan ke DOM agar bisa dilanjutkan
         keyboardContainer.prepend(handVisualizer);
     }
     
-    // Hapus semua child kecuali kontainer gambar tangan
     const childrenToRemove = Array.from(keyboardContainer.children).filter(child => child.id !== 'hand-visualizer-container');
     childrenToRemove.forEach(child => keyboardContainer.removeChild(child));
     
-    // Buat keyboard baru dan tambahkan
     keyLayout.forEach(row => {
         const rowElement = document.createElement('div');
         rowElement.classList.add('keyboard-row');
@@ -192,7 +212,6 @@ export function renderLesson({
     currentLessonIndex,
     currentStepIndex,
     currentCharIndex,
-    waitingForAnim,
     keyboardContainer,
     lessonTitle,
     lessonInstruction,
@@ -212,6 +231,11 @@ export function renderLesson({
 
     const lesson2State = getState('lesson2State');
     const lesson2SequenceIndex = getState('lesson2SequenceIndex');
+    const lesson3State = getState('lesson3State');
+    const lesson3SequenceIndex = getState('lesson3SequenceIndex');
+    // Tambahan: Dapatkan status pelajaran 4
+    const lesson4State = getState('lesson4State');
+    const lesson4SequenceIndex = getState('lesson4SequenceIndex');
 
     if (currentLessonIndex === 0) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
@@ -235,7 +259,14 @@ export function renderLesson({
     } else if (currentLessonIndex === 2) {
         if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
         renderLesson3(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
-    } else {
+    }
+    // Tambahan: Logika untuk Pelajaran 4
+    else if (currentLessonIndex === 3) {
+        if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+        renderLesson4(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect);
+    } 
+    // Logika untuk pelajaran lainnya
+    else {
         cleanupLesson2Elements(lessonInstruction);
         renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
     }
@@ -244,10 +275,13 @@ export function renderLesson({
         currentLessonIndex,
         currentStepIndex,
         currentCharIndex,
-        getState('lesson2State'),
-        getState('lesson2SequenceIndex'),
-        getState('lesson3State'),
-        getState('lesson3SequenceIndex'),
+        lesson2State,
+        lesson2SequenceIndex,
+        lesson3State,
+        lesson3SequenceIndex,
+        // Tambahan: Kirim status pelajaran 4 ke fungsi progress
+        lesson4State,
+        lesson4SequenceIndex,
         lessons[currentLessonIndex]
     );
     updateProgressBar(progress);
@@ -308,9 +342,13 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
                 if (nextLessonIndex === 0) {
                     previewText = `Ketik huruf: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span>`;
                 } else if (nextLessonIndex === 1) {
-                    previewText = `Ketik kata acak: <span class="highlight-key-modal">huruf acak</span>`;
+                    previewText = `Latihan: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span> berulang.`;
+                } else if (nextLessonIndex === 2) {
+                    previewText = `Lanjutan latihan: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span> acak.`;
+                } else if (nextLessonIndex === 3) {
+                    previewText = `Lanjutan latihan: <span class="highlight-key-modal">G</span> dan <span class="highlight-key-modal">H</span>.`;
                 } else {
-                    const previewChars = nextLesson.sequence ? nextLesson.sequence.slice(0, 5).join('') : '';
+                    const previewChars = nextLesson.sequence ? nextLesson.sequence.slice(0, 5).join('') : 'Latihan Baru';
                     previewText = `Ketik: <span class="highlight-key-modal">${previewChars}...</span>`;
                 }
                 nextLessonPreview.innerHTML = previewText;
