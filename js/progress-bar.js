@@ -1,7 +1,7 @@
 // progress-bar.js
 import { getState } from './learn-typing-state.js';
 
-export function calculateLessonProgress(currentLessonIndex, currentStepIndex, currentCharIndex, lesson2State, lesson2SequenceIndex, lesson3State, lesson3SequenceIndex, lesson) {
+export function calculateLessonProgress(currentLessonIndex, currentStepIndex, currentCharIndex, lesson2State, lesson2SequenceIndex, lesson3State, lesson3SequenceIndex, lesson4CurrentCharIndex, lesson) {
     if (currentLessonIndex === 0) {
         const maxStepsForLesson0 = 2;
         let progress = (currentStepIndex / maxStepsForLesson0) * 100;
@@ -32,17 +32,10 @@ export function calculateLessonProgress(currentLessonIndex, currentStepIndex, cu
         let progress = (totalTypedChars / TOTAL_CHARS_FOR_LESSON3) * 100;
         return Math.min(100, progress);
     }
-    // Logika untuk Pelajaran 4
+    // BARIS BARU UNTUK PELAJARAN 4
     else if (currentLessonIndex === 3) {
-        const completedPhases = Math.floor(lesson4State / 2);
-        let totalTypedChars = completedPhases * 7;
-        if (lesson4State % 2 === 0 && lesson4State < 12) {
-            totalTypedChars += lesson4SequenceIndex;
-        } else if (lesson4State === 11) {
-            totalTypedChars = 42; // Total karakter: 6 fase * 7 karakter/fase
-        }
-        const TOTAL_CHARS_FOR_LESSON4 = 42;
-        let progress = (totalTypedChars / TOTAL_CHARS_FOR_LESSON4) * 100;
+        if (!lesson || !lesson.sequence || lesson.sequence.length === 0) return 0;
+        let progress = (lesson4CurrentCharIndex / lesson.sequence.length) * 100;
         return Math.min(100, progress);
     }
     // Logika untuk Pelajaran lainnya (indeks > 3)

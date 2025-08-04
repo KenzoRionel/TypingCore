@@ -5,6 +5,7 @@ import {
     renderLesson,
     resetLesson2State,
     resetLesson3State,
+    resetLesson4State,
     showLessonCompleteNotification,
     highlightKeyOnKeyboard,
 } from './learn-typing-logic.js';
@@ -12,6 +13,7 @@ import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-
 import { keyLayout } from './keyboard-layout.js';
 import { handleKeyboardInput } from './input-handler.js';
 import { handleLesson3Input } from './lesson3-logic.js';
+import { handleLesson4Input } from './lesson4-logic.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const {
@@ -65,12 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentCharIndex = getState('currentCharIndex');
         const waitingForAnim = getState('waitingForAnim');
 
-        if (lessonCompleteNotification) {
-            lessonCompleteNotification.classList.remove('active');
-            lessonCompleteNotification.style.display = 'none';
-        }
-        if (keyboardContainer) {
-            keyboardContainer.style.display = '';
+        // PERBAIKAN: Tambahkan cek ini di sini untuk menghentikan rendering jika pelajaran selesai.
+        const lesson2Finished = getState('lesson2Finished');
+        const lesson3Finished = getState('lesson3Finished');
+        const lesson4Finished = getState('lesson4Finished');
+
+        if ((currentLessonIndex === 1 && lesson2Finished) || 
+            (currentLessonIndex === 2 && lesson3Finished) || 
+            (currentLessonIndex === 3 && lesson4Finished)) {
+            return;
         }
         
         renderLesson({
@@ -86,10 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
             feedbackIndex,
             isCorrect
         });
-
+        
         const input = getHiddenInput();
-        if (input && !lessonCompleteNotification.classList.contains('active')) {
-            setTimeout(() => input.focus(), 0);
+        if (input) {
+            input.focus();
         }
     }
 
@@ -99,9 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateState('waitingForAnim', false);
         updateState('lesson2Finished', false);
         updateState('lesson3Finished', false);
+        updateState('lesson4Finished', false);
         
         resetLesson2State(keyboardContainer);
         resetLesson3State(keyboardContainer);
+        resetLesson4State(keyboardContainer);
     }
     
     function goToNextLesson() {
@@ -116,10 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- SETUP AWAL APLIKASI, HANYA DIPANGGIL SEKALI ---
-    createKeyboard(keyboardContainer, keyLayout); // MENGGUNAKAN keyLayout YANG DI-IMPORT
+    createKeyboard(keyboardContainer, keyLayout);
 
     resetCurrentLessonState();
     doRenderLessonAndFocus();
+    
+    const input = getHiddenInput();
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            handleKeyboardInput(e, domElements, doRenderLessonAndFocus);
+        });
+    }
     // ---------------------------------------------------
 
     window.addEventListener('focus', () => {
@@ -173,6 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (domElements.prevLessonBtn) domElements.prevLessonBtn.style.display = '';
                 if (domElements.nextLessonBtn) domElements.nextLessonBtn.style.display = '';
                 
+                if (domElements.keyboardContainer) {
+                    domElements.keyboardContainer.style.display = '';
+                }
+
+                // PERBAIKAN: Tambahkan ini untuk menampilkan kembali lesson display
+                if (domElements.lessonTextDisplay) {
+                    domElements.lessonTextDisplay.style.display = '';
+                }
+
                 const input = getHiddenInput();
                 if (input) {
                     input.style.display = '';
@@ -184,13 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const input = getHiddenInput();
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            handleKeyboardInput(e, domElements, doRenderLessonAndFocus);
-        });
-    }
-
     if (lessonInstruction) {
         lessonInstruction.addEventListener('lesson2-finished', (event) => {
             updateState('lesson2Finished', true);
@@ -200,6 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         lessonInstruction.addEventListener('lesson3-finished', (event) => {
             updateState('lesson3Finished', true);
+            const currentLessonIndex = getState('currentLessonIndex');
+            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+        });
+        lessonInstruction.addEventListener('lesson4-finished', (event) => {
+            updateState('lesson4Finished', true);
             const currentLessonIndex = getState('currentLessonIndex');
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         });

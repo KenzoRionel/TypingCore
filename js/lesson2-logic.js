@@ -57,7 +57,6 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
     // Sekarang kita bisa mengambil instruksi langsung dari data lessons,
     // karena properti tersebut sudah ditambahkan di file lessons.js.
     if (lesson2State === 0) instructionText = lessons[1].instruction;
-    if (lesson2State === 11) instructionText = 'Hebat! Pelajaran F dan J selesai!';
     // --- AKHIR BARIS PERBAIKAN ---
 
     updateInstructionText(lessonInstruction, instructionText);

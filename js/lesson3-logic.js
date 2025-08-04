@@ -53,7 +53,6 @@ export function renderLesson3(lessonInstruction, keyboardContainer, feedbackInde
     }
 
     if (lesson3State === 0) instructionText = lessons[2].instruction;
-    if (lesson3State === 11) instructionText = 'Hebat! Pelajaran F dan J selesai!';
     
     updateInstructionText(lessonInstruction, instructionText);
 

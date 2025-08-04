@@ -1,4 +1,4 @@
-// input-handler.js
+// js/input-handler.js
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import {
@@ -12,35 +12,27 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput } = domElements; 
 
     const currentLessonIndex = getState('currentLessonIndex');
-    const currentStepIndex = getState('currentStepIndex');
-    const currentCharIndex = getState('currentCharIndex');
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
     const lesson3Finished = getState('lesson3Finished');
+    // PERBAIKAN: Gunakan state lesson4Finished
     const lesson4Finished = getState('lesson4Finished');
     
-    // PERBAIKAN: Tangani event "Enter" secara terpisah saat notifikasi aktif
-    // Ini harus dieksekusi sebelum pengecekan "waitingForAnim"
     if (lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) {
-        console.log('Notifikasi aktif, mengecek tombol Enter.');
         if (e.key === 'Enter') {
-            console.log('Enter ditekan, memicu klik pada tombol Lanjutkan.');
-            e.preventDefault(); // Mencegah perilaku default Enter
+            e.preventDefault(); 
             if (continueBtn) {
-                continueBtn.click(); // Simulasikan klik pada tombol "Lanjutkan"
+                continueBtn.click(); 
             }
-            return; // Hentikan eksekusi lebih lanjut
+            return; 
         }
     }
     
-    // Pengecekan status aplikasi, harus di bawah pengecekan "Enter"
-    if (waitingForAnim.value || lesson2Finished || lesson3Finished) {
+    if (waitingForAnim || lesson2Finished || lesson3Finished || lesson4Finished) {
         e.preventDefault();
-        console.log('Aplikasi sedang dalam transisi atau Pelajaran 2 selesai. Input diabaikan.');
         return;
     }
     
-    // Pastikan hiddenInput terlihat untuk Pelajaran 2
     if (hiddenInput && hiddenInput.style.display === 'none') {
         hiddenInput.style.display = '';
         setTimeout(() => hiddenInput.focus(), 0);
@@ -50,6 +42,8 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     let preventDefault = true;
 
     if (currentLessonIndex === 0) {
+        // Logika untuk Pelajaran 1 (Home Row)
+        const currentStepIndex = getState('currentStepIndex');
         if (currentStepIndex === 0 && e.key.toLowerCase() === 'f') {
             updateState('waitingForAnim', true);
             const inlineKeyF = document.getElementById('inlineKeyF');
@@ -100,7 +94,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
             lessonInstructionEl: lessonInstruction,
         });
-        preventDefault = false;
     } else if (currentLessonIndex === 2) {
         handleLesson3Input({
             e,
@@ -108,26 +101,24 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             dispatchLesson3FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
             lessonInstructionEl: lessonInstruction,
         });
-        preventDefault = false;
-    } 
-    else if (currentLessonIndex === 3) {
+    } else if (currentLessonIndex === 3) {
         handleLesson4Input({
             e,
             doRenderAndHighlight: doRenderAndHighlight,
-            dispatchLesson4FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            // PERBAIKAN: Callback hanya memicu event saja
+            dispatchLesson4FinishedEvent: (event) => {
+                lessonInstruction.dispatchEvent(event);
+            },
             lessonInstructionEl: lessonInstruction,
         });
-        preventDefault = false;
-    }
-    else {
+        return;
+    } else {
+        const currentCharIndex = getState('currentCharIndex');
         if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
-            console.warn("Pelajaran tidak valid atau sudah selesai. Mengabaikan input.");
             e.preventDefault();
             return;
         }
-
         const expectedChar = currentLesson.sequence[currentCharIndex];
-
         if (e.key === ' ' && expectedChar === ' ') {
             updateState('currentCharIndex', currentCharIndex + 1);
         } else if (e.key === 'Escape') {
@@ -140,7 +131,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
                 setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
             }
         }
-
         if (getState('currentCharIndex') >= currentLesson.sequence.length) {
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         }
