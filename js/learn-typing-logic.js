@@ -58,7 +58,9 @@ export function renderLesson({
     lessonInstruction,
     lessonTextDisplay,
     feedbackIndex = -1,
-    isCorrect = null
+    isCorrect = null,
+    navigationButtonsContainer,
+    lessonHeader
 }) {
     if (!lessons || !lessons[currentLessonIndex]) {
         console.error("Pelajaran tidak ditemukan atau indeks tidak valid.");
@@ -69,6 +71,16 @@ export function renderLesson({
     if (lessonTitle) lessonTitle.textContent = lesson.title;
     
     clearKeyboardHighlights(keyboardContainer);
+
+    // LOGIKA PERUBAHAN: Selalu pindahkan progres bar ke atas virtual keyboard
+    const progressBarContainerEl = document.getElementById('progress-container-wrapper');
+    const learnTypingSectionEl = document.getElementById('learn-typing-section');
+    const virtualKeyboardEl = document.getElementById('virtual-keyboard');
+    
+    if (progressBarContainerEl && learnTypingSectionEl && virtualKeyboardEl) {
+        learnTypingSectionEl.insertBefore(progressBarContainerEl, virtualKeyboardEl);
+    }
+    // AKHIR LOGIKA PERUBAHAN
 
     if (lessonTextDisplay) {
         if (currentLessonIndex === 3) {
@@ -114,7 +126,6 @@ export function renderLesson({
         renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer);
     }
     
-    // PERBAIKAN: Panggilan calculateLessonProgress sekarang hanya butuh 2 parameter
     const progress = calculateLessonProgress(
         currentLessonIndex,
         lessons[currentLessonIndex]

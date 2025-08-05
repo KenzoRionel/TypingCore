@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         circlePath,
         checkPath,
         hiddenInput,
+        navigationButtonsContainer
     } = initDOMAndState();
 
     if (!keyboardContainer || !lessonCompleteNotification) {
@@ -61,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         circlePath,
         checkPath,
         hiddenInput,
+        navigationButtonsContainer,
     };
 
     function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
@@ -70,8 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const waitingForAnim = getState('waitingForAnim');
 
         const isLessonFinished = (currentLessonIndex === 1 && getState('lesson2Finished')) || 
-                                (currentLessonIndex === 2 && getState('lesson3Finished')) || 
-                                (currentLessonIndex === 3 && getState('lesson4Finished'));
+                                 (currentLessonIndex === 2 && getState('lesson3Finished')) || 
+                                 (currentLessonIndex === 3 && getState('lesson4Finished'));
 
         if (isLessonFinished) {
             return;
@@ -88,7 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
             lessonInstruction,
             lessonTextDisplay,
             feedbackIndex,
-            isCorrect
+            isCorrect,
+            navigationButtonsContainer: domElements.navigationButtonsContainer,
+            lessonHeader: domElements.lessonHeader,
         });
         
         const input = getHiddenInput();

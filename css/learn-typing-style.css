@@ -515,12 +515,16 @@ overflow: hidden;
   }
 
   /* Progress Bar Styles */
+#progress-container-wrapper {
+    max-width: 800px;
+    margin: 0 auto 5px auto; /* Memberikan margin bawah agar ada jarak dengan keyboard */
+}
+
 .lesson-progress {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex-grow: 1;
-    margin: 0 15px;
+    width: 100%;
 }
 
 .progress-container {
@@ -572,17 +576,16 @@ overflow: hidden;
     /* PERBAIKAN: Gunakan margin untuk menengahkan elemen di halaman */
     margin: 0 auto;
     margin-top: -30px;
-    
+    margin-bottom: -20px;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    
-    max-width: 500px;
-    font-size: 2.0rem;
+    justify-content: flex-start; /* Mengatur perataan item flexbox ke kiri */
+    max-width: 800px;
+    font-size: 2.5rem;
     font-family: monospace;
     color: var(--text-color-light);
     white-space: normal;
-    text-align: center;
+    text-align: left; /* Mengubah perataan teks menjadi kiri */
 }
 
 #lesson-title {

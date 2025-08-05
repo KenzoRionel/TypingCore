@@ -29,7 +29,9 @@ export const lessons = [
         title: "Pelajaran 4: Test Mengetik F dan J",
         type: "free-typing",
         sequence: ['f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j', ' ', 'f', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f',
-                   ' ', 'f', 'j', ' ' , 'j', 'f', 'f', 'j', ' ', 'f', 'j', 'j', 'f', ' ', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f',],
+                   ' ', 'f', 'j', ' ' , 'j', 'f', 'f', 'j', ' ', 'f', 'j', 'j', 'f', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f',
+                'f', 'j', ' ', 'j', 'f', 'f', 'f', ' ', 'j', 'f', 'j', 'f', ' ', 'f', 'j', 'f', 'j', ' ', 'f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j',
+            ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'j','f'],
         preview: ['f', 'j']
     }
 ];
