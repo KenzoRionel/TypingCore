@@ -558,3 +558,71 @@ body {
     font-size: 1.5rem;
     font-family: monospace;
 }
+
+.keyboard-and-navigation-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Jarak antara tombol dan keyboard */
+    width: 100%;
+    margin-top: 20px;
+    padding: 0 40px;
+}
+
+.navigation-button-wrapper {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.navigation-button-wrapper button {
+    font-size: 1.1rem;
+    padding: 10px 15px;
+    white-space: nowrap;
+}
+
+/* Mengatur gaya dasar untuk kedua tombol */
+#prev-lesson-btn,
+#next-lesson-btn {
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 7px 20px;
+    border-radius: 25px; /* Membuat sudut tombol lebih melengkung */
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease; /* Menambahkan transisi untuk efek yang halus */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Menambahkan efek bayangan */
+    width: 165px;
+}
+
+/* Gaya untuk tombol "Selanjutnya" (Primary) */
+#next-lesson-btn {
+    background-color: #007bff; /* Warna biru */
+    color: #fff;
+}
+
+#next-lesson-btn:hover {
+    background-color: #0056b3; /* Warna lebih gelap saat kursor di atasnya */
+    transform: translateY(-2px); /* Mengangkat tombol sedikit saat di-hover */
+}
+
+/* Gaya untuk tombol "Sebelumnya" (Secondary) */
+#prev-lesson-btn {
+    background-color: #e9ecef; /* Warna abu-abu muda */
+    color: #495057;
+    transition: visibility 0s, opacity 0.3s linear;
+}
+#prev-lesson-btn[style*="visibility: hidden;"] {
+    opacity: 0;
+}
+
+#prev-lesson-btn:hover {
+    background-color: #dae0e5; /* Warna lebih gelap saat kursor di atasnya */
+    transform: translateY(-2px);
+}
+
+/* Mengatur gaya ikon di dalam tombol */
+#prev-lesson-btn i,
+#next-lesson-btn i {
+    margin: 0 5px;
+}

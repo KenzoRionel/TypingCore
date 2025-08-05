@@ -206,12 +206,9 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         const h2 = lessonCompleteNotification.querySelector('h3');
         if (h2) h2.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
         if (successAnimationSvg) {
-            successAnimationSvg.classList.remove('animate-circle', 'animate-check');
+            successAnimationSvg.classList.remove('animate');
             void successAnimationSvg.offsetWidth;
-            successAnimationSvg.classList.add('animate-circle');
-            setTimeout(() => {
-                successAnimationSvg.classList.add('animate-check');
-            }, 1000);
+            successAnimationSvg.classList.add('animate');
         }
 
         if (nextLessonPreview) {

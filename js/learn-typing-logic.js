@@ -71,6 +71,16 @@ export function renderLesson({
         console.error("Pelajaran tidak ditemukan atau indeks tidak valid.");
         return;
     }
+    const prevLessonBtn = document.getElementById('prev-lesson-btn');
+    if (prevLessonBtn) {
+        if (currentLessonIndex === 0) {
+            // Sembunyikan tombol 'Sebelumnya' di pelajaran pertama
+            prevLessonBtn.style.visibility = 'hidden';
+        } else {
+            // Tampilkan kembali tombol 'Sebelumnya' di pelajaran selanjutnya
+            prevLessonBtn.style.visibility = 'visible';
+        }
+    }
 
     const lesson = lessons[currentLessonIndex];
     if (lessonTitle) lessonTitle.textContent = lesson.title;
@@ -81,9 +91,7 @@ export function renderLesson({
     const learnTypingSectionEl = document.getElementById('learn-typing-section');
     const virtualKeyboardEl = document.getElementById('virtual-keyboard');
     
-    if (progressBarContainerEl && learnTypingSectionEl && virtualKeyboardEl) {
-        learnTypingSectionEl.insertBefore(progressBarContainerEl, virtualKeyboardEl);
-    }
+    
 
     if (lessonTextDisplay) {
         if (currentLessonIndex === 3) {

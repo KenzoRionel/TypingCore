@@ -37,7 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
         circlePath,
         checkPath,
         hiddenInput,
-        navigationButtonsContainer
+        navigationButtonsContainer,
+        // PERBAIKAN: Tambahkan tombol "Coba lagi" ke dalam objek
+        retryLessonBtn,
     } = initDOMAndState();
 
     if (!keyboardContainer || !lessonCompleteNotification) {
@@ -65,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         checkPath,
         hiddenInput,
         navigationButtonsContainer,
+        // PERBAIKAN: Tambahkan tombol "Coba lagi" ke dalam objek
+        retryLessonBtn,
     };
 
     function doRenderLessonAndFocus(feedbackIndex = -1, isCorrect = null) {
@@ -73,14 +77,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentCharIndex = getState('currentCharIndex');
         const waitingForAnim = getState('waitingForAnim');
 
-        const isLessonFinished = (currentLessonIndex === 1 && getState('lesson2Finished')) || 
-                                     (currentLessonIndex === 2 && getState('lesson3Finished')) || 
-                                     (currentLessonIndex === 3 && getState('lesson4Finished'));
+        const isLessonFinished = (currentLessonIndex === 1 && getState('lesson2Finished')) ||
+            (currentLessonIndex === 2 && getState('lesson3Finished')) ||
+            (currentLessonIndex === 3 && getState('lesson4Finished'));
 
         if (isLessonFinished) {
             return;
         }
-        
+
         renderLesson({
             lessons,
             currentLessonIndex,
@@ -96,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             navigationButtonsContainer: domElements.navigationButtonsContainer,
             lessonHeader: domElements.lessonHeader,
         });
-        
+
         const input = getHiddenInput();
         if (input) {
             input.focus();
@@ -110,12 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
         updateState('lesson2Finished', false);
         updateState('lesson3Finished', false);
         updateState('lesson4Finished', false);
-        
+
         resetLesson2State(keyboardContainer);
         resetLesson3State(keyboardContainer);
         resetLesson4State(keyboardContainer);
     }
-    
+
     function goToNextLesson() {
         let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex < lessons.length - 1) {
@@ -140,13 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
             input.focus();
         }
     }
-    
+
     // --- SETUP AWAL APLIKASI, HANYA DIPANGGIL SEKALI ---
     createKeyboard(keyboardContainer, keyLayout);
 
     resetCurrentLessonState();
     doRenderLessonAndFocus();
-    
+
     const input = getHiddenInput();
     if (input) {
         input.addEventListener('keydown', (e) => {
@@ -198,6 +202,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         }
     });
+
+    // PERBAIKAN: Tambahkan event listener untuk tombol "Coba lagi"
+    if (retryLessonBtn) {
+        retryLessonBtn.addEventListener('click', () => {
+            if (lessonCompleteNotification) {
+                lessonCompleteNotification.classList.remove('active');
+                setTimeout(() => {
+                    lessonCompleteNotification.style.display = 'none';
+                    showLessonElements();
+                    resetCurrentLessonState(); // Reset pelajaran saat ini
+                    doRenderLessonAndFocus(); // Muat ulang pelajaran dari awal
+                }, 500);
+            }
+        });
+    }
 
     if (lessonInstruction) {
         const handleLessonFinished = (event) => {

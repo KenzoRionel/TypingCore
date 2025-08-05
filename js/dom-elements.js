@@ -48,6 +48,13 @@ export function getDOMReferences() {
         return null;
     }
 
+    // PERBAIKAN: Tambahkan elemen tombol "Coba lagi"
+    const retryLessonBtn = document.getElementById('retry-lesson-btn');
+    if (!retryLessonBtn) {
+        console.error("ERROR: Elemen DOM penting #retry-lesson-btn tidak ditemukan.");
+        return null;
+    }
+    
     const lessonCompleteNotification = document.getElementById('lesson-complete-notification');
     if (!lessonCompleteNotification) {
         console.error("ERROR: Elemen DOM penting #lesson-complete-notification tidak ditemukan.");
@@ -132,6 +139,7 @@ export function getDOMReferences() {
         lessonTextDisplay,
         prevLessonBtn,
         nextLessonBtn,
+        retryLessonBtn, // PERBAIKAN: Kembalikan tombol "Coba lagi"
         lessonCompleteNotification,
         continueBtn,
         nextLessonPreview,
