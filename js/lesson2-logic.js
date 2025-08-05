@@ -1,4 +1,4 @@
-//lesson2-logic.js
+// lesson2-logic.js
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import { updateUnderlineStatus } from './underline-logic.js';
@@ -7,16 +7,21 @@ import { highlightKeyOnKeyboard } from './learn-typing-ui.js';
 let lesson2SequenceContainer = null;
 let lesson2UnderlineContainer = null;
 
+const lesson2Sequences = [
+    ['f', 'f', 'f', 'f', 'j', 'j'],
+    ['j', 'j', 'f', 'f', 'f', 'f'],
+    ['j', 'j', 'j', 'j', 'f', 'f'],
+    ['j', 'j', 'f', 'f', 'j', 'j'],
+    ['f', 'j', 'f', 'j', 'j', 'f'],
+    ['j', 'f', 'f', 'j', 'f', 'j'],
+];
+
 export function getSequenceForState(state) {
-    switch (state) {
-        case 0: return ['f', 'f', 'f', 'f', 'j', 'j'];
-        case 2: return ['j', 'j', 'f', 'f', 'f', 'f'];
-        case 4: return ['j', 'j', 'j', 'j', 'f', 'f'];
-        case 6: return ['j', 'j', 'f', 'f', 'j', 'j'];
-        case 8: return ['f', 'j', 'f', 'j', 'j', 'f'];
-        case 10: return ['j', 'f', 'f', 'j', 'f', 'j'];
-        default: return [];
+    if (state % 2 !== 0 || state < 0 || state >= lesson2Sequences.length * 2) {
+        return [];
     }
+    const index = state / 2;
+    return lesson2Sequences[index];
 }
 
 export function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
@@ -31,9 +36,7 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
     if (!lesson2SequenceContainer || !lessonInstruction.contains(lesson2SequenceContainer)) {
         lesson2SequenceContainer = document.createElement('div');
         lesson2SequenceContainer.classList.add('lesson-keyboard-sequence');
-        // Masukkan kontainer ini sebelum kontainer underline
-        const underlineContainer = lessonInstruction.querySelector('.lesson-keyboard-underline');
-        lessonInstruction.insertBefore(lesson2SequenceContainer, underlineContainer);
+        lessonInstruction.prepend(lesson2SequenceContainer);
     }
     if (!lesson2UnderlineContainer || !lessonInstruction.contains(lesson2UnderlineContainer)) {
         lesson2UnderlineContainer = document.createElement('div');
@@ -41,46 +44,15 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
         lessonInstruction.appendChild(lesson2UnderlineContainer);
     }
 
-    let instructionText = '';
-    let keysToDisplay = [];
-    let activeIndex = -1;
-    let highlightedKey = null;
-
     const sequence = getSequenceForState(lesson2State);
-    if (sequence.length > 0) {
-        keysToDisplay = sequence;
-        activeIndex = lesson2SequenceIndex;
-        highlightedKey = sequence[lesson2SequenceIndex];
-    }
-
-    // --- BARIS PERBAIKAN ---
-    // Sekarang kita bisa mengambil instruksi langsung dari data lessons,
-    // karena properti tersebut sudah ditambahkan di file lessons.js.
-    if (lesson2State === 0) instructionText = lessons[1].instruction;
-    // --- AKHIR BARIS PERBAIKAN ---
-
-    updateInstructionText(lessonInstruction, instructionText);
+    const highlightedKey = sequence[lesson2SequenceIndex];
 
     if (lesson2State % 2 !== 0 && lesson2State < 12) {
         handleTransitionState();
     } else if (lesson2State < 12) {
-        handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex, isCorrect);
+        handleActiveState(sequence, lesson2SequenceIndex, highlightedKey, keyboardContainer, feedbackIndex, isCorrect);
     } else {
         cleanupLesson2Elements(lessonInstruction);
-    }
-}
-
-function updateInstructionText(lessonInstruction, text) {
-    // --- BARIS PERBAIKAN ---
-    // Bersihkan semua node anak, kecuali kontainer sequence dan underline
-    Array.from(lessonInstruction.childNodes).forEach(node => {
-        if (!node.classList || (!node.classList.contains('lesson-keyboard-sequence') && !node.classList.contains('lesson-keyboard-underline'))) {
-            node.remove();
-        }
-    });
-    // --- AKHIR BARIS PERBAIKAN ---
-    if (text) {
-        lessonInstruction.prepend(document.createTextNode(text));
     }
 }
 
@@ -101,50 +73,31 @@ function handleTransitionState() {
 function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex = -1, isCorrect = null) {
     if (!lesson2SequenceContainer || !lesson2UnderlineContainer) return;
 
-    const requiresRebuild = lesson2SequenceContainer.children.length === 0 || keysToDisplay.join('') !== Array.from(lesson2SequenceContainer.children).map(el => el.textContent).join('');
+    const currentKeys = Array.from(lesson2SequenceContainer.children).map(el => el.textContent).join('');
+    const requiresRebuild = keysToDisplay.join('') !== currentKeys;
 
     if (requiresRebuild) {
         lesson2SequenceContainer.innerHTML = '';
         lesson2UnderlineContainer.innerHTML = '';
-
         keysToDisplay.forEach((keyChar, idx) => {
             const keyEl = document.createElement('span');
-            keyEl.classList.add('lesson-keyboard-key');
+            keyEl.classList.add('lesson-keyboard-key', 'slide-down-fade-in');
             keyEl.textContent = keyChar;
             lesson2SequenceContainer.appendChild(keyEl);
 
             const underlineEl = document.createElement('span');
             underlineEl.classList.add('lesson-keyboard-underline-item');
             lesson2UnderlineContainer.appendChild(underlineEl);
-
-            keyEl.classList.add('slide-down-fade-in');
-            void keyEl.offsetWidth;
         });
-
+        
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                const keyElements = Array.from(lesson2SequenceContainer.children);
-                const underlineElements = Array.from(lesson2UnderlineContainer.children);
-
-                keyElements.forEach((keyEl, idx) => {
-                    const underlineEl = underlineElements[idx];
-                    if (keyEl && underlineEl) {
-                        const keyRect = keyEl.getBoundingClientRect();
-                        const underlineRect = underlineEl.getBoundingClientRect();
-                        const targetUnderlineCenterX = keyRect.left + (keyRect.width / 2);
-                        const currentUnderlineCenterX = underlineRect.left + (underlineRect.width / 2);
-                        const translateXValue = targetUnderlineCenterX - currentUnderlineCenterX;
-                        underlineEl.style.transform = `translateX(${translateXValue}px)`;
-                    }
-                });
-            });
+            updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
         });
-
+    } else {
+        updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
     }
-
-    updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
+    
     applyFeedback(feedbackIndex, isCorrect);
-
     if (highlightedKey) {
         highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
     }
@@ -152,11 +105,9 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
 
 function applyFeedback(feedbackIndex, isCorrect) {
     if (feedbackIndex < 0 || isCorrect === null || !lesson2SequenceContainer) return;
-
-    const keyElements = Array.from(lesson2SequenceContainer.children);
+    const keyElements = lesson2SequenceContainer.children;
     if (keyElements[feedbackIndex]) {
         keyElements[feedbackIndex].classList.remove('completed-correct', 'input-incorrect');
-
         if (isCorrect) {
             keyElements[feedbackIndex].classList.add('completed-correct');
         } else {
@@ -167,7 +118,6 @@ function applyFeedback(feedbackIndex, isCorrect) {
                 }
             }, 500);
         }
-        void keyElements[feedbackIndex].offsetWidth;
     }
 }
 
@@ -194,8 +144,9 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
         return;
     }
 
-    let isCorrect = false;
     let feedbackIndex = -1;
+    let isCorrect = false;
+
     let lesson2State = getState('lesson2State');
     let lesson2SequenceIndex = getState('lesson2SequenceIndex');
 
@@ -207,23 +158,20 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
             isCorrect = true;
             feedbackIndex = lesson2SequenceIndex;
             updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1);
-            lesson2SequenceIndex = getState('lesson2SequenceIndex');
-
-            if (lesson2SequenceIndex >= sequence.length) {
+            
+            if (getState('lesson2SequenceIndex') >= sequence.length) {
                 updateState('lesson2SequenceIndex', 0);
-                updateState('lesson2State', lesson2State + 1);
-                doRenderAndHighlight(feedbackIndex, isCorrect);
-
-                setTimeout(() => {
-                    updateState('lesson2State', getState('lesson2State') + 1);
-                    if (getState('lesson2State') >= 12) {
-                        dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
-                    } else {
-                        doRenderAndHighlight();
-                    }
-                }, 400);
+                updateState('lesson2State', lesson2State + 2);
+                
+                // PERBAIKAN: Panggil doRenderAndHighlight tanpa feedback
+                // agar urutan baru tidak menampilkan umpan balik yang salah.
+                doRenderAndHighlight();
             } else {
                 doRenderAndHighlight(feedbackIndex, isCorrect);
+            }
+            
+            if (getState('lesson2State') >= 12) {
+                dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
             }
         } else {
             feedbackIndex = lesson2SequenceIndex;

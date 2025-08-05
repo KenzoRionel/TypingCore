@@ -15,8 +15,9 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     const waitingForAnim = getState('waitingForAnim');
     const lesson2Finished = getState('lesson2Finished');
     const lesson3Finished = getState('lesson3Finished');
-    // PERBAIKAN: Gunakan state lesson4Finished
     const lesson4Finished = getState('lesson4Finished');
+    
+    const isAnyLessonFinished = [lesson2Finished, lesson3Finished, lesson4Finished].some(status => status);
     
     if (lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) {
         if (e.key === 'Enter') {
@@ -24,11 +25,11 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
             if (continueBtn) {
                 continueBtn.click(); 
             }
-            return; 
         }
+        return; 
     }
     
-    if (waitingForAnim || lesson2Finished || lesson3Finished || lesson4Finished) {
+    if (waitingForAnim || isAnyLessonFinished) {
         e.preventDefault();
         return;
     }
@@ -42,7 +43,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
     let preventDefault = true;
 
     if (currentLessonIndex === 0) {
-        // Logika untuk Pelajaran 1 (Home Row)
         const currentStepIndex = getState('currentStepIndex');
         if (currentStepIndex === 0 && e.key.toLowerCase() === 'f') {
             updateState('waitingForAnim', true);
@@ -105,13 +105,11 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight) {
         handleLesson4Input({
             e,
             doRenderAndHighlight: doRenderAndHighlight,
-            // PERBAIKAN: Callback hanya memicu event saja
             dispatchLesson4FinishedEvent: (event) => {
                 lessonInstruction.dispatchEvent(event);
             },
             lessonInstructionEl: lessonInstruction,
         });
-        return;
     } else {
         const currentCharIndex = getState('currentCharIndex');
         if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {

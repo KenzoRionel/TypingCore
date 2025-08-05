@@ -1,4 +1,4 @@
-//learn-typing-ui.js
+// learn-typing-ui.js
 import { updateHandVisualizer } from './hand-visualizer.js';
 import { updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
@@ -9,28 +9,21 @@ export function createHandVisualizerElement() {
     const visualizerContainer = document.createElement('div');
     visualizerContainer.id = 'hand-visualizer-container';
 
-    const handF = document.createElement('img');
-    handF.id = 'hand-f';
-    handF.classList.add('hand-image');
-    handF.src = 'img/hand_f.png';
-    handF.alt = 'Tangan untuk tombol F';
+    const handImages = [
+        { id: 'hand-f', src: 'img/hand_f.png', alt: 'Tangan untuk tombol F' },
+        { id: 'hand-j', src: 'img/hand_j.png', alt: 'Tangan untuk tombol J' },
+        { id: 'hand-space', src: 'img/hand_space.png', alt: 'Tangan untuk tombol spasi' },
+    ];
 
-    const handJ = document.createElement('img');
-    handJ.id = 'hand-j';
-    handJ.classList.add('hand-image');
-    handJ.src = 'img/hand_j.png';
-    handJ.alt = 'Tangan untuk tombol J';
+    handImages.forEach(hand => {
+        const img = document.createElement('img');
+        img.id = hand.id;
+        img.classList.add('hand-image');
+        img.src = hand.src;
+        img.alt = hand.alt;
+        visualizerContainer.appendChild(img);
+    });
 
-    const handSpace = document.createElement('img');
-    handSpace.id = 'hand-space';
-    handSpace.classList.add('hand-image');
-    handSpace.src = 'img/hand_space.png';
-    handSpace.alt = 'Tangan untuk tombol spasi';
-
-    visualizerContainer.appendChild(handF);
-    visualizerContainer.appendChild(handJ);
-    visualizerContainer.appendChild(handSpace);
-    
     return visualizerContainer;
 }
 
@@ -39,50 +32,60 @@ export function createKeyboard(keyboardContainer, keyLayout) {
         console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
         return;
     }
-    let handVisualizer = keyboardContainer.querySelector('#hand-visualizer-container');
-    if (!handVisualizer) {
-        handVisualizer = createHandVisualizerElement();
-        keyboardContainer.prepend(handVisualizer);
-    }
-    const childrenToRemove = Array.from(keyboardContainer.children).filter(child => child.id !== 'hand-visualizer-container');
-    childrenToRemove.forEach(child => keyboardContainer.removeChild(child));
+    const handVisualizer = keyboardContainer.querySelector('#hand-visualizer-container') || createHandVisualizerElement();
+    keyboardContainer.innerHTML = ''; // Membersihkan konten sebelum membuat ulang
+    keyboardContainer.appendChild(handVisualizer);
+
+    const keyWidthClasses = {
+        'ShiftLeft': 'key-wide',
+        'ShiftRight': 'key-wide',
+        'Tab': 'key-tab',
+        'CapsLock': 'key-medium',
+        'Backspace': 'key-medium',
+        'Enter': 'key-medium',
+        'Space': 'key-space',
+        'ControlLeft': 'key-small',
+        'ControlRight': 'key-small',
+        'AltLeft': 'key-small',
+        'AltRight': 'key-small',
+        'MetaLeft': 'key-small',
+        'MetaRight': 'key-small',
+        'ContextMenu': 'key-small',
+    };
+
+    const keyDisplayNames = {
+        'ShiftLeft': 'Shift',
+        'ShiftRight': 'Shift',
+        'ControlLeft': 'Ctrl',
+        'ControlRight': 'Ctrl',
+        'AltLeft': 'Alt',
+        'AltRight': 'Alt',
+        'MetaLeft': 'Win',
+        'MetaRight': 'Win',
+        'ContextMenu': 'Menu',
+        'Space': '',
+    };
+    
     keyLayout.forEach(row => {
         const rowElement = document.createElement('div');
         rowElement.classList.add('keyboard-row');
         row.forEach(key => {
-            if (key === '') {
-                return;
-            }
+            if (key === '') return;
+            
             const keyElement = document.createElement('div');
             keyElement.classList.add('key');
-            let lowerKey = key.toLowerCase();
-            let displayKey = key;
-            if (key === 'ShiftLeft' || key === 'ShiftRight') displayKey = 'Shift';
-            if (key === 'ControlLeft' || key === 'ControlRight') displayKey = 'Ctrl';
-            if (key === 'AltLeft' || key === 'AltRight') displayKey = 'Alt';
-            if (key === 'MetaLeft' || key === 'MetaRight') displayKey = 'Win';
-            if (key === 'ContextMenu') displayKey = 'Menu';
-            if (key === 'Space') {
-                displayKey = '';
-                lowerKey = ' ';
-            }
+            
+            const displayKey = keyDisplayNames[key] !== undefined ? keyDisplayNames[key] : key;
+            const lowerKey = key === 'Space' ? ' ' : key.toLowerCase();
+            
             keyElement.textContent = displayKey;
             keyElement.setAttribute('data-key', lowerKey);
-            if (['ShiftLeft', 'ShiftRight'].includes(key)) {
-                keyElement.classList.add('key-wide');
+            
+            const widthClass = keyWidthClasses[key];
+            if (widthClass) {
+                keyElement.classList.add(widthClass);
             }
-            if (['Tab'].includes(key)) {
-                keyElement.classList.add('key-tab');
-            }
-            if (['CapsLock', 'Backspace', 'Enter'].includes(key)) {
-                keyElement.classList.add('key-medium');
-            }
-            if (key === 'Space') {
-                keyElement.classList.add('key-space');
-            }
-            if (['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight', 'ContextMenu'].includes(key)) {
-                keyElement.classList.add('key-small');
-            }
+            
             rowElement.appendChild(keyElement);
         });
         keyboardContainer.appendChild(rowElement);
@@ -126,16 +129,17 @@ export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, 
     lessonInstruction.textContent = lesson.instruction || '';
     lessonTextDisplay.innerHTML = '';
     if (lesson.sequence && lesson.sequence.length > 0) {
-        lesson.sequence.forEach((char, idx) => {
-            const span = document.createElement('span');
-            span.textContent = char === ' ' ? '\u00A0' : char; 
+        const textContent = lesson.sequence.join('');
+        lessonTextDisplay.innerHTML = textContent.split('').map((char, idx) => {
+            const displayChar = char === ' ' ? '\u00A0' : char;
+            let className = '';
             if (idx < currentCharIndex) {
-                span.classList.add('correct');
+                className = 'correct';
             } else if (idx === currentCharIndex) {
-                span.classList.add('cursor');
+                className = 'cursor';
             }
-            lessonTextDisplay.appendChild(span);
-        });
+            return `<span class="${className}">${displayChar}</span>`;
+        }).join('');
         if (currentCharIndex < lesson.sequence.length) {
             highlightKeyOnKeyboard(keyboardContainer, lesson.sequence[currentCharIndex]);
         } else {
@@ -157,26 +161,22 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         lessonTextDisplay
     } = domElements;
 
-    if (lessonHeader) lessonHeader.style.display = 'none';
+    // Sembunyikan elemen-elemen pelajaran
+    [lessonHeader, keyboardContainer, prevLessonBtn, nextLessonBtn, lessonTextDisplay].forEach(el => {
+        if (el) el.style.display = 'none';
+    });
+    
+    // Hentikan animasi keyboard
     if (keyboardContainer) {
-        keyboardContainer.style.display = 'none';
         const keys = keyboardContainer.querySelectorAll('.key');
         keys.forEach(key => {
             key.style.animation = 'none';
             key.classList.remove('next-key', 'correct-key', 'wrong-key');
         });
     }
-    if (prevLessonBtn) prevLessonBtn.style.display = 'none';
-    if (nextLessonBtn) nextLessonBtn.style.display = 'none';
-
-    if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-
-    if (currentLessonIdx === 3) {
-        updateState('lesson4Finished', true);
-    }
 
     if (lessonCompleteNotification) {
-        const h2 = lessonCompleteNotification.querySelector('h2');
+        const h2 = lessonCompleteNotification.querySelector('h3');
         if (h2) h2.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
         if (successAnimationSvg) {
             successAnimationSvg.classList.remove('animate-circle', 'animate-check');
@@ -191,24 +191,24 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
             const nextLessonIndex = currentLessonIdx + 1;
             if (nextLessonIndex < lessons.length) {
                 const nextLesson = lessons[nextLessonIndex];
-                let previewText = '';
-                if (nextLessonIndex === 0) {
-                    previewText = `Ketik huruf: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span>`;
-                } else if (nextLessonIndex === 1) {
-                    previewText = `Latihan: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span> berulang.`;
-                } else if (nextLessonIndex === 2) {
-                    previewText = `Lanjutan latihan: <span class="highlight-key-modal">F</span> dan <span class="highlight-key-modal">J</span> acak.`;
-                } else if (nextLessonIndex === 4) {
-                    previewText = `Lanjutan latihan: <span class="highlight-key-modal">G</span> dan <span class="highlight-key-modal">H</span>.`;
-                } else {
-                    const previewChars = nextLesson.sequence ? nextLesson.sequence.slice(0, 5).join('') : 'Latihan Baru';
+                let previewText;
+                if (nextLesson.type === 'simple-drill' && nextLesson.keys) {
+                    previewText = `Latihan: <span class="highlight-key-modal">${nextLesson.keys.join(', ')}</span>.`;
+                } else if (nextLesson.type === 'free-typing' && nextLesson.sequence) {
+                    const previewChars = nextLesson.sequence.slice(0, 5).join('');
                     previewText = `Ketik: <span class="highlight-key-modal">${previewChars}...</span>`;
+                } else if (nextLesson.type === 'character-drill' && nextLesson.sequence) {
+                    const uniqueChars = [...new Set(nextLesson.sequence.join(''))].join('');
+                    previewText = `Ketik huruf: <span class="highlight-key-modal">${uniqueChars}</span>.`;
+                } else {
+                    previewText = 'Latihan Baru';
                 }
                 nextLessonPreview.innerHTML = previewText;
             } else {
                 nextLessonPreview.textContent = "Anda telah menyelesaikan semua pelajaran!";
             }
         }
+        
         lessonCompleteNotification.style.display = 'flex';
         setTimeout(() => {
             lessonCompleteNotification.classList.add('active');

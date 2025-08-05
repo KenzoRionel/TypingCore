@@ -69,14 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentCharIndex = getState('currentCharIndex');
         const waitingForAnim = getState('waitingForAnim');
 
-        // PERBAIKAN: Tambahkan cek ini di sini untuk menghentikan rendering jika pelajaran selesai.
-        const lesson2Finished = getState('lesson2Finished');
-        const lesson3Finished = getState('lesson3Finished');
-        const lesson4Finished = getState('lesson4Finished');
+        const isLessonFinished = (currentLessonIndex === 1 && getState('lesson2Finished')) || 
+                                (currentLessonIndex === 2 && getState('lesson3Finished')) || 
+                                (currentLessonIndex === 3 && getState('lesson4Finished'));
 
-        if ((currentLessonIndex === 1 && lesson2Finished) || 
-            (currentLessonIndex === 2 && lesson3Finished) || 
-            (currentLessonIndex === 3 && lesson4Finished)) {
+        if (isLessonFinished) {
             return;
         }
         
@@ -123,6 +120,19 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Semua pelajaran selesai!");
         }
     }
+
+    function showLessonElements() {
+        if (domElements.lessonHeader) domElements.lessonHeader.style.display = '';
+        if (domElements.prevLessonBtn) domElements.prevLessonBtn.style.display = '';
+        if (domElements.nextLessonBtn) domElements.nextLessonBtn.style.display = '';
+        if (domElements.keyboardContainer) domElements.keyboardContainer.style.display = '';
+        if (domElements.lessonTextDisplay) domElements.lessonTextDisplay.style.display = '';
+        const input = getHiddenInput();
+        if (input) {
+            input.style.display = '';
+            input.focus();
+        }
+    }
     
     // --- SETUP AWAL APLIKASI, HANYA DIPANGGIL SEKALI ---
     createKeyboard(keyboardContainer, keyLayout);
@@ -155,9 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isNotificationActive && !isNavigationButton && clickedElement.closest('#virtual-keyboard') === null) {
             const input = getHiddenInput();
             if (input && document.activeElement !== input) {
-                setTimeout(() => {
-                    input.focus();
-                }, 10);
+                input.focus();
             }
         }
     });
@@ -171,60 +179,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    nextLessonBtn.addEventListener('click', () => {
-        setTimeout(() => {
-            goToNextLesson();
-        }, 50);
-    });
+    nextLessonBtn.addEventListener('click', goToNextLesson);
 
     continueBtn.addEventListener('click', () => {
         if (lessonCompleteNotification) {
             lessonCompleteNotification.classList.remove('active');
             setTimeout(() => {
                 lessonCompleteNotification.style.display = 'none';
-                if (domElements.lessonHeader) {
-                    domElements.lessonHeader.style.display = '';
-                }
-                
-                if (domElements.prevLessonBtn) domElements.prevLessonBtn.style.display = '';
-                if (domElements.nextLessonBtn) domElements.nextLessonBtn.style.display = '';
-                
-                if (domElements.keyboardContainer) {
-                    domElements.keyboardContainer.style.display = '';
-                }
-
-                // PERBAIKAN: Tambahkan ini untuk menampilkan kembali lesson display
-                if (domElements.lessonTextDisplay) {
-                    domElements.lessonTextDisplay.style.display = '';
-                }
-
-                const input = getHiddenInput();
-                if (input) {
-                    input.style.display = '';
-                    input.focus();
-                }
-
+                showLessonElements();
                 goToNextLesson();
             }, 500);
         }
     });
 
     if (lessonInstruction) {
-        lessonInstruction.addEventListener('lesson2-finished', (event) => {
-            updateState('lesson2Finished', true);
+        const handleLessonFinished = (event) => {
+            const lessonNumber = parseInt(event.type.replace('lesson', '').replace('-finished', ''), 10);
+            updateState(`lesson${lessonNumber}Finished`, true);
             const currentLessonIndex = getState('currentLessonIndex');
             showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
-        });
-        
-        lessonInstruction.addEventListener('lesson3-finished', (event) => {
-            updateState('lesson3Finished', true);
-            const currentLessonIndex = getState('currentLessonIndex');
-            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
-        });
-        lessonInstruction.addEventListener('lesson4-finished', (event) => {
-            updateState('lesson4Finished', true);
-            const currentLessonIndex = getState('currentLessonIndex');
-            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
-        });
+        };
+        lessonInstruction.addEventListener('lesson2-finished', handleLessonFinished);
+        lessonInstruction.addEventListener('lesson3-finished', handleLessonFinished);
+        lessonInstruction.addEventListener('lesson4-finished', handleLessonFinished);
     }
 });
