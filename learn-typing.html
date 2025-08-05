@@ -84,40 +84,47 @@
                     </div>
                 </div>
                 <div id="lesson-complete-notification" class="lesson-complete-notification" style="display: none;">
-                    <div class="notification-content">
-                        <div class="notification-header">
-                            <h3>Pelajaran Selesai!</h3>
+    <div class="notification-content">
+        <div class="notification-header">
+            <h3>Pelajaran Selesai!</h3>
+        </div>
+        <div class="completion-progress-wrapper">
+            <div class="completion-progress-container">
+                <div id="completion-progress-bar" class="completion-progress-bar"></div>
+            </div>
+            <span id="completion-progress-text" class="completion-progress-text">0%</span>
+        </div>
+        <div id="thumb-animation-container" class="thumb-animation-container">
+            <svg id="success-animation-svg" class="success-animation-svg" viewBox="-27 -27 150 150"
+                xmlns="http://www.w3.org/2000/svg">
+                <circle id="background-circle" cx="50" cy="50" r="60" fill="#BDCFFA" />
+                <path id="circle-path" class="circle-path"
+                    d="M50 2 C76.48 2 98 23.52 98 50 C98 76.48 76.48 98 50 98 C23.52 98 2 76.48 2 50 C2 23.52 23.52 2 50 2 Z"
+                    fill="none" stroke-width="10" stroke-linecap="round" stroke-miterlimit="10" />
+                <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none"
+                    stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" />
+            </svg>
+        </div>
+        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+    </div>
+</div>
+                <div class="navigation-buttons" id="navigation-buttons">
+                    <button id="prev-lesson-btn" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Sebelumnya</button>
+                    <button id="next-lesson-btn" class="btn btn-primary">
+                        Selanjutnya <i class="fas fa-arrow-right"></i></button>
+                </div>
+
+                <div id="progress-container-wrapper" class="progress-container-wrapper">
+                    <div class="lesson-progress">
+                        <div class="progress-container">
+                            <div class="progress-bar" id="lesson-progress-bar"></div>
                         </div>
-                        <div id="thumb-animation-container" class="thumb-animation-container">
-                            <svg id="success-animation-svg" class="success-animation-svg" viewBox="-27 -27 150 150"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <circle id="background-circle" cx="50" cy="50" r="60" fill="#BDCFFA" />
-                                <path id="circle-path" class="circle-path"
-                                    d="M50 2 C76.48 2 98 23.52 98 50 C98 76.48 76.48 98 50 98 C23.52 98 2 76.48 2 50 C2 23.52 23.52 2 50 2 Z"
-                                    fill="none" stroke-width="10" stroke-linecap="round" stroke-miterlimit="10" />
-                                <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none"
-                                    stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" />
-                            </svg>
-                        </div>
-                        <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+                        <span class="progress-text" id="progress-percentage">0%</span>
                     </div>
                 </div>
-                <div class="navigation-buttons" id="navigation-buttons">
-    <button id="prev-lesson-btn" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Sebelumnya</button>
-    
-    <div id="progress-container-wrapper" class="progress-container-wrapper">
-        <div class="lesson-progress">
-            <div class="progress-container">
-                <div class="progress-bar" id="lesson-progress-bar"></div>
-            </div>
-            <span class="progress-text" id="progress-percentage">0%</span>
-        </div>
-    </div>
-    
-    <button id="next-lesson-btn" class="btn btn-primary">
-        Selanjutnya <i class="fas fa-arrow-right"></i></button>
-</div>
+
+
             </section>
         </main>
     </div>

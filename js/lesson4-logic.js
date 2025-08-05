@@ -67,8 +67,6 @@ export function handleLesson4Input({ e, doRenderAndHighlight, dispatchLesson4Fin
         updateState('lesson4CurrentCharIndex', newCharIndex);
 
         if (newCharIndex >= lesson.sequence.length) {
-            // PERBAIKAN DI SINI:
-            // Paksa progres bar ke 100% sebelum notifikasi muncul
             updateProgressBar(100);
             dispatchLesson4FinishedEvent(new Event('lesson4-finished'));
         }

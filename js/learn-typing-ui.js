@@ -158,11 +158,12 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         successAnimationSvg,
         prevLessonBtn,
         nextLessonBtn,
-        lessonTextDisplay
+        lessonTextDisplay,
+        progressContainerWrapper // Ditambahkan: Elemen progress bar dari pelajaran
     } = domElements;
 
-    // Sembunyikan elemen-elemen pelajaran
-    [lessonHeader, keyboardContainer, prevLessonBtn, nextLessonBtn, lessonTextDisplay].forEach(el => {
+    // Sembunyikan elemen-elemen pelajaran, termasuk progress bar
+    [lessonHeader, keyboardContainer, prevLessonBtn, nextLessonBtn, lessonTextDisplay, progressContainerWrapper].forEach(el => {
         if (el) el.style.display = 'none';
     });
     
@@ -174,6 +175,32 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
             key.classList.remove('next-key', 'correct-key', 'wrong-key');
         });
     }
+    
+    // LOGIKA ANIMASI PROGRESS BAR BARU
+    const completionProgressBar = document.getElementById('completion-progress-bar');
+    const completionProgressText = document.getElementById('completion-progress-text');
+
+    if (completionProgressBar && completionProgressText) {
+        // Reset progress bar
+        completionProgressBar.style.width = '0%';
+        completionProgressText.textContent = '0%';
+
+        // Mulai animasi
+        setTimeout(() => {
+            completionProgressBar.style.width = '100%';
+        }, 100);
+
+        // Animasikan teks persentase
+        let currentPercentage = 0;
+        const interval = setInterval(() => {
+            currentPercentage += 1;
+            completionProgressText.textContent = `${currentPercentage}%`;
+            if (currentPercentage >= 100) {
+                clearInterval(interval);
+            }
+        }, 15);
+    }
+    // AKHIR LOGIKA ANIMASI PROGRESS BAR
 
     if (lessonCompleteNotification) {
         const h2 = lessonCompleteNotification.querySelector('h3');

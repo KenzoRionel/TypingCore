@@ -1,9 +1,9 @@
-// js/input-handler.js
+// input-handler.js
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import {
     showLessonCompleteNotification
-} from './learn-typing-logic.js';
+} from './learn-typing-ui.js'; // PERBAIKAN: Ubah import dari learn-typing-logic.js ke learn-typing-ui.js
 import { handleLesson2Input } from './lesson2-logic.js';
 import { handleLesson3Input } from './lesson3-logic.js';
 import { handleLesson4Input } from './lesson4-logic.js';

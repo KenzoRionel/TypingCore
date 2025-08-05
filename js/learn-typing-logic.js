@@ -28,7 +28,8 @@ function cleanupSpecialLessons(lessonInstruction) {
     cleanupLesson4Elements(lessonInstruction);
 }
 
-function resetSpecialLessonState(keyboardContainer) {
+// PERBAIKAN: Fungsi ini sekarang akan memanggil cleanupSpecialLessons
+function resetSpecialLessonState() {
     updateState('lesson2State', 0);
     updateState('lesson2SequenceIndex', 0);
     updateState('lesson3State', 0);
@@ -37,9 +38,13 @@ function resetSpecialLessonState(keyboardContainer) {
     
     const lessonInstructionEl = document.getElementById('lesson-instruction');
     if (lessonInstructionEl) {
+        // Panggil fungsi cleanup di sini
         cleanupSpecialLessons(lessonInstructionEl);
     }
-    clearKeyboardHighlights(keyboardContainer);
+    const keyboardContainerEl = document.getElementById('virtual-keyboard');
+    if (keyboardContainerEl) {
+        clearKeyboardHighlights(keyboardContainerEl);
+    }
 }
 
 export { resetSpecialLessonState as resetLesson2State };
@@ -72,7 +77,6 @@ export function renderLesson({
     
     clearKeyboardHighlights(keyboardContainer);
 
-    // LOGIKA PERUBAHAN: Selalu pindahkan progres bar ke atas virtual keyboard
     const progressBarContainerEl = document.getElementById('progress-container-wrapper');
     const learnTypingSectionEl = document.getElementById('learn-typing-section');
     const virtualKeyboardEl = document.getElementById('virtual-keyboard');
@@ -80,7 +84,6 @@ export function renderLesson({
     if (progressBarContainerEl && learnTypingSectionEl && virtualKeyboardEl) {
         learnTypingSectionEl.insertBefore(progressBarContainerEl, virtualKeyboardEl);
     }
-    // AKHIR LOGIKA PERUBAHAN
 
     if (lessonTextDisplay) {
         if (currentLessonIndex === 3) {
@@ -89,6 +92,10 @@ export function renderLesson({
             lessonTextDisplay.classList.remove('lesson-4-display');
         }
     }
+    
+    // Perbaikan utama: Panggil cleanup setiap kali render dimulai
+    if (lessonTextDisplay) lessonTextDisplay.innerHTML = ''; //
+    // Akhir perbaikan
 
     const specialRenderers = {
         0: () => {

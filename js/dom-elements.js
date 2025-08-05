@@ -1,4 +1,4 @@
-// dom-elements.js (DIUPDATE)
+// dom-elements.js
 
 /**
  * Mencari dan mengembalikan semua referensi elemen DOM yang dibutuhkan.
@@ -62,6 +62,13 @@ export function getDOMReferences() {
 
     const nextLessonPreview = document.getElementById('next-lesson-preview');
     // nextLessonPreview bisa null untuk pelajaran awal, jadi tidak perlu divalidasi
+    
+    // Perbaikan ada di sini: Mengambil elemen wadah progress bar
+    const progressContainerWrapper = document.getElementById('progress-container-wrapper');
+    if (!progressContainerWrapper) {
+        console.error("ERROR: Elemen DOM penting #progress-container-wrapper tidak ditemukan.");
+        return null;
+    }
     
     const progressBar = document.getElementById('lesson-progress-bar');
     if (!progressBar) {
@@ -131,6 +138,7 @@ export function getDOMReferences() {
         hiddenInput,
         progressBar,
         progressText,
+        progressContainerWrapper, // Ditambahkan: Wadah progress bar utama
         thumbAnimationContainer,
         successAnimationSvg,
         circlePath,

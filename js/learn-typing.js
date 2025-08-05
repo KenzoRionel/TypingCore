@@ -1,4 +1,4 @@
-// js/learn-typing.js
+// learn-typing.js
 import { lessons } from './learn-typing-lessons.js';
 import {
     renderLesson,
@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextLessonPreview,
         progressBar,
         progressText,
+        progressContainerWrapper, // Ditambahkan: Wadah progress bar utama
         thumbAnimationContainer,
         successAnimationSvg,
         circlePath,
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextLessonPreview,
         progressBar,
         progressText,
+        progressContainerWrapper, // Ditambahkan: Sekarang ada di objek
         thumbAnimationContainer,
         successAnimationSvg,
         circlePath,
@@ -72,8 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const waitingForAnim = getState('waitingForAnim');
 
         const isLessonFinished = (currentLessonIndex === 1 && getState('lesson2Finished')) || 
-                                 (currentLessonIndex === 2 && getState('lesson3Finished')) || 
-                                 (currentLessonIndex === 3 && getState('lesson4Finished'));
+                                     (currentLessonIndex === 2 && getState('lesson3Finished')) || 
+                                     (currentLessonIndex === 3 && getState('lesson4Finished'));
 
         if (isLessonFinished) {
             return;
@@ -131,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (domElements.nextLessonBtn) domElements.nextLessonBtn.style.display = '';
         if (domElements.keyboardContainer) domElements.keyboardContainer.style.display = '';
         if (domElements.lessonTextDisplay) domElements.lessonTextDisplay.style.display = '';
+        if (domElements.progressContainerWrapper) domElements.progressContainerWrapper.style.display = ''; // Ditambahkan: Tampilkan kembali progress bar
         const input = getHiddenInput();
         if (input) {
             input.style.display = '';
