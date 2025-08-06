@@ -24,8 +24,7 @@ export function getSequenceForState(state) {
     return lesson2Sequences[index];
 }
 
-// PERBAIKAN: Tambahkan parameter setAnimatingKey dan renderHandVisualizer
-export function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1, isCorrect = null, setAnimatingKey, renderHandVisualizer, clearAnimation) {
+export function renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex = -1, isCorrect = null, setAnimatingKey, renderHandVisualizer) {
     if (!lessonInstruction) {
         console.error("renderLesson2: lessonInstruction tidak ditemukan.");
         return;
@@ -43,14 +42,16 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
         lesson2UnderlineContainer.classList.add('lesson-keyboard-underline');
         lessonInstruction.appendChild(lesson2UnderlineContainer);
     }
+    
     const sequence = getSequenceForState(lesson2State);
     const highlightedKey = sequence[lesson2SequenceIndex];
 
     if (lesson2State % 2 !== 0 && lesson2State < 12) {
         handleTransitionState();
     } else if (lesson2State < 12) {
-        // PERBAIKAN: Meneruskan parameter
-        handleActiveState(sequence, lesson2SequenceIndex, highlightedKey, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer, clearAnimation);
+        // PERBAIKAN: Panggil handleActiveState dengan parameter yang benar.
+        handleActiveState(sequence, lesson2SequenceIndex, highlightedKey, keyboardContainer, setAnimatingKey, renderHandVisualizer);
+        applyFeedback(feedbackIndex, isCorrect);
     } else {
         cleanupLesson2Elements(lessonInstruction);
     }
@@ -70,8 +71,7 @@ function handleTransitionState() {
     }
 }
 
-// PERBAIKAN: Tambahkan parameter setAnimatingKey, renderHandVisualizer, dan clearAnimation
-function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, feedbackIndex = -1, isCorrect = null, setAnimatingKey, renderHandVisualizer, clearAnimation) {
+function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer, setAnimatingKey, renderHandVisualizer) {
     if (!lesson2SequenceContainer || !lesson2UnderlineContainer) return;
     const currentKeys = Array.from(lesson2SequenceContainer.children).map(el => el.textContent).join('');
     const requiresRebuild = keysToDisplay.join('') !== currentKeys;
@@ -93,24 +93,9 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
     } else {
         updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
     }
-    applyFeedback(feedbackIndex, isCorrect);
     
-    // PERBAIKAN: Hapus panggilan clearAnimation di sini
-    // if (clearAnimation) {
-    //     clearAnimation();
-    // }
-    clearKeyboardHighlights(keyboardContainer);
-
-    if (highlightedKey) {
-        const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
-        if (keyElement && setAnimatingKey) {
-            setAnimatingKey(keyElement);
-        }
-        if (renderHandVisualizer) {
-            renderHandVisualizer(highlightedKey);
-        }
-        highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-    }
+    // Perbaikan: Semua logika highlight keyboard di sini Dihapus.
+    // Tugas highlight sekarang hanya di handleLesson2Input
 }
 
 function applyFeedback(feedbackIndex, isCorrect) {
@@ -147,8 +132,7 @@ export function cleanupLesson2Elements(lessonInstruction) {
     });
 }
 
-// PERBAIKAN: Tambahkan parameter setAnimatingKey dan renderHandVisualizer
-export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2FinishedEvent, lessonInstructionEl, keyboardContainer, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation }) {
+export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2FinishedEvent, lessonInstructionEl, keyboardContainer, setAnimationSpeed, setAnimatingKey, renderHandVisualizer }) {
     if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
         e.preventDefault();
     } else {
@@ -164,9 +148,11 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
         const expectedKey = sequence[lesson2SequenceIndex];
 
         if (e.key.toLowerCase() === expectedKey) {
+            // PERBAIKAN: Hapus highlight lama HANYA jika input benar
+            clearKeyboardHighlights(keyboardContainer);
+
             if (setAnimationSpeed) {
                 setAnimationSpeed(15);
-                // PERBAIKAN: Menggunakan nilai 3 secara langsung karena defaultAnimationSpeed tidak tersedia
                 setTimeout(() => setAnimationSpeed(3), 100);
             }
 
@@ -174,10 +160,19 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
             feedbackIndex = lesson2SequenceIndex;
             updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1);
             
-            // PERBAIKAN: Hapus baris ini
-            // if (clearAnimation) {
-            //     clearAnimation();
-            // }
+            applyFeedback(feedbackIndex, isCorrect);
+            
+            const nextKey = sequence[getState('lesson2SequenceIndex')];
+            if (nextKey) {
+                if (setAnimatingKey) {
+                    const keyElement = keyboardContainer.querySelector(`.key[data-key="${nextKey.toLowerCase()}"]`);
+                    setAnimatingKey(keyElement);
+                }
+                if (renderHandVisualizer) {
+                    renderHandVisualizer(nextKey);
+                }
+                highlightKeyOnKeyboard(keyboardContainer, nextKey);
+            }
 
             if (getState('lesson2SequenceIndex') >= sequence.length) {
                 updateState('lesson2SequenceIndex', 0);
@@ -190,11 +185,16 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
                 dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
             }
         } else {
-            feedbackIndex = lesson2SequenceIndex;
-            isCorrect = false;
-            // PERBAIKAN: Hapus baris di bawah ini
-            // doRenderAndHighlight(feedbackIndex, isCorrect);
+            // Perbaikan: Tidak perlu clear highlight di sini. Highlight benar tetap ada.
+            
             highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
+            
+            setTimeout(() => {
+                highlightWrongKeyOnKeyboard(keyboardContainer, e.key, false);
+            }, 200);
+            
+            applyFeedback(lesson2SequenceIndex, false);
+
             if (lessonInstructionEl) {
                 lessonInstructionEl.classList.add('error-shake');
                 setTimeout(() => lessonInstructionEl.classList.remove('error-shake'), 200);

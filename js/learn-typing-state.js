@@ -17,6 +17,7 @@ let appState = {
     lesson4State: 0,
     lesson4SequenceIndex: 0,
     lesson4CurrentCharIndex: 0,
+    lesson4CharHistory: [],
 };
 
 export function initDOMAndState() {

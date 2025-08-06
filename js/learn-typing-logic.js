@@ -1,17 +1,20 @@
 // learn-typing-logic.js
+
 import { lessons } from './learn-typing-lessons.js';
 import { getState, updateState } from './learn-typing-state.js';
 import {
     renderLesson2,
     cleanupLesson2Elements,
+    getSequenceForState, // Import getSequenceForState dari lesson2-logic
 } from './lesson2-logic.js';
 import {
     renderLesson3,
     cleanupLesson3Elements,
+    getSequenceForState as getSequenceForState3, // Import getSequenceForState dari lesson3-logic
 } from './lesson3-logic.js';
 import {
     renderLesson4,
-    cleanupLesson4Elements
+    cleanupLesson4Elements,
 } from './lesson4-logic.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 import {
@@ -22,34 +25,53 @@ import {
     highlightKeyOnKeyboard,
 } from './learn-typing-ui.js';
 
-function cleanupSpecialLessons(lessonInstruction) {
+export function cleanupSpecialLessons(lessonInstruction) {
     cleanupLesson2Elements(lessonInstruction);
     cleanupLesson3Elements(lessonInstruction);
     cleanupLesson4Elements(lessonInstruction);
 }
 
-function resetSpecialLessonState(clearAnimation) {
+export function resetLesson2State(clearAnimation) {
     updateState('lesson2State', 0);
     updateState('lesson2SequenceIndex', 0);
-    updateState('lesson3State', 0);
-    updateState('lesson3SequenceIndex', 0);
-    updateState('lesson4CurrentCharIndex', 0);
-
     const lessonInstructionEl = document.getElementById('lesson-instruction');
     if (lessonInstructionEl) {
-        cleanupSpecialLessons(lessonInstructionEl);
+        cleanupLesson2Elements(lessonInstructionEl);
     }
     const keyboardContainerEl = document.getElementById('virtual-keyboard');
     if (keyboardContainerEl) {
         clearKeyboardHighlights(keyboardContainerEl);
     }
-    // PERBAIKAN: Pastikan animasi juga dimatikan saat reset
     if (clearAnimation) clearAnimation();
 }
 
-export { resetSpecialLessonState as resetLesson2State };
-export { resetSpecialLessonState as resetLesson3State };
-export { resetSpecialLessonState as resetLesson4State };
+export function resetLesson3State(clearAnimation) {
+    updateState('lesson3State', 0);
+    updateState('lesson3SequenceIndex', 0);
+    const lessonInstructionEl = document.getElementById('lesson-instruction');
+    if (lessonInstructionEl) {
+        cleanupLesson3Elements(lessonInstructionEl);
+    }
+    const keyboardContainerEl = document.getElementById('virtual-keyboard');
+    if (keyboardContainerEl) {
+        clearKeyboardHighlights(keyboardContainerEl);
+    }
+    if (clearAnimation) clearAnimation();
+}
+
+export function resetLesson4State(clearAnimation) {
+    updateState('lesson4CurrentCharIndex', 0);
+    updateState('lesson4CharHistory', []);
+    const lessonInstructionEl = document.getElementById('lesson-instruction');
+    if (lessonInstructionEl) {
+        cleanupLesson4Elements(lessonInstructionEl);
+    }
+    const keyboardContainerEl = document.getElementById('virtual-keyboard');
+    if (keyboardContainerEl) {
+        clearKeyboardHighlights(keyboardContainerEl);
+    }
+    if (clearAnimation) clearAnimation();
+}
 
 export { createKeyboard };
 
@@ -87,9 +109,6 @@ export function renderLesson({
     if (lessonTitle) lessonTitle.textContent = lesson.title;
 
     clearKeyboardHighlights(keyboardContainer);
-    
-    // PERBAIKAN: Hapus panggilan clearAnimation() yang berlebihan dari sini
-    // if (clearAnimation) clearAnimation(); 
 
     const progressBarContainerEl = document.getElementById('progress-container-wrapper');
     const learnTypingSectionEl = document.getElementById('learn-typing-section');
@@ -138,10 +157,44 @@ export function renderLesson({
         1: () => {
             if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
             renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer);
+            
+            // PERBAIKAN: Tambahkan logika inisialisasi highlight untuk Pelajaran 2
+            const lesson2State = getState('lesson2State');
+            const lesson2SequenceIndex = getState('lesson2SequenceIndex');
+            const sequence = getSequenceForState(lesson2State);
+            const highlightedKey = sequence[lesson2SequenceIndex];
+
+            if (highlightedKey) {
+                const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
+                if (keyElement && setAnimatingKey) {
+                    setAnimatingKey(keyElement);
+                }
+                if (renderHandVisualizer) {
+                    renderHandVisualizer(highlightedKey);
+                }
+                highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+            }
         },
         2: () => {
             if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
             renderLesson3(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer);
+            
+            // PERBAIKAN: Tambahkan logika inisialisasi highlight untuk Pelajaran 3
+            const lesson3State = getState('lesson3State');
+            const lesson3SequenceIndex = getState('lesson3SequenceIndex');
+            const sequence = getSequenceForState3(lesson3State);
+            const highlightedKey = sequence[lesson3SequenceIndex];
+
+            if (highlightedKey) {
+                const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
+                if (keyElement && setAnimatingKey) {
+                    setAnimatingKey(keyElement);
+                }
+                if (renderHandVisualizer) {
+                    renderHandVisualizer(highlightedKey);
+                }
+                highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+            }
         },
         3: () => {
             if (lessonTextDisplay) lessonTextDisplay.style.display = '';

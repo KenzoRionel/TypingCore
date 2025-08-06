@@ -1,4 +1,5 @@
 // learn-typing.js
+
 import { lessons } from './learn-typing-lessons.js';
 import {
     renderLesson,
@@ -38,7 +39,6 @@ function setAnimationSpeed(speed) {
     }
 }
 
-// PERBAIKAN: setAnimatingKey sekarang menghapus jeda
 function setAnimatingKey(keyElement) {
     clearAnimation();
     if (keyElement) {
@@ -49,11 +49,10 @@ function setAnimatingKey(keyElement) {
     }
 }
 
-// PERBAIKAN: clearAnimation sekarang menghapus borderImageSource untuk menghindari konflik dengan border CSS.
 function clearAnimation() {
     if (animatingKeyElement) {
         animatingKeyElement.classList.remove('is-animating');
-        animatingKeyElement.style.borderImageSource = ''; // Hapus style border animasi secara spesifik
+        animatingKeyElement.style.borderImageSource = '';
     }
     animatingKeyElement = null;
 }
@@ -68,6 +67,7 @@ function animateBorder() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Ambil elemen DOM secara terpisah dan tambahkan tombol baru
     const {
         keyboardContainer,
         lessonHeader,
@@ -87,9 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         circlePath,
         checkPath,
         hiddenInput,
-        navigationButtonsContainer,
-        retryLessonBtn,
+        retryLessonBtn
     } = initDOMAndState();
+
+    const navigationButtonsContainer = document.querySelector('.keyboard-and-navigation-wrapper');
 
     if (!keyboardContainer || !lessonCompleteNotification) {
         console.error("ERROR: Elemen DOM kunci (keyboard atau notifikasi) tidak ditemukan. Aplikasi tidak dapat berjalan.");
@@ -174,15 +175,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function goToNextLesson() {
-        let currentLessonIndex = getState('currentLessonIndex');
-        if (currentLessonIndex < lessons.length - 1) {
-            updateState('currentLessonIndex', currentLessonIndex + 1);
-            resetCurrentLessonState();
-            doRenderLessonAndFocus();
-        } else {
-            console.log("Semua pelajaran selesai!");
-        }
+    let currentLessonIndex = getState('currentLessonIndex');
+    if (currentLessonIndex < lessons.length - 1) {
+        updateState('currentLessonIndex', currentLessonIndex + 1);
+        resetCurrentLessonState();
+        // PERBAIKAN: Bersihkan semua highlight dan animasi dari pelajaran sebelumnya
+        clearAnimation();
+        clearKeyboardHighlights(keyboardContainer); // Pastikan keyboardContainer tersedia
+        doRenderLessonAndFocus();
+    } else {
+        console.log("Semua pelajaran selesai!");
     }
+}
 
     function showLessonElements() {
         if (domElements.lessonHeader) domElements.lessonHeader.style.display = '';
@@ -252,15 +256,18 @@ document.addEventListener('DOMContentLoaded', () => {
     nextLessonBtn.addEventListener('click', goToNextLesson);
 
     continueBtn.addEventListener('click', () => {
-        if (lessonCompleteNotification) {
-            lessonCompleteNotification.classList.remove('active');
-            setTimeout(() => {
-                lessonCompleteNotification.style.display = 'none';
-                showLessonElements();
-                goToNextLesson();
-            }, 500);
-        }
-    });
+    if (lessonCompleteNotification) {
+        lessonCompleteNotification.classList.remove('active');
+        // PERBAIKAN: Bersihkan juga saat tombol "Lanjut" diklik
+        clearAnimation();
+        clearKeyboardHighlights(domElements.keyboardContainer);
+        setTimeout(() => {
+            lessonCompleteNotification.style.display = 'none';
+            showLessonElements();
+            goToNextLesson();
+        }, 500);
+    }
+});
 
     if (retryLessonBtn) {
         retryLessonBtn.addEventListener('click', () => {

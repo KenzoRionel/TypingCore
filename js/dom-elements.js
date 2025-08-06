@@ -113,11 +113,11 @@ export function getDOMReferences() {
         return null;
     }
 
-    let hiddenInput = document.getElementById('learnTypingHiddenInput');
+    let hiddenInput = document.getElementById('hidden-input');
     if (!hiddenInput) {
         hiddenInput = document.createElement('input');
         hiddenInput.type = 'text';
-        hiddenInput.id = 'learnTypingHiddenInput';
+        hiddenInput.id = 'hidden-input';
         hiddenInput.style.position = 'absolute';
         hiddenInput.style.opacity = '0';
         hiddenInput.style.pointerEvents = 'none';
