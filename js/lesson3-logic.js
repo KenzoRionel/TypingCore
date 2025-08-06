@@ -7,6 +7,13 @@ import { highlightKeyOnKeyboard, highlightWrongKeyOnKeyboard, clearKeyboardHighl
 
 let lesson3SequenceContainer = null;
 let lesson3UnderlineContainer = null;
+
+let wrongInputState = {
+    el: null,
+    originalText: '',
+    timeoutId: null
+};
+
 const lesson3Sequences = [
     ['f', ' ', 'f', ' ', 'j', ' ', 'j'],
     [' ', 'f', 'f', ' ', ' ', 'f', 'f'],
@@ -56,7 +63,7 @@ export function renderLesson3(lessonInstruction, keyboardContainer, feedbackInde
 function handleTransitionState() {
     if (lesson3SequenceContainer) {
         Array.from(lesson3SequenceContainer.children).forEach(keyEl => {
-            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect');
+            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect', 'wrong-input-overlay');
             keyEl.classList.add('slide-up-fade-out');
             void keyEl.offsetWidth;
             keyEl.addEventListener('animationend', () => keyEl.remove(), { once: true });
@@ -110,6 +117,15 @@ function applyFeedback(feedbackIndex, isCorrect) {
     }
 }
 
+function clearWrongInputFeedback() {
+    if (wrongInputState.el) {
+        clearTimeout(wrongInputState.timeoutId);
+        wrongInputState.el.textContent = wrongInputState.originalText;
+        wrongInputState.el.classList.remove('wrong-input-overlay');
+        wrongInputState = { el: null, originalText: '', timeoutId: null };
+    }
+}
+
 export function cleanupLesson3Elements(lessonInstruction) {
     if (lesson3SequenceContainer && lesson3SequenceContainer.parentNode) {
         lesson3SequenceContainer.remove();
@@ -137,11 +153,14 @@ export function handleLesson3Input({ e, doRenderAndHighlight, dispatchLesson3Fin
     let lesson3SequenceIndex = getState('lesson3SequenceIndex');
     const sequence = getSequenceForState(lesson3State);
     const expectedKey = sequence[lesson3SequenceIndex];
+    const correctKeyEl = lesson3SequenceContainer ? lesson3SequenceContainer.children[lesson3SequenceIndex] : null;
 
     if (lesson3State % 2 === 0 && lesson3State < lesson3Sequences.length * 2) {
         if (e.key.toLowerCase() === expectedKey.toLowerCase()) {
-            clearKeyboardHighlights(keyboardContainer);
+            // Panggil pembersih di sini
+            clearWrongInputFeedback();
 
+            clearKeyboardHighlights(keyboardContainer);
             if (setAnimationSpeed) {
                 setAnimationSpeed(15);
                 setTimeout(() => setAnimationSpeed(3), 100);
@@ -149,7 +168,6 @@ export function handleLesson3Input({ e, doRenderAndHighlight, dispatchLesson3Fin
 
             isCorrect = true;
             updateState('lesson3SequenceIndex', lesson3SequenceIndex + 1);
-            
             applyFeedback(lesson3SequenceIndex, isCorrect);
             
             const nextKey = sequence[getState('lesson3SequenceIndex')];
@@ -175,19 +193,31 @@ export function handleLesson3Input({ e, doRenderAndHighlight, dispatchLesson3Fin
                 dispatchLesson3FinishedEvent(new Event('lesson3-finished'));
             }
         } else {
-            // Perbaikan: Logika yang sama dengan lesson2-logic.js
+            applyFeedback(lesson3SequenceIndex, false);
             
-            // Tambahkan highlight merah pada tombol yang salah
+            if (correctKeyEl) {
+                // Panggil pembersih untuk memastikan hanya ada satu timeout aktif
+                clearWrongInputFeedback();
+                
+                wrongInputState.el = correctKeyEl;
+                wrongInputState.originalText = correctKeyEl.textContent;
+                correctKeyEl.textContent = e.key;
+                correctKeyEl.classList.add('wrong-input-overlay');
+                
+                wrongInputState.timeoutId = setTimeout(() => {
+                    if (wrongInputState.el === correctKeyEl) {
+                        correctKeyEl.textContent = wrongInputState.originalText;
+                        correctKeyEl.classList.remove('wrong-input-overlay');
+                        wrongInputState = { el: null, originalText: '', timeoutId: null };
+                    }
+                }, 500);
+            }
+
             highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
             
-            // Atur waktu agar highlight merah hilang
             setTimeout(() => {
                 highlightWrongKeyOnKeyboard(keyboardContainer, e.key, false);
             }, 200);
-
-            // Highlight biru pada tombol yang benar tetap ada, kita tidak perlu menyentuhnya
-            
-            applyFeedback(lesson3SequenceIndex, false);
 
             if (lessonInstructionEl) {
                 lessonInstructionEl.classList.add('error-shake');

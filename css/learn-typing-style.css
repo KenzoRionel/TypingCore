@@ -208,6 +208,12 @@ virtual-keyboard .key.next-key {
     }
 }
 
+.wrong-input-overlay {
+    color: #ff4d4f; /* Warna merah untuk input salah */
+    font-weight: bold;
+    /* Efek transisi jika kamu inginkan */
+}
+
 .lesson-header {
     text-align: center;
     margin-bottom: 0px;

@@ -7,6 +7,13 @@ import { highlightKeyOnKeyboard, highlightWrongKeyOnKeyboard, clearKeyboardHighl
 
 let lesson2SequenceContainer = null;
 let lesson2UnderlineContainer = null;
+
+let wrongInputState = {
+    el: null,
+    originalText: '',
+    timeoutId: null
+};
+
 const lesson2Sequences = [
     ['f', 'f', 'f', 'f', 'j', 'j'],
     ['j', 'j', 'f', 'f', 'f', 'f'],
@@ -29,7 +36,6 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
         console.error("renderLesson2: lessonInstruction tidak ditemukan.");
         return;
     }
-
     const lesson2State = getState('lesson2State');
     const lesson2SequenceIndex = getState('lesson2SequenceIndex');
     if (!lesson2SequenceContainer || !lessonInstruction.contains(lesson2SequenceContainer)) {
@@ -42,14 +48,12 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
         lesson2UnderlineContainer.classList.add('lesson-keyboard-underline');
         lessonInstruction.appendChild(lesson2UnderlineContainer);
     }
-    
     const sequence = getSequenceForState(lesson2State);
     const highlightedKey = sequence[lesson2SequenceIndex];
 
     if (lesson2State % 2 !== 0 && lesson2State < 12) {
         handleTransitionState();
     } else if (lesson2State < 12) {
-        // PERBAIKAN: Panggil handleActiveState dengan parameter yang benar.
         handleActiveState(sequence, lesson2SequenceIndex, highlightedKey, keyboardContainer, setAnimatingKey, renderHandVisualizer);
         applyFeedback(feedbackIndex, isCorrect);
     } else {
@@ -60,7 +64,7 @@ export function renderLesson2(lessonInstruction, keyboardContainer, feedbackInde
 function handleTransitionState() {
     if (lesson2SequenceContainer) {
         Array.from(lesson2SequenceContainer.children).forEach(keyEl => {
-            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect');
+            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect', 'wrong-input-overlay');
             keyEl.classList.add('slide-up-fade-out');
             void keyEl.offsetWidth;
             keyEl.addEventListener('animationend', () => keyEl.remove(), { once: true });
@@ -93,9 +97,6 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
     } else {
         updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex);
     }
-    
-    // Perbaikan: Semua logika highlight keyboard di sini Dihapus.
-    // Tugas highlight sekarang hanya di handleLesson2Input
 }
 
 function applyFeedback(feedbackIndex, isCorrect) {
@@ -113,6 +114,15 @@ function applyFeedback(feedbackIndex, isCorrect) {
                 }
             }, 500);
         }
+    }
+}
+
+function clearWrongInputFeedback() {
+    if (wrongInputState.el) {
+        clearTimeout(wrongInputState.timeoutId);
+        wrongInputState.el.textContent = wrongInputState.originalText;
+        wrongInputState.el.classList.remove('wrong-input-overlay');
+        wrongInputState = { el: null, originalText: '', timeoutId: null };
     }
 }
 
@@ -146,11 +156,13 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
     if (lesson2State % 2 === 0 && lesson2State < 12) {
         const sequence = getSequenceForState(lesson2State);
         const expectedKey = sequence[lesson2SequenceIndex];
+        const correctKeyEl = lesson2SequenceContainer ? lesson2SequenceContainer.children[lesson2SequenceIndex] : null;
 
         if (e.key.toLowerCase() === expectedKey) {
-            // PERBAIKAN: Hapus highlight lama HANYA jika input benar
-            clearKeyboardHighlights(keyboardContainer);
+            // Panggil pembersih di sini
+            clearWrongInputFeedback();
 
+            clearKeyboardHighlights(keyboardContainer);
             if (setAnimationSpeed) {
                 setAnimationSpeed(15);
                 setTimeout(() => setAnimationSpeed(3), 100);
@@ -159,7 +171,6 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
             isCorrect = true;
             feedbackIndex = lesson2SequenceIndex;
             updateState('lesson2SequenceIndex', lesson2SequenceIndex + 1);
-            
             applyFeedback(feedbackIndex, isCorrect);
             
             const nextKey = sequence[getState('lesson2SequenceIndex')];
@@ -185,16 +196,33 @@ export function handleLesson2Input({ e, doRenderAndHighlight, dispatchLesson2Fin
                 dispatchLesson2FinishedEvent(new Event('lesson2-finished'));
             }
         } else {
-            // Perbaikan: Tidak perlu clear highlight di sini. Highlight benar tetap ada.
+            feedbackIndex = lesson2SequenceIndex;
+            isCorrect = false;
             
+            if (correctKeyEl) {
+                // Panggil pembersih untuk memastikan hanya ada satu timeout aktif
+                clearWrongInputFeedback();
+
+                wrongInputState.el = correctKeyEl;
+                wrongInputState.originalText = correctKeyEl.textContent;
+                correctKeyEl.textContent = e.key;
+                correctKeyEl.classList.add('wrong-input-overlay');
+                
+                wrongInputState.timeoutId = setTimeout(() => {
+                    if (wrongInputState.el === correctKeyEl) {
+                        correctKeyEl.textContent = wrongInputState.originalText;
+                        correctKeyEl.classList.remove('wrong-input-overlay');
+                        wrongInputState = { el: null, originalText: '', timeoutId: null };
+                    }
+                }, 500);
+            }
+            
+            applyFeedback(feedbackIndex, isCorrect);
             highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
-            
             setTimeout(() => {
                 highlightWrongKeyOnKeyboard(keyboardContainer, e.key, false);
             }, 200);
             
-            applyFeedback(lesson2SequenceIndex, false);
-
             if (lessonInstructionEl) {
                 lessonInstructionEl.classList.add('error-shake');
                 setTimeout(() => lessonInstructionEl.classList.remove('error-shake'), 200);
