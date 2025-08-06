@@ -3,9 +3,9 @@
 /* --- VARIABEL CSS (Diperlukan oleh beberapa bagian, tapi minimal) --- */
 :root {
     --key-bg-color: #5555550e;
-    --active-key-bg-color: #77aaff;
+    --active-key-bg-color: #00e1ff;
     --active-key-shadow-color: #77aaff80;
-    --next-key-bg-color: #99cc99;
+    --next-key-bg-color: #39a8e7;
     --next-key-text-color: #222;
     --next-key-border-color: #77a777;
     --lesson-key-default-bg: #fff;
@@ -53,6 +53,7 @@ body {
 .keyboard-row:last-child {
     margin-bottom: 0;
 }
+
 .hidden-input {
     position: absolute;
     left: -9999px;
@@ -68,22 +69,35 @@ body {
     text-align: center;
     font-size: 1.1em;
     border: 1px solid #444;
-    box-shadow: 0 2px 2px rgba(0,0,0,0.2);
+    /* Border default */
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
     flex: 0 1 50px;
     transition: all 0.3s ease;
+    /* PERBAIKAN: Pastikan border-image-slice dan width direset */
+    border-image-slice: 0 !important;
+    border-image-width: 0 !important;
+}
+
+.key.is-animating {
+    /* Set properti border-image yang dibutuhkan */
+    border: 3px solid transparent;
+    border-image-slice: 1 !important;
+    border-image-width: 3px !important;
 }
 
 .key-wide {
     min-width: 133px;
     flex: 0 1 110px;
 }
-.key-tab{
+
+.key-tab {
     min-width: 92px;
     max-width: 130px;
     padding: 11px 0;
     flex: 0 1 110px;
     font-size: 1.05em;
 }
+
 .key-medium {
     min-width: 104px;
     max-width: 130px;
@@ -118,7 +132,7 @@ body {
     background-color: var(--active-key-bg-color);
     transform: translateY(2px) scale(1.08);
     box-shadow: 0 0 12px 2px var(--active-key-shadow-color);
-    animation: key-press-pop 0.18s cubic-bezier(.36,.07,.19,.97);
+    animation: key-press-pop 0.18s cubic-bezier(.36, .07, .19, .97);
 }
 
 @keyframes key-press-pop {
@@ -126,34 +140,30 @@ body {
         transform: translateY(0) scale(1);
         box-shadow: 0 0 0 0 #77aaff00;
     }
+
     60% {
         transform: translateY(2px) scale(1.13);
         box-shadow: 0 0 18px 4px var(--active-key-shadow-color);
     }
+
     100% {
         transform: translateY(2px) scale(1.08);
         box-shadow: 0 0 12px 2px var(--active-key-shadow-color);
     }
 }
 
-.key.next-key {
-    background: var(--next-key-bg-color) !important;
+virtual-keyboard .key.next-key {
+    background-color: var(--active-key-bg-color);
+    /* Hapus properti border dan border-image-slice yang ada di sini */
     color: var(--next-key-text-color) !important;
-    border-color: var(--next-key-border-color) !important;
-    border-radius: 4px;
-    box-shadow: 0 0 12px 2px #99cc9980;
-    animation: highlight-move 0.6s infinite alternate;
+    transition: none;
+    scale: 1.3;
 }
 
-@keyframes highlight-move {
-    0% {
-        transform: scale(1);
-        box-shadow: 0 0 12px 2px #99cc9980;
-    }
-    100% {
-        transform: scale(1.1);
-        box-shadow: 0 0 24px 4px #99cc99;
-    }
+.key.next-key {
+    background-color: var(--highlight-color);
+    box-shadow: 0 0 10px var(--highlight-color);
+    color: rgb(19, 18, 18) !important;
 }
 
 .lesson-text-container {
@@ -211,17 +221,34 @@ body {
 
 /* Animasi Error Shake untuk Instruksi */
 .error-shake {
-    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    animation: shake 0.2s cubic-bezier(.36, .07, .19, .97) both;
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     perspective: 1000px;
 }
 
 @keyframes shake {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
 }
 
 .navigation-buttons {
@@ -251,7 +278,7 @@ body {
     padding: 40px;
     border-radius: 15px;
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     animation: modal-pop 0.3s ease-out;
 }
 
@@ -260,6 +287,7 @@ body {
         transform: scale(0.7);
         opacity: 0;
     }
+
     to {
         transform: scale(1);
         opacity: 1;
@@ -329,7 +357,7 @@ body {
     color: var(--lesson-key-default-color);
     border: 2px solid var(--lesson-key-default-border);
     border-radius: 7px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     margin: 0 2px;
     position: relative;
     will-change: transform, opacity;
@@ -371,6 +399,7 @@ body {
         transform: translateY(0);
         opacity: 1;
     }
+
     to {
         transform: translateY(-100%);
         opacity: 0;
@@ -387,6 +416,7 @@ body {
         transform: translateY(100%);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -400,31 +430,40 @@ body {
     animation: none !important;
 }
 
-.key.next-key {
-    background-color: var(--highlight-color);
-    box-shadow: 0 0 10px var(--highlight-color);
-    color: rgb(19, 18, 18) !important;
-}
 
-@keyframes highlight-move {
-    0% { transform: scale(1.0); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1.3); }
-}
 
 .error-shake {
-    animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+    animation: shake 0.2s cubic-bezier(.36, .07, .19, .97) both;
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     perspective: 1000px;
 }
 
 @keyframes shake {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
-    50% { transform: translate3d(-4px, 0, 0); }
+
+    10%,
+    90% {
+        transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+        transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    70% {
+        transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+        transform: translate3d(4px, 0, 0);
+    }
+
+    50% {
+        transform: translate3d(-4px, 0, 0);
+    }
 }
 
 /* END ADDITION 4 */
@@ -451,9 +490,9 @@ body {
 .lesson-keyboard-sequence .lesson-keyboard-key.input-incorrect {
     background: #f7a8a8 !important;
     border-color: #f44336 !important;
-    animation: 
-    shake 0.5s,
-    fade-out-red 0.5s 0.5s forwards;
+    animation:
+        shake 0.5s,
+        fade-out-red 0.5s 0.5s forwards;
 }
 
 /* Animasi fade out untuk merah */
@@ -464,6 +503,7 @@ body {
         border-color: var(--lesson-key-default-border) !important;
     }
 }
+
 .lesson-keyboard-key.completed-correct::after {
     content: "✓";
     position: absolute;
@@ -477,9 +517,19 @@ body {
 }
 
 @keyframes check-pop {
-    0% { transform: scale(0); opacity: 0; }
-    80% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    80% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* Progress Bar Styles */
@@ -518,41 +568,33 @@ body {
     text-align: center;
 }
 
-#hand-visualizer-container {
+#hand-visualizer {
     position: absolute;
     top: 0;
     left: 0;
     pointer-events: none;
-    z-index: 10;
+    z-index: 999;
+    opacity: 0;
+    /* Sembunyikan secara default */
+    transition: opacity 0.3s ease;
 }
 
-.hand-image {
+#hand-visualizer .hand-image {
     width: 550px;
     height: auto;
     position: absolute;
-    display: none;
-    transition: transform 0.2s ease-in-out;
+    top: 0;
+    left: 0;
+    /* Ganti display: none; */
+    opacity: 0;
 }
 
 /* Tampilkan hanya gambar tangan yang memiliki kelas 'active' */
-.hand-image.active {
-    display: block;
+#hand-visualizer .hand-image.active {
+    /* Ganti display: block; */
+    opacity: 1;
 }
 
-.lesson-4-display {
-    margin: 0 auto;
-    margin-top: -30px;
-    margin-bottom: -20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    max-width: 800px;
-    font-size: 2.5rem;
-    font-family: monospace;
-    color: var(--text-color-light);
-    white-space: normal;
-    text-align: left;
-}
 
 #lesson-title {
     font-size: 1.5rem;
@@ -563,7 +605,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px; /* Jarak antara tombol dan keyboard */
+    gap: 15px;
+    /* Jarak antara tombol dan keyboard */
     width: 100%;
     margin-top: 20px;
     padding: 0 40px;
@@ -587,37 +630,46 @@ body {
     font-size: 1rem;
     font-weight: bold;
     padding: 7px 20px;
-    border-radius: 25px; /* Membuat sudut tombol lebih melengkung */
+    border-radius: 25px;
+    /* Membuat sudut tombol lebih melengkung */
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease; /* Menambahkan transisi untuk efek yang halus */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Menambahkan efek bayangan */
+    transition: all 0.3s ease;
+    /* Menambahkan transisi untuk efek yang halus */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Menambahkan efek bayangan */
     width: 165px;
 }
 
 /* Gaya untuk tombol "Selanjutnya" (Primary) */
 #next-lesson-btn {
-    background-color: #007bff; /* Warna biru */
+    background-color: #007bff;
+    /* Warna biru */
     color: #fff;
 }
 
 #next-lesson-btn:hover {
-    background-color: #0056b3; /* Warna lebih gelap saat kursor di atasnya */
-    transform: translateY(-2px); /* Mengangkat tombol sedikit saat di-hover */
+    background-color: #0056b3;
+    /* Warna lebih gelap saat kursor di atasnya */
+    transform: translateY(-2px);
+    /* Mengangkat tombol sedikit saat di-hover */
 }
 
 /* Gaya untuk tombol "Sebelumnya" (Secondary) */
 #prev-lesson-btn {
-    background-color: #e9ecef; /* Warna abu-abu muda */
+    background-color: #e9ecef;
+    /* Warna abu-abu muda */
     color: #495057;
     transition: visibility 0s, opacity 0.3s linear;
 }
+
 #prev-lesson-btn[style*="visibility: hidden;"] {
     opacity: 0;
 }
 
 #prev-lesson-btn:hover {
-    background-color: #dae0e5; /* Warna lebih gelap saat kursor di atasnya */
+    background-color: #dae0e5;
+    /* Warna lebih gelap saat kursor di atasnya */
     transform: translateY(-2px);
 }
 
@@ -625,4 +677,162 @@ body {
 #prev-lesson-btn i,
 #next-lesson-btn i {
     margin: 0 5px;
+}
+
+/* learn-typing.css */
+
+/* Kontainer utama untuk teks pelajaran 4 */
+.lesson-4-display {
+    margin: 0 auto;
+    margin-top: -30px;
+    margin-bottom: -20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    max-width: 800px;
+    font-size: 2.5rem;
+    font-family: monospace;
+    color: var(--text-color-light);
+    white-space: normal;
+    text-align: left;
+}
+
+/* Gaya untuk setiap huruf (box) di dalam pelajaran 4 */
+.lesson-4-display .typing-char {
+    display: inline-block;
+    padding: 0px 0px;
+    margin: 0.5px;
+    margin-top: 10px;
+    border-radius: 4px;
+    color: inherit;
+    background-color: transparent;
+    border: 1px solid transparent;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    line-height: 1;
+}
+
+/* Kotak untuk karakter yang diketik dengan benar */
+.lesson-text.lesson-4-display .typing-char.correct-box {
+    background: linear-gradient(to right, #b2ebf283, #80deea7c);
+    color: #073f58cc;
+}
+
+/* Garis bawah untuk posisi kursor */
+.lesson-text.lesson-4-display .typing-char.cursor {
+    border-bottom: 3px solid var(--primary-color);
+    border-radius: 0;
+    background-color: transparent;
+}
+
+/* Animasi dan gaya untuk kursor saat input salah */
+/* PERBAIKAN: Selektor yang lebih spesifik agar tidak tertimpa */
+.lesson-text.lesson-4-display .typing-char.cursor.wrong-char-flash {
+    animation:
+        wrongFlashAnimation 0.5s ease-out forwards,
+        shake 0.5s ease-in-out;
+}
+
+/* Kotak untuk karakter yang sudah diperbaiki */
+/* PERBAIKAN: Gunakan !important untuk menjamin warna muncul */
+.lesson-text.lesson-4-display .typing-char.corrected-box {
+    background-color: #FFF2CC !important;
+    color: #DAA520 !important;
+}
+
+/* Definisi animasi untuk flash merah */
+@keyframes wrongFlashAnimation {
+    0% {
+        background-color: rgba(255, 77, 77, 0.7);
+        color: #fff;
+    }
+
+    100% {
+        background-color: transparent;
+        color: inherit;
+    }
+}
+
+/* Definisi animasi untuk getar */
+@keyframes shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-3px);
+    }
+
+    50% {
+        transform: translateX(3px);
+    }
+
+    75% {
+        transform: translateX(-3px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.key.wrong-key-flash {
+    background-color: rgba(255, 77, 77, 0.7);
+    box-shadow: 0 0 10px rgba(255, 77, 77, 0.7);
+    animation: wrong-key-shake 0.2s ease-in-out;
+}
+
+@keyframes wrong-key-shake {
+    0% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-3px);
+    }
+
+    50% {
+        transform: translateX(3px);
+    }
+
+    75% {
+        transform: translateX(-3px);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Animasi baru yang menggabungkan kedip merah dan goyangan */
+@keyframes wrong-key-flash-shake {
+    0% {
+        background-color: transparent;
+        transform: translateX(0) scale(1);
+    }
+
+    25% {
+        background-color: rgba(255, 77, 77, 0.7);
+        transform: translateX(-2px) scale(1.1);
+    }
+
+    50% {
+        background-color: rgba(255, 77, 77, 0.7);
+        transform: translateX(2px) scale(1.1);
+    }
+
+    75% {
+        background-color: rgba(255, 77, 77, 0.7);
+        transform: translateX(-2px) scale(1.1);
+    }
+
+    100% {
+        background-color: transparent;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* KELAS YANG DIMODIFIKASI DENGAN !important */
+#virtual-keyboard .key.wrong-key-flash {
+    animation: wrong-key-flash-shake 0.2s ease-in-out !important;
+    color: #fff !important;
 }

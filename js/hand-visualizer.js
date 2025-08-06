@@ -1,11 +1,13 @@
 // js/hand-visualizer.js
 
-export function updateHandVisualizer(handVisualizer, keyboardContainer, keyChar) {
+export function renderHandVisualizer(keyChar) {
+    const handVisualizer = document.getElementById('hand-visualizer');
+    const keyboardContainer = document.getElementById('virtual-keyboard');
+
     if (!handVisualizer || !keyboardContainer) {
         return;
     }
 
-    // Hapus kelas aktif dari semua gambar tangan
     const handImages = handVisualizer.querySelectorAll('.hand-image');
     handImages.forEach(img => {
         img.classList.remove('active');
@@ -32,21 +34,17 @@ export function updateHandVisualizer(handVisualizer, keyboardContainer, keyChar)
 
             const activeHandImage = document.getElementById(handImageId);
             if (activeHandImage) {
-                // Perhitungan posisi relatif terhadap kontainer keyboard
                 const left = targetKeyElement.offsetLeft + (targetKeyElement.offsetWidth / 2);
                 const top = targetKeyElement.offsetTop + (targetKeyElement.offsetHeight / 2);
                 
-                // Gunakan transform untuk menempatkan kontainer utama
                 handVisualizer.style.transform = `translate(${left}px, ${top}px)`;
                 handVisualizer.style.opacity = '1';
 
-                // Tambahkan kelas aktif dan sesuaikan posisi jari
                 activeHandImage.classList.add('active');
                 activeHandImage.style.transform = `translate(${fingerAdjustments.x}, ${fingerAdjustments.y})`;
             }
         }
     } else {
-        // Jika tidak ada karakter yang harus disorot, sembunyikan visualizer
         handVisualizer.style.opacity = '0';
     }
 }

@@ -1,5 +1,5 @@
 // learn-typing-ui.js
-import { updateHandVisualizer } from './hand-visualizer.js';
+
 import { updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 
@@ -7,7 +7,7 @@ let currentHighlightedKeyElement = null;
 
 export function createHandVisualizerElement() {
     const visualizerContainer = document.createElement('div');
-    visualizerContainer.id = 'hand-visualizer-container';
+    visualizerContainer.id = 'hand-visualizer';
 
     const handImages = [
         { id: 'hand-f', src: 'img/hand_f.png', alt: 'Tangan untuk tombol F' },
@@ -32,8 +32,8 @@ export function createKeyboard(keyboardContainer, keyLayout) {
         console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
         return;
     }
-    const handVisualizer = keyboardContainer.querySelector('#hand-visualizer-container') || createHandVisualizerElement();
-    keyboardContainer.innerHTML = ''; // Membersihkan konten sebelum membuat ulang
+    const handVisualizer = keyboardContainer.querySelector('#hand-visualizer') || createHandVisualizerElement();
+    keyboardContainer.innerHTML = '';
     keyboardContainer.appendChild(handVisualizer);
 
     const keyWidthClasses = {
@@ -94,14 +94,9 @@ export function createKeyboard(keyboardContainer, keyLayout) {
 
 export function clearKeyboardHighlights(keyboardContainer) {
     if (!keyboardContainer) return;
-    keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key').forEach(el => {
-        el.classList.remove('next-key', 'correct-key', 'wrong-key');
-        el.style.animation = '';
+    keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key, .key.wrong-key-flash').forEach(el => {
+        el.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash');
     });
-    if (currentHighlightedKeyElement) {
-        currentHighlightedKeyElement.style.animation = '';
-    }
-    currentHighlightedKeyElement = null;
 }
 
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
@@ -109,41 +104,48 @@ export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
         console.error("ERROR: keyboardContainer tidak ditemukan.");
         return;
     }
-    const handVisualizer = keyboardContainer.querySelector('#hand-visualizer-container');
     clearKeyboardHighlights(keyboardContainer);
     if (typeof keyChar === 'string' && keyChar.length > 0) {
         const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
         if (targetKeyElement) {
             targetKeyElement.classList.add('next-key');
-            void targetKeyElement.offsetWidth;
-            targetKeyElement.style.animation = 'highlight-move 0.6s ease-out infinite';
-            currentHighlightedKeyElement = targetKeyElement;
         }
     }
-    updateHandVisualizer(handVisualizer, keyboardContainer, keyChar);
 }
 
-export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer) {
+export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer) {
     if (!lessonTextDisplay || !lessonInstruction) return;
     lessonTextDisplay.style.display = '';
     lessonInstruction.textContent = lesson.instruction || '';
     lessonTextDisplay.innerHTML = '';
+    
     if (lesson.sequence && lesson.sequence.length > 0) {
-        const textContent = lesson.sequence.join('');
-        lessonTextDisplay.innerHTML = textContent.split('').map((char, idx) => {
+        lessonTextDisplay.innerHTML = lesson.sequence.map((char, idx) => {
             const displayChar = char === ' ' ? '\u00A0' : char;
-            let className = '';
+            let className = 'typing-char';
+            
             if (idx < currentCharIndex) {
-                className = 'correct';
+                className += ' correct';
             } else if (idx === currentCharIndex) {
-                className = 'cursor';
+                className += ' cursor';
             }
+            
             return `<span class="${className}">${displayChar}</span>`;
         }).join('');
+
         if (currentCharIndex < lesson.sequence.length) {
-            highlightKeyOnKeyboard(keyboardContainer, lesson.sequence[currentCharIndex]);
+            const nextChar = lesson.sequence[currentCharIndex];
+            const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
+
+            if (keyElement) {
+                keyElement.classList.add('next-key');
+                if (setAnimatingKey) setAnimatingKey(keyElement);
+                if (renderHandVisualizer) renderHandVisualizer(nextChar);
+            }
         } else {
-            highlightKeyOnKeyboard(keyboardContainer, null);
+            if (setAnimatingKey) setAnimatingKey(null);
+            if (renderHandVisualizer) renderHandVisualizer(null);
+            clearKeyboardHighlights(keyboardContainer);
         }
     }
 }
@@ -159,38 +161,34 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         prevLessonBtn,
         nextLessonBtn,
         lessonTextDisplay,
-        progressContainerWrapper // Ditambahkan: Elemen progress bar dari pelajaran
+        progressContainerWrapper
     } = domElements;
 
-    // Sembunyikan elemen-elemen pelajaran, termasuk progress bar
     [lessonHeader, keyboardContainer, prevLessonBtn, nextLessonBtn, lessonTextDisplay, progressContainerWrapper].forEach(el => {
         if (el) el.style.display = 'none';
     });
     
-    // Hentikan animasi keyboard
     if (keyboardContainer) {
         const keys = keyboardContainer.querySelectorAll('.key');
         keys.forEach(key => {
             key.style.animation = 'none';
-            key.classList.remove('next-key', 'correct-key', 'wrong-key');
+            key.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash');
+            key.style.borderImageSource = 'none';
+            key.style.border = '1px solid #444';
         });
     }
     
-    // LOGIKA ANIMASI PROGRESS BAR BARU
     const completionProgressBar = document.getElementById('completion-progress-bar');
     const completionProgressText = document.getElementById('completion-progress-text');
 
     if (completionProgressBar && completionProgressText) {
-        // Reset progress bar
         completionProgressBar.style.width = '0%';
         completionProgressText.textContent = '0%';
 
-        // Mulai animasi
         setTimeout(() => {
             completionProgressBar.style.width = '100%';
         }, 100);
 
-        // Animasikan teks persentase
         let currentPercentage = 0;
         const interval = setInterval(() => {
             currentPercentage += 1;
@@ -200,7 +198,6 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
             }
         }, 15);
     }
-    // AKHIR LOGIKA ANIMASI PROGRESS BAR
 
     if (lessonCompleteNotification) {
         const h2 = lessonCompleteNotification.querySelector('h3');
@@ -244,5 +241,19 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
         }, 50);
     } else {
         console.error('ERROR: Elemen notifikasi (#lesson-complete-notification) tidak ditemukan!');
+    }
+}
+
+export function highlightWrongKeyOnKeyboard(keyboardContainer, keyChar) {
+    if (!keyboardContainer || !keyChar) return;
+
+    const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
+
+    if (targetKeyElement) {
+        targetKeyElement.classList.remove('next-key', 'correct-key');
+        targetKeyElement.classList.add('wrong-key-flash');
+        setTimeout(() => {
+            targetKeyElement.classList.remove('wrong-key-flash');
+        }, 200);
     }
 }
