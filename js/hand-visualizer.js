@@ -30,6 +30,12 @@ export function renderHandVisualizer(keyChar) {
             } else if (keyChar === ' ') {
                 handImageId = 'hand-space';
                 fingerAdjustments = { x: '-48%', y: '-35%' };
+            } else if (keyChar === 'd') { // ✅ Logika baru untuk tombol 'd'
+                handImageId = 'hand-d';
+                fingerAdjustments = { x: '-25%', y: '-5%' };
+            } else if (keyChar === 'k') { // ✅ Logika baru untuk tombol 'k'
+                handImageId = 'hand-k';
+                fingerAdjustments = { x: '-70%', y: '-5%' };
             }
 
             const activeHandImage = document.getElementById(handImageId);

@@ -6,12 +6,13 @@ import {
     showLessonCompleteNotification,
     highlightWrongKeyOnKeyboard,
     animateJellyEffect,
-    // PERBAIKAN: Tambahkan animateAllBordersOnCorrectInput
     animateAllBordersOnCorrectInput,
 } from './learn-typing-ui.js';
 import { handleLesson2Input } from './lesson2-logic.js';
 import { handleLesson3Input } from './lesson3-logic.js';
 import { handleLesson4Input } from './lesson4-logic.js';
+// ✅ Impor handler untuk Pelajaran 6
+import { handleLesson6Input } from './lesson6-logic.js';
 import { setIsCorrectInputAnimationActive } from './learn-typing.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation) {
@@ -22,8 +23,11 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
     const lesson2Finished = getState('lesson2Finished');
     const lesson3Finished = getState('lesson3Finished');
     const lesson4Finished = getState('lesson4Finished');
+    const lesson5Finished = getState('lesson5Finished');
+    // ✅ Tambahkan state untuk Pelajaran 6
+    const lesson6Finished = getState('lesson6Finished');
 
-    const isAnyLessonFinished = [lesson2Finished, lesson3Finished, lesson4Finished].some(status => status);
+    const isAnyLessonFinished = [lesson2Finished, lesson3Finished, lesson4Finished, lesson5Finished, lesson6Finished].some(status => status);
 
     if (lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) {
         if (e.key === 'Enter') {
@@ -107,7 +111,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
         } else {
             preventDefault = false;
         }
-    // PERBAIKAN: Mengembalikan logika untuk Pelajaran 2
     } else if (currentLessonIndex === 1) {
         handleLesson2Input({
             e,
@@ -122,7 +125,6 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             animateJellyEffect: animateJellyEffect,
             animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
         });
-    // PERBAIKAN: Mengembalikan logika untuk Pelajaran 3
     } else if (currentLessonIndex === 2) {
         handleLesson3Input({
             e,
@@ -151,6 +153,80 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             renderHandVisualizer: renderHandVisualizer,
             clearAnimation: clearAnimation,
             animateJellyEffect: animateJellyEffect,
+        });
+    } else if (currentLessonIndex === 4) {
+        const currentStepIndex = getState('currentStepIndex');
+        if (currentStepIndex === 0 && e.key.toLowerCase() === 'd') {
+            if (setAnimationSpeed) {
+                setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
+            }
+            const keyD = keyboardContainer.querySelector('.key[data-key="d"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 1);
+                doRenderAndHighlight();
+            };
+            if (keyD) {
+                animateJellyEffect(keyD, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
+            const inlineKeyD = document.getElementById('inlineKeyD');
+            if (inlineKeyD) {
+                inlineKeyD.classList.add('fade-out');
+            }
+        } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'k') {
+            if (setAnimationSpeed) {
+                setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
+            }
+            const keyK = keyboardContainer.querySelector('.key[data-key="k"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 2);
+                doRenderAndHighlight();
+                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+            };
+            if (keyK) {
+                animateJellyEffect(keyK, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
+            const inlineKeyK = document.getElementById('inlineKeyK');
+            if (inlineKeyK) {
+                inlineKeyK.classList.add('fade-out');
+            }
+        } else if (e.key.length === 1 && e.key.toLowerCase() !== 'd' && e.key.toLowerCase() !== 'k') {
+            if (keyboardContainer && highlightWrongKeyOnKeyboard) {
+                highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
+            }
+            if (lessonInstruction) {
+                lessonInstruction.classList.add('error-shake');
+                setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
+            }
+        } else {
+            preventDefault = false;
+        }
+    } else if (currentLessonIndex === 5) {
+        handleLesson6Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson6FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+            keyboardContainer: keyboardContainer,
+            setAnimationSpeed: setAnimationSpeed,
+            setAnimatingKey: setAnimatingKey,
+            renderHandVisualizer: renderHandVisualizer,
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+            animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
         });
     } else {
         const currentCharIndex = getState('currentCharIndex');

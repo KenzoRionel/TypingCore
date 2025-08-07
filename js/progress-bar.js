@@ -10,8 +10,8 @@ export function calculateLessonProgress(lesson) {
     }
 
     const currentLessonIndex = getState('currentLessonIndex');
-    let totalCharacters, typedCharacters;
     
+    // Logika perhitungan untuk Pelajaran 0
     if (currentLessonIndex === 0) {
         if (!lesson.steps) return 0;
         const totalSteps = lesson.steps.length;
@@ -19,8 +19,9 @@ export function calculateLessonProgress(lesson) {
         if (totalSteps === 0) return 0;
         const progress = (currentIndex / totalSteps) * 100;
         return Math.min(progress, 100);
-    } else if (currentLessonIndex === 1 || currentLessonIndex === 2) {
-        // PERBAIKAN: Hitung progres berdasarkan karakter yang diketik
+    } 
+    // Logika perhitungan untuk Pelajaran 1, 2, dan 5
+    else if (currentLessonIndex === 1 || currentLessonIndex === 2 || currentLessonIndex === 5) {
         if (!lesson.sequences) return 0;
         
         let totalChars = 0;
@@ -28,8 +29,19 @@ export function calculateLessonProgress(lesson) {
             totalChars += seq.length;
         }
 
-        const completedSequencesCount = (currentLessonIndex === 1) ? (getState('lesson2State') / 2) : (getState('lesson3State') / 2);
-        const currentSequenceIndex = (currentLessonIndex === 1) ? getState('lesson2SequenceIndex') : getState('lesson3SequenceIndex');
+        let completedSequencesCount;
+        let currentSequenceIndex;
+
+        if (currentLessonIndex === 1) {
+            completedSequencesCount = (getState('lesson2State') / 2);
+            currentSequenceIndex = getState('lesson2SequenceIndex');
+        } else if (currentLessonIndex === 2) {
+            completedSequencesCount = (getState('lesson3State') / 2);
+            currentSequenceIndex = getState('lesson3SequenceIndex');
+        } else if (currentLessonIndex === 5) {
+            completedSequencesCount = (getState('lesson6State') / 2);
+            currentSequenceIndex = getState('lesson6SequenceIndex');
+        }
 
         let typedChars = 0;
         for (let i = 0; i < completedSequencesCount; i++) {
@@ -40,7 +52,18 @@ export function calculateLessonProgress(lesson) {
         if (totalChars === 0) return 0;
         const progress = (typedChars / totalChars) * 100;
         return Math.min(progress, 100);
-    } else {
+    } 
+    // Logika perhitungan untuk Pelajaran 5
+    else if (currentLessonIndex === 4) {
+        if (!lesson.steps) return 0;
+        const totalSteps = lesson.steps.length;
+        const currentIndex = getState('currentStepIndex');
+        if (totalSteps === 0) return 0;
+        const progress = (currentIndex / totalSteps) * 100;
+        return Math.min(progress, 100);
+    }
+    // Logika default untuk pelajaran lainnya (termasuk pelajaran 3 dan 4)
+    else {
         if (!lesson.sequence) return 0;
         const totalSteps = lesson.sequence.length;
         const currentIndex = getState('currentCharIndex');
