@@ -94,8 +94,8 @@ export function createKeyboard(keyboardContainer, keyLayout) {
 
 export function clearKeyboardHighlights(keyboardContainer) {
     if (!keyboardContainer) return;
-    keyboardContainer.querySelectorAll('.key.next-key, .key.correct-key, .key.wrong-key, .key.wrong-key-flash').forEach(el => {
-        el.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash');
+    keyboardContainer.querySelectorAll('.key:not(.wrong-key-flash)').forEach(el => {
+        el.classList.remove('next-key', 'correct-key', 'wrong-key');
     });
 }
 
@@ -250,10 +250,36 @@ export function highlightWrongKeyOnKeyboard(keyboardContainer, keyChar) {
     const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
 
     if (targetKeyElement) {
-        targetKeyElement.classList.remove('next-key', 'correct-key');
         targetKeyElement.classList.add('wrong-key-flash');
         setTimeout(() => {
             targetKeyElement.classList.remove('wrong-key-flash');
         }, 200);
+    }
+}
+
+export function animateAllBordersOnCorrectInput(lessonTextDisplay) {
+    if (!lessonTextDisplay) return;
+    // PERBAIKAN: Mengubah selektor kelas dari '.typing-char' menjadi '.lesson-keyboard-key'
+    const allTypingChars = lessonTextDisplay.querySelectorAll('.lesson-keyboard-key');
+    allTypingChars.forEach(charEl => {
+        charEl.classList.add('correct-input-border');
+    });
+
+    setTimeout(() => {
+        allTypingChars.forEach(charEl => {
+            charEl.classList.remove('correct-input-border');
+        });
+    }, 500);
+}
+
+export function animateJellyEffect(keyElement, callback) {
+    if (keyElement) {
+        keyElement.classList.add('jelly-effect');
+        keyElement.addEventListener('animationend', () => {
+            keyElement.classList.remove('jelly-effect');
+            if (callback && typeof callback === 'function') {
+                callback();
+            }
+        }, { once: true });
     }
 }

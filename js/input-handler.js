@@ -1,16 +1,21 @@
-// input-handler.js
+// js/input-handler.js
+
 import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import {
     showLessonCompleteNotification,
-    highlightWrongKeyOnKeyboard
+    highlightWrongKeyOnKeyboard,
+    animateJellyEffect,
+    // PERBAIKAN: Tambahkan animateAllBordersOnCorrectInput
+    animateAllBordersOnCorrectInput,
 } from './learn-typing-ui.js';
 import { handleLesson2Input } from './lesson2-logic.js';
 import { handleLesson3Input } from './lesson3-logic.js';
 import { handleLesson4Input } from './lesson4-logic.js';
+import { setIsCorrectInputAnimationActive } from './learn-typing.js';
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation) {
-    const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput, keyboardContainer } = domElements;
+    const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput, keyboardContainer, lessonTextDisplay } = domElements;
 
     const currentLessonIndex = getState('currentLessonIndex');
     const waitingForAnim = getState('waitingForAnim');
@@ -45,44 +50,53 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
         if (currentStepIndex === 0 && e.key.toLowerCase() === 'f') {
             if (setAnimationSpeed) {
                 setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
             }
-            updateState('waitingForAnim', true);
+            const keyF = keyboardContainer.querySelector('.key[data-key="f"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 1);
+                console.log(`[INPUT] Pelajaran 0: currentStepIndex diperbarui ke:`, getState('currentStepIndex'));
+                doRenderAndHighlight();
+            };
+            if (keyF) {
+                animateJellyEffect(keyF, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
             const inlineKeyF = document.getElementById('inlineKeyF');
             if (inlineKeyF) {
                 inlineKeyF.classList.add('fade-out');
-                setTimeout(() => {
-                    inlineKeyF.style.display = 'none';
-                    updateState('waitingForAnim', false);
-                    updateState('currentStepIndex', 1);
-                    doRenderAndHighlight();
-                }, 300);
-            } else {
-                updateState('waitingForAnim', false);
-                updateState('currentStepIndex', 1);
-                doRenderAndHighlight();
             }
         } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'j') {
             if (setAnimationSpeed) {
                 setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
             }
-            updateState('waitingForAnim', true);
+            const keyJ = keyboardContainer.querySelector('.key[data-key="j"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 2);
+                console.log(`[INPUT] Pelajaran 0: currentStepIndex diperbarui ke:`, getState('currentStepIndex'));
+                doRenderAndHighlight();
+                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+            };
+            if (keyJ) {
+                animateJellyEffect(keyJ, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
             const inlineKeyJ = document.getElementById('inlineKeyJ');
             if (inlineKeyJ) {
                 inlineKeyJ.classList.add('fade-out');
-                setTimeout(() => {
-                    inlineKeyJ.style.display = 'none';
-                    updateState('waitingForAnim', false);
-                    updateState('currentStepIndex', 2);
-                    doRenderAndHighlight();
-                    showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
-                }, 300);
-            } else {
-                updateState('waitingForAnim', false);
-                updateState('currentStepIndex', 2);
-                doRenderAndHighlight();
-                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
             }
-        } else if (e.key.length === 1 && e.key !== 'F' && e.key !== 'f' && e.key !== 'J' && e.key !== 'j') {
+        } else if (e.key.length === 1 && e.key.toLowerCase() !== 'f' && e.key.toLowerCase() !== 'j') {
             if (keyboardContainer && highlightWrongKeyOnKeyboard) {
                 highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
             }
@@ -90,10 +104,10 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
                 lessonInstruction.classList.add('error-shake');
                 setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
             }
-            // PERBAIKAN: Hapus doRenderAndHighlight() di sini
         } else {
             preventDefault = false;
         }
+    // PERBAIKAN: Mengembalikan logika untuk Pelajaran 2
     } else if (currentLessonIndex === 1) {
         handleLesson2Input({
             e,
@@ -104,8 +118,11 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             setAnimationSpeed: setAnimationSpeed,
             setAnimatingKey: setAnimatingKey,
             renderHandVisualizer: renderHandVisualizer,
-            clearAnimation: clearAnimation
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+            animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
         });
+    // PERBAIKAN: Mengembalikan logika untuk Pelajaran 3
     } else if (currentLessonIndex === 2) {
         handleLesson3Input({
             e,
@@ -116,7 +133,9 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             setAnimationSpeed: setAnimationSpeed,
             setAnimatingKey: setAnimatingKey,
             renderHandVisualizer: renderHandVisualizer,
-            clearAnimation: clearAnimation
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+            animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
         });
     } else if (currentLessonIndex === 3) {
         handleLesson4Input({
@@ -130,7 +149,8 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             setAnimationSpeed: setAnimationSpeed,
             setAnimatingKey: setAnimatingKey,
             renderHandVisualizer: renderHandVisualizer,
-            clearAnimation: clearAnimation
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
         });
     } else {
         const currentCharIndex = getState('currentCharIndex');
@@ -139,29 +159,43 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             return;
         }
         const expectedChar = currentLesson.sequence[currentCharIndex];
-        if (e.key === ' ' && expectedChar === ' ') {
+        const isSpaceCorrect = e.key === ' ' && expectedChar === ' ';
+        const isCharCorrect = e.key.toLowerCase() === expectedChar.toLowerCase();
+        
+        if (isSpaceCorrect || isCharCorrect) {
             if (setAnimationSpeed) {
                 setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
             }
-            updateState('currentCharIndex', currentCharIndex + 1);
-            doRenderAndHighlight();
+            
+            const keyElement = keyboardContainer.querySelector(`.key[data-key="${(isSpaceCorrect ? ' ' : e.key).toLowerCase()}"]`);
+            
+            if (keyElement) {
+                const onAnimationEnd = () => {
+                    updateState('currentCharIndex', currentCharIndex + 1);
+                    console.log(`[INPUT] Pelajaran lain: currentCharIndex diperbarui ke:`, getState('currentCharIndex'));
+                    doRenderAndHighlight();
+                    if (getState('currentCharIndex') >= currentLesson.sequence.length) {
+                        showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+                    }
+                };
+                
+                animateJellyEffect(keyElement, onAnimationEnd);
+            } else {
+                updateState('currentCharIndex', currentCharIndex + 1);
+                doRenderAndHighlight();
+                if (getState('currentCharIndex') >= currentLesson.sequence.length) {
+                    showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+                }
+            }
         } else if (e.key === 'Escape') {
             preventDefault = false;
-        } else if (e.key.toLowerCase() === expectedChar.toLowerCase()) {
-            if (setAnimationSpeed) {
-                setAnimationSpeed(15);
-            }
-            updateState('currentCharIndex', currentCharIndex + 1);
-            doRenderAndHighlight();
         } else {
             if (lessonInstruction) {
                 lessonInstruction.classList.add('error-shake');
                 setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
             }
-            // PERBAIKAN: Hapus doRenderAndHighlight() di sini
-        }
-        if (getState('currentCharIndex') >= currentLesson.sequence.length) {
-            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
         }
     }
     if (preventDefault) {

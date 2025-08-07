@@ -1,4 +1,5 @@
 // js/learn-typing-lessons.js
+
 export const lessons = [
     {
         title: "Pengenalan Tombol Baru",
@@ -18,20 +19,38 @@ export const lessons = [
     {
         title: "Pelajaran 2: Huruf F dan J",
         type: "simple-drill",
+        // PERBAIKAN: Menambahkan 'sequences' untuk logika progres bar
+        sequences: [
+            ['f', 'f', 'f', 'f', 'j', 'j'],
+            ['j', 'j', 'f', 'f', 'f', 'f'],
+            ['j', 'j', 'j', 'j', 'f', 'f'],
+            ['j', 'j', 'f', 'f', 'j', 'j'],
+            ['f', 'j', 'f', 'j', 'j', 'f'],
+            ['j', 'f', 'f', 'j', 'f', 'j'],
+        ],
         preview: ['f', 'j']
     },
     {
         title: "Pelajaran 3: Latihan Kata F dan J Lanjutan",
         type: "simple-drill",
+        // PERBAIKAN: Menambahkan 'sequences' untuk logika progres bar
+        sequences: [
+            ['f', ' ', 'f', ' ', 'j', ' ', 'j'],
+            [' ', 'f', 'f', ' ', ' ', 'f', 'f'],
+            ['j', 'j', ' ', 'j', 'j', ' ', 'f'],
+            ['j', ' ', 'j', 'f', ' ', 'f', 'f'],
+            [' ', 'j', 'j', ' ', ' ', 'j', 'j'],
+            ['f', 'f', ' ', ' ', 'f', 'f', ' '],
+        ],
         preview: ['f', 'j']
     },
-     {
+      {
         title: "Pelajaran 4: Test Mengetik F dan J",
         type: "free-typing",
         sequence: ['f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j', ' ', 'f', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f',
-                   ' ', 'f', 'j', ' ' , 'j', 'f', 'f', 'j', ' ', 'f', 'j', 'j', 'f', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f',
-                'f', 'j', ' ', 'j', 'f', 'f', 'f', ' ', 'j', 'f', 'j', 'f', ' ', 'f', 'j', 'f', 'j', ' ', 'f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j',
-            ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'j','f'],
+                        ' ', 'f', 'j', ' ' , 'j', 'f', 'f', 'j', ' ', 'f', 'j', 'j', 'f', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f',
+                      'f', 'j', ' ', 'j', 'f', 'f', 'f', ' ', 'j', 'f', 'j', 'f', ' ', 'f', 'j', 'f', 'j', ' ', 'f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j',
+                    ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'j','f'],
         preview: ['f', 'j']
     }
 ];

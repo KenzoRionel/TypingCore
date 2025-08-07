@@ -12,18 +12,22 @@ import {
     showLessonCompleteNotification,
     highlightKeyOnKeyboard,
     clearKeyboardHighlights,
+    animateAllBordersOnCorrectInput,
 }
 from './learn-typing-ui.js';
 import { initDOMAndState, getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { keyLayout } from './keyboard-layout.js';
 import { handleKeyboardInput } from './input-handler.js';
 import { renderHandVisualizer } from './hand-visualizer.js';
+// PERBAIKAN: Import updateProgressBar
+import { updateProgressBar } from './progress-bar.js';
 
 let rotation = 0;
 const defaultAnimationSpeed = 3;
 let animationSpeed = defaultAnimationSpeed;
 let animatingKeyElement = null;
 let lessonSpeedTimeout = null;
+export let isCorrectInputAnimationActive = false;
 
 function setAnimationSpeed(speed) {
     if (speed === 15) {
@@ -33,7 +37,7 @@ function setAnimationSpeed(speed) {
         }
         lessonSpeedTimeout = setTimeout(() => {
             animationSpeed = defaultAnimationSpeed;
-        }, 100);
+        }, 50);
     } else {
         animationSpeed = speed;
     }
@@ -60,14 +64,27 @@ function clearAnimation() {
 function animateBorder() {
     if (animatingKeyElement) {
         rotation += animationSpeed;
-        const gradient = `conic-gradient(from ${rotation}deg, rgba(0, 123, 255, 0.8) 0%, rgba(255, 255, 255, 1) 25%, rgba(0, 123, 255, 0.8) 50%, rgba(255, 255, 255, 1) 75%, rgba(0, 123, 255, 0.8) 100%)`;
+
+        let startColor = 'rgba(0, 123, 255, 0.8)';
+        let endColor = 'rgba(255, 255, 255, 1)';
+        
+        if (isCorrectInputAnimationActive) {
+            startColor = 'rgba(253, 216, 53, 1)';
+            endColor = 'rgba(200, 255, 0, 1)';
+        }
+
+        const gradient = `conic-gradient(from ${rotation}deg, ${startColor} 0%, ${endColor} 25%, ${startColor} 50%, ${endColor} 75%, ${startColor} 100%)`;
         animatingKeyElement.style.borderImageSource = gradient;
     }
     window.requestAnimationFrame(animateBorder);
 }
 
+export function setIsCorrectInputAnimationActive(value) {
+    isCorrectInputAnimationActive = value;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Ambil elemen DOM secara terpisah dan tambahkan tombol baru
+    const domElements = initDOMAndState();
     const {
         keyboardContainer,
         lessonHeader,
@@ -88,37 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
         checkPath,
         hiddenInput,
         retryLessonBtn
-    } = initDOMAndState();
-
-    const navigationButtonsContainer = document.querySelector('.keyboard-and-navigation-wrapper');
+    } = domElements;
 
     if (!keyboardContainer || !lessonCompleteNotification) {
         console.error("ERROR: Elemen DOM kunci (keyboard atau notifikasi) tidak ditemukan. Aplikasi tidak dapat berjalan.");
         return;
     }
-
-    const domElements = {
-        keyboardContainer,
-        lessonHeader,
-        lessonTitle,
-        lessonInstruction,
-        lessonTextDisplay,
-        prevLessonBtn,
-        nextLessonBtn,
-        lessonCompleteNotification,
-        continueBtn,
-        nextLessonPreview,
-        progressBar,
-        progressText,
-        progressContainerWrapper,
-        thumbAnimationContainer,
-        successAnimationSvg,
-        circlePath,
-        checkPath,
-        hiddenInput,
-        navigationButtonsContainer,
-        retryLessonBtn,
-    };
 
     window.requestAnimationFrame(animateBorder);
 
@@ -161,32 +153,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function resetCurrentLessonState() {
+    // PERBAIKAN: Tambahkan parameter domElements
+    function resetCurrentLessonState(domElements) {
         updateState('currentCharIndex', 0);
         updateState('currentStepIndex', 0);
         updateState('waitingForAnim', false);
         updateState('lesson2Finished', false);
         updateState('lesson3Finished', false);
         updateState('lesson4Finished', false);
+        setIsCorrectInputAnimationActive(false);
 
         resetLesson2State(clearAnimation);
         resetLesson3State(clearAnimation);
         resetLesson4State(clearAnimation);
+
+        createKeyboard(keyboardContainer, keyLayout);
+
+        // PERBAIKAN: Reset progress bar
+        updateProgressBar(0, domElements.progressText, domElements.progressBar);
     }
 
     function goToNextLesson() {
-    let currentLessonIndex = getState('currentLessonIndex');
-    if (currentLessonIndex < lessons.length - 1) {
-        updateState('currentLessonIndex', currentLessonIndex + 1);
-        resetCurrentLessonState();
-        // PERBAIKAN: Bersihkan semua highlight dan animasi dari pelajaran sebelumnya
-        clearAnimation();
-        clearKeyboardHighlights(keyboardContainer); // Pastikan keyboardContainer tersedia
-        doRenderLessonAndFocus();
-    } else {
-        console.log("Semua pelajaran selesai!");
+        let currentLessonIndex = getState('currentLessonIndex');
+        if (currentLessonIndex < lessons.length - 1) {
+            updateState('currentLessonIndex', currentLessonIndex + 1);
+            // PERBAIKAN: Teruskan domElements ke resetCurrentLessonState
+            resetCurrentLessonState(domElements);
+            clearAnimation();
+            clearKeyboardHighlights(keyboardContainer);
+            doRenderLessonAndFocus();
+        } else {
+            console.log("Semua pelajaran selesai!");
+        }
     }
-}
 
     function showLessonElements() {
         if (domElements.lessonHeader) domElements.lessonHeader.style.display = '';
@@ -204,7 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createKeyboard(keyboardContainer, keyLayout);
 
-    resetCurrentLessonState();
+    // PERBAIKAN: Teruskan domElements ke resetCurrentLessonState
+    resetCurrentLessonState(domElements);
     doRenderLessonAndFocus();
 
     const input = getHiddenInput();
@@ -217,30 +217,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 setAnimationSpeed,
                 setAnimatingKey,
                 renderHandVisualizer,
-                clearAnimation
+                clearAnimation,
+                animateAllBordersOnCorrectInput
             );
         });
     }
 
-    window.addEventListener('focus', () => {
+    document.body.addEventListener('click', () => {
         const input = getHiddenInput();
-        if (input && !lessonCompleteNotification.classList.contains('active')) {
-            if (document.activeElement !== input) {
-                input.focus();
-            }
-        }
-    });
-
-    document.addEventListener('mousedown', (e) => {
-        const clickedElement = e.target;
-        const isNavigationButton = clickedElement.closest('.navigation-buttons') !== null;
-        const isNotificationActive = lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
-
-        if (!isNotificationActive && !isNavigationButton && clickedElement.closest('#virtual-keyboard') === null) {
-            const input = getHiddenInput();
-            if (input && document.activeElement !== input) {
-                input.focus();
-            }
+        if (input && document.activeElement !== input) {
+            input.focus();
         }
     });
 
@@ -248,7 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentLessonIndex = getState('currentLessonIndex');
         if (currentLessonIndex > 0) {
             updateState('currentLessonIndex', currentLessonIndex - 1);
-            resetCurrentLessonState();
+            // PERBAIKAN: Teruskan domElements ke resetCurrentLessonState
+            resetCurrentLessonState(domElements);
             doRenderLessonAndFocus();
         }
     });
@@ -256,24 +243,24 @@ document.addEventListener('DOMContentLoaded', () => {
     nextLessonBtn.addEventListener('click', goToNextLesson);
 
     continueBtn.addEventListener('click', () => {
-    if (lessonCompleteNotification) {
-        lessonCompleteNotification.classList.remove('active');
-        // PERBAIKAN: Bersihkan juga saat tombol "Lanjut" diklik
-        clearAnimation();
-        clearKeyboardHighlights(domElements.keyboardContainer);
-        setTimeout(() => {
-            lessonCompleteNotification.style.display = 'none';
-            showLessonElements();
-            goToNextLesson();
-        }, 500);
-    }
-});
+        if (lessonCompleteNotification) {
+            lessonCompleteNotification.classList.remove('active');
+            clearAnimation();
+            clearKeyboardHighlights(domElements.keyboardContainer);
+            setTimeout(() => {
+                lessonCompleteNotification.style.display = 'none';
+                showLessonElements();
+                goToNextLesson();
+            }, 500);
+        }
+    });
 
     if (retryLessonBtn) {
         retryLessonBtn.addEventListener('click', () => {
             if (lessonCompleteNotification) {
                 lessonCompleteNotification.classList.remove('active');
-                resetCurrentLessonState();
+                // PERBAIKAN: Teruskan domElements ke resetCurrentLessonState
+                resetCurrentLessonState(domElements);
                 setTimeout(() => {
                     lessonCompleteNotification.style.display = 'none';
                     showLessonElements();

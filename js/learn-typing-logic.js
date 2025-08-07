@@ -1,16 +1,16 @@
-// learn-typing-logic.js
+// js/learn-typing-logic.js
 
 import { lessons } from './learn-typing-lessons.js';
 import { getState, updateState } from './learn-typing-state.js';
 import {
     renderLesson2,
     cleanupLesson2Elements,
-    getSequenceForState, // Import getSequenceForState dari lesson2-logic
+    getSequenceForState,
 } from './lesson2-logic.js';
 import {
     renderLesson3,
     cleanupLesson3Elements,
-    getSequenceForState as getSequenceForState3, // Import getSequenceForState dari lesson3-logic
+    getSequenceForState as getSequenceForState3,
 } from './lesson3-logic.js';
 import {
     renderLesson4,
@@ -23,6 +23,8 @@ import {
     showLessonCompleteNotification,
     createKeyboard,
     highlightKeyOnKeyboard,
+    animateJellyEffect,
+    animateAllBordersOnCorrectInput,
 } from './learn-typing-ui.js';
 
 export function cleanupSpecialLessons(lessonInstruction) {
@@ -90,12 +92,20 @@ export function renderLesson({
     lessonHeader,
     setAnimatingKey,
     clearAnimation,
-    renderHandVisualizer
+    renderHandVisualizer,
+    animateJellyEffect,
+    animateAllBordersOnCorrectInput,
 }) {
     if (!lessons || !lessons[currentLessonIndex]) {
         console.error("Pelajaran tidak ditemukan atau indeks tidak valid.");
         return;
     }
+
+    const lesson = lessons[currentLessonIndex];
+    
+    // Perbaikan ini memastikan objek pelajaran yang benar
+    // digunakan di seluruh fungsi ini.
+    
     const prevLessonBtn = document.getElementById('prev-lesson-btn');
     if (prevLessonBtn) {
         if (currentLessonIndex === 0) {
@@ -104,8 +114,7 @@ export function renderLesson({
             prevLessonBtn.style.visibility = 'visible';
         }
     }
-
-    const lesson = lessons[currentLessonIndex];
+    
     if (lessonTitle) lessonTitle.textContent = lesson.title;
 
     clearKeyboardHighlights(keyboardContainer);
@@ -126,93 +135,89 @@ export function renderLesson({
 
     const specialRenderers = {
         0: () => {
-            if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-            if (lessonInstruction) {
-                if (currentStepIndex === 0) {
-                    lessonInstruction.innerHTML = lesson.steps[0].instruction;
-                    const keyF = keyboardContainer.querySelector('.key[data-key="f"]');
-                    if (keyF) {
-                        keyF.classList.add('next-key');
-                    }
-                    if (keyF && setAnimatingKey) {
-                        setAnimatingKey(keyF);
-                    }
-                    if (renderHandVisualizer) renderHandVisualizer('f');
-                } else if (currentStepIndex === 1) {
-                    lessonInstruction.innerHTML = lesson.steps[1].instruction;
-                    const keyJ = keyboardContainer.querySelector('.key[data-key="j"]');
-                    if (keyJ) {
-                        keyJ.classList.add('next-key');
-                    }
-                    if (keyJ && setAnimatingKey) {
-                        setAnimatingKey(keyJ);
-                    }
-                    if (renderHandVisualizer) renderHandVisualizer('j');
-                } else if (currentStepIndex === 2) {
-                    if (setAnimatingKey) setAnimatingKey(null);
-                    if (renderHandVisualizer) renderHandVisualizer(null);
-                }
-            }
+             if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+             if (lessonInstruction) {
+                 if (currentStepIndex === 0) {
+                     lessonInstruction.innerHTML = lesson.steps[0].instruction;
+                     const keyF = keyboardContainer.querySelector('.key[data-key="f"]');
+                     if (keyF) {
+                         keyF.classList.add('next-key');
+                     }
+                     if (keyF && setAnimatingKey) {
+                         setAnimatingKey(keyF);
+                     }
+                     if (renderHandVisualizer) renderHandVisualizer('f');
+                 } else if (currentStepIndex === 1) {
+                     lessonInstruction.innerHTML = lesson.steps[1].instruction;
+                     const keyJ = keyboardContainer.querySelector('.key[data-key="j"]');
+                     if (keyJ) {
+                         keyJ.classList.add('next-key');
+                     }
+                     if (keyJ && setAnimatingKey) {
+                         setAnimatingKey(keyJ);
+                     }
+                     if (renderHandVisualizer) renderHandVisualizer('j');
+                 } else if (currentStepIndex === 2) {
+                     if (setAnimatingKey) setAnimatingKey(null);
+                     if (renderHandVisualizer) renderHandVisualizer(null);
+                 }
+             }
         },
         1: () => {
-            if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-            renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer);
-            
-            // PERBAIKAN: Tambahkan logika inisialisasi highlight untuk Pelajaran 2
-            const lesson2State = getState('lesson2State');
-            const lesson2SequenceIndex = getState('lesson2SequenceIndex');
-            const sequence = getSequenceForState(lesson2State);
-            const highlightedKey = sequence[lesson2SequenceIndex];
+             if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+             renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput);
 
-            if (highlightedKey) {
-                const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
-                if (keyElement && setAnimatingKey) {
-                    setAnimatingKey(keyElement);
-                }
-                if (renderHandVisualizer) {
-                    renderHandVisualizer(highlightedKey);
-                }
-                highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-            }
-        },
-        2: () => {
-            if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-            renderLesson3(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer);
-            
-            // PERBAIKAN: Tambahkan logika inisialisasi highlight untuk Pelajaran 3
-            const lesson3State = getState('lesson3State');
-            const lesson3SequenceIndex = getState('lesson3SequenceIndex');
-            const sequence = getSequenceForState3(lesson3State);
-            const highlightedKey = sequence[lesson3SequenceIndex];
+             const lesson2State = getState('lesson2State');
+             const lesson2SequenceIndex = getState('lesson2SequenceIndex');
+             const sequence = getSequenceForState(lesson2State);
+             const highlightedKey = sequence[lesson2SequenceIndex];
 
-            if (highlightedKey) {
-                const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
-                if (keyElement && setAnimatingKey) {
-                    setAnimatingKey(keyElement);
-                }
-                if (renderHandVisualizer) {
-                    renderHandVisualizer(highlightedKey);
-                }
-                highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-            }
-        },
-        3: () => {
-            if (lessonTextDisplay) lessonTextDisplay.style.display = '';
-            renderLesson4(lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer);
-        },
+             if (highlightedKey) {
+                 const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
+                 if (keyElement && setAnimatingKey) {
+                     setAnimatingKey(keyElement);
+                 }
+                 if (renderHandVisualizer) {
+                     renderHandVisualizer(highlightedKey);
+                 }
+                 highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+             }
+           },
+           2: () => {
+             if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+             renderLesson3(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput);
+
+             const lesson3State = getState('lesson3State');
+             const lesson3SequenceIndex = getState('lesson3SequenceIndex');
+             const sequence = getSequenceForState3(lesson3State);
+             const highlightedKey = sequence[lesson3SequenceIndex];
+
+             if (highlightedKey) {
+                 const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
+                 if (keyElement && setAnimatingKey) {
+                     setAnimatingKey(keyElement);
+                 }
+                 if (renderHandVisualizer) {
+                     renderHandVisualizer(highlightedKey);
+                 }
+                 highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+             }
+           },
+         3: () => {
+             if (lessonTextDisplay) lessonTextDisplay.style.display = '';
+             renderLesson4(lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer);
+         },
     };
 
     if (specialRenderers[currentLessonIndex]) {
         specialRenderers[currentLessonIndex]();
     } else {
         if (lessonTextDisplay) lessonTextDisplay.style.display = '';
-        renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer);
+        renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer, animateJellyEffect);
     }
 
-    const progress = calculateLessonProgress(
-        currentLessonIndex,
-        lessons[currentLessonIndex]
-    );
+    const progress = calculateLessonProgress(lesson);
+    // PERBAIKAN: Memanggil updateProgressBar dengan satu parameter
     updateProgressBar(progress);
 }
 

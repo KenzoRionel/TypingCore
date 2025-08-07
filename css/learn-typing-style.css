@@ -1,4 +1,4 @@
-/* learn-typing.css */
+/* learn-typing-style.css */
 
 /* --- VARIABEL CSS (Diperlukan oleh beberapa bagian, tapi minimal) --- */
 :root {
@@ -80,7 +80,7 @@ body {
 
 .key.is-animating {
     /* Set properti border-image yang dibutuhkan */
-    border: 3px solid transparent;
+    border: 1px solid transparent;
     border-image-slice: 1 !important;
     border-image-width: 3px !important;
 }
@@ -164,6 +164,19 @@ virtual-keyboard .key.next-key {
     background-color: var(--highlight-color);
     box-shadow: 0 0 10px var(--highlight-color);
     color: rgb(19, 18, 18) !important;
+}
+
+@keyframes jelly-effect {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.key.jelly-effect {
+    animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .lesson-text-container {
@@ -809,6 +822,12 @@ virtual-keyboard .key.next-key {
     }
 }
 
+.lesson-text.lesson-4-display .typing-char.wrong-char {
+    background-color: rgba(255, 77, 77, 0.7) !important;
+    color: #fff !important;
+    animation: wrong-key-shake 0.2s ease-in-out;
+}
+
 /* Animasi baru yang menggabungkan kedip merah dan goyangan */
 @keyframes wrong-key-flash-shake {
     0% {
@@ -841,4 +860,17 @@ virtual-keyboard .key.next-key {
 #virtual-keyboard .key.wrong-key-flash {
     animation: wrong-key-flash-shake 0.2s ease-in-out !important;
     color: #fff !important;
+}
+
+@keyframes jelly-effect {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.key.jelly-effect {
+    animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }

@@ -18,6 +18,7 @@ let appState = {
     lesson4SequenceIndex: 0,
     lesson4CurrentCharIndex: 0,
     lesson4CharHistory: [],
+    lastKeyPressed: null,
 };
 
 export function initDOMAndState() {
