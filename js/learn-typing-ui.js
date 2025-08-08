@@ -13,7 +13,6 @@ export function createHandVisualizerElement() {
         { id: 'hand-f', src: 'img/hand_f.png', alt: 'Tangan untuk tombol F' },
         { id: 'hand-j', src: 'img/hand_j.png', alt: 'Tangan untuk tombol J' },
         { id: 'hand-space', src: 'img/hand_space.png', alt: 'Tangan untuk tombol spasi' },
-        // ✅ Tambahkan gambar tangan untuk tombol 'd' dan 'k'
         { id: 'hand-d', src: 'img/hand_d.png', alt: 'Tangan untuk tombol D' },
         { id: 'hand-k', src: 'img/hand_k.png', alt: 'Tangan untuk tombol K' },
     ];

@@ -2,7 +2,7 @@
 .lesson-keyboard-sequence {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 30px;
     overflow: hidden;
     height: 74px;
     position: relative;
@@ -13,7 +13,7 @@
 .lesson-keyboard-underline {
     display: flex;
     justify-content: center;
-    gap: 28px;
+    gap: 50px;
     margin-top: 4px;
     position: relative;
 }
@@ -23,7 +23,7 @@
     display: block;
     width: 32px; /* Lebar default, akan disesuaikan JS */
     height: 3px;
-    background-color: #ccc; /* Warna garis bawah saat TIDAK AKTIF (abu-abu) */
+    background-color: transparent; /* Warna garis bawah saat TIDAK AKTIF (abu-abu) */
     border-radius: 2px;
     opacity: 1; /* Pastikan selalu terlihat */
     position: relative; /* Penting untuk pseudo-elemen */

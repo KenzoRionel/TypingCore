@@ -32,8 +32,8 @@ import {
     animateJellyEffect,
     animateAllBordersOnCorrectInput,
 } from './learn-typing-ui.js';
-// ✅ Perbaikan: Impor fungsi renderHandVisualizer dari file yang benar
 import { renderHandVisualizer } from './hand-visualizer.js';
+import {cleanupSimpleDrillElements, renderSimpleDrill} from './simple-drill-logic.js';
 
 export function cleanupSpecialLessons(lessonInstruction) {
     cleanupLesson2Elements(lessonInstruction);
@@ -139,7 +139,7 @@ export function renderLesson({
     }
 
     const lesson = lessons[currentLessonIndex];
-    
+
     const prevLessonBtn = document.getElementById('prev-lesson-btn');
     if (prevLessonBtn) {
         if (currentLessonIndex === 0) {
@@ -154,168 +154,64 @@ export function renderLesson({
     clearKeyboardHighlights(keyboardContainer);
 
     const progressBarContainerEl = document.getElementById('progress-container-wrapper');
-    const learnTypingSectionEl = document.getElementById('learn-typing-section');
-    const virtualKeyboardEl = document.getElementById('virtual-keyboard');
+
+    // Bersihkan elemen-elemen dari pelajaran sebelumnya untuk mencegah tumpang tindih
+    cleanupSimpleDrillElements(lessonInstruction);
+    cleanupCharacterDrillElements(lessonInstruction);
+    cleanupLesson4Elements(lessonInstruction, lessonTextDisplay);
 
     if (lessonTextDisplay) {
-        if (currentLessonIndex === 3) {
+        // Hapus kelas khusus untuk memastikan tampilan default
+        lessonTextDisplay.classList.remove('lesson-4-display');
+        lessonTextDisplay.innerHTML = '';
+        lessonTextDisplay.style.display = '';
+    }
+
+    // Gunakan switch case atau if/else if berdasarkan tipe pelajaran, bukan indeks
+    switch (lesson.type) {
+        case 'simple-drill':
+            const lessonStateKey = `lesson${currentLessonIndex + 1}State`;
+            const lessonSequenceIndexKey = `lesson${currentLessonIndex + 1}SequenceIndex`;
+            const lessonState = getState(lessonStateKey);
+            const lessonSequenceIndex = getState(lessonSequenceIndexKey);
+            
+            if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+
+            renderSimpleDrill(lesson, lessonInstruction, keyboardContainer, lessonState, lessonSequenceIndex, setAnimatingKey, renderHandVisualizer);
+            
+            // Logika untuk menampilkan notifikasi selesai
+            const totalSequences = lesson.sequences.length;
+            if (lessonState >= totalSequences * 2) {
+                const domElements = {
+                    lessonHeader,
+                    lessonCompleteNotification: document.getElementById('lesson-complete-notification'),
+                    continueBtn: document.getElementById('continue-btn'),
+                    keyboardContainer,
+                    nextLessonPreview: document.getElementById('next-lesson-preview'),
+                    successAnimationSvg: document.getElementById('success-animation-svg'),
+                    prevLessonBtn: document.getElementById('prev-lesson-btn'),
+                    nextLessonBtn: document.getElementById('next-lesson-btn'),
+                    lessonTextDisplay,
+                    progressContainerWrapper: progressBarContainerEl
+                };
+                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+            }
+            break;
+
+        case 'character-drill':
+            if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
+            renderCharacterDrill(lesson, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer, currentStepIndex);
+            break;
+
+        case 'free-typing':
             lessonTextDisplay.classList.add('lesson-4-display');
-        } else {
-            lessonTextDisplay.classList.remove('lesson-4-display');
-        }
-    }
+            renderLesson4(lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer);
+            break;
 
-    if (lessonTextDisplay) lessonTextDisplay.innerHTML = '';
-
-    if (currentLessonIndex === 5) {
-        renderLesson6(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput);
-        const lesson6State = getState('lesson6State');
-        const lesson6SequenceIndex = getState('lesson6SequenceIndex');
-        const sequence = getSequenceForState6(lesson6State);
-        
-        if (lesson6SequenceIndex >= sequence.length) {
-            const domElements = {
-                lessonHeader,
-                lessonCompleteNotification: document.getElementById('lesson-complete-notification'),
-                continueBtn: document.getElementById('continue-btn'),
-                keyboardContainer,
-                nextLessonPreview: document.getElementById('next-lesson-preview'),
-                successAnimationSvg: document.getElementById('success-animation-svg'),
-                prevLessonBtn: document.getElementById('prev-lesson-btn'),
-                nextLessonBtn: document.getElementById('next-lesson-btn'),
-                lessonTextDisplay,
-                progressContainerWrapper: progressBarContainerEl
-            };
-            showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
-            return;
-        }
-
-        const highlightedKey = sequence[lesson6SequenceIndex];
-
-        if (highlightedKey) {
-            const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
-            if (keyElement && setAnimatingKey) {
-                setAnimatingKey(keyElement);
-            }
-            if (renderHandVisualizer) {
-                renderHandVisualizer(highlightedKey);
-            }
-            highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-        }
-    } else {
-        const specialRenderers = {
-            0: () => {
-                if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-                if (lessonInstruction) {
-                    if (currentStepIndex === 0) {
-                        lessonInstruction.innerHTML = lesson.steps[0].instruction;
-                        const keyF = keyboardContainer.querySelector('.key[data-key="f"]');
-                        if (keyF) {
-                            keyF.classList.add('next-key');
-                        }
-                        if (keyF && setAnimatingKey) {
-                            setAnimatingKey(keyF);
-                        }
-                        if (renderHandVisualizer) renderHandVisualizer('f');
-                    } else if (currentStepIndex === 1) {
-                        lessonInstruction.innerHTML = lesson.steps[1].instruction;
-                        const keyJ = keyboardContainer.querySelector('.key[data-key="j"]');
-                        if (keyJ) {
-                            keyJ.classList.add('next-key');
-                        }
-                        if (keyJ && setAnimatingKey) {
-                            setAnimatingKey(keyJ);
-                        }
-                        if (renderHandVisualizer) renderHandVisualizer('j');
-                    } else if (currentStepIndex === 2) {
-                        if (setAnimatingKey) setAnimatingKey(null);
-                        if (renderHandVisualizer) renderHandVisualizer(null);
-                    }
-                }
-            },
-            1: () => {
-                if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-                renderLesson2(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput);
-
-                const lesson2State = getState('lesson2State');
-                const lesson2SequenceIndex = getState('lesson2SequenceIndex');
-                const sequence = getSequenceForState(lesson2State);
-                const highlightedKey = sequence[lesson2SequenceIndex];
-
-                if (highlightedKey) {
-                    const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
-                    if (keyElement && setAnimatingKey) {
-                        setAnimatingKey(keyElement);
-                    }
-                    if (renderHandVisualizer) {
-                        renderHandVisualizer(highlightedKey);
-                    }
-                    highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-                }
-            },
-            2: () => {
-                if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-                renderLesson3(lessonInstruction, keyboardContainer, feedbackIndex, isCorrect, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput);
-
-                const lesson3State = getState('lesson3State');
-                const lesson3SequenceIndex = getState('lesson3SequenceIndex');
-                const sequence = getSequenceForState3(lesson3State);
-                const highlightedKey = sequence[lesson3SequenceIndex];
-
-                if (highlightedKey) {
-                    const keyElement = keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`);
-                    if (keyElement && setAnimatingKey) {
-                        setAnimatingKey(keyElement);
-                    }
-                    if (renderHandVisualizer) {
-                        renderHandVisualizer(highlightedKey);
-                    }
-                    highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-                }
-            },
-            3: () => {
-                if (lessonTextDisplay) lessonTextDisplay.style.display = '';
-                renderLesson4(lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer);
-            },
-            4: () => {
-                if (lessonTextDisplay) lessonTextDisplay.style.display = 'none';
-                if (lessonInstruction) {
-                    if (currentStepIndex === 0) {
-                        lessonInstruction.innerHTML = lesson.steps[0].instruction;
-                        const keyD = keyboardContainer.querySelector('.key[data-key="d"]');
-                        if (keyD) {
-                            keyD.classList.add('next-key');
-                        }
-                        if (keyD && setAnimatingKey) {
-                            setAnimatingKey(keyD);
-                        }
-                        if (renderHandVisualizer) renderHandVisualizer('d');
-                    } else if (currentStepIndex === 1) {
-                        lessonInstruction.innerHTML = lesson.steps[1].instruction;
-                        const keyK = keyboardContainer.querySelector('.key[data-key="k"]');
-                        if (keyK) {
-                            keyK.classList.add('next-key');
-                        }
-                        if (keyK && setAnimatingKey) {
-                            setAnimatingKey(keyK);
-                        }
-                        if (renderHandVisualizer) renderHandVisualizer('k');
-                    } else if (currentStepIndex === 2) {
-                        if (setAnimatingKey) setAnimatingKey(null);
-                        if (renderHandVisualizer) renderHandVisualizer(null);
-                    }
-                }
-            },
-        };
-
-        if (specialRenderers[currentLessonIndex]) {
-            specialRenderers[currentLessonIndex]();
-        } else {
-            if (lessonTextDisplay) lessonTextDisplay.style.display = '';
+        default:
             renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer, animateJellyEffect);
-        }
+            break;
     }
-
 
     const progress = calculateLessonProgress(lesson);
     updateProgressBar(progress);

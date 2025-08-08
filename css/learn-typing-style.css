@@ -6,22 +6,25 @@
     --active-key-bg-color: #00e1ff;
     --active-key-shadow-color: #77aaff80;
     --next-key-bg-color: #39a8e7;
-    --next-key-text-color: #222;
+    --next-key-text-color: #ffffff;
     --next-key-border-color: #77a777;
     --lesson-key-default-bg: #fff;
-    --lesson-key-default-color: #444;
-    --lesson-key-default-border: #bbb;
+    --lesson-key-default-color: #5a5959;
+    --lesson-key-default-border: #367bfc8f;
     --lesson-key-active-bg: #007bff;
+    --lesson-key-correct-bg: #c4f1d7;
+    --lesson-key-correct-color: #5a5959;
+    --lesson-key-correct-border: #5cdd92;
     --lesson-key-active-color: #fff;
-    --lesson-key-active-border: #1976d2;
-    --inline-key-bg: #1976d2;
+    --lesson-key-active-border: #89c4ff;
+    --inline-key-bg: #007bff;
     --inline-key-color: #fff;
-    --inline-key-border: #b0b0b0;
+    --inline-key-border: #89c4ff;
     --lesson-text-default-color: #888;
     --lesson-text-correct-color: #4caf50;
     --lesson-text-incorrect-color: #f44336;
     --text-color-light: #888;
-    --highlight-color: #99cc99;
+    --highlight-color: #007bff;
     --primary-color: #126ed6;
 }
 
@@ -163,7 +166,7 @@ virtual-keyboard .key.next-key {
 .key.next-key {
     background-color: var(--highlight-color);
     box-shadow: 0 0 10px var(--highlight-color);
-    color: rgb(19, 18, 18) !important;
+    color: var(--next-key-text-color) !important;
 }
 
 @keyframes jelly-effect {
@@ -338,7 +341,7 @@ virtual-keyboard .key.next-key {
     color: var(--inline-key-color);
     border: 1.5px solid var(--inline-key-border);
     border-radius: 5px;
-    padding: 3px 14px 3px 14px;
+    padding: 6px 6px 6px 6px;
     margin: 0 3px;
     font-family: 'Segoe UI', 'Courier New', monospace;
     font-size: 1.1em;
@@ -348,6 +351,8 @@ virtual-keyboard .key.next-key {
     letter-spacing: 1px;
     user-select: none;
     transition: background 0.2s, color 0.2s;
+    width: 48px;
+    height: 48px;
 }
 
 /* Animasi menghilang (fade out + scale) */
@@ -367,16 +372,15 @@ virtual-keyboard .key.next-key {
     display: inline-flex;
     align-items: flex-end;
     justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
+    width: 48px;
+    min-height: 48px;
     padding: 0 16px;
     font-size: 1.5em;
     font-family: 'Segoe UI', 'Courier New', monospace;
     background: var(--lesson-key-default-bg);
     color: var(--lesson-key-default-color);
     border: 2px solid var(--lesson-key-default-border);
-    border-radius: 7px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
     margin: 0 2px;
     position: relative;
     will-change: transform, opacity;
@@ -501,9 +505,10 @@ virtual-keyboard .key.next-key {
 }
 
 .lesson-keyboard-sequence .lesson-keyboard-key.completed-correct {
-    background: #a8ed93 !important;
-    border-color: #4CAF50 !important;
+    background: var(--lesson-key-correct-bg) !important;
+    border-color: var(--lesson-key-correct-border) !important;
     transform: scale(1.05);
+    color: var(--lesson-key-correct-color);
 }
 
 .lesson-keyboard-sequence .lesson-keyboard-key.input-incorrect {
