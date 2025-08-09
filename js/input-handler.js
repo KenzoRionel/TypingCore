@@ -8,79 +8,26 @@ import {
     animateJellyEffect,
     animateAllBordersOnCorrectInput,
 } from './learn-typing-ui.js';
+import { handleLesson2Input } from './lesson2-logic.js';
+import { handleLesson3Input } from './lesson3-logic.js';
 import { handleLesson4Input } from './lesson4-logic.js';
+// ✅ Impor handler untuk Pelajaran 6
+import { handleLesson6Input } from './lesson6-logic.js';
 import { setIsCorrectInputAnimationActive } from './learn-typing.js';
-import { handleSimpleDrillInput } from './simple-drill-logic.js';
-import { handleCharacterDrillInput } from './character-drill-logic.js';
-
-// --- Fungsi baru untuk menangani input pelajaran character-drill (Pelajaran 0 & 4) ---
-function handleCharacterDrillInput({
-    e,
-    doRenderAndHighlight,
-    setAnimationSpeed,
-    domElements,
-}) {
-    const { keyboardContainer, lessonInstruction } = domElements;
-    const currentLessonIndex = getState('currentLessonIndex');
-    const currentStepIndex = getState('currentStepIndex');
-    const currentLesson = lessons[currentLessonIndex];
-
-    const expectedKey = currentLesson.steps[currentStepIndex]?.key;
-
-    if (!expectedKey) {
-        return;
-    }
-
-    if (e.key.toLowerCase() === expectedKey.toLowerCase()) {
-        if (setAnimationSpeed) {
-            setAnimationSpeed(15);
-            setIsCorrectInputAnimationActive(true);
-            setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
-        }
-        
-        const keyElement = keyboardContainer.querySelector(`.key[data-key="${expectedKey.toLowerCase()}"]`);
-        const onAnimationEnd = () => {
-            updateState('waitingForAnim', false);
-            updateState('currentStepIndex', currentStepIndex + 1);
-            doRenderAndHighlight();
-            if (getState('currentStepIndex') >= currentLesson.steps.length) {
-                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
-            }
-        };
-
-        if (keyElement) {
-            animateJellyEffect(keyElement, onAnimationEnd);
-            updateState('waitingForAnim', true);
-        } else {
-            onAnimationEnd();
-        }
-        
-        const inlineKeyEl = document.getElementById(`inlineKey${expectedKey.toUpperCase()}`);
-        if (inlineKeyEl) {
-            inlineKeyEl.classList.add('fade-out');
-        }
-
-    } else if (e.key.length === 1 && e.key.toLowerCase() !== expectedKey.toLowerCase()) {
-        if (keyboardContainer && highlightWrongKeyOnKeyboard) {
-            highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
-        }
-        if (lessonInstruction) {
-            lessonInstruction.classList.add('error-shake');
-            setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
-        }
-    }
-}
 
 export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation) {
     const { lessonInstruction, lessonCompleteNotification, continueBtn, hiddenInput, keyboardContainer, lessonTextDisplay } = domElements;
-// Mengecek apakah ada pelajaran yang selesai dengan cara yang lebih fleksibel
-    const isAnyLessonFinished = [
-        getState('lesson2Finished'),
-        getState('lesson3Finished'),
-        getState('lesson4Finished'),
-        getState('lesson5Finished'),
-        getState('lesson6Finished')
-    ].some(status => status);
+
+    const currentLessonIndex = getState('currentLessonIndex');
+    const waitingForAnim = getState('waitingForAnim');
+    const lesson2Finished = getState('lesson2Finished');
+    const lesson3Finished = getState('lesson3Finished');
+    const lesson4Finished = getState('lesson4Finished');
+    const lesson5Finished = getState('lesson5Finished');
+    // ✅ Tambahkan state untuk Pelajaran 6
+    const lesson6Finished = getState('lesson6Finished');
+
+    const isAnyLessonFinished = [lesson2Finished, lesson3Finished, lesson4Finished, lesson5Finished, lesson6Finished].some(status => status);
 
     if (lessonCompleteNotification && lessonCompleteNotification.classList.contains('active')) {
         if (e.key === 'Enter') {
@@ -99,52 +46,189 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
         hiddenInput.style.display = '';
         setTimeout(() => hiddenInput.focus(), 0);
     }
-    
+    const currentLesson = lessons[currentLessonIndex];
     let preventDefault = true;
-    const lessonType = currentLesson.type;
 
-    if (lessonType === 'character-drill') {
-        handleCharacterDrillInput({
-            e,
-            doRenderAndHighlight,
-            setAnimationSpeed,
-            domElements,
-        });
-    } else if (lessonType === 'simple-drill') {
-        // Mengarahkan ke handler yang sesuai
-        if (currentLessonIndex === 1) {
-            handleLesson2Input({ e, doRenderAndHighlight, lessonInstructionEl: lessonInstruction, keyboardContainer, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput });
-        } else if (currentLessonIndex === 2) {
-            handleLesson3Input({ e, doRenderAndHighlight, lessonInstructionEl: lessonInstruction, keyboardContainer, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput });
-        } else if (currentLessonIndex === 5) {
-            handleLesson6Input({ e, doRenderAndHighlight, lessonInstructionEl: lessonInstruction, keyboardContainer, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect, animateAllBordersOnCorrectInput });
+    if (currentLessonIndex === 0) {
+        const currentStepIndex = getState('currentStepIndex');
+        if (currentStepIndex === 0 && e.key.toLowerCase() === 'f') {
+            if (setAnimationSpeed) {
+                setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
+            }
+            const keyF = keyboardContainer.querySelector('.key[data-key="f"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 1);
+                console.log(`[INPUT] Pelajaran 0: currentStepIndex diperbarui ke:`, getState('currentStepIndex'));
+                doRenderAndHighlight();
+            };
+            if (keyF) {
+                animateJellyEffect(keyF, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
+            const inlineKeyF = document.getElementById('inlineKeyF');
+            if (inlineKeyF) {
+                inlineKeyF.classList.add('fade-out');
+            }
+        } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'j') {
+            if (setAnimationSpeed) {
+                setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
+            }
+            const keyJ = keyboardContainer.querySelector('.key[data-key="j"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 2);
+                console.log(`[INPUT] Pelajaran 0: currentStepIndex diperbarui ke:`, getState('currentStepIndex'));
+                doRenderAndHighlight();
+                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+            };
+            if (keyJ) {
+                animateJellyEffect(keyJ, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
+            const inlineKeyJ = document.getElementById('inlineKeyJ');
+            if (inlineKeyJ) {
+                inlineKeyJ.classList.add('fade-out');
+            }
+        } else if (e.key.length === 1 && e.key.toLowerCase() !== 'f' && e.key.toLowerCase() !== 'j') {
+            if (keyboardContainer && highlightWrongKeyOnKeyboard) {
+                highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
+            }
+            if (lessonInstruction) {
+                lessonInstruction.classList.add('error-shake');
+                setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
+            }
+        } else {
+            preventDefault = false;
         }
-    } else if (lessonType === 'simple-drill') {
-        // Mengarahkan ke handler generik
-        const lessonStateKey = `lesson${currentLessonIndex + 1}State`;
-        const lessonSequenceIndexKey = `lesson${currentLessonIndex + 1}SequenceIndex`;
-        const lessonState = getState(lessonStateKey);
-        const lessonSequenceIndex = getState(lessonSequenceIndexKey);
-
-        handleSimpleDrillInput({ 
-            e, 
-            doRenderAndHighlight, 
-            dispatchLessonFinishedEvent: (event) => lessonInstruction.dispatchEvent(event), 
-            lessonInstructionEl: lessonInstruction, 
-            keyboardContainer, 
-            setAnimationSpeed, 
-            animateJellyEffect, 
-            animateAllBordersOnCorrectInput, 
-            lessonData: currentLesson,
-            lessonState,
-            lessonSequenceIndex,
-            lessonStateKey,
-            lessonSequenceIndexKey
+    } else if (currentLessonIndex === 1) {
+        handleLesson2Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson2FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+            keyboardContainer: keyboardContainer,
+            setAnimationSpeed: setAnimationSpeed,
+            setAnimatingKey: setAnimatingKey,
+            renderHandVisualizer: renderHandVisualizer,
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+            animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
         });
-    } else if (lessonType === 'free-typing') {
-        handleLesson4Input({ e, doRenderAndHighlight, lessonInstructionEl: lessonInstruction, keyboardContainer, setAnimationSpeed, setAnimatingKey, renderHandVisualizer, clearAnimation, animateJellyEffect });
+    } else if (currentLessonIndex === 2) {
+        handleLesson3Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson3FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+            keyboardContainer: keyboardContainer,
+            setAnimationSpeed: setAnimationSpeed,
+            setAnimatingKey: setAnimatingKey,
+            renderHandVisualizer: renderHandVisualizer,
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+            animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
+        });
+    } else if (currentLessonIndex === 3) {
+        handleLesson4Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson4FinishedEvent: (event) => {
+                lessonInstruction.dispatchEvent(event);
+            },
+            lessonInstructionEl: lessonInstruction,
+            keyboardContainer: keyboardContainer,
+            setAnimationSpeed: setAnimationSpeed,
+            setAnimatingKey: setAnimatingKey,
+            renderHandVisualizer: renderHandVisualizer,
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+        });
+    } else if (currentLessonIndex === 4) {
+        const currentStepIndex = getState('currentStepIndex');
+        if (currentStepIndex === 0 && e.key.toLowerCase() === 'd') {
+            if (setAnimationSpeed) {
+                setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
+            }
+            const keyD = keyboardContainer.querySelector('.key[data-key="d"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 1);
+                doRenderAndHighlight();
+            };
+            if (keyD) {
+                animateJellyEffect(keyD, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
+            const inlineKeyD = document.getElementById('inlineKeyD');
+            if (inlineKeyD) {
+                inlineKeyD.classList.add('fade-out');
+            }
+        } else if (currentStepIndex === 1 && e.key.toLowerCase() === 'k') {
+            if (setAnimationSpeed) {
+                setAnimationSpeed(15);
+                setIsCorrectInputAnimationActive(true);
+                setTimeout(() => setIsCorrectInputAnimationActive(false), 50);
+            }
+            const keyK = keyboardContainer.querySelector('.key[data-key="k"]');
+            const onAnimationEnd = () => {
+                updateState('waitingForAnim', false);
+                updateState('currentStepIndex', 2);
+                doRenderAndHighlight();
+                showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
+            };
+            if (keyK) {
+                animateJellyEffect(keyK, onAnimationEnd);
+                updateState('waitingForAnim', true);
+            } else {
+                onAnimationEnd();
+            }
+            
+            const inlineKeyK = document.getElementById('inlineKeyK');
+            if (inlineKeyK) {
+                inlineKeyK.classList.add('fade-out');
+            }
+        } else if (e.key.length === 1 && e.key.toLowerCase() !== 'd' && e.key.toLowerCase() !== 'k') {
+            if (keyboardContainer && highlightWrongKeyOnKeyboard) {
+                highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
+            }
+            if (lessonInstruction) {
+                lessonInstruction.classList.add('error-shake');
+                setTimeout(() => lessonInstruction.classList.remove('error-shake'), 200);
+            }
+        } else {
+            preventDefault = false;
+        }
+    } else if (currentLessonIndex === 5) {
+        handleLesson6Input({
+            e,
+            doRenderAndHighlight: doRenderAndHighlight,
+            dispatchLesson6FinishedEvent: (event) => lessonInstruction.dispatchEvent(event),
+            lessonInstructionEl: lessonInstruction,
+            keyboardContainer: keyboardContainer,
+            setAnimationSpeed: setAnimationSpeed,
+            setAnimatingKey: setAnimatingKey,
+            renderHandVisualizer: renderHandVisualizer,
+            clearAnimation: clearAnimation,
+            animateJellyEffect: animateJellyEffect,
+            animateAllBordersOnCorrectInput: animateAllBordersOnCorrectInput,
+        });
     } else {
-        // Logika Fallback
         const currentCharIndex = getState('currentCharIndex');
         if (!currentLesson || !currentLesson.sequence || currentCharIndex >= currentLesson.sequence.length) {
             e.preventDefault();
@@ -166,6 +250,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             if (keyElement) {
                 const onAnimationEnd = () => {
                     updateState('currentCharIndex', currentCharIndex + 1);
+                    console.log(`[INPUT] Pelajaran lain: currentCharIndex diperbarui ke:`, getState('currentCharIndex'));
                     doRenderAndHighlight();
                     if (getState('currentCharIndex') >= currentLesson.sequence.length) {
                         showLessonCompleteNotification(lessons, currentLessonIndex, domElements);
@@ -189,8 +274,7 @@ export function handleKeyboardInput(e, domElements, doRenderAndHighlight, setAni
             }
         }
     }
-
-    if (e.key.length === 1 || e.key === 'Backspace') {
+    if (preventDefault) {
         e.preventDefault();
     }
 }

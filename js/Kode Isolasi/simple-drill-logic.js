@@ -5,6 +5,7 @@ import { updateUnderlineStatus } from './underline-logic.js';
 import { highlightKeyOnKeyboard, highlightWrongKeyOnKeyboard, clearKeyboardHighlights, animateJellyEffect, animateAllBordersOnCorrectInput } from './learn-typing-ui.js';
 import { setIsCorrectInputAnimationActive } from './learn-typing.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
+import { getDOMReferences } from './dom-elements.js';
 
 let sequenceContainer = null;
 let underlineContainer = null;
@@ -14,6 +15,20 @@ let wrongInputState = {
     originalText: '',
     timeoutId: null
 };
+
+function animateDrillBorders(container) {
+    if (!container) return;
+    const allTypingChars = container.querySelectorAll('.lesson-keyboard-key');
+    allTypingChars.forEach(charEl => {
+        charEl.classList.add('correct-input-border');
+    });
+
+    setTimeout(() => {
+        allTypingChars.forEach(charEl => {
+            charEl.classList.remove('correct-input-border');
+        });
+    }, 500);
+}
 
 function getSequenceForState(lessonData, state) {
     if (!lessonData || !lessonData.sequences || state % 2 !== 0 || state < 0 || state >= lessonData.sequences.length * 2) {
@@ -177,7 +192,7 @@ export function handleSimpleDrillInput({ e, doRenderAndHighlight, dispatchLesson
                 }
             }
 
-            if (animateAllBordersOnCorrectInput) {
+            if (sequenceContainer) {
                 animateAllBordersOnCorrectInput(sequenceContainer);
             }
             
@@ -240,4 +255,9 @@ export function handleSimpleDrillInput({ e, doRenderAndHighlight, dispatchLesson
             }
         }
     }
+}
+
+export function resetSimpleDrillState() {
+    const { lessonInstruction } = getDOMReferences();
+    cleanupSimpleDrillElements(lessonInstruction);
 }

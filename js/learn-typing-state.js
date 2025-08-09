@@ -20,6 +20,7 @@ let appState = {
     lesson4CurrentCharIndex: 0,
     lesson4CharHistory: [],
     lesson5Finished: false,
+    // ✅ Tambahkan state untuk Pelajaran 6
     lesson6Finished: false,
     lesson6State: 0,
     lesson6SequenceIndex: 0,
