@@ -1,5 +1,4 @@
 // js/learn-typing-ui.js
-
 import { getState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import { renderHandVisualizer, resetHandVisualizer } from './hand-visualizer.js';
@@ -13,6 +12,8 @@ const defaultAnimationSpeed = 3;
 let animationSpeed = defaultAnimationSpeed;
 let lessonSpeedTimeout = null;
 export let isCorrectInputAnimationActive = false;
+// PERUBAHAN: Tambahkan variabel untuk mengontrol opacity border
+let borderOpacity = 0;
 
 export function setAnimationSpeed(speed) {
     if (speed === 15) {
@@ -33,6 +34,8 @@ export function setAnimatingKey(keyElement) {
     if (keyElement) {
         animatedKeyElement = keyElement;
         animatedKeyElement.classList.add('is-animating');
+        // PERUBAHAN: Reset opacity saat tombol baru diatur
+        borderOpacity = 0;
     } else {
         animatedKeyElement = null;
     }
@@ -44,16 +47,35 @@ export function clearAnimation() {
         animatedKeyElement.style.borderImageSource = '';
     }
     animatedKeyElement = null;
+    // PERUBAHAN: Reset opacity
+    borderOpacity = 0;
 }
 
 export function animateBorder() {
     if (animatedKeyElement) {
+        // PERUBAHAN: Dapatkan tipe pelajaran saat ini
+        const currentLessonIndex = getState('currentLessonIndex');
+        const currentLesson = lessons[currentLessonIndex];
+        const isFreeTyping = currentLesson && currentLesson.type === 'free-typing';
+        // PERUBAHAN: Cek apakah ini render awal dengan fade-in
+        const isInitialFadeIn = document.body.classList.contains('initial-fade-in');
+
+        // PERUBAHAN: Tingkatkan opacity secara bertahap hanya untuk free-typing pada render awal
+        if (isFreeTyping && isInitialFadeIn) {
+            if (borderOpacity < 1) {
+                borderOpacity = Math.min(1, borderOpacity + 0.05); // Kecepatan fade-in
+            }
+        } else {
+            // Untuk pelajaran lain atau interaksi berikutnya, atur opacity ke 1 secara langsung
+            borderOpacity = 1;
+        }
+
         rotation += animationSpeed;
-        let startColor = 'rgba(0, 123, 255, 0.8)';
-        let endColor = 'rgba(255, 255, 255, 1)';
+        let startColor = `rgba(0, 123, 255, ${0.8 * borderOpacity})`;
+        let endColor = `rgba(255, 255, 255, ${1 * borderOpacity})`;
         if (isCorrectInputAnimationActive) {
-            startColor = 'rgba(253, 216, 53, 1)';
-            endColor = 'rgba(200, 255, 0, 1)';
+            startColor = `rgba(253, 216, 53, ${1 * borderOpacity})`;
+            endColor = `rgba(200, 255, 0, ${1 * borderOpacity})`;
         }
         const gradient = `conic-gradient(from ${rotation}deg, ${startColor} 0%, ${endColor} 25%, ${startColor} 50%, ${endColor} 75%, ${startColor} 100%)`;
         animatedKeyElement.style.borderImageSource = gradient;
@@ -150,6 +172,11 @@ export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
         console.error("ERROR: keyboardContainer tidak ditemukan.");
         return;
     }
+    // Hapus highlight dari tombol sebelumnya sebelum menambahkan yang baru
+    const previousHighlightedKey = keyboardContainer.querySelector('.next-key');
+    if (previousHighlightedKey) {
+        previousHighlightedKey.classList.remove('next-key');
+    }
     if (typeof keyChar === 'string' && keyChar.length > 0) {
         const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
         if (targetKeyElement) {
@@ -203,18 +230,15 @@ export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, 
         const nextChar = lesson.sequence[currentCharIndex];
         const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
         if (keyElement) {
-            keyElement.classList.add('next-key');
+            highlightKeyOnKeyboard(keyboardContainer, nextChar);
             if (setAnimatingKey) setAnimatingKey(keyElement);
-            // ✅ PERBAIKAN: Hapus renderHandVisualizer dari sini
         }
     } else {
         if (setAnimatingKey) setAnimatingKey(null);
-        // ✅ PERBAIKAN: Hapus renderHandVisualizer dari sini
         clearKeyboardHighlights(keyboardContainer);
     }
 }
 
-// ✅ PERBAIKAN: Fungsi cleanup karakter drill yang sebelumnya hilang
 function cleanupCharacterDrillElements() {
     const domElements = getDOMReferences();
     if (domElements.lessonInstruction) {
@@ -222,7 +246,6 @@ function cleanupCharacterDrillElements() {
     }
 }
 
-// ✅ PERBAIKAN: Fungsi pembersihan universal yang memanggil semua cleanup spesifik
 export function cleanupAllLessonUI() {
     const domElements = getDOMReferences();
     const keyboardContainer = domElements.keyboardContainer;
@@ -237,16 +260,13 @@ export function cleanupAllLessonUI() {
         });
     }
 
-    // Panggil semua fungsi cleanup spesifik
     cleanupSimpleDrillElements(domElements.lessonInstruction);
     cleanupCharacterDrillElements();
     
-    // Membersihkan elemen teks pelajaran
     if (domElements.lessonTextDisplay) {
         domElements.lessonTextDisplay.innerHTML = '';
     }
 
-    // Membersihkan sisa-sisa UI
     clearKeyboardHighlights(domElements.keyboardContainer);
     resetHandVisualizer();
 }
@@ -254,8 +274,8 @@ export function cleanupAllLessonUI() {
 export function showLessonCompleteNotification(lessons, currentLessonIdx, domElements) {
     const {
         lessonHeader, lessonCompleteNotification, continueBtn, keyboardContainer,
-        nextLessonPreview, successAnimationSvg, prevLessonBtn, nextLessonBtn,
-        lessonTextDisplay, progressContainerWrapper
+        successAnimationSvg, prevLessonBtn, nextLessonBtn,
+        lessonTextDisplay, progressContainerWrapper, retryLessonBtn
     } = domElements;
 
     cleanupAllLessonUI();
@@ -276,58 +296,54 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
     
     const completionProgressBar = document.getElementById('completion-progress-bar');
     const completionProgressText = document.getElementById('completion-progress-text');
+    // PERBAIKAN: Reset progress bar di sini, tapi jangan mulai animasi.
     if (completionProgressBar && completionProgressText) {
+        completionProgressBar.style.transition = 'none'; // Hentikan transisi sementara
         completionProgressBar.style.width = '0%';
         completionProgressText.textContent = '0%';
-        setTimeout(() => {
-            completionProgressBar.style.width = '100%';
-        }, 100);
-        let currentPercentage = 0;
-        const interval = setInterval(() => {
-            currentPercentage += 1;
-            completionProgressText.textContent = `${currentPercentage}%`;
-            if (currentPercentage >= 100) {
-                clearInterval(interval);
-            }
-        }, 15);
     }
     
     if (lessonCompleteNotification) {
-        const h2 = lessonCompleteNotification.querySelector('h3');
-        if (h2) h2.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
+        const h3 = lessonCompleteNotification.querySelector('h3');
+        if (h3) h3.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
         
-        if (nextLessonPreview) {
-            const nextLessonIndex = currentLessonIdx + 1;
-            if (nextLessonIndex < lessons.length) {
-                const nextLesson = lessons[nextLessonIndex];
-                let previewText;
-                if (nextLesson.type === 'simple-drill' && nextLesson.keys) {
-                    previewText = `Latihan: <span class="highlight-key-modal">${nextLesson.keys.join(', ')}</span>.`;
-                } else if (nextLesson.type === 'free-typing' && nextLesson.sequence) {
-                    const previewChars = nextLesson.sequence.slice(0, 5).join('');
-                    previewText = `Ketik: <span class="highlight-key-modal">${previewChars}...</span>`;
-                } else if (nextLesson.type === 'character-drill' && nextLesson.sequence) {
-                    const uniqueChars = [...new Set(nextLesson.sequence.join(''))].join('');
-                    previewText = `Ketik huruf: <span class="highlight-key-modal">${uniqueChars}</span>.`;
-                } else {
-                    previewText = 'Latihan Baru';
-                }
-                nextLessonPreview.innerHTML = previewText;
-            } else {
-                nextLessonPreview.textContent = "Anda telah menyelesaikan semua pelajaran!";
-            }
-        }
+        // Hapus semua logika yang berhubungan dengan nextLessonPreview
         
         lessonCompleteNotification.style.display = 'flex';
+        
+        // Hapus kelas animasi sebelum menambahkannya lagi
+        if (retryLessonBtn) retryLessonBtn.classList.remove('pop-in');
+        if (continueBtn) continueBtn.classList.remove('pop-in');
+
         setTimeout(() => {
             lessonCompleteNotification.classList.add('active');
             if (successAnimationSvg) {
                 successAnimationSvg.classList.add('animate');
             }
+
+            // PERBAIKAN: Pindahkan logika animasi progress bar ke sini.
+            if (completionProgressBar && completionProgressText) {
+                // Paksa reflow agar reset width diterapkan sebelum transisi dimulai
+                void completionProgressBar.offsetWidth; 
+                completionProgressBar.style.transition = 'width 1.5s ease-out';
+                completionProgressBar.style.width = '100%';
+                
+                let currentPercentage = 0;
+                const interval = setInterval(() => {
+                    if (currentPercentage < 100) {
+                        currentPercentage += 1;
+                        completionProgressText.textContent = `${currentPercentage}%`;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 15);
+            }
+
+            // Tambahkan kelas untuk memicu animasi tombol
+            if (retryLessonBtn) retryLessonBtn.classList.add('pop-in');
             if (continueBtn) {
+                continueBtn.classList.add('pop-in');
                 continueBtn.focus();
-            } else {
-                console.error('ERROR: Elemen continueBtn tidak ditemukan saat mencoba fokus!');
             }
         }, 50);
     } else {
@@ -339,6 +355,7 @@ export function highlightWrongKeyOnKeyboard(keyboardContainer, keyChar) {
     if (!keyboardContainer || !keyChar) return;
     const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
     if (targetKeyElement) {
+        // Hanya tambahkan kelas kilat tanpa menghapus highlight yang sudah ada
         targetKeyElement.classList.add('wrong-key-flash');
         setTimeout(() => {
             targetKeyElement.classList.remove('wrong-key-flash');

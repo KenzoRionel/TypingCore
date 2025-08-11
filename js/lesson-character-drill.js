@@ -4,6 +4,7 @@ import { clearKeyboardHighlights, highlightKeyOnKeyboard, highlightWrongKeyOnKey
 import { lessons } from './learn-typing-lessons.js';
 import { renderHandVisualizer as renderHand } from './hand-visualizer.js';
 import { dispatchFinishedEvent } from './learn-typing-logic.js';
+import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
 
 function handleNextStep({ currentLessonIndex, lesson, domElements }) {
     const lessonId = `lesson${currentLessonIndex + 1}`;
@@ -13,6 +14,10 @@ function handleNextStep({ currentLessonIndex, lesson, domElements }) {
         const nextCharIndex = currentState.currentCharIndex + 1;
         updateState(lessonId, { currentCharIndex: nextCharIndex });
         
+        // Perbarui progress bar
+        const progress = calculateLessonProgress(lesson);
+        updateProgressBar(progress, domElements.progressText, domElements.progressBar);
+
         if (nextCharIndex >= lesson.steps.length) {
             dispatchFinishedEvent(currentLessonIndex);
         } else {
@@ -118,6 +123,14 @@ export function handleCharacterDrillInput({
     const pressedKey = e.key?.toLowerCase() || '';
 
     if (pressedKey === expectedKey) {
+        // PERBAIKAN: Blokir input dan tunda langkah berikutnya untuk memberi waktu pada animasi.
+        updateState('isTransitioning', true);
+
+        const inlineKey = domElements.lessonInstruction.querySelector('.keyboard-inline-key');
+        if (inlineKey) {
+            inlineKey.classList.add('fade-out');
+        }
+
         const keyElement = domElements.keyboardContainer?.querySelector(`.key[data-key="${pressedKey}"]`);
         
         if (keyElement && animationFunctions?.animateJellyEffect) {
@@ -132,7 +145,11 @@ export function handleCharacterDrillInput({
             }, 50);
         }
         
-        handleNextStep({ currentLessonIndex, lesson, domElements });
+        // Tunda langkah berikutnya agar animasi fade-out terlihat.
+        setTimeout(() => {
+            handleNextStep({ currentLessonIndex, lesson, domElements });
+            updateState('isTransitioning', false);
+        }, 400); // Sesuaikan dengan durasi animasi fade-out (0.4s)
 
         return {};
 

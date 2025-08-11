@@ -17,16 +17,29 @@ export function calculateLessonProgress(lesson) {
         case 'character-drill':
             if (!lesson.steps) return 0;
             const totalSteps = lesson.steps.length;
-            const progressCharacter = (currentCharIndex / totalSteps) * 100;
+            // Pastikan currentCharIndex tidak melebihi totalSteps
+            const currentStep = Math.min(currentCharIndex, totalSteps);
+            const progressCharacter = (currentStep / totalSteps) * 100;
             return Math.min(progressCharacter, 100);
         case 'simple-drill':
-            if (!lesson.sequences) return 0;
-            const totalSequences = lesson.sequences.length;
-            const progressSimple = (sequenceIndex / totalSequences) * 100;
+            if (!lesson.sequences || lesson.sequences.length === 0) return 0;
+            const { sequenceIndex: currentSequenceIndex, nextCharIndex } = lessonState;
+            
+            const totalCharsInDrill = lesson.sequences.reduce((sum, seq) => sum + seq.length, 0);
+            if (totalCharsInDrill === 0) return 0;
+
+            let charsTyped = 0;
+            for (let i = 0; i < currentSequenceIndex; i++) {
+                charsTyped += lesson.sequences[i].length;
+            }
+            charsTyped += nextCharIndex;
+
+            const progressSimple = (charsTyped / totalCharsInDrill) * 100;
             return Math.min(progressSimple, 100);
         default: // Termasuk type 'free-typing' atau lainnya
-            if (!lesson.sequences) return 0;
-            const totalCharacters = lesson.sequences.length;
+            // PERBAIKAN: Gunakan lesson.sequence untuk free-typing, bukan lesson.sequences
+            if (!lesson.sequence) return 0;
+            const totalCharacters = lesson.sequence.length;
             const progressDefault = (currentCharIndex / totalCharacters) * 100;
             return Math.min(progressDefault, 100);
     }

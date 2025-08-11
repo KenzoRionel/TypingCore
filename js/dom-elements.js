@@ -67,8 +67,7 @@ export function getDOMReferences() {
         return null;
     }
 
-    const nextLessonPreview = document.getElementById('next-lesson-preview');
-    // nextLessonPreview bisa null untuk pelajaran awal, jadi tidak perlu divalidasi
+    // Hapus pengambilan nextLessonPreview karena elemennya sudah tidak ada
     
     // Perbaikan ada di sini: Mengambil elemen wadah progress bar
     const progressContainerWrapper = document.getElementById('progress-container-wrapper');
@@ -142,7 +141,6 @@ export function getDOMReferences() {
         retryLessonBtn, // PERBAIKAN: Kembalikan tombol "Coba lagi"
         lessonCompleteNotification,
         continueBtn,
-        nextLessonPreview,
         hiddenInput,
         progressBar,
         progressText,

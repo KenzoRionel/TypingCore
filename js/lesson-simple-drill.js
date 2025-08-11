@@ -2,12 +2,12 @@
 import { lessons } from './learn-typing-lessons.js';
 import { getState, updateState, initializeLessonState } from './learn-typing-state.js';
 import {
-    highlightKeyOnKeyboard,
-    clearKeyboardHighlights,
-    highlightWrongKeyOnKeyboard,
-    animateAllBordersOnCorrectInput,
-    setAnimatingKey,
-    clearAnimation
+    highlightKeyOnKeyboard,
+    clearKeyboardHighlights,
+    highlightWrongKeyOnKeyboard,
+    animateAllBordersOnCorrectInput,
+    setAnimatingKey,
+    clearAnimation
 } from './learn-typing-ui.js';
 
 import { renderHandVisualizer } from './hand-visualizer.js';
@@ -20,156 +20,179 @@ let lessonUnderlineContainer = null;
 let wrongInputState = { el: null, originalText: '', timeoutId: null };
 
 function getSequenceForState(lessonIndex, sequenceIndex) {
-    const lesson = lessons[lessonIndex];
-    if (!lesson || !lesson.sequences || sequenceIndex < 0 || sequenceIndex >= lesson.sequences.length) {
-        return null;
-    }
-    const index = Math.floor(sequenceIndex);
-    return lesson.sequences[index];
+    const lesson = lessons[lessonIndex];
+    if (!lesson || !lesson.sequences || sequenceIndex < 0 || sequenceIndex >= lesson.sequences.length) {
+        return null;
+    }
+    const index = Math.floor(sequenceIndex);
+    return lesson.sequences[index];
 }
 
 function handleTransitionState(callback) {
-    if (lessonSequenceContainer) {
-        let completedAnimations = 0;
-        const totalElements = lessonSequenceContainer.children.length;
+    if (lessonSequenceContainer) {
+        // ✅ Perubahan: Set status transisi menjadi true saat transisi dimulai
+        updateState('isTransitioning', true);
+        let completedAnimations = 0;
+        const totalElements = lessonSequenceContainer.children.length;
 
-        if (totalElements === 0) {
-            if (callback) callback();
-            return;
-        }
+        if (totalElements === 0) {
+            // ✅ Perubahan: Set status transisi menjadi false jika tidak ada animasi
+            updateState('isTransitioning', false);
+            if (callback) callback();
+            return;
+        }
 
-        Array.from(lessonSequenceContainer.children).forEach(keyEl => {
-            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect', 'wrong-input-overlay');
-            keyEl.classList.add('slide-up-fade-out');
-            keyEl.addEventListener('animationend', () => {
-                keyEl.remove();
-                completedAnimations++;
-                if (completedAnimations === totalElements) {
-                    if (lessonUnderlineContainer) {
-                        lessonUnderlineContainer.innerHTML = '';
-                    }
-                    if (callback) callback();
-                }
-            }, { once: true });
-        });
-    }
+        Array.from(lessonSequenceContainer.children).forEach(keyEl => {
+            keyEl.classList.remove('active', 'slide-down-fade-in', 'no-initial-animation', 'completed-correct', 'input-incorrect', 'wrong-input-overlay');
+            keyEl.classList.add('slide-up-fade-out');
+            keyEl.addEventListener('animationend', () => {
+                keyEl.remove();
+                completedAnimations++;
+                if (completedAnimations === totalElements) {
+                    if (lessonUnderlineContainer) {
+                        lessonUnderlineContainer.innerHTML = '';
+                    }
+                    // ✅ Perubahan: Set status transisi menjadi false saat semua animasi selesai
+                    updateState('isTransitioning', false);
+                    if (callback) callback();
+                }
+            }, { once: true });
+        });
+    }
 }
 
 function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardContainer) {
-    if (!lessonSequenceContainer || !lessonUnderlineContainer) return;
+    if (!lessonSequenceContainer || !lessonUnderlineContainer) return;
 
-    const currentKeys = Array.from(lessonSequenceContainer.children).map(el => el.textContent).join('');
-    const requiresRebuild = keysToDisplay.join('') !== currentKeys;
+    const currentKeys = Array.from(lessonSequenceContainer.children).map(el => el.textContent).join('');
+    const requiresRebuild = keysToDisplay.join('') !== currentKeys;
 
-    if (requiresRebuild) {
-        lessonSequenceContainer.innerHTML = '';
-        lessonUnderlineContainer.innerHTML = '';
-        keysToDisplay.forEach((keyChar) => {
-            const keyEl = document.createElement('span');
-            keyEl.classList.add('lesson-keyboard-key', 'slide-down-fade-in');
-            keyEl.textContent = keyChar;
-            lessonSequenceContainer.appendChild(keyEl);
-            const underlineEl = document.createElement('span');
-            underlineEl.classList.add('lesson-keyboard-underline-item');
-            lessonUnderlineContainer.appendChild(underlineEl);
-        });
-    }
+    if (requiresRebuild) {
+        // ✅ Perubahan: Set status transisi menjadi true saat rendering dimulai
+        updateState('isTransitioning', true);
 
-    const keyElements = lessonSequenceContainer.children;
-    for (let i = 0; i < keyElements.length; i++) {
-        if (i < activeIndex) {
-            keyElements[i].classList.add('completed-correct');
-            keyElements[i].classList.remove('active', 'wrong-input-overlay');
-        } else if (i === activeIndex) {
-            keyElements[i].classList.add('active');
-            keyElements[i].classList.remove('completed-correct', 'wrong-input-overlay');
-        } else {
-            keyElements[i].classList.remove('active', 'completed-correct', 'wrong-input-overlay');
-        }
-    }
+        lessonSequenceContainer.innerHTML = '';
+        lessonUnderlineContainer.innerHTML = '';
+        const totalKeys = keysToDisplay.length;
+        let animationsCompleted = 0;
 
-    updateUnderlineStatus(lessonSequenceContainer, lessonUnderlineContainer, activeIndex);
-    clearKeyboardHighlights(keyboardContainer);
-    if (highlightedKey) {
-        highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-        setAnimatingKey(keyboardContainer.querySelector(`[data-key="${highlightedKey.toLowerCase()}"]`));
-        window.requestAnimationFrame(() => {
-            renderHandVisualizer(highlightedKey);
-        });
-    }
+        keysToDisplay.forEach((keyChar) => {
+            const keyEl = document.createElement('span');
+            keyEl.classList.add('lesson-keyboard-key', 'slide-down-fade-in');
+            keyEl.textContent = keyChar;
+            lessonSequenceContainer.appendChild(keyEl);
+            const underlineEl = document.createElement('span');
+            underlineEl.classList.add('lesson-keyboard-underline-item');
+            lessonUnderlineContainer.appendChild(underlineEl);
+        
+            // ✅ Perubahan: Nonaktifkan status transisi setelah animasi selesai
+            keyEl.addEventListener('animationend', () => {
+                animationsCompleted++;
+                if (animationsCompleted === totalKeys) {
+                    updateState('isTransitioning', false);
+                }
+            }, { once: true });
+        });
+
+    }
+
+    const keyElements = lessonSequenceContainer.children;
+    for (let i = 0; i < keyElements.length; i++) {
+        if (i < activeIndex) {
+            keyElements[i].classList.add('completed-correct');
+            keyElements[i].classList.remove('active', 'wrong-input-overlay', 'input-incorrect');
+        } else if (i === activeIndex) {
+            keyElements[i].classList.add('active');
+            keyElements[i].classList.remove('completed-correct', 'wrong-input-overlay', 'input-incorrect');
+        } else {
+            keyElements[i].classList.remove('active', 'completed-correct', 'wrong-input-overlay', 'input-incorrect');
+        }
+    }
+
+    window.requestAnimationFrame(() => {
+        updateUnderlineStatus(lessonSequenceContainer, lessonUnderlineContainer, activeIndex);
+    });
+
+    if (highlightedKey) {
+        highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
+        setAnimatingKey(keyboardContainer.querySelector(`[data-key="${highlightedKey.toLowerCase()}"]`));
+        window.requestAnimationFrame(() => {
+            renderHandVisualizer(highlightedKey);
+        });
+    }
 }
 
 function applyFeedback(feedbackIndex, isCorrect) {
-    if (feedbackIndex < 0 || isCorrect === null || !lessonSequenceContainer) return;
-    const keyElements = lessonSequenceContainer.children;
-    if (keyElements[feedbackIndex]) {
-        keyElements[feedbackIndex].classList.remove('input-incorrect');
-        if (!isCorrect) {
-            keyElements[feedbackIndex].classList.add('input-incorrect');
-            setTimeout(() => {
-                if (keyElements[feedbackIndex]) {
-                    keyElements[feedbackIndex].classList.remove('input-incorrect');
-                }
-            }, 200);
-        }
-    }
+    if (feedbackIndex < 0 || isCorrect === null || !lessonSequenceContainer) return;
+    const keyElements = lessonSequenceContainer.children;
+    if (keyElements[feedbackIndex]) {
+        keyElements[feedbackIndex].classList.remove('input-incorrect');
+        if (!isCorrect) {
+            keyElements[feedbackIndex].classList.add('input-incorrect');
+            setTimeout(() => {
+                if (keyElements[feedbackIndex]) {
+                    keyElements[feedbackIndex].classList.remove('input-incorrect');
+                }
+            }, 200);
+        }
+    }
 }
 
 function clearWrongInputFeedback() {
-    if (wrongInputState.el) {
-        clearTimeout(wrongInputState.timeoutId);
-        wrongInputState.el.textContent = wrongInputState.originalText;
-        wrongInputState.el.classList.remove('wrong-input-overlay');
-        wrongInputState = { el: null, originalText: '', timeoutId: null };
-    }
+    if (wrongInputState.el) {
+        clearTimeout(wrongInputState.timeoutId);
+        wrongInputState.el.textContent = wrongInputState.originalText;
+        wrongInputState.el.classList.remove('wrong-input-overlay');
+        wrongInputState = { el: null, originalText: '', timeoutId: null };
+    }
 }
 
 export function cleanupSimpleDrillElements(lessonInstruction) {
-    if (lessonSequenceContainer && lessonSequenceContainer.parentNode) {
-        lessonSequenceContainer.remove();
-        lessonSequenceContainer = null;
-    }
-    if (lessonUnderlineContainer && lessonUnderlineContainer.parentNode) {
-        lessonUnderlineContainer.remove();
-        lessonUnderlineContainer = null;
-    }
-    Array.from(lessonInstruction.childNodes).forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE) {
-            node.remove();
-        }
-    });
+    if (lessonSequenceContainer && lessonSequenceContainer.parentNode) {
+        lessonSequenceContainer.remove();
+        lessonSequenceContainer = null;
+    }
+    if (lessonUnderlineContainer && lessonUnderlineContainer.parentNode) {
+        lessonUnderlineContainer.remove();
+        lessonUnderlineContainer = null;
+    }
+    Array.from(lessonInstruction.childNodes).forEach(node => {
+        if (node.nodeType === Node.TEXT_NODE) {
+            node.remove();
+        }
+    });
 }
 
 export function renderSimpleDrillLesson(lessonIndex, lessonInstruction, keyboardContainer) {
-    if (!lessonInstruction) {
-        console.error("renderSimpleDrillLesson: lessonInstruction tidak ditemukan.");
-        return;
-    }
-    
-    const lessonId = `lesson${lessonIndex + 1}`;
-    const lessonState = getState(lessonId) || { sequenceIndex: 0, finished: false };
-    
-    if (!lessonSequenceContainer || !lessonInstruction.contains(lessonSequenceContainer)) {
-        lessonInstruction.innerHTML = '';
-        lessonSequenceContainer = document.createElement('div');
-        lessonSequenceContainer.classList.add('lesson-keyboard-sequence');
-        lessonInstruction.prepend(lessonSequenceContainer);
-    }
-    if (!lessonUnderlineContainer || !lessonInstruction.contains(lessonUnderlineContainer)) {
-        lessonUnderlineContainer = document.createElement('div');
-        lessonUnderlineContainer.classList.add('lesson-keyboard-underline');
-        lessonInstruction.appendChild(lessonUnderlineContainer);
-    }
+    if (!lessonInstruction) {
+        console.error("renderSimpleDrillLesson: lessonInstruction tidak ditemukan.");
+        return;
+    }
 
-    const totalSequences = lessons[lessonIndex].sequences.length;
-    if (lessonState.sequenceIndex < totalSequences) {
-        const sequence = getSequenceForState(lessonIndex, lessonState.sequenceIndex);
-        const nextCharIndex = lessonState.nextCharIndex || 0;
-        const highlightedKey = sequence[nextCharIndex];
-        handleActiveState(sequence, nextCharIndex, highlightedKey, keyboardContainer);
-    } else {
-        cleanupSimpleDrillElements(lessonInstruction);
-    }
+    const lessonId = `lesson${lessonIndex + 1}`;
+    const lessonState = getState(lessonId) || { sequenceIndex: 0, finished: false };
+
+    if (!lessonSequenceContainer || !lessonInstruction.contains(lessonSequenceContainer)) {
+        lessonInstruction.innerHTML = '';
+        lessonSequenceContainer = document.createElement('div');
+        lessonSequenceContainer.classList.add('lesson-keyboard-sequence');
+        lessonInstruction.prepend(lessonSequenceContainer);
+    }
+    if (!lessonUnderlineContainer || !lessonInstruction.contains(lessonUnderlineContainer)) {
+        lessonUnderlineContainer = document.createElement('div');
+        lessonUnderlineContainer.classList.add('lesson-keyboard-underline');
+        lessonInstruction.appendChild(lessonUnderlineContainer);
+    }
+
+    const totalSequences = lessons[lessonIndex].sequences.length;
+    if (lessonState.sequenceIndex < totalSequences) {
+        const sequence = getSequenceForState(lessonIndex, lessonState.sequenceIndex);
+        const nextCharIndex = lessonState.nextCharIndex || 0;
+        const highlightedKey = sequence[nextCharIndex];
+        handleActiveState(sequence, nextCharIndex, highlightedKey, keyboardContainer);
+    } else {
+        cleanupSimpleDrillElements(lessonInstruction);
+    }
 }
 
 export function handleSimpleDrillInput({ e, domElements, animationFunctions, currentLessonIndex }) {
@@ -186,20 +209,20 @@ export function handleSimpleDrillInput({ e, domElements, animationFunctions, cur
         lessonState = { sequenceIndex: 0, nextCharIndex: 0, finished: false };
         initializeLessonState(lessonId, lessonState);
     }
-    
+
     const totalSequences = lessons[currentLessonIndex].sequences.length;
     if (lessonState.sequenceIndex >= totalSequences) return;
-    
+
     const sequence = getSequenceForState(currentLessonIndex, lessonState.sequenceIndex);
-    
+
     if (!sequence) {
         console.error('Data urutan pelajaran tidak valid atau tidak ditemukan.');
         return;
     }
-    
+
     const nextCharIndex = lessonState.nextCharIndex || 0;
     const expectedKey = sequence[nextCharIndex];
-    
+
     if (!expectedKey) {
         console.error('Karakter yang diharapkan tidak ditemukan. Membatalkan input.');
         return;
@@ -215,7 +238,7 @@ export function handleSimpleDrillInput({ e, domElements, animationFunctions, cur
         if (keyboardKeyEl && animationFunctions?.animateJellyEffect) {
             animationFunctions.animateJellyEffect(keyboardKeyEl);
         }
-        
+
         if (animationFunctions?.setAnimationSpeed) {
             animationFunctions.setAnimationSpeed(15);
             animationFunctions.setIsCorrectInputAnimationActive(true);
@@ -234,22 +257,41 @@ export function handleSimpleDrillInput({ e, domElements, animationFunctions, cur
             lessonState.nextCharIndex = nextIndex;
         }
         updateState(lessonId, lessonState);
-        
+
         if (lessonSequenceContainer) {
             animateAllBordersOnCorrectInput(lessonSequenceContainer);
         }
         
-        setTimeout(() => {
-            if (isSequenceComplete && lessonState.sequenceIndex < totalSequences) {
-                handleTransitionState(() => {
-                    renderLesson();
-                });
-            } else if (lessonState.sequenceIndex >= totalSequences) {
-                dispatchFinishedEvent(currentLessonIndex);
-            } else {
-                renderSimpleDrillLesson(currentLessonIndex, domElements.lessonInstruction, domElements.keyboardContainer);
+        if (isSequenceComplete) {
+            window.requestAnimationFrame(() => {
+                updateUnderlineStatus(lessonSequenceContainer, lessonUnderlineContainer, -1);
+            });
+        }
+        
+        // PERBAIKAN: Panggil render untuk menampilkan status 'benar' pada karakter terakhir
+        // sebelum memulai transisi.
+        if (!isSequenceComplete) {
+            renderSimpleDrillLesson(currentLessonIndex, domElements.lessonInstruction, domElements.keyboardContainer);
+        } else {
+            // Untuk urutan yang selesai, render state terakhirnya sebelum transisi
+            const keyElements = lessonSequenceContainer.children;
+            if (keyElements[nextCharIndex]) {
+                keyElements[nextCharIndex].classList.add('completed-correct');
             }
-        }, 100);
+        }
+
+        setTimeout(() => {
+            if (isSequenceComplete) {
+                if (lessonState.sequenceIndex < totalSequences) {
+                    handleTransitionState(() => {
+                        renderLesson();
+                    });
+                } else {
+                    dispatchFinishedEvent(currentLessonIndex);
+                }
+            }
+            // Hapus pemanggilan render dari sini karena sudah ditangani di atas
+        }, isSequenceComplete ? 100 : 10); // Beri jeda lebih lama jika urutan selesai
 
         const progress = calculateLessonProgress(lessons[currentLessonIndex]);
         updateProgressBar(progress, domElements.progressText, domElements.progressBar);

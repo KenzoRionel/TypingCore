@@ -94,13 +94,21 @@
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Bayangan lembut */
     text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    /* Hapus properti animasi dari sini */
+}
+
+/* PERBAIKAN: Tambahkan kelas baru untuk memicu animasi */
+.notification-buttons-wrapper .pop-in {
     animation: pop-in-with-bounce 0.8s forwards;
 }
 
 /* Tambahkan gaya khusus atau animasi yang berbeda di sini */
-.notification-buttons-wrapper .btn-success {
+.notification-buttons-wrapper .btn-success.pop-in {
     /* Animasi ini lebih cocok untuk tombol yang ada di kanan */
     animation-delay: 0.3s;
+}
+
+.notification-buttons-wrapper .btn-success {
     /* Tambahkan gaya modern */
     background-image: linear-gradient(45deg, #28a745 0%, #218838 100%); /* Gradien hijau */
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
@@ -112,8 +120,11 @@
     transform: translateY(-3px);
 }
 
-.notification-buttons-wrapper #retry-lesson-btn {
+.notification-buttons-wrapper #retry-lesson-btn.pop-in {
     animation-delay: 0s;
+}
+
+.notification-buttons-wrapper #retry-lesson-btn {
     /* Tambahkan gaya modern */
     background-image: linear-gradient(45deg, #6c757d 0%, #5a6268 100%); /* Gradien abu-abu gelap */
     box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
@@ -298,6 +309,8 @@
     color: #333;
     width: 60px;
 }
+
+/* Hapus semua gaya untuk #next-lesson-preview karena elemennya dihapus */
 
 /* Tambahkan kode ini di bagian bawah file CSS */
 .notification-buttons-wrapper {

@@ -163,10 +163,22 @@ virtual-keyboard .key.next-key {
     scale: 1.3;
 }
 
+/* PERUBAHAN: Tambahkan keyframes untuk fade-in */
+@keyframes fade-in-effect {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .key.next-key {
     background-color: var(--highlight-color);
     box-shadow: 0 0 10px var(--highlight-color);
     color: var(--next-key-text-color) !important;
+    /* PERUBAHAN: Hapus animasi fade-in dari sini */
+}
+
+/* PERUBAHAN: Terapkan animasi fade-in hanya untuk free-typing saat render awal */
+body.lesson-type-free-typing.initial-fade-in .key.next-key {
+    animation: fade-in-effect 0.4s ease-out;
 }
 
 @keyframes jelly-effect {
@@ -617,6 +629,12 @@ virtual-keyboard .key.next-key {
 #hand-visualizer .hand-image.active {
     /* Ganti display: block; */
     opacity: 1;
+    /* PERUBAHAN: Hapus animasi fade-in dari sini */
+}
+
+/* PERUBAHAN: Terapkan animasi fade-in hanya untuk free-typing saat render awal */
+body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active {
+    animation: fade-in-effect 0.4s ease-out;
 }
 
 
@@ -697,10 +715,32 @@ virtual-keyboard .key.next-key {
     transform: translateY(-2px);
 }
 
-/* Mengatur gaya ikon di dalam tombol */
+/* Mengatur ikon di dalam tombol */
 #prev-lesson-btn i,
 #next-lesson-btn i {
     margin: 0 5px;
+}
+
+/* Animasi baru untuk slide-down */
+@keyframes slide-in-from-top-anim {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* PERUBAHAN: Animasi baru untuk efek "reveal" */
+@keyframes reveal-text-and-progress {
+    from {
+        height: 0;
+    }
+    to {
+        height: 10.5rem; /* Sesuaikan dengan tinggi .lesson-4-display */
+    }
 }
 
 /* learn-typing.css */
@@ -708,17 +748,40 @@ virtual-keyboard .key.next-key {
 /* Kontainer utama untuk teks pelajaran 4 */
 .lesson-4-display {
     margin: 0 auto;
-    margin-top: -30px;
-    margin-bottom: -20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    max-width: 800px;
+    /* PERBAIKAN: Sesuaikan margin vertikal agar lebih di tengah */
+    margin-top: 0px;
+    margin-bottom: 0px;
+    /* PERBAIKAN: Hapus flexbox properties dari container luar */
+    max-width: 785px;
     font-size: 2.5rem;
     font-family: monospace;
     color: var(--text-color-light);
     white-space: normal;
     text-align: left;
+    /* PERBAIKAN: Atur tinggi tetap dan sembunyikan overflow */
+    height: 10.5rem; /* Cukup untuk sekitar 3 baris. Sesuaikan jika perlu. */
+    overflow: hidden;
+    position: relative;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px; /* Typo 'opx' diperbaiki menjadi '0px' */
+    box-sizing: border-box; /* PERBAIKAN: Tambahkan box-sizing */
+}
+
+/* PERUBAHAN: Kelas untuk memicu animasi "reveal" */
+.lesson-4-display.is-revealing {
+    animation: reveal-text-and-progress 0.5s ease-out forwards;
+}
+
+/* PERBAIKAN: Tambahkan container untuk teks yang bisa di-scroll */
+.scrollable-text-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    position: absolute;
+    width: 100%;
+    transition: transform 0.3s ease-out; /* Animasi untuk scrolling */
+    box-sizing: border-box; /* PERBAIKAN: Tambahkan box-sizing */
 }
 
 /* Gaya untuk setiap huruf (box) di dalam pelajaran 4 */
@@ -733,6 +796,7 @@ virtual-keyboard .key.next-key {
     border: 1px solid transparent;
     transition: background-color 0.3s ease, border-color 0.3s ease;
     line-height: 1;
+    box-sizing: border-box; /* PERBAIKAN: Tambahkan box-sizing */
 }
 
 /* Kotak untuk karakter yang diketik dengan benar */

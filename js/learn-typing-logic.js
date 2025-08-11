@@ -65,6 +65,13 @@ export function renderLesson() {
     }
 
     const lesson = lessons[currentLessonIndex];
+
+    // PERUBAHAN: Tambahkan kelas ke body berdasarkan tipe pelajaran
+    document.body.className = document.body.className.replace(/\blesson-type-\S+/g, '');
+    if (lesson.type) {
+        document.body.classList.add(`lesson-type-${lesson.type}`);
+    }
+
     if (domElements.prevLessonBtn) {
         domElements.prevLessonBtn.style.visibility = (currentLessonIndex === 0) ? 'hidden' : 'visible';
     }
@@ -77,11 +84,19 @@ export function renderLesson() {
 
     switch (lesson.type) {
         case 'simple-drill':
-            if (domElements.lessonTextDisplay) domElements.lessonTextDisplay.style.display = 'flex';
+            if (domElements.lessonTextDisplay) {
+                // PERBAIKAN: Sembunyikan elemen ini untuk pelajaran simple-drill
+                domElements.lessonTextDisplay.style.display = 'none';
+                domElements.lessonTextDisplay.innerHTML = '';
+            }
             renderSimpleDrillLesson(currentLessonIndex, domElements.lessonInstruction, domElements.keyboardContainer);
             break;
         case 'character-drill':
-            if (domElements.lessonTextDisplay) domElements.lessonTextDisplay.style.display = 'flex';
+            if (domElements.lessonTextDisplay) {
+                // PERBAIKAN: Sembunyikan elemen ini untuk pelajaran character-drill
+                domElements.lessonTextDisplay.style.display = 'none';
+                domElements.lessonTextDisplay.innerHTML = '';
+            }
             renderCharacterDrillLesson({
                 lesson,
                 lessonInstruction: domElements.lessonInstruction,
@@ -90,6 +105,7 @@ export function renderLesson() {
             });
             break;
         case 'free-typing':
+            // PERBAIKAN: Hapus display:flex dari sini, karena container luar tidak lagi flex
             domElements.lessonTextDisplay.classList.add('lesson-4-display');
             renderFreeTypingLesson({
                 lesson,
@@ -197,7 +213,10 @@ export function setupEventListeners() {
     }
     lessons.forEach((lesson, index) => {
         document.addEventListener(`lesson${index + 1}-finished`, () => {
-            showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
+            // PERBAIKAN: Tambahkan jeda sebelum menampilkan notifikasi
+            setTimeout(() => {
+                showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
+            }, 500); // Jeda 500ms
         });
     });
 

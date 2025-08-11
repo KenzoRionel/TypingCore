@@ -7,6 +7,7 @@ let appState = {
     currentLessonIndex: 0,
     waitingForAnim: false,
     lessonStates: {},
+    isTransitioning: false, // ✅ Perubahan: Tambahkan status baru
 };
 
 export function initDOMAndState() {
