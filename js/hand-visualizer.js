@@ -1,4 +1,25 @@
 // js/hand-visualizer.js
+const keyFingerMap = {
+    'f': { id: 'hand-f', adjust: { x: '-33%', y: '-5%' } },
+    'j': { id: 'hand-j', adjust: { x: '-62%', y: '-5%' } },
+    ' ': { id: 'hand-space', adjust: { x: '-48%', y: '-35%' } },
+    'd': { id: 'hand-d', adjust: { x: '-25%', y: '-5%' } },
+    'k': { id: 'hand-k', adjust: { x: '-70%', y: '-5%' } },
+    // Tambahkan kunci lain di sini sesuai kebutuhan pelajaran
+};
+
+export function resetHandVisualizer() {
+    const handVisualizer = document.getElementById('hand-visualizer');
+    if (handVisualizer) {
+        handVisualizer.style.transform = '';
+        handVisualizer.style.opacity = '0';
+        const handImages = handVisualizer.querySelectorAll('.hand-image');
+        handImages.forEach(img => {
+            img.classList.remove('active');
+            img.style.transform = '';
+        });
+    }
+}
 
 export function renderHandVisualizer(keyChar) {
     const handVisualizer = document.getElementById('hand-visualizer');
@@ -7,38 +28,18 @@ export function renderHandVisualizer(keyChar) {
     if (!handVisualizer || !keyboardContainer) {
         return;
     }
-
-    const handImages = handVisualizer.querySelectorAll('.hand-image');
-    handImages.forEach(img => {
-        img.classList.remove('active');
-        img.style.transform = '';
-    });
     
-    if (typeof keyChar === 'string' && keyChar.length > 0) {
+    // Hapus class 'active' dari semua gambar tangan
+    const allHandImages = handVisualizer.querySelectorAll('.hand-image');
+    allHandImages.forEach(img => img.classList.remove('active'));
+
+    const keyData = keyFingerMap[keyChar.toLowerCase()];
+
+    if (keyData) {
         const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
 
         if (targetKeyElement) {
-            let handImageId;
-            let fingerAdjustments;
-
-            if (keyChar === 'f') {
-                handImageId = 'hand-f';
-                fingerAdjustments = { x: '-33%', y: '-5%' }; 
-            } else if (keyChar === 'j') {
-                handImageId = 'hand-j';
-                fingerAdjustments = { x: '-62%', y: '-5%' };
-            } else if (keyChar === ' ') {
-                handImageId = 'hand-space';
-                fingerAdjustments = { x: '-48%', y: '-35%' };
-            } else if (keyChar === 'd') { // ✅ Logika baru untuk tombol 'd'
-                handImageId = 'hand-d';
-                fingerAdjustments = { x: '-25%', y: '-5%' };
-            } else if (keyChar === 'k') { // ✅ Logika baru untuk tombol 'k'
-                handImageId = 'hand-k';
-                fingerAdjustments = { x: '-70%', y: '-5%' };
-            }
-
-            const activeHandImage = document.getElementById(handImageId);
+            const activeHandImage = document.getElementById(keyData.id);
             if (activeHandImage) {
                 const left = targetKeyElement.offsetLeft + (targetKeyElement.offsetWidth / 2);
                 const top = targetKeyElement.offsetTop + (targetKeyElement.offsetHeight / 2);
@@ -47,10 +48,17 @@ export function renderHandVisualizer(keyChar) {
                 handVisualizer.style.opacity = '1';
 
                 activeHandImage.classList.add('active');
-                activeHandImage.style.transform = `translate(${fingerAdjustments.x}, ${fingerAdjustments.y})`;
+                activeHandImage.style.transform = `translate(${keyData.adjust.x}, ${keyData.adjust.y})`;
+            } else {
+                // Sembunyikan jika gambar tangan tidak ditemukan
+                handVisualizer.style.opacity = '0';
             }
+        } else {
+            // Sembunyikan jika elemen target tidak ditemukan
+            handVisualizer.style.opacity = '0';
         }
     } else {
+        // Sembunyikan jika keyChar tidak ada dalam map
         handVisualizer.style.opacity = '0';
     }
 }

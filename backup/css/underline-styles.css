@@ -1,0 +1,80 @@
+/* underline-styles.css */
+.lesson-keyboard-sequence {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    overflow: hidden;
+    height: 74px;
+    position: relative;
+    padding: 5px 0;
+    align-items: end;
+}
+
+.lesson-keyboard-underline {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 4px;
+    position: relative;
+}
+
+/* --- Ini adalah Desain Dasar Setiap Garis Bawah --- */
+.lesson-keyboard-underline-item {
+    display: block;
+    width: 32px; /* Lebar default, akan disesuaikan JS */
+    height: 3px;
+    background-color: transparent; /* Warna garis bawah saat TIDAK AKTIF (abu-abu) */
+    border-radius: 2px;
+    opacity: 1; /* Pastikan selalu terlihat */
+    position: relative; /* Penting untuk pseudo-elemen */
+    overflow: hidden; /* Penting agar warna aktif tidak keluar batas */
+    transform: translateX(0px); /* Dikelola JS untuk kesejajaran, tanpa transisi di sini */
+}
+
+/* --- Pseudo-elemen untuk Efek Warna Bergeser (Lapisan Biru) --- */
+.lesson-keyboard-underline-item::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #007bff; /* Warna biru aktif */
+    /* Gunakan custom property untuk transform, akan diatur oleh JS */
+    transform: var(--pseudo-transform, translateX(-100%)); /* Default tersembunyi */
+    animation: none; /* Default: Tidak ada animasi yang berjalan */
+    z-index: 1;
+}
+
+/* --- Kelas untuk Animasi "Muncul dari Kiri" --- */
+.lesson-keyboard-underline-item.animate-slide-in-left::before {
+    animation: slideInLeft 0.3s ease-out forwards;
+    /* Transform akan diatur oleh keyframes */
+}
+
+/* --- Kelas untuk Animasi "Pergi ke Kanan" --- */
+.lesson-keyboard-underline-item.animate-slide-out-right::before {
+    animation: slideOutRight 0.3s ease-out forwards;
+    /* Transform akan diatur oleh keyframes */
+}
+
+/* --- Keyframes untuk Animasi "Pergi ke Kanan" --- */
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0%);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* --- Keyframes untuk Animasi "Muncul dari Kiri" --- */
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0%);
+    }
+}

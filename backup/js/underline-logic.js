@@ -1,10 +1,11 @@
-// js/underline-logic.js
+// underline-logic.js
 
-export function updateUnderlineStatus(sequenceContainer, underlineContainer, activeIndex) {
-    if (!sequenceContainer || !underlineContainer) return;
+// Fungsi untuk mengupdate status aktif garis bawah dan memicu animasi
+export function updateUnderlineStatus(lesson2SequenceContainer, lesson2UnderlineContainer, activeIndex) {
+    if (!lesson2SequenceContainer || !lesson2UnderlineContainer) return;
 
-    const keyElements = Array.from(sequenceContainer.children);
-    const underlineElements = Array.from(underlineContainer.children);
+    const keyElements = Array.from(lesson2SequenceContainer.children);
+    const underlineElements = Array.from(lesson2UnderlineContainer.children);
 
     keyElements.forEach((keyEl, idx) => {
         keyEl.classList.toggle('active', idx === activeIndex);

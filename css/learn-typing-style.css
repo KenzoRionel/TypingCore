@@ -868,14 +868,18 @@ virtual-keyboard .key.next-key {
 }
 
 @keyframes jelly-effect {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.1);
     }
 }
 
 .key.jelly-effect {
-    animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+transition: none !important;
 }
