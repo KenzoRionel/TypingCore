@@ -4,7 +4,7 @@ const keyFingerMap = {
     'j': { id: 'hand-j', adjust: { x: '-62%', y: '-5%' } },
     ' ': { id: 'hand-space', adjust: { x: '-48%', y: '-35%' } },
     'd': { id: 'hand-d', adjust: { x: '-25%', y: '-5%' } },
-    'k': { id: 'hand-k', adjust: { x: '-70%', y: '-5%' } },
+    'k': { id: 'hand-k', adjust: { x: '-73%', y: '-7%' } },
     // Tambahkan kunci lain di sini sesuai kebutuhan pelajaran
 };
 
