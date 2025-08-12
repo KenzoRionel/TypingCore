@@ -1,0 +1,83 @@
+/* lessons-style.css */
+/* --- Variabel CSS dasar, bisa disesuaikan --- */
+:root {
+    --primary-color: #9d9d9d;
+    --card-bg-color: #f9f9f9;
+    --text-color: #333;
+}
+
+/* --- Gaya untuk daftar kartu pelajaran --- */
+.lesson-list {
+    /* Perbaikan: Menggunakan flexbox untuk responsivitas yang lebih baik dengan ukuran tetap */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+/* --- Gaya untuk setiap kartu pelajaran --- */
+.lesson-card {
+    background-color: var(--card-bg-color);
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    /* Perbaikan: Mengatur ukuran kartu sesuai permintaan */
+    width: 200px;
+    height: 200px;
+    flex-direction: column;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.lesson-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.card-header {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+}
+
+.lesson-number {
+    color: #a6a6a6;
+    font-weight: bold;
+    font-size: 2.5rem;
+    padding: 0;
+    margin: 0;
+    border-radius: 5px;
+}
+
+.card-body {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.card-body img {
+    max-width: 100%;
+    /* Perbaikan: Mengatur tinggi gambar agar sesuai dengan layout kartu */
+    height: 100px;
+    border-radius: 8px;
+}
+
+.card-footer {
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.lesson-title {
+    font-size: 1rem;
+    font-weight: normal;
+    color: var(--text-color);
+    margin: 0;
+}

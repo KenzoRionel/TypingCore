@@ -12,13 +12,14 @@ import {
     animateJellyEffect,
     animateAllBordersOnCorrectInput,
     cleanupAllLessonUI,
-    createKeyboard
+    createKeyboard,
+    highlightWrongKeyOnKeyboard,
 } from './learn-typing-ui.js';
 import { renderHandVisualizer } from './hand-visualizer.js';
 import { renderFreeTypingLesson, resetFreeTypingState } from './lesson-free-typing.js';
 import { renderSimpleDrillLesson } from './lesson-simple-drill.js';
 import { renderCharacterDrillLesson, resetCharacterDrillState } from './lesson-character-drill.js';
-import { handleKeyboardInput } from './input-handler.js';
+import { attachInputHandlers } from './input-handler.js';
 import { keyLayout } from './keyboard-layout.js';
 
 function showLessonElements() {
@@ -66,7 +67,6 @@ export function renderLesson() {
 
     const lesson = lessons[currentLessonIndex];
 
-    // PERUBAHAN: Tambahkan kelas ke body berdasarkan tipe pelajaran
     document.body.className = document.body.className.replace(/\blesson-type-\S+/g, '');
     if (lesson.type) {
         document.body.classList.add(`lesson-type-${lesson.type}`);
@@ -85,7 +85,6 @@ export function renderLesson() {
     switch (lesson.type) {
         case 'simple-drill':
             if (domElements.lessonTextDisplay) {
-                // PERBAIKAN: Sembunyikan elemen ini untuk pelajaran simple-drill
                 domElements.lessonTextDisplay.style.display = 'none';
                 domElements.lessonTextDisplay.innerHTML = '';
             }
@@ -93,7 +92,6 @@ export function renderLesson() {
             break;
         case 'character-drill':
             if (domElements.lessonTextDisplay) {
-                // PERBAIKAN: Sembunyikan elemen ini untuk pelajaran character-drill
                 domElements.lessonTextDisplay.style.display = 'none';
                 domElements.lessonTextDisplay.innerHTML = '';
             }
@@ -105,7 +103,6 @@ export function renderLesson() {
             });
             break;
         case 'free-typing':
-            // PERBAIKAN: Hapus display:flex dari sini, karena container luar tidak lagi flex
             domElements.lessonTextDisplay.classList.add('lesson-4-display');
             renderFreeTypingLesson({
                 lesson,
@@ -125,33 +122,8 @@ export function renderLesson() {
     updateProgressBar(progress, domElements.progressText, domElements.progressBar);
 }
 
-let currentKeyDownHandler = null; 
-
 function loadLesson() {
-    const domElements = getDOMReferences();
-    const currentLesson = lessons[getState('currentLessonIndex')];
-    
-    if (currentKeyDownHandler) {
-        document.removeEventListener('keydown', currentKeyDownHandler);
-    }
-    
-    currentKeyDownHandler = (e) => handleKeyboardInput({
-        e,
-        domElements: getDOMReferences(),
-        animationFunctions: {
-            setIsCorrectInputAnimationActive,
-            setAnimationSpeed,
-            animateJellyEffect,
-            animateAllBordersOnCorrectInput,
-            renderLesson
-        },
-    });
-
-    document.addEventListener('keydown', currentKeyDownHandler);
-    
-    // ✅ PERBAIKAN: Memanggil cleanupAllLessonUI tanpa parameter
     cleanupAllLessonUI();
-    
     resetLessonState();
     renderLesson();
     showLessonElements();
@@ -195,30 +167,50 @@ export function dispatchFinishedEvent(lessonIndex) {
 }
 
 export function setupEventListeners() {
-    const domElements = getDOMReferences();
-    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn } = domElements;
+    const domElements = getDOMReferences();
+    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn } = domElements;
 
-    createKeyboard(domElements.keyboardContainer, keyLayout);
-    if (nextLessonBtn) {
-        nextLessonBtn.addEventListener('click', goToNextLesson);
-    }
-    if (prevLessonBtn) {
-        prevLessonBtn.addEventListener('click', goToPreviousLesson);
-    }
-    if (retryLessonBtn) {
-        retryLessonBtn.addEventListener('click', retryLesson);
-    }
-    if (continueBtn) {
-        continueBtn.addEventListener('click', goToNextLesson);
-    }
-    lessons.forEach((lesson, index) => {
-        document.addEventListener(`lesson${index + 1}-finished`, () => {
-            // PERBAIKAN: Tambahkan jeda sebelum menampilkan notifikasi
-            setTimeout(() => {
-                showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
-            }, 500); // Jeda 500ms
-        });
-    });
+    createKeyboard(domElements.keyboardContainer, keyLayout);
 
-    loadLesson();
+    if (nextLessonBtn) {
+        nextLessonBtn.addEventListener('click', goToNextLesson);
+    }
+    if (prevLessonBtn) {
+        prevLessonBtn.addEventListener('click', goToPreviousLesson);
+    }
+    if (retryLessonBtn) {
+        retryLessonBtn.addEventListener('click', retryLesson);
+    }
+    if (continueBtn) {
+        continueBtn.addEventListener('click', goToNextLesson);
+    }
+    lessons.forEach((lesson, index) => {
+        document.addEventListener(`lesson${index + 1}-finished`, () => {
+            setTimeout(() => {
+                showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
+            }, 500);
+        });
+    });
+
+    attachInputHandlers(loadLesson);
+
+    // PERBAIKAN: Baca lesson index dari URL saat halaman dimuat
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonIndexFromUrl = urlParams.get('lessonIndex');
+
+    if (lessonIndexFromUrl !== null) {
+        // Set state dengan lesson index dari URL
+        const parsedIndex = parseInt(lessonIndexFromUrl, 10);
+        if (!isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < lessons.length) {
+            updateState('currentLessonIndex', parsedIndex);
+        } else {
+            console.error('Invalid lesson index from URL. Loading default lesson.');
+            updateState('currentLessonIndex', 0); // Default ke pelajaran pertama jika index tidak valid
+        }
+    } else {
+        updateState('currentLessonIndex', 0); // Default ke pelajaran pertama jika tidak ada parameter
+    }
+
+    // Initial load
+    loadLesson();
 }

@@ -947,3 +947,75 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
 animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
 transition: none !important;
 }
+
+/* Gaya untuk overlay gelap */
+.lesson-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 999;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0s 0.5s;
+}
+
+/* Gaya untuk teks instruksi */
+#hold-key-overlay-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    color: #fff;
+    font-size: 2.5rem;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease-in-out, visibility 0s 0.5s;
+    padding: 40px;
+    border-radius: 15px;
+}
+
+#hold-key-overlay-text .keyboard-inline-key {
+    font-size: 1.8rem;
+    padding: 0px 0px;
+    margin: 0 0px;
+    background: #484849;
+    color: #fff;
+    border-radius: 8px;
+}
+
+/* Efek blur pada seluruh halaman pelajaran kecuali overlay dan teks instruksi */
+body.lesson-overlay-active .lesson-title,
+body.lesson-overlay-active .lesson-text-display,
+body.lesson-overlay-active .keyboard-container,
+body.lesson-overlay-active .progress-container-wrapper,
+body.lesson-overlay-active .lesson-navigation,
+body.lesson-overlay-active #lesson-instruction {
+    filter: blur(5px);
+    transition: filter 0.5s ease-in-out;
+}
+
+/* Kelas yang mengontrol visibilitas overlay dan teks */
+body.show-hold-key-overlay .lesson-overlay,
+body.show-hold-key-overlay #hold-key-overlay-text {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease-in-out, visibility 0s;
+}
+
+/* Menghilangkan blur saat overlay tidak aktif */
+body .lesson-title,
+body .lesson-text-display,
+body .keyboard-container,
+body .progress-container-wrapper,
+body .lesson-navigation,
+body #lesson-instruction {
+    filter: none;
+    transition: filter 0.5s ease-in-out;
+}

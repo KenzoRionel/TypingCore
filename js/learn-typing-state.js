@@ -7,7 +7,7 @@ let appState = {
     currentLessonIndex: 0,
     waitingForAnim: false,
     lessonStates: {},
-    isTransitioning: false, // ✅ Perubahan: Tambahkan status baru
+    isTransitioning: false,
 };
 
 export function initDOMAndState() {
@@ -52,9 +52,10 @@ export function getState(key) {
     return undefined;
 }
 
+// ✅ Perbaikan: Inisialisasi state dengan properti isHoldKeyActive dari awal
 export function initializeLessonState(lessonId, initialState) {
     if (!appState.lessonStates[lessonId]) {
-        appState.lessonStates[lessonId] = { ...initialState };
+        appState.lessonStates[lessonId] = { ...initialState, isHoldKeyActive: false };
     }
 }
 

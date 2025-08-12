@@ -1,5 +1,5 @@
 // js/input-handler.js
-import { getState } from './learn-typing-state.js';
+import { getState, updateState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import { handleFreeTypingInput } from './lesson-free-typing.js';
 import { handleSimpleDrillInput } from './lesson-simple-drill.js';
@@ -10,15 +10,18 @@ import {
     setAnimationSpeed,
     animateJellyEffect,
     animateAllBordersOnCorrectInput,
+    highlightWrongKeyOnKeyboard,
 } from './learn-typing-ui.js';
 
-export function handleKeyboardInput({ e, animationFunctions }) {
-    // Ambil referensi DOM dan status terbaru di awal fungsi
+let currentKeyDownHandler = null;
+let currentKeyUpHandler = null;
+
+// ✅ Perbaikan: Handler terpisah untuk keydown dan keyup
+const handleKeyDown = (e) => {
     const domElements = getDOMReferences();
     const currentLessonIndex = getState('currentLessonIndex');
-    const isTransitioning = getState('isTransitioning'); // ✅ Perubahan: Ambil status baru
+    const isTransitioning = getState('isTransitioning'); 
     
-    // Cek notifikasi selesai pelajaran aktif, jika ya, hanya tanggapi 'Enter'
     if (domElements.lessonCompleteNotification?.classList.contains('active')) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -27,7 +30,6 @@ export function handleKeyboardInput({ e, animationFunctions }) {
         return;
     }
 
-    // ✅ Perubahan: Hentikan input jika pelajaran sedang dalam transisi atau rendering
     if (isTransitioning) {
         e.preventDefault();
         return;
@@ -35,42 +37,80 @@ export function handleKeyboardInput({ e, animationFunctions }) {
 
     const currentLesson = lessons[currentLessonIndex];
     if (!currentLesson) {
-        console.error('handleKeyboardInput: Pelajaran tidak ditemukan atau indeks tidak valid.');
+        console.error('handleKeyDown: Pelajaran tidak ditemukan atau indeks tidak valid.');
         return; 
     }
-    
-    // Cegah perilaku default browser untuk tombol yang relevan
-    if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
+
+    const animationFunctions = {
+        setIsCorrectInputAnimationActive,
+        setAnimationSpeed,
+        animateJellyEffect,
+        animateAllBordersOnCorrectInput,
+        highlightWrongKeyOnKeyboard,
+    };
+
+    // Mencegah perilaku default hanya untuk tombol yang relevan
+    if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ' || (currentLesson.requiredHoldKey && e.key.toLowerCase() === currentLesson.requiredHoldKey)) {
         e.preventDefault();
-    } else {
-        return;
     }
 
-    const baseProps = {
+    const handlerProps = {
         e,
         domElements,
         currentLessonIndex,
-        animationFunctions: {
-            setIsCorrectInputAnimationActive,
-            setAnimationSpeed,
-            animateJellyEffect,
-            animateAllBordersOnCorrectInput,
-        },
+        animationFunctions,
+        type: 'keydown',
     };
 
-    // Alihkan input ke penangan yang sesuai berdasarkan tipe pelajaran
     switch (currentLesson.type) {
         case 'character-drill':
-            handleCharacterDrillInput(baseProps); // ✅ Perubahan: Gunakan baseProps untuk konsistensi
+            handleCharacterDrillInput(handlerProps);
             break;
         case 'simple-drill':
-            handleSimpleDrillInput(baseProps); // ✅ Perubahan: Gunakan baseProps untuk konsistensi
+            handleSimpleDrillInput(handlerProps);
             break;
         case 'free-typing':
-            handleFreeTypingInput(baseProps); // ✅ Perubahan: Gunakan baseProps untuk konsistensi
+            handleFreeTypingInput(handlerProps);
             break;
         default:
             console.error(`Tipe pelajaran tidak dikenal: ${currentLesson.type}`);
             break;
     }
+};
+
+const handleKeyUp = (e) => {
+    const domElements = getDOMReferences();
+    const currentLessonIndex = getState('currentLessonIndex');
+    const currentLesson = lessons[currentLessonIndex];
+
+    if (!currentLesson) return;
+
+    if (currentLesson.requiredHoldKey) {
+        if (e.key.toLowerCase() === currentLesson.requiredHoldKey) {
+            e.preventDefault();
+            const handlerProps = {
+                e,
+                domElements,
+                currentLessonIndex,
+                animationFunctions: {},
+                type: 'keyup',
+            };
+            handleFreeTypingInput(handlerProps);
+        }
+    }
+};
+
+export function attachInputHandlers() {
+    if (currentKeyDownHandler) {
+        document.removeEventListener('keydown', currentKeyDownHandler);
+    }
+    if (currentKeyUpHandler) {
+        document.removeEventListener('keyup', currentKeyUpHandler);
+    }
+
+    currentKeyDownHandler = handleKeyDown;
+    currentKeyUpHandler = handleKeyUp;
+    
+    document.addEventListener('keydown', currentKeyDownHandler);
+    document.addEventListener('keyup', currentKeyUpHandler);
 }
