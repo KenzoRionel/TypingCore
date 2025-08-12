@@ -14,7 +14,8 @@ export const lessons = [
                 instruction: `Tekan tombol <span class="keyboard-inline-key">j</span> menggunakan jari telunjuk kanan Anda.`
             }
         ],
-        preview: ['f', 'j']
+        preview: ['f', 'j'],
+        isCompleted: true //Menambahkan tanda di kartu untuk pelajaran selesai.
     },
     {
         title: "Pelajaran 2: Huruf F dan J",
@@ -47,6 +48,7 @@ export const lessons = [
     {
         title: "Pelajaran 4: Test Mengetik F dan J",
         type: "free-typing",
+        image: 'test-fj.png',
         sequence: ['f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j', ' ', 'f', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'j', 'f', 'j',
                    'j', 'f', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'f', ' ', 'j', 'f', 'j', 'f', ' ', 'f', 'j', 'f', 'j', ' ', 'f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j',
                    ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'j', 'f'],
@@ -185,7 +187,6 @@ export const lessons = [
                   ],
         preview: ['a', 's', 'd', 'f', 'j', 'k', 'l', ';']
     },
-    // ✅ Perubahan: Tambahkan pelajaran baru untuk menahan 'j'
     {
         title: "Pelajaran 16: Menahan Tombol J",
         type: "free-typing",

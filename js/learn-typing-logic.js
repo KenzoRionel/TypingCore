@@ -1,5 +1,5 @@
 // js/learn-typing-logic.js
-import { getDOMReferences } from './dom-elements.js';
+import { getDOMReferences } from './utils/dom-elements.js';
 import { lessons } from './learn-typing-lessons.js';
 import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
@@ -21,6 +21,7 @@ import { renderSimpleDrillLesson } from './lesson-simple-drill.js';
 import { renderCharacterDrillLesson, resetCharacterDrillState } from './lesson-character-drill.js';
 import { attachInputHandlers } from './input-handler.js';
 import { keyLayout } from './keyboard-layout.js';
+import { initDarkMode } from './utils/dark-mode.js'; // Impor modul dark mode
 
 function showLessonElements() {
     const domElements = getDOMReferences();
@@ -167,32 +168,36 @@ export function dispatchFinishedEvent(lessonIndex) {
 }
 
 export function setupEventListeners() {
-    const domElements = getDOMReferences();
-    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn } = domElements;
+    const domElements = getDOMReferences();
+    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn } = domElements;
 
-    createKeyboard(domElements.keyboardContainer, keyLayout);
+    createKeyboard(domElements.keyboardContainer, keyLayout);
 
-    if (nextLessonBtn) {
-        nextLessonBtn.addEventListener('click', goToNextLesson);
-    }
-    if (prevLessonBtn) {
-        prevLessonBtn.addEventListener('click', goToPreviousLesson);
-    }
-    if (retryLessonBtn) {
-        retryLessonBtn.addEventListener('click', retryLesson);
-    }
-    if (continueBtn) {
-        continueBtn.addEventListener('click', goToNextLesson);
-    }
-    lessons.forEach((lesson, index) => {
-        document.addEventListener(`lesson${index + 1}-finished`, () => {
-            setTimeout(() => {
-                showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
-            }, 500);
-        });
-    });
+    if (nextLessonBtn) {
+        nextLessonBtn.addEventListener('click', goToNextLesson);
+    }
+    if (prevLessonBtn) {
+        prevLessonBtn.addEventListener('click', goToPreviousLesson);
+    }
+    if (retryLessonBtn) {
+        retryLessonBtn.addEventListener('click', retryLesson);
+    }
+    if (continueBtn) {
+        continueBtn.addEventListener('click', goToNextLesson);
+    }
 
-    attachInputHandlers(loadLesson);
+    // Panggil modul dark mode yang baru
+    initDarkMode(domElements.darkModeToggle);
+
+    lessons.forEach((lesson, index) => {
+        document.addEventListener(`lesson${index + 1}-finished`, () => {
+            setTimeout(() => {
+                showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
+            }, 500);
+        });
+    });
+
+    attachInputHandlers(loadLesson);
 
     // PERBAIKAN: Baca lesson index dari URL saat halaman dimuat
     const urlParams = new URLSearchParams(window.location.search);
@@ -211,6 +216,6 @@ export function setupEventListeners() {
         updateState('currentLessonIndex', 0); // Default ke pelajaran pertama jika tidak ada parameter
     }
 
-    // Initial load
-    loadLesson();
+    // Initial load
+    loadLesson();
 }

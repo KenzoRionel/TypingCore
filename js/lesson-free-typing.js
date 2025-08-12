@@ -251,16 +251,32 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                 // Hapus kedua kelas untuk menghilangkan overlay dan blur
                 document.body.classList.remove('show-hold-key-overlay');
                 document.body.classList.remove('lesson-overlay-active');
+
+                // PERBAIKAN: Langsung render visualizer tangan saat tombol j ditahan
+                const nextChar = lesson.sequence[currentCharIndex];
+                const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
+                if (nextChar && keyElement) {
+                    highlightKeyOnKeyboard(keyboardContainer, nextChar);
+                    setAnimatingKey(keyElement);
+                    requestAnimationFrame(() => renderHandVisualizer(nextChar));
+                }
             }
             return;
         }
 
         if (type === 'keyup' && isHoldKey) {
             if (prevIsHoldKeyActive) {
-                updateState(lessonId, { isHoldKeyActive: false });
-                // Tambahkan kembali kedua kelas untuk memunculkan overlay dan blur
-                document.body.classList.add('show-hold-key-overlay');
-                document.body.classList.add('lesson-overlay-active');
+                // Perbaikan: Hanya tampilkan kembali overlay jika pelajaran belum selesai.
+                if (currentCharIndex < lesson.sequence.length) {
+                    updateState(lessonId, { isHoldKeyActive: false });
+                    document.body.classList.add('show-hold-key-overlay');
+                    document.body.classList.add('lesson-overlay-active');
+                } else {
+                    // Jika pelajaran selesai, kita tidak perlu menampilkan kembali overlay
+                    updateState(lessonId, { isHoldKeyActive: false });
+                    document.body.classList.remove('show-hold-key-overlay');
+                    document.body.classList.remove('lesson-overlay-active');
+                }
             }
             return;
         }

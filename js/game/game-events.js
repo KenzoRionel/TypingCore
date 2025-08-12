@@ -1,11 +1,15 @@
 // js/game/game-events.js
 
-import { DOM } from '../utils/dom-elements.js';
+// Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
+import { getDOMReferences } from '../utils/dom-elements.js';
 import { gameState } from './game-state.js';
 import { processTypedWord, startTimer, endTest, updateRealtimeStats, startInactivityTimer, generateAndAppendWords } from './game-logic.js';
 import { renderCurrentLine, updateWordHighlighting, triggerShakeAnimation, prepareAndRenderLines } from '../utils/text-display.js';
 
 export function handleKeydown(e) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
+
     if (gameState.isTestInvalid) {
         e.preventDefault();
         return;
@@ -26,7 +30,8 @@ export function handleKeydown(e) {
     }
 
     // Mencegah spasi di awal tes
-    if (e.key === ' ' && DOM.hiddenTextInput.value.length === 0 && gameState.typedWordIndex === 0) {
+    // Perbaikan: Gunakan DOM.hiddenInput
+    if (e.key === ' ' && DOM.hiddenInput.value.length === 0 && gameState.typedWordIndex === 0) {
         e.preventDefault();
         return;
     }
@@ -73,7 +78,8 @@ export function handleKeydown(e) {
     }
 
     const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || '';
-    const currentTypedLength = DOM.hiddenTextInput.value.length;
+    // Perbaikan: Gunakan DOM.hiddenInput
+    const currentTypedLength = DOM.hiddenInput.value.length;
 
     // Mencegah mengetik karakter berlebih
     if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey && e.key !== 'Backspace' && e.key !== ' ') {
@@ -87,7 +93,8 @@ export function handleKeydown(e) {
     if (e.key === ' ') {
         e.preventDefault();
 
-        if (DOM.hiddenTextInput.value.length === 0) return; // Jangan proses jika tidak ada input
+        // Perbaikan: Gunakan DOM.hiddenInput
+        if (DOM.hiddenInput.value.length === 0) return; // Jangan proses jika tidak ada input
 
         processTypedWord();
 
@@ -100,7 +107,8 @@ export function handleKeydown(e) {
             const totalCorrectChars = gameState.correctChars;
             const totalIncorrectChars = gameState.incorrectChars;
             // Perhitungan Raw WPM yang benar: termasuk semua karakter yang sudah diketik
-            const allTypedChars = totalCorrectChars + totalIncorrectChars + DOM.hiddenTextInput.value.length;
+            // Perbaikan: Gunakan DOM.hiddenInput
+            const allTypedChars = totalCorrectChars + totalIncorrectChars + DOM.hiddenInput.value.length;
             
             const wpm = Math.round((totalCorrectChars / 5) / (elapsedTime / 60));
             const rawWpm = Math.round((allTypedChars / 5) / (elapsedTime / 60));
@@ -134,7 +142,8 @@ export function handleKeydown(e) {
             gameState.currentLineIndex++;
             if (gameState.currentLineIndex >= gameState.lines.length) {
                 gameState.typedWordIndex++;
-                DOM.hiddenTextInput.value = '';
+                // Perbaikan: Gunakan DOM.hiddenInput
+                DOM.hiddenInput.value = '';
                 endTest();
                 return;
             } else {
@@ -143,7 +152,8 @@ export function handleKeydown(e) {
         }
 
         gameState.typedWordIndex++;
-        DOM.hiddenTextInput.value = '';
+        // Perbaikan: Gunakan DOM.hiddenInput
+        DOM.hiddenInput.value = '';
 
         updateWordHighlighting();
         updateRealtimeStats();
@@ -158,7 +168,8 @@ export function handleKeydown(e) {
     } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         // Gunakan setTimeout untuk memastikan nilai input sudah diperbarui
         setTimeout(() => {
-            gameState.userTypedWords[gameState.typedWordIndex] = DOM.hiddenTextInput.value;
+            // Perbaikan: Gunakan DOM.hiddenInput
+            gameState.userTypedWords[gameState.typedWordIndex] = DOM.hiddenInput.value;
             updateWordHighlighting();
             updateRealtimeStats();
         }, 0);

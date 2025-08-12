@@ -5,108 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Pelajaran Mengetik | TypingCore</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="css/lessons-style.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
 </head>
 <body>
 
     <header id="header" class="site-header d-flex align-items-center">
-        <nav class="navbar navbar-expand navbar-light flex-grow-1">
-            <div class="container-fluid">
-                <a class="navbar-brand py-0 me-auto" href="index.html">
-                    <img src="img/TypingCore.png" alt="Logo TypingCore" style="height: 70px;">
-                </a>
-                <div class="navbar-collapse justify-content-between" id="navbarSupportedContent">
-                    <ul class="navbar-nav align-items-center">
-                        <li class="nav-item">
-                            <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="lessons.html"><i
-                                    class="fas fa-graduation-cap"></i></a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="navbar-collapse justify-content-end" id="navbarSupportedContent2">
-                    <ul class="navbar-nav align-items-center">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-globe"></i> Bahasa
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
-                                <li><a class="dropdown-item" href="#">Bahasa Indonesia</a></li>
-                                <li><a class="dropdown-item" href="#">English</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle"></i> User
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-                                <li><a class="dropdown-item" href="#">Profil</a></li>
-                                <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
+                <nav class="navbar navbar-expand navbar-light flex-grow-1">
+                    <div class="container-fluid">
+                        <button id="mainSidebarToggleBtn" class="navbar-toggler d-lg-none me-2" type="button" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+
+                        <a class="navbar-brand py-0 me-auto" href="index.html">
+                            <img src="img/TypingCore.png" alt="Logo Website" style="height: 70px;">
+                        </a>
+                        <div class="navbar-collapse justify-content-between" id="navbarSupportedContent">
+                            <ul class="navbar-nav align-items-center">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
                                 </li>
-                                <li><a class="dropdown-item" href="#">Logout</a></li>
+                               <li class="nav-item">
+                                    <a class="nav-link active" href="lessons.html"><i class="fas fa-graduation-cap"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="add-text.html"><i class="fas fa-plus-circle"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="score-history.html"><i class="fas fa-bars"></i></a>
+                                </li>
                             </ul>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
+                        </div>
+                        <div class="navbar-collapse justify-content-end" id="navbarSupportedContent2">
+                            <ul class="navbar-nav align-items-center">
+                                <!-- Tombol mode malam/siang yang dipindahkan ke header -->
+                                <li class="nav-item">
+                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
+                                        <span class="slider">
+                                            <span class="slider-icon sun">☀️</span>
+                                            <span class="slider-icon moon">🌙</span>
+                                        </span>
+                                    </button>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-globe"></i> Bahasa
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
+                                        <li><a class="dropdown-item" href="#">Bahasa Indonesia</a></li>
+                                        <li><a class="dropdown-item" href="#">English</a></li>
+                                    </ul>
+                                </li>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-user-circle"></i> User
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
+                                        <li><a class="dropdown-item" href="#">Profil</a></li>
+                                        <li><a class="dropdown-item" href="#">Pengaturan</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#">Logout</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </header>
 
     <main>
         <div class="container-fluid py-5">
+            <h2 class="text-center mb-4">Pilih Pelajaran yang Ingin Kamu Mulai</h2>
             <section class="lesson-list">
-                <a href="learn-typing.html?lessonIndex=0" class="lesson-card">
-                    <div class="card-header">
-                        <span class="lesson-number">1</span>
-                    </div>
-                    <div class="card-body">
-                        <img src="img/fj.png" alt="Gambar Pelajaran 1 ">
-                    </div>
-                    <div class="card-footer">
-                        <h3 class="lesson-title">Tombol f dan j</h3>
-                    </div>
-                </a>
-
-                <a href="learn-typing.html?lessonIndex=1" class="lesson-card">
-                    <div class="card-header">
-                        <span class="lesson-number">2</span>
-                    </div>
-                    <div class="card-body">
-                        <img src="img/latihanfdanj.png" alt="Gambar Pelajaran 2">
-                    </div>
-                    <div class="card-footer">
-                        <h3 class="lesson-title">Latihan f dan j</h3>
-                    </div>
-                </a>
-
-                <a href="learn-typing.html?lessonIndex=2" class="lesson-card">
-                    <div class="card-header">
-                        <span class="lesson-number">3</span>
-                    </div>
-                    <div class="card-body">
-                        <img src="img/tombolspasi.png" alt="Gambar Pelajaran 3">
-                    </div>
-                    <div class="card-footer">
-                        <h3 class="lesson-title">Tombol Spasi</h3>
-                    </div>
-                </a>
-            </section>
+                </section>
         </div>
     </main>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+        xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
+    <script type="module" src="js/lessons-generator.js"></script>
 </body>
 </html>

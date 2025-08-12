@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/custom-button.css">
     <link rel="stylesheet" href="css/speedometer-style.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -47,7 +48,15 @@
                         </div>
                         <div class="navbar-collapse justify-content-end" id="navbarSupportedContent2">
                             <ul class="navbar-nav align-items-center">
-                                
+                                <!-- Tombol mode malam/siang yang dipindahkan ke header -->
+                                <li class="nav-item">
+                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
+                                        <span class="slider">
+                                            <span class="slider-icon sun">☀️</span>
+                                            <span class="slider-icon moon">🌙</span>
+                                        </span>
+                                    </button>
+                                </li>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-globe"></i> Bahasa
@@ -83,19 +92,11 @@
                 <button class="btn btn-outline-success word-type-btn" data-word-type="200">IND</button>
                 <button class="btn btn-outline-success word-type-btn" data-word-type="1000">IND 1K</button>
                 <button class="btn btn-outline-success word-type-btn" data-word-type="10000">IND 10K</button>
-                <!-- Tombol mode malam/siang di akhir -->
                 <!-- Tombol mode kursor -->
                 <div class="btn-group ms-3" role="group" aria-label="Cursor Modes">
                     <button type="button" class="btn btn-outline-secondary cursor-mode-btn active" data-cursor-mode="highlight"><i class="fas fa-highlighter"></i></button>
                     <button type="button" class="btn btn-outline-secondary cursor-mode-btn" data-cursor-mode="caret"><i class="fas fa-i-cursor"></i></button>
                 </div>
-                <!-- Tombol mode malam/siang di akhir -->
-                <button id="darkModeToggle" class="dark-mode-slide-toggle ms-3" aria-label="Toggle Dark Mode">
-                    <span class="slider">
-                        <span class="slider-icon sun">&#9728;</span>
-                        <span class="slider-icon moon">&#9790;</span>
-                    </span>
-                </button>
             </div>
             <section id="typing-test" class="page active">
                 <div class="main-typing-area">

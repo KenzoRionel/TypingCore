@@ -1,6 +1,6 @@
 // js/learn-typing-state.js
 
-import { getDOMReferences } from './dom-elements.js';
+import { getDOMReferences } from './utils/dom-elements.js';
 
 let appState = {
     hiddenInput: null,

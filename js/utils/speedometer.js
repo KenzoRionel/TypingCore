@@ -1,6 +1,7 @@
 // js/utils/speedometer.js
 
-import { DOM } from './dom-elements.js';
+// Perbaikan: Ganti `import { DOM }` menjadi `import { getDOMReferences }`
+import { getDOMReferences } from './dom-elements.js';
 
 // Speedometer Constants
 const GAUGE_FACE_RADIUS = 80;
@@ -95,6 +96,8 @@ export function createSpeedometerTicks(container, minVal, maxVal, step, tickColo
 }
 
 export function setWpmSpeedometer(wpm) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (!DOM.wpmNeedle || !DOM.wpmValueText) return;
     wpm = Math.max(0, Math.min(wpmMax, wpm));
     const angle = (wpm / wpmMax) * 240 - 120;
@@ -103,6 +106,8 @@ export function setWpmSpeedometer(wpm) {
 }
 
 export function setAccuracySpeedometer(accuracy) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (!DOM.accuracyNeedle || !DOM.accuracyValueText) return;
     accuracy = Math.max(0, Math.min(accuracyMax, accuracy));
     const angle = (accuracy / accuracyMax) * 240 - 120;
@@ -111,6 +116,8 @@ export function setAccuracySpeedometer(accuracy) {
 }
 
 export function setTimerSpeedometer(timeLeftVal) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (!DOM.timerNeedle || !DOM.timerValueText) return;
     timeLeftVal = Math.max(0, Math.min(timerMax, timeLeftVal));
 
@@ -125,6 +132,8 @@ export function setTimerSpeedometer(timeLeftVal) {
 
 // Modifikasi setTimerSpeedometerMax agar menggunakan warna dinamis
 export function setTimerSpeedometerMax(newMax) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     window.timerMax = newMax;
     if (DOM.timerTicksContainer) {
         DOM.timerTicksContainer.innerHTML = '';
@@ -132,5 +141,5 @@ export function setTimerSpeedometerMax(newMax) {
         createSpeedometerTicks(DOM.timerTicksContainer, 0, newMax, 5, dynamicTickColors);
     }
 }
-export { wpmMax, accuracyMax, wpmTickColors, accuracyTickColors }; // Hapus timerTickColors dari ekspor
-// ...existing code... };
+
+export { wpmMax, accuracyMax, wpmTickColors, accuracyTickColors };

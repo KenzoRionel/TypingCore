@@ -1,11 +1,14 @@
 // js/history/history-chart.js
 
-import { DOM } from '../utils/dom-elements.js';
+// Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
+import { getDOMReferences } from '../utils/dom-elements.js';
 
 let wpmChart;
 let accuracyChart;
 
 export function renderProgressCharts(scores) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (!DOM.wpmProgressChartCanvas || !DOM.accuracyProgressChartCanvas) {
         console.warn("Chart canvas elements not found. Skipping chart rendering.");
         return;
@@ -125,6 +128,8 @@ export function renderProgressCharts(scores) {
 }
 
 export function destroyCharts() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (wpmChart) {
         wpmChart.destroy();
         wpmChart = null; // Penting untuk me-reset referensi

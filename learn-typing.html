@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="css/learn-typing-style.css">
     <link rel="stylesheet" href="css/underline-styles.css">
     <link rel="stylesheet" href="css/lesson-complete-notification.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
 </head>
 
 <body>
@@ -20,28 +21,45 @@
             <header id="header" class="site-header d-flex align-items-center">
                 <nav class="navbar navbar-expand navbar-light flex-grow-1">
                     <div class="container-fluid">
+                        <button id="mainSidebarToggleBtn" class="navbar-toggler d-lg-none me-2" type="button" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+
                         <a class="navbar-brand py-0 me-auto" href="index.html">
-                            <img src="img/TypingCore.png" alt="Logo TypingCore" style="height: 70px;">
+                            <img src="img/TypingCore.png" alt="Logo Website" style="height: 70px;">
                         </a>
                         <div class="navbar-collapse justify-content-between" id="navbarSupportedContent">
                             <ul class="navbar-nav align-items-center">
                                 <li class="nav-item">
                                     <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
                                 </li>
+                               <li class="nav-item">
+                                    <a class="nav-link active" href="lessons.html"><i class="fas fa-graduation-cap"></i></a>
+                                </li>
                                 <li class="nav-item">
-                                    <a class="nav-link active" href="lessons.html"><i
-                                            class="fas fa-graduation-cap"></i></a>
+                                    <a class="nav-link" href="add-text.html"><i class="fas fa-plus-circle"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="score-history.html"><i class="fas fa-bars"></i></a>
                                 </li>
                             </ul>
                         </div>
                         <div class="navbar-collapse justify-content-end" id="navbarSupportedContent2">
                             <ul class="navbar-nav align-items-center">
+                                <!-- Tombol mode malam/siang yang dipindahkan ke header -->
+                                <li class="nav-item">
+                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
+                                        <span class="slider">
+                                            <span class="slider-icon sun">☀️</span>
+                                            <span class="slider-icon moon">🌙</span>
+                                        </span>
+                                    </button>
+                                </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-globe"></i> Bahasa
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
@@ -50,16 +68,13 @@
                                     </ul>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-user-circle"></i> User
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
                                         <li><a class="dropdown-item" href="#">Profil</a></li>
                                         <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="#">Logout</a></li>
                                     </ul>
                                 </li>

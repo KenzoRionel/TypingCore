@@ -4,7 +4,7 @@ import { lessons } from './learn-typing-lessons.js';
 import { handleFreeTypingInput } from './lesson-free-typing.js';
 import { handleSimpleDrillInput } from './lesson-simple-drill.js';
 import { handleCharacterDrillInput } from './lesson-character-drill.js';
-import { getDOMReferences } from './dom-elements.js';
+import { getDOMReferences } from './utils/dom-elements.js';
 import { 
     setIsCorrectInputAnimationActive,
     setAnimationSpeed,

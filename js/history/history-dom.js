@@ -1,8 +1,12 @@
 // js/history/history-dom.js
 
-import { DOM } from '../utils/dom-elements.js';
+// Perbaikan: Ganti `import { DOM }` menjadi `import { getDOMReferences }`
+import { getDOMReferences } from '../utils/dom-elements.js';
 
 export function renderScoreTable(scores) {
+    // Panggil fungsi getDOMReferences() di sini untuk mendapatkan objek DOM
+    const DOM = getDOMReferences();
+    
     let table = document.getElementById('scoreTable');
     if (!table) {
         table = document.createElement('table');

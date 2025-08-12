@@ -1,6 +1,7 @@
 // js/game/game-logic.js
 
-import { DOM } from '../utils/dom-elements.js';
+// Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
+import { getDOMReferences } from '../utils/dom-elements.js';
 import { gameState } from './game-state.js';
 import { setWpmSpeedometer, setAccuracySpeedometer, setTimerSpeedometer, timerMax } from '../utils/speedometer.js';
 import { prepareAndRenderLines, renderCurrentLine, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
@@ -10,13 +11,15 @@ let hasStartedTyping = false; // Flag untuk melacak apakah mengetik sudah dimula
 
 // --- FUNGSI BARU UNTUK MENGATUR VISIBILITAS STATS CONTAINER ---
 function showStatsContainer() {
-    if (DOM.statsContainer) { // Gunakan DOM.statsContainer yang baru
+    const DOM = getDOMReferences();
+    if (DOM.statsContainer) { 
         DOM.statsContainer.classList.add('show');
     }
 }
 
 function hideStatsContainer() {
-    if (DOM.statsContainer) { // Gunakan DOM.statsContainer yang baru
+    const DOM = getDOMReferences();
+    if (DOM.statsContainer) { 
         DOM.statsContainer.classList.remove('show');
     }
 }
@@ -43,7 +46,10 @@ export function generateAndAppendWords(numWords) {
 
 // export function processTypedWord() { ... tidak ada perubahan di sini }
 export function processTypedWord() {
-    const currentWordTyped = DOM.hiddenTextInput.value;
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
+    // Perbaikan: Gunakan DOM.hiddenInput
+    const currentWordTyped = DOM.hiddenInput.value;
     const targetWord = gameState.fullTextWords[gameState.typedWordIndex];
 
     gameState.userTypedWords[gameState.typedWordIndex] = currentWordTyped;
@@ -93,6 +99,8 @@ export function processTypedWord() {
 
 
 export function updateRealtimeStats() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (!gameState.startTime) {
         setWpmSpeedometer(0);
         setAccuracySpeedometer(0);
@@ -107,7 +115,8 @@ export function updateRealtimeStats() {
     let totalIncorrectChars = gameState.incorrectChars;
 
     // Tambahkan karakter dari kata yang sedang diketik
-    const currentWordTypedValue = DOM.hiddenTextInput.value;
+    // Perbaikan: Gunakan DOM.hiddenInput
+    const currentWordTypedValue = DOM.hiddenInput.value;
     const targetWordForTyping = gameState.fullTextWords[gameState.typedWordIndex] || '';
     for (let i = 0; i < currentWordTypedValue.length; i++) {
         if (i < targetWordForTyping.length && currentWordTypedValue[i] === targetWordForTyping[i]) {
@@ -132,6 +141,8 @@ export function updateRealtimeStats() {
 }
 
 export function calculateAndDisplayFinalResults() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     // Sembunyikan kontainer text display dan menu button
     const textDisplayContainer = document.querySelector('.text-display-container');
     if (textDisplayContainer) {
@@ -196,10 +207,13 @@ export function calculateAndDisplayFinalResults() {
 }
 
 export function endTest() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     clearInterval(gameState.timerInterval);
     clearInterval(gameState.updateStatsInterval);
     clearTimeout(gameState.inactivityTimer); // Hentikan timer inaktivitas
-    DOM.hiddenTextInput.disabled = true;
+    // Perbaikan: Gunakan DOM.hiddenInput
+    DOM.hiddenInput.disabled = true;
     if (!gameState.isTestInvalid) {
         calculateAndDisplayFinalResults();
     }
@@ -209,6 +223,8 @@ export function endTest() {
 }
 
 export function invalidateTest(reason) {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     gameState.isTestInvalid = true;
     endTest(); // Panggil endTest untuk menghentikan semua
     
@@ -227,6 +243,8 @@ export function invalidateTest(reason) {
 }
 
 export function resetTestState() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     clearInterval(gameState.timerInterval);
     clearInterval(gameState.updateStatsInterval);
     clearTimeout(gameState.inactivityTimer); // Hentikan timer inaktivitas saat reset
@@ -244,12 +262,13 @@ export function resetTestState() {
     gameState.currentLineIndex = 0;
     gameState.history = []; // KOSONGKAN RIWAYAT GRAFIK
 
+    // Perbaikan: Gunakan DOM.hiddenInput
     if (DOM.accuracySpan) DOM.accuracySpan.textContent = '0%';
     if (DOM.timerSpan) DOM.timerSpan.textContent = gameState.TIMED_TEST_DURATION;
 
-    DOM.hiddenTextInput.value = '';
-    DOM.hiddenTextInput.disabled = false;
-    // DOM.hiddenTextInput.focus(); // Ini akan fokus ulang input
+    DOM.hiddenInput.value = '';
+    DOM.hiddenInput.disabled = false;
+    // DOM.hiddenInput.focus(); // Ini akan fokus ulang input
     gameState.fullTextWords = [];
     DOM.textDisplay.innerHTML = '';
     DOM.textDisplay.scrollTop = 0;
@@ -269,23 +288,27 @@ export function resetTestState() {
         textDisplayContainer.style.display = 'flex'; // Gunakan 'flex' sesuai gaya aslinya
     }
 
-    if (DOM.finalWPMText) DOM.finalWPMText.textContent = '--';
-    if (DOM.finalAccuracyText) DOM.finalAccuracyText.textContent = '--%';
-    if (DOM.finalTimeText) DOM.finalTimeText.textContent = `-- detik`;
-    if (DOM.finalErrorsText) DOM.finalErrorsText.textContent = '--';
-    if (DOM.finalTotalWordsText) DOM.finalTotalWordsText.textContent = '--';
-    if (DOM.finalCorrectWordsText) DOM.finalCorrectWordsText.textContent = '--';
-    if (DOM.finalIncorrectWordsText) DOM.finalIncorrectWordsText.textContent = '--';
+    // Perbaikan: Gunakan DOM.finalWPM, DOM.finalAccuracy, dst
+    if (DOM.finalWPM) DOM.finalWPM.textContent = '--';
+    if (DOM.finalAccuracy) DOM.finalAccuracy.textContent = '--%';
+    if (DOM.finalTime) DOM.finalTime.textContent = `-- detik`;
+    if (DOM.finalErrors) DOM.finalErrors.textContent = '--';
+    if (DOM.finalTotalWords) DOM.finalTotalWords.textContent = '--';
+    if (DOM.finalCorrectWords) DOM.finalCorrectWords.textContent = '--';
+    if (DOM.finalIncorrectWords) DOM.finalIncorrectWords.textContent = '--';
 
     generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
     prepareAndRenderLines();
-    DOM.hiddenTextInput.focus();
+    // Perbaikan: Gunakan DOM.hiddenInput
+    DOM.hiddenInput.focus();
 
     hasStartedTyping = false; // --- TAMBAHAN: Reset flag saat tes di-reset ---
     hideStatsContainer(); // --- TAMBAHAN: Sembunyikan speedometer saat tes di-reset ---
 }
 
 export function startTimer() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     if (gameState.timerInterval) clearInterval(gameState.timerInterval);
     
     // Mulai timer utama
@@ -308,6 +331,8 @@ export function startTimer() {
 }
 
 export function startInactivityTimer() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     clearTimeout(gameState.inactivityTimer); // Hapus timer lama jika ada
     gameState.inactivityTimer = setTimeout(() => {
         invalidateTest("User AFK / Tidak ada aktivitas.");
@@ -318,7 +343,10 @@ export function startInactivityTimer() {
 // Fungsi ini akan dipanggil dari luar game-logic (misalnya main.js)
 // untuk menginisialisasi event listener setelah DOM dimuat.
 export function initGameListeners() {
-    DOM.hiddenTextInput.addEventListener('input', (event) => {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
+    // Perbaikan: Gunakan DOM.hiddenInput
+    DOM.hiddenInput.addEventListener('input', (event) => {
         // Jika belum mulai mengetik dan input bukan spasi pertama
         // (spasi pertama bisa jadi bagian dari input normal atau error)
         // Kita anggap input pertama yang bukan spasi adalah awal mengetik
@@ -327,16 +355,16 @@ export function initGameListeners() {
             showStatsContainer(); // Tampilkan speedometer
             // Mulai timer di sini jika belum dimulai oleh logika lain
             if (!gameState.startTime) { // Pastikan timer belum berjalan
-                 gameState.startTime = new Date().getTime();
-                 startTimer();
+                    gameState.startTime = new Date().getTime();
+                    startTimer();
             }
-        } else if (!hasStartedTyping && !event.data && DOM.hiddenTextInput.value.length === 1 && event.inputType === 'insertText') {
+        } else if (!hasStartedTyping && !event.data && DOM.hiddenInput.value.length === 1 && event.inputType === 'insertText') {
             // Ini bisa menangani kasus copy-paste satu karakter pertama
             hasStartedTyping = true;
             showStatsContainer();
             if (!gameState.startTime) {
-                 gameState.startTime = new Date().getTime();
-                 startTimer();
+                    gameState.startTime = new Date().getTime();
+                    startTimer();
             }
         }
         // ... Logika penanganan input mengetik Anda yang sudah ada ...

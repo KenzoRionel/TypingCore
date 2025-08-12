@@ -1,6 +1,7 @@
 // js/history/score-manager.js
 
-import { DOM } from '../utils/dom-elements.js';
+// Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
+import { getDOMReferences } from '../utils/dom-elements.js';
 import { renderScoreTable } from './history-dom.js';
 import { renderProgressCharts, destroyCharts } from './history-chart.js';
 
@@ -30,6 +31,8 @@ export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords,
 }
 
 export function displayFullScoreHistory() {
+    // Perbaikan: Panggil getDOMReferences()
+    const DOM = getDOMReferences();
     const scores = getTypingScores();
 
     if (scores.length > 0) {

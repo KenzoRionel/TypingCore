@@ -2,7 +2,7 @@
 import { getState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import { renderHandVisualizer, resetHandVisualizer } from './hand-visualizer.js';
-import { getDOMReferences } from './dom-elements.js';
+import { getDOMReferences } from './utils/dom-elements.js';
 import { cleanupSimpleDrillElements } from './lesson-simple-drill.js';
 import { resetCharacterDrillState } from './lesson-character-drill.js';
 

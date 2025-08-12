@@ -11,7 +11,8 @@
     /* Perbaikan: Menggunakan flexbox untuk responsivitas yang lebih baik dengan ukuran tetap */
     display: flex;
     flex-wrap: wrap;
-    justify-content: left;
+    /* PERBAIKAN: Mengatur kartu agar berjejer dari kiri */
+    justify-content: flex-start; 
     gap: 2rem;
     padding: 2rem;
 }
@@ -30,7 +31,7 @@
     flex-direction: column;
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    text-decoration: none;
+    text-decoration: none; /* Tambahkan ini agar tidak ada garis bawah */
     color: inherit;
 }
 
@@ -52,6 +53,8 @@
     padding: 0;
     margin: 0;
     border-radius: 5px;
+    /* PERBAIKAN: Menambahkan ini untuk menghilangkan latar belakang di mode terang */
+    background-color: transparent; 
 }
 
 .card-body {
@@ -64,7 +67,6 @@
 
 .card-body img {
     max-width: 100%;
-    /* Perbaikan: Mengatur tinggi gambar agar sesuai dengan layout kartu */
     height: 100px;
     border-radius: 8px;
 }
@@ -80,4 +82,23 @@
     font-weight: normal;
     color: var(--text-color);
     margin: 0;
+}
+
+.lesson-completed-indicator {
+    position: absolute;
+    bottom: -25px; /* Perbaikan: Nilai bottom diperbesar agar gambar lebih ke bawah */
+    left: 85%;
+    transform: translateX(-50%);
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+}
+
+.lesson-card .card-body {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
 }
