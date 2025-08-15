@@ -1,22 +1,30 @@
 // js/hand-visualizer.js
+
+// Tidak perlu properti 'adjust' lagi karena posisi gambar tidak akan digeser
 const keyFingerMap = {
-    'f': { id: 'hand-f', adjust: { x: '-33%', y: '-5%' } },
-    'j': { id: 'hand-j', adjust: { x: '-62%', y: '-5%' } },
-    ' ': { id: 'hand-space', adjust: { x: '-48%', y: '-35%' } },
-    'd': { id: 'hand-d', adjust: { x: '-25%', y: '-5%' } },
-    'k': { id: 'hand-k', adjust: { x: '-73%', y: '-7%' } },
+    'f': { id: 'hand-f' },
+    'j': { id: 'hand-j' },
+    ' ': { id: 'hand-space' },
+    'd': { id: 'hand-d' },
+    'k': { id: 'hand-k' },
+    's': { id: 'hand-s' },
+    'l': { id: 'hand-l' },
+    'a': { id: 'hand-a' },
+    ';': { id: 'hand-;' },
     // Tambahkan kunci lain di sini sesuai kebutuhan pelajaran
 };
 
 export function resetHandVisualizer() {
     const handVisualizer = document.getElementById('hand-visualizer');
     if (handVisualizer) {
+        // Hapus transform dan opacity karena tidak digunakan lagi
         handVisualizer.style.transform = '';
         handVisualizer.style.opacity = '0';
         const handImages = handVisualizer.querySelectorAll('.hand-image');
         handImages.forEach(img => {
             img.classList.remove('active');
-            img.style.transform = '';
+            // Hapus baris ini karena tidak perlu ada transform di setiap gambar
+            img.style.transform = ''; 
         });
     }
 }
@@ -41,14 +49,16 @@ export function renderHandVisualizer(keyChar) {
         if (targetKeyElement) {
             const activeHandImage = document.getElementById(keyData.id);
             if (activeHandImage) {
-                const left = targetKeyElement.offsetLeft + (targetKeyElement.offsetWidth / 2);
-                const top = targetKeyElement.offsetTop + (targetKeyElement.offsetHeight / 2);
+                // Baris kode ini dihapus karena tidak ada pergeseran posisi
+                // const left = targetKeyElement.offsetLeft + (targetKeyElement.offsetWidth / 2);
+                // const top = targetKeyElement.offsetTop + (targetKeyElement.offsetHeight / 2);
                 
-                handVisualizer.style.transform = `translate(${left}px, ${top}px)`;
+                // Set opacity ke 1 untuk menampilkan visualizer
                 handVisualizer.style.opacity = '1';
 
                 activeHandImage.classList.add('active');
-                activeHandImage.style.transform = `translate(${keyData.adjust.x}, ${keyData.adjust.y})`;
+                // Baris ini juga dihapus karena properti 'adjust' tidak lagi digunakan
+                // activeHandImage.style.transform = `translate(${keyData.adjust.x}, ${keyData.adjust.y})`;
             } else {
                 // Sembunyikan jika gambar tangan tidak ditemukan
                 handVisualizer.style.opacity = '0';

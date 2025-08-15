@@ -18,6 +18,7 @@ export const lessons = [
     {
         title: "Pelajaran 2: Huruf F dan J",
         type: "simple-drill",
+        image: 'target-fj.png',
         sequences: [
             ['f', 'f', 'f', 'f', 'j', 'j'],
             ['j', 'j', 'f', 'f', 'f', 'f'],
@@ -32,6 +33,7 @@ export const lessons = [
     {
         title: "Pelajaran 3: Latihan Tombol Spasi",
         type: "simple-drill",
+        image: 'target-fj.png',
         sequences: [
             ['f', ' ', 'f', ' ', 'j', ' ', 'j'],
             [' ', 'f', 'f', ' ', ' ', 'f', 'f'],
@@ -84,6 +86,7 @@ export const lessons = [
     {
         title: "Pelajaran 7: Test Mengetik D dan K",
         type: "free-typing",
+        image: 'test-dk.png',
         sequence: ['d', 'd', 'd', 'd', ' ', 'k', 'k', 'k', 'k', ' ', 'd', 'd', 'k', 'k', ' ', 'k', 'k', 'd', 'd', ' ', 'k', 'd',
                     ' ', 'd', 'k', ' ', 'k', 'd', 'd', 'k', ' ', 'd', 'k', 'k', 'd', ' ', 'k', 'k', 'd', 'd', ' ', 'k', 'd',
                     'd', 'k', ' ', 'k', 'd', 'd', 'd', ' ', 'k', 'd', 'k', 'd', ' ', 'd', 'k', 'd', 'k', ' ', 'd', 'd', 'd', 'd', ' ', 'k', 'k', 'k', 'k',
@@ -179,7 +182,7 @@ export const lessons = [
         type: "free-typing",
         sequence: ['a', 'd', 'a', ' ', 'a', 's', 'a', ' ', 'j', 'a', 'j', 'a', ' ', 'j', 'a', 'l', 'a', ';', ' ', 'd', 'a', 'd', 'a', ' ', 'l', 'a', 'l', 'a', ' ',
                     's', 'a', 'd', 'a', ' ', 'f', 'a', 'd', 'a', ' ', 'k', 'a', 's', ' ', 'a', 'l', 'a', 's', ' ', 's', 'a', 'k', 'a', ';', ' ', 'a', 's', 'f', ' ',
-                    'a', 'd', 'a', ' ', 'a', 's', 'a', ' ', 'd', 'a', 'd', 'a', ' ', 'j', 'a', 'l', 'a', ' ', 's', 'a', 'j', 'a', ' ', 's', 'a', 'd', 'a', 'r', ' ',
+                    'a', 'd', 'a', ' ', 'a', 's', 'a', ' ', 'd', 'a', 'd', 'a', ' ', 'j', 'a', 'l', 'a', ' ', 's', 'a', 'j', 'a', ' ', 's', 'a', 'd', 'a', ' ',
                     'f', 'a', 's', 'a', ' ', 'a', 'l', 'a', 's', ';', ' ', 'j', 'a', 's', 'a', ' ', 'k', 'a', 's', 'a', ' ', 'j', 'a', 'k', 's', 'a', ' ', 'k', 'a', 'd', 's', 'a', ' ',
                     'a', 'l', 'a', 's', 'k', 'a', ' ', 's', 'a', 'd', 'a', ' ', 'f', 'a', 'd', 'a', ';', ' ', 'k', 'a', 's', ' ', 'a', 'l', 'a', 's', ' ', 's', 'a', 'k', 'a', ' '
                   ],

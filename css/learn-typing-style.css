@@ -548,7 +548,6 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
     color: var(--lesson-text-correct-color);
     font-size: 0.7em;
     font-weight: bold;
-    text-shadow: 0 0 5px white;
     animation: check-pop 0.3s ease-out;
 }
 
@@ -606,8 +605,8 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
 
 #hand-visualizer {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 90px;
+    left: 115px;
     pointer-events: none;
     z-index: 999;
     opacity: 0;

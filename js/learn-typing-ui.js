@@ -96,6 +96,10 @@ export function createHandVisualizerElement() {
         { id: 'hand-space', src: 'img/hand_space.png', alt: 'Tangan untuk tombol spasi' },
         { id: 'hand-d', src: 'img/hand_d.png', alt: 'Tangan untuk tombol D' },
         { id: 'hand-k', src: 'img/hand_k.png', alt: 'Tangan untuk tombol K' },
+        { id: 'hand-s', src: 'img/hand_s.png', alt: 'Tangan untuk tombol S' },
+        { id: 'hand-l', src: 'img/hand_l.png', alt: 'Tangan untuk tombol L' },
+        { id: 'hand-a', src: 'img/hand_a.png', alt: 'Tangan untuk tombol A' },
+        { id: 'hand-;', src: 'img/hand_;png', alt: 'Tangan untuk tombol ;' }
     ];
     handImages.forEach(hand => {
         const img = document.createElement('img');
