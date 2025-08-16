@@ -2,11 +2,9 @@
 
 // Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
 import { getDOMReferences } from '../utils/dom-elements.js';
-import { gameState } from './game-state.js';
 import { setWpmSpeedometer, setAccuracySpeedometer, setTimerSpeedometer, timerMax } from '../utils/speedometer.js';
 import { prepareAndRenderLines, renderCurrentLine, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
 import { renderResultChart } from '../history/result-chart.js';
-
 let hasStartedTyping = false; // Flag untuk melacak apakah mengetik sudah dimulai
 
 // --- FUNGSI BARU UNTUK MENGATUR VISIBILITAS STATS CONTAINER ---
@@ -141,57 +139,59 @@ export function updateRealtimeStats() {
 }
 
 export function calculateAndDisplayFinalResults() {
-    // Perbaikan: Panggil getDOMReferences()
     const DOM = getDOMReferences();
-    // Sembunyikan kontainer text display dan menu button
+
     const textDisplayContainer = document.querySelector('.text-display-container');
-    if (textDisplayContainer) {
-        textDisplayContainer.style.display = 'none';
-    }
+    if (textDisplayContainer) textDisplayContainer.style.display = 'none';
     const menuButton = document.getElementById('MenuButton');
-    if (menuButton) {
-        menuButton.style.display = 'none';
-    }
-
-    // Tampilkan kontainer hasil
+    if (menuButton) menuButton.style.display = 'none';
     const resultsArea = document.getElementById('resultsDisplayArea');
-    if (resultsArea) {
-        resultsArea.style.display = 'block';
-    }
+    if (resultsArea) resultsArea.style.display = 'block';
 
-    // Hitung Akurasi final
     const finalCorrectChars = gameState.correctChars;
     const finalIncorrectChars = gameState.incorrectChars;
     const totalTypedChars = finalCorrectChars + finalIncorrectChars;
     const finalAccuracy = totalTypedChars > 0 ? Math.round((finalCorrectChars / totalTypedChars) * 100) : 0;
 
-    // Hitung WPM final yang lebih akurat
     const totalTestMinutes = gameState.TIMED_TEST_DURATION / 60;
     const finalWPM = totalTestMinutes > 0 ? Math.round((finalCorrectChars / 5) / totalTestMinutes) : 0;
 
-    // Hitung Konsistensi
+    // Hitung RAW WPM final (total kata diketik termasuk salah / menit)
+    const finalRawWPM = totalTestMinutes > 0 ? Math.round((totalTypedChars / 5) / totalTestMinutes) : 0;
+
+    // Hitung persentase error berdasarkan kata
+    const totalWordsTyped = (gameState.totalCorrectWords || 0) + (gameState.totalIncorrectWords || 0);
+    const errorPercentage = totalWordsTyped > 0
+        ? Math.round(((gameState.totalIncorrectWords || 0) / totalWordsTyped) * 100)
+        : 0;
+
     let consistency = 0;
     const wpmHistory = gameState.history.map(h => h.wpm);
     if (wpmHistory.length > 1) {
-        const mean = finalWPM; // Gunakan WPM final yang baru sebagai rata-rata
+        const mean = finalWPM;
         const stdDev = Math.sqrt(wpmHistory.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / wpmHistory.length);
-        // Normalisasi: (1 - (stdDev / mean)) * 100. Semakin kecil stdDev, semakin tinggi konsistensi.
         if (mean > 0) {
             consistency = Math.max(0, Math.round((1 - (stdDev / mean)) * 100));
         }
     }
 
-    // Isi statistik di bawah grafik
     document.getElementById('finalWPM').textContent = finalWPM;
     document.getElementById('finalAccuracy').textContent = `${finalAccuracy}%`;
     document.getElementById('finalTime').textContent = `${gameState.TIMED_TEST_DURATION}s`;
     document.getElementById('finalChars').textContent = `${finalCorrectChars} / ${finalIncorrectChars} / ${totalTypedChars}`;
     document.getElementById('finalConsistency').textContent = `${consistency}%`;
 
-    // Render grafik
-    renderResultChart(gameState.history);
+    // Buat historyData lengkap untuk renderResultChart
+    const historyData = gameState.history.map(h => ({
+        ...h,
+        correctWords: gameState.totalCorrectWords,
+        incorrectWords: gameState.totalIncorrectWords,
+        time: gameState.TIMED_TEST_DURATION,
+        errorPercentage: errorPercentage
+    }));
 
-    // Simpan skor (jika fungsi ada)
+    renderResultChart(historyData);
+
     if (typeof window.saveScore === 'function') {
         window.saveScore(
             finalWPM,
@@ -205,6 +205,7 @@ export function calculateAndDisplayFinalResults() {
         );
     }
 }
+
 
 export function endTest() {
     // Perbaikan: Panggil getDOMReferences()

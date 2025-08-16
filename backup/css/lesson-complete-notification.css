@@ -1,0 +1,315 @@
+/* lesson-complete-notification.css*/
+.lesson-complete-notification {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0; /* Menempatkan dari atas layar */
+    left: 0; /* Menempatkan dari kiri layar */
+    width: 100%; /* Membuatnya selebar layar */
+    height: 100%; /* Membuatnya setinggi layar */
+    z-index: 1000; /* Memastikan notifikasi berada di atas elemen lain */
+    min-height: 250px;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin-top: 20px;
+    font-family: monospace;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.5s ease;
+}
+
+.notification-header {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #126ed6;
+    margin-bottom: -10px;
+}
+
+.lesson-complete-notification.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lesson-complete-notification .notification-content {
+    width: 100%;
+    /* PERBAIKAN: Menggunakan flexbox untuk perataan horizontal */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0px;
+}
+
+.lesson-complete-notification h2 {
+    color: #28a745;
+    font-size: 2rem;
+}
+
+.lesson-complete-notification p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.lesson-complete-notification .next-lesson-keys {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.lesson-complete-notification .next-lesson-keys .highlight-key-modal {
+    padding: 5px 10px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    background-color: #e9f5ff;
+}
+
+/* notification-buttons.css atau learn-typing-style.css */
+
+/* Tambahkan kode ini di bagian bawah file CSS */
+.notification-buttons-wrapper {
+    display: flex;
+    justify-content: center; /* Menempatkan tombol di tengah */
+    gap: 15px; /* Memberikan jarak antara kedua tombol */
+    margin-top: 20px; /* Jarak dari atas */
+}
+
+/* Menggabungkan semua properti umum untuk kedua tombol */
+.notification-buttons-wrapper .btn-success,
+.notification-buttons-wrapper #retry-lesson-btn {
+    padding: 0px 25px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    border: none;
+    border-radius: 30px; /* Sudut lebih melengkung */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Bayangan lembut */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    animation: pop-in-with-bounce 0.8s forwards;
+}
+
+/* Tambahkan gaya khusus atau animasi yang berbeda di sini */
+.notification-buttons-wrapper .btn-success {
+    /* Animasi ini lebih cocok untuk tombol yang ada di kanan */
+    animation-delay: 0.3s;
+    /* Tambahkan gaya modern */
+    background-image: linear-gradient(45deg, #28a745 0%, #218838 100%); /* Gradien hijau */
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.notification-buttons-wrapper .btn-success:hover {
+    background-image: linear-gradient(45deg, #218838 0%, #1e7e34 100%);
+    box-shadow: 0 8px 20px rgba(40, 167, 69, 0.6);
+    transform: translateY(-3px);
+}
+
+.notification-buttons-wrapper #retry-lesson-btn {
+    animation-delay: 0s;
+    /* Tambahkan gaya modern */
+    background-image: linear-gradient(45deg, #6c757d 0%, #5a6268 100%); /* Gradien abu-abu gelap */
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+}
+
+.notification-buttons-wrapper #retry-lesson-btn:hover {
+    background-image: linear-gradient(45deg, #5a6268 0%, #545b62 100%);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.6);
+    transform: translateY(-3px);
+}
+
+/* PERBAIKAN: Tambahkan @keyframes baru */
+@keyframes pop-in-with-bounce {
+    0% {
+        transform: scale(0.2) translateY(50px);
+        opacity: 0;
+    }
+    60% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+#thumb-animation-container {
+    width: 300px;
+    height: 300px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.success-animation-svg {
+    width: 100%;
+    height: 100%;
+    transform: scale(0.5);
+    opacity: 0;
+    filter: blur(5px);
+}
+
+.success-animation-svg.animate {
+    opacity: 1;
+    filter: blur(0);
+    animation: fade-in-scale 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.circle-path,
+.check-path {
+    stroke: #126ed6;
+    stroke-miterlimit: 10;
+}
+
+.circle-path {
+    stroke-dasharray: 280;
+    stroke-dashoffset: 280;
+    transform-origin: center;
+}
+
+.success-animation-svg.animate .circle-path {
+    animation: draw-circle-fluid 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.check-path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: center;
+}
+
+.success-animation-svg.animate .check-path {
+    animation: draw-check-fluid 0.6s 0.8s forwards ease-in-out;
+}
+
+#background-circle {
+    fill: #BDCFFA;
+    transform: scale(0);
+    transform-origin: center;
+}
+
+.success-animation-svg.animate #background-circle {
+    animation: burst-background-fluid 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* --- Keyframes Animasi Baru --- */
+@keyframes fade-in-scale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+        filter: blur(5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes burst-background-fluid {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes draw-circle-fluid {
+    0% {
+        stroke-dashoffset: 280;
+        transform: scale(0.8) rotate(30deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05) rotate(-5deg);
+        opacity: 1;
+    }
+    100% {
+        stroke-dashoffset: 0;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes draw-check-fluid {
+    0% {
+        stroke-dashoffset: 100;
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        stroke-dashoffset: 0;
+        transform: scale(1);
+        opacity: 1; /* PERBAIKAN: Menambahkan ini agar ceklis tetap terlihat */
+    }
+}
+
+.completion-progress-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 50px 0;
+    margin-top: 0px;
+}
+
+.completion-progress-container {
+    flex-grow: 1;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+
+.completion-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    border-radius: 5px;
+    transition: width 1.5s ease-out;
+}
+
+.completion-progress-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    width: 60px;
+}
+
+/* Tambahkan kode ini di bagian bawah file CSS */
+.notification-buttons-wrapper {
+    display: flex;
+    justify-content: center; /* Untuk menempatkan tombol di tengah */
+    gap: 15px; /* Untuk memberikan jarak antara kedua tombol */
+    margin-top: 20px;
+}
+
+/* Tambahkan gaya untuk tombol "Coba lagi" */
+#retry-lesson-btn {
+    padding: 10px 25px;
+    font-size: 1rem;
+    border-radius: 7px;
+}

@@ -79,17 +79,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
-    <script src="js/history/score-manager.js" type="module"></script>
-    <script>
-        // Panggil displayFullScoreHistory saat DOMContentLoaded untuk halaman ini
-        document.addEventListener('DOMContentLoaded', () => {
-        if (typeof window.displayFullScoreHistory === 'function') {
-            window.displayFullScoreHistory();
-        } else {
-            console.error("Fungsi displayFullScoreHistory tidak ditemukan.");
-        }
-        });
-    </script>
+<script src="js/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="js/history/score-manager.js" type="module"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => displayFullScoreHistory());
+</script>
 </body>
 </html>

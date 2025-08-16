@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelajaran Selesai - TypingCore</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/learn-typing-style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <main class="main-content">
+            <header id="header" class="site-header d-flex align-items-center">
+                <nav class="navbar navbar-expand navbar-light flex-grow-1">
+                    <div class="container-fluid">
+                        <a class="navbar-brand py-0 me-auto" href="index.html">
+                            <img src="img/TypingCore.png" alt="Logo Website" style="height: 70px;">
+                        </a>
+                        <div class="navbar-collapse justify-content-between" id="navbarSupportedContent">
+                            <ul class="navbar-nav align-items-center">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="learn-typing.html"><i class="fas fa-graduation-cap"></i></a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+
+            <section id="lesson-complete-section">
+                <div class="lesson-complete-content">
+                    <h2>Kerja Bagus!</h2>
+                    <p>Anda telah menyelesaikan pelajaran ini.</p>
+                    <p>Selanjutnya kita akan belajar:</p>
+                    <div id="next-lesson-preview" class="next-lesson-keys">
+                        <!-- Pratinjau tombol pelajaran berikutnya akan diisi oleh JS -->
+                    </div>
+                    <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="js/learn-typing.js" type="module"></script>
+</body>
+</html>
