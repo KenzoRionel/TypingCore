@@ -83,7 +83,8 @@
 
 /* Menggabungkan semua properti umum untuk kedua tombol */
 .notification-buttons-wrapper .btn-success,
-.notification-buttons-wrapper #retry-lesson-btn {
+.notification-buttons-wrapper #retry-lesson-btn,
+.notification-buttons-wrapper #lessons-list {
     padding: 0px 25px;
     font-size: 1.1rem;
     font-weight: bold;
@@ -325,4 +326,18 @@
     padding: 10px 25px;
     font-size: 1rem;
     border-radius: 7px;
+}
+
+#lessons-list {
+    padding: 10px 25px;
+    font-size: 1rem;
+    border-radius: 7px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#lessons-list:hover {
+    background-color: #0056b3;
 }

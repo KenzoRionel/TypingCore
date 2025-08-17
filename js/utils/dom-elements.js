@@ -1,20 +1,130 @@
-// js/utils/dom-elements.js
+// dom-elements.js
 
 /**
- * Mengelola semua referensi elemen DOM yang dibutuhkan oleh seluruh aplikasi,
- * baik untuk halaman utama (game) maupun halaman pelajaran.
- * File ini berfungsi sebagai satu sumber kebenaran (single source of truth)
- * untuk semua elemen DOM.
- * @returns {Object} Objek berisi semua referensi elemen DOM yang ditemukan.
+ * Mencari dan mengembalikan semua referensi elemen DOM yang dibutuhkan.
+ * Jika hiddenInput belum ada, akan membuatnya secara dinamis.
+ * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
  */
 export function getDOMReferences() {
-    // Hidden Input (dibuat jika tidak ada, untuk memastikan selalu tersedia)
+    const keyboardContainer = document.getElementById('virtual-keyboard');
+    if (!keyboardContainer) {
+        console.error("ERROR: Elemen DOM penting #virtual-keyboard tidak ditemukan.");
+        return null;
+    }
+
+    const lessonHeader = document.getElementById('lesson-header');
+    if (!lessonHeader) {
+        console.error("ERROR: Elemen DOM penting #lesson-header tidak ditemukan.");
+        return null;
+    }
+
+    const lessonTitle = document.getElementById('lesson-title');
+    if (!lessonTitle) {
+        console.error("ERROR: Elemen DOM penting #lesson-title tidak ditemukan.");
+        return null;
+    }
+
+    const lessonInstruction = document.getElementById('lesson-instruction');
+    if (!lessonInstruction) {
+        console.error("ERROR: Elemen DOM penting #lesson-instruction tidak ditemukan.");
+        return null;
+    }
+
+    const lessonTextDisplay = document.getElementById('lesson-text-display');
+    if (!lessonTextDisplay) {
+        console.error("ERROR: Elemen DOM penting #lesson-text-display tidak ditemukan.");
+        return null;
+    }
+
+    const prevLessonBtn = document.getElementById('prev-lesson-btn');
+    if (!prevLessonBtn) {
+        console.error("ERROR: Elemen DOM penting #prev-lesson-btn tidak ditemukan.");
+        return null;
+    }
+
+    const nextLessonBtn = document.getElementById('next-lesson-btn');
+    if (!nextLessonBtn) {
+        console.error("ERROR: Elemen DOM penting #next-lesson-btn tidak ditemukan.");
+        return null;
+    }
+
+    // PERBAIKAN: Tambahkan elemen tombol "Coba lagi"
+    const retryLessonBtn = document.getElementById('retry-lesson-btn');
+    if (!retryLessonBtn) {
+        console.error("ERROR: Elemen DOM penting #retry-lesson-btn tidak ditemukan.");
+        return null;
+    }
+    
+    const lessonCompleteNotification = document.getElementById('lesson-complete-notification');
+    if (!lessonCompleteNotification) {
+        console.error("ERROR: Elemen DOM penting #lesson-complete-notification tidak ditemukan.");
+        return null;
+    }
+
+    const continueBtn = document.getElementById('continue-to-next-lesson-btn');
+    if (!continueBtn) {
+        console.error("ERROR: Elemen DOM penting #continue-to-next-lesson-btn tidak ditemukan.");
+        return null;
+    }
+
+    // Hapus pengambilan nextLessonPreview karena elemennya sudah tidak ada
+    
+    // Perbaikan ada di sini: Mengambil elemen wadah progress bar
+    const progressContainerWrapper = document.getElementById('progress-container-wrapper');
+    if (!progressContainerWrapper) {
+        console.error("ERROR: Elemen DOM penting #progress-container-wrapper tidak ditemukan.");
+        return null;
+    }
+    
+    const progressBar = document.getElementById('lesson-progress-bar');
+    if (!progressBar) {
+        console.error("ERROR: Elemen DOM penting #lesson-progress-bar tidak ditemukan.");
+        return null;
+    }
+
+    const progressText = document.getElementById('progress-percentage');
+    if (!progressText) {
+        console.error("ERROR: Elemen DOM penting #progress-percentage tidak ditemukan.");
+        return null;
+    }
+
+    const thumbAnimationContainer = document.getElementById('thumb-animation-container');
+    if (!thumbAnimationContainer) {
+        console.error("ERROR: Elemen DOM penting #thumb-animation-container tidak ditemukan.");
+        return null;
+    }
+
+    const successAnimationSvg = document.getElementById('success-animation-svg');
+    if (!successAnimationSvg) {
+        console.error("ERROR: Elemen DOM penting #success-animation-svg tidak ditemukan.");
+        return null;
+    }
+
+    const circlePath = document.getElementById('circle-path');
+    if (!circlePath) {
+        console.error("ERROR: Elemen DOM penting #circle-path tidak ditemukan.");
+        return null;
+    }
+
+    const checkPath = document.getElementById('check-path');
+    if (!checkPath) {
+        console.error("ERROR: Elemen DOM penting #check-path tidak ditemukan.");
+        return null;
+    }
+    
+    // START - PERBAIKAN BUG
+    const lessonListBtn = document.getElementById('lessons-list');
+    if (!lessonListBtn) {
+        console.error("ERROR: Elemen DOM penting #lessons-list tidak ditemukan.");
+        return null;
+    }
+    // END - PERBAIKAN BUG
+
     let hiddenInput = document.getElementById('hidden-input');
     if (!hiddenInput) {
         hiddenInput = document.createElement('input');
         hiddenInput.type = 'text';
         hiddenInput.id = 'hidden-input';
-        hiddenInput.className = 'hidden-input';
         hiddenInput.style.position = 'absolute';
         hiddenInput.style.opacity = '0';
         hiddenInput.style.pointerEvents = 'none';
@@ -27,60 +137,28 @@ export function getDOMReferences() {
         hiddenInput.spellcheck = false;
         document.body.appendChild(hiddenInput);
     }
-    
-    const elements = {
-        // --- Referensi untuk halaman pelajaran ---
-        keyboardContainer: document.getElementById('virtual-keyboard'),
-        lessonHeader: document.getElementById('lesson-header'),
-        lessonTitle: document.getElementById('lesson-title'),
-        lessonInstruction: document.getElementById('lesson-instruction'),
-        lessonTextDisplay: document.getElementById('lesson-text-display'),
-        prevLessonBtn: document.getElementById('prev-lesson-btn'),
-        nextLessonBtn: document.getElementById('next-lesson-btn'),
-        retryLessonBtn: document.getElementById('retry-lesson-btn'),
-        lessonCompleteNotification: document.getElementById('lesson-complete-notification'),
-        continueBtn: document.getElementById('continue-to-next-lesson-btn'),
-        progressContainerWrapper: document.getElementById('progress-container-wrapper'),
-        progressBar: document.getElementById('lesson-progress-bar'),
-        progressText: document.getElementById('progress-percentage'),
-        thumbAnimationContainer: document.getElementById('thumb-animation-container'),
-        successAnimationSvg: document.getElementById('success-animation-svg'),
-        circlePath: document.getElementById('circle-path'),
-        checkPath: document.getElementById('check-path'),
 
-        // --- Referensi untuk halaman utama (typing game) ---
-        textDisplay: document.getElementById('textDisplay'),
-        restartButton: document.getElementById('restartButton'),
-        accuracySpan: document.getElementById('accuracy'),
-        timerSpan: document.getElementById('timer'),
-        statsContainer: document.getElementById('stats-container'),
-        wpmValueText: document.getElementById('wpmValue'),
-        wpmNeedle: document.getElementById('wpmNeedle'),
-        wpmTicksContainer: document.getElementById('wpmTicks'),
-        accuracyValueText: document.getElementById('accuracyValue'),
-        accuracyNeedle: document.getElementById('accuracyNeedle'),
-        accuracyTicksContainer: document.getElementById('accuracyTicks'),
-        timerValueText: document.getElementById('timerValue'),
-        timerNeedle: document.getElementById('timerNeedle'),
-        timerTicksContainer: document.getElementById('timerTicks'),
-        resultsDisplayArea: document.getElementById('resultsDisplayArea'),
-        finalWPMText: document.getElementById('finalWPM'),
-        finalAccuracyText: document.getElementById('finalAccuracy'),
-        finalTimeText: document.getElementById('finalTime'),
-        finalErrorsText: document.getElementById('finalErrors'),
-        finalTotalWordsText: document.getElementById('finalTotalWords'),
-        finalCorrectWordsText: document.getElementById('finalCorrectWords'),
-        finalIncorrectWordsText: document.getElementById('finalIncorrectWords'),
-        resultModal: document.getElementById('resultModal'),
-        scoreHistoryList: document.getElementById('scoreHistoryList'),
-        noHistoryMessage: document.querySelector('#scoreHistoryList .no-history'),
-        wpmProgressChartCanvas: document.getElementById('wpmProgressChart'),
-        accuracyProgressChartCanvas: document.getElementById('accuracyProgressChart'),
-
-        // --- Elemen yang digunakan di kedua halaman ---
-        hiddenInput: hiddenInput,
-        darkModeToggle: document.getElementById('darkModeToggle'),
+    return {
+        keyboardContainer,
+        lessonHeader,
+        lessonTitle,
+        lessonInstruction,
+        lessonTextDisplay,
+        prevLessonBtn,
+        nextLessonBtn,
+        retryLessonBtn, // PERBAIKAN: Kembalikan tombol "Coba lagi"
+        lessonCompleteNotification,
+        continueBtn,
+        hiddenInput,
+        progressBar,
+        progressText,
+        progressContainerWrapper, // Ditambahkan: Wadah progress bar utama
+        thumbAnimationContainer,
+        successAnimationSvg,
+        circlePath,
+        checkPath,
+        // START - PERBAIKAN BUG
+        lessonListBtn,
+        // END - PERBAIKAN BUG
     };
-    
-    return elements;
 }

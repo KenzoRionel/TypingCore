@@ -169,7 +169,7 @@ export function dispatchFinishedEvent(lessonIndex) {
 
 export function setupEventListeners() {
     const domElements = getDOMReferences();
-    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn } = domElements;
+    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn, lessonListBtn } = domElements;
 
     createKeyboard(domElements.keyboardContainer, keyLayout);
 
@@ -198,6 +198,14 @@ export function setupEventListeners() {
     });
 
     attachInputHandlers(loadLesson);
+    
+    // START - PERBAIKAN BUG
+    if (lessonListBtn) {
+        lessonListBtn.addEventListener('click', () => {
+            window.location.href = 'lessons.html';
+        });
+    }
+    // END - PERBAIKAN BUG
 
     // PERBAIKAN: Baca lesson index dari URL saat halaman dimuat
     const urlParams = new URLSearchParams(window.location.search);

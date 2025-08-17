@@ -16,6 +16,10 @@
 </head>
 
 <body>
+    <div id="loading-screen">
+  <div class="spinner"></div>
+  <p class="loading-text">Loading TypingCore...</p>
+</div>
     <div class="wrapper">
         <main class="main-content learn-typing-content">
             <header id="header" class="site-header d-flex align-items-center">
@@ -114,8 +118,8 @@
                 <img id="hand-k" class="hand-image" src="img/hand_k.png" alt="Tangan untuk tombol K">
                 <img id="hand-s" class="hand-image" src="img/hand_s.svg" alt="Tangan untuk tombol S">
                 <img id="hand-l" class="hand-image" src="img/hand_l.svg" alt="Tangan untuk tombol L">
-                <img id="hand-a" class="hand-image" src="img/hand_a.png" alt="Tangan untuk tombol A">
-                <img id="hand-;" class="hand-image" src="img/hand_;.png" alt="Tangan untuk tombol ;">
+                <img id="hand-a" class="hand-image" src="img/hand_a.svg" alt="Tangan untuk tombol A">
+                <img id="hand-;" class="hand-image" src="img/hand_;.svg" alt="Tangan untuk tombol ;">
             </div>
         </div>
         <button id="next-lesson-btn" class="btn btn-primary">
@@ -151,6 +155,7 @@
                 </div>
                 <div class="notification-buttons-wrapper">
             <button id="retry-lesson-btn" class="btn btn-secondary">Coba lagi</button>
+            <button id="lessons-list" class="btn btn-info" href="lessons.html">Daftar Pelajaran</button>
             <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
         </div>
             </div>
@@ -158,6 +163,15 @@
     </div>
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="js/learn-typing.js" type="module"></script>
+    <script>
+  window.addEventListener("load", () => {
+    const loader = document.getElementById("loading-screen");
+    loader.style.opacity = "0";
+    loader.style.visibility = "hidden";
+    setTimeout(() => loader.remove(), 500); // hapus setelah animasi
+  });
+</script>
+
 </body>
 
 </html>

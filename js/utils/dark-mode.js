@@ -1,15 +1,38 @@
 // js/utils/dark-mode.js
 
 /**
- * Mengelola logika dark mode, membaca preferensi dari localStorage
- * dan menerapkan kelas CSS ke body.
+ * Mengelola logika dark mode, membaca preferensi dari localStorage,
+ * menerapkan kelas CSS ke body, dan mengganti gambar.
  */
 
-// Kunci untuk menyimpan preferensi di localStorage
 const STORAGE_KEY = 'darkMode';
 
 /**
- * Mengaplikasikan kelas dark mode ke elemen <body> berdasarkan preferensi yang tersimpan.
+ * Ganti semua gambar sesuai tema
+ */
+function swapImages(isDark) {
+    document.querySelectorAll('.lesson-image').forEach(wrapper => {
+        const img = wrapper.querySelector('img');
+        if (!img) return;
+
+        const light = wrapper.dataset.lightSrc || img.getAttribute('src');
+        const file = light.split('/').pop().replace(/\.\w+$/, ''); // nama file tanpa ekstensi
+        const dark = `img/dark-mode/${file}.svg`;
+
+        const target = isDark ? dark : light;
+
+        if (img.src.endsWith(target)) return;
+
+        img.onerror = () => {
+            img.onerror = null;
+            img.src = light; // fallback ke light kalau dark 404
+        };
+        img.src = target;
+    });
+}
+
+/**
+ * Mengaplikasikan preferensi dark mode ke body & gambar.
  */
 function applyDarkModePreference() {
     const isDarkModeEnabled = localStorage.getItem(STORAGE_KEY) === 'enabled';
@@ -18,10 +41,11 @@ function applyDarkModePreference() {
     } else {
         document.body.classList.remove('dark-mode');
     }
+    swapImages(isDarkModeEnabled);
 }
 
 /**
- * Menukar (toggle) status dark mode dan menyimpan preferensi ke localStorage.
+ * Toggle dark mode + simpan preferensi + swap gambar
  */
 export function toggleDarkMode() {
     const isDarkModeEnabled = document.body.classList.toggle('dark-mode');
@@ -30,19 +54,17 @@ export function toggleDarkMode() {
     } else {
         localStorage.setItem(STORAGE_KEY, 'disabled');
     }
+    swapImages(isDarkModeEnabled);
 }
 
 /**
- * Fungsi inisialisasi yang harus dipanggil di setiap halaman.
- * Ia akan memuat preferensi dari localStorage dan menambahkan event listener
- * ke tombol toggle dark mode.
- * @param {HTMLElement} toggleButton Tombol DOM untuk dark mode.
+ * Inisialisasi dark mode di tiap halaman
  */
 export function initDarkMode(toggleButton) {
-    // 1. Terapkan preferensi saat halaman dimuat
+    // Terapkan preferensi awal
     applyDarkModePreference();
 
-    // 2. Tambahkan event listener ke tombol toggle
+    // Tambahkan listener ke tombol toggle
     if (toggleButton) {
         toggleButton.addEventListener('click', () => {
             toggleDarkMode();

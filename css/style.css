@@ -25,7 +25,7 @@ body {
 .main-content {
     flex-grow: 1; /* Memastikan main-content mengambil sisa ruang */
     padding: 20px;
-    background-color: #f8f9fa; /* Latar belakang untuk main content area, agar kontras dengan body */
+    background-color: #ececec; /* Latar belakang untuk main content area, agar kontras dengan body */
 }
 
 /* --- Header Styling --- */

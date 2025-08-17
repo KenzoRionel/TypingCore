@@ -11,7 +11,10 @@
     <link rel="stylesheet" href="css/dark-mode.css">
 </head>
 <body>
-
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <p class="loading-text">Loading TypingCore...</p>
+</div>
     <header id="header" class="site-header d-flex align-items-center">
                 <nav class="navbar navbar-expand navbar-light flex-grow-1">
                     <div class="container-fluid">
@@ -90,5 +93,14 @@
         xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     </script>
     <script type="module" src="js/lessons-generator.js"></script>
+    <script>
+  window.addEventListener("load", () => {
+    const loader = document.getElementById("loading-screen");
+    loader.style.opacity = "0";
+    loader.style.visibility = "hidden";
+    setTimeout(() => loader.remove(), 500); // hapus setelah animasi
+  });
+</script>
+
 </body>
 </html>
