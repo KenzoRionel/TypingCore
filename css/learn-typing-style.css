@@ -23,7 +23,7 @@
     --lesson-text-default-color: #888;
     --lesson-text-correct-color: #4caf50;
     --lesson-text-incorrect-color: #f44336;
-    --text-color-light: #888;
+    --text-color-light: #4e4e4e;
     --highlight-color: #007bff;
     --primary-color: #126ed6;
 }
@@ -801,7 +801,7 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
   top: 30px;
   font-weight: bold;
   font-family: monospace;
-  color: #f5f5f5;
+  color: #4e4e4e;
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
   pointer-events: none; /* biar ga bisa diklik saat hidden */
@@ -862,7 +862,7 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
 
 /* Kotak untuk karakter yang diketik dengan benar */
 .lesson-text.lesson-4-display .typing-char.correct-box {
-    background: linear-gradient(to right, #b2ebf283, #80deea7c);
+    background: linear-gradient(to right, #b2ebf2a4, #80deea9c);
     color: #073f58cc;
 }
 
