@@ -2,7 +2,8 @@
 import { getState } from './learn-typing-state.js';
 import { lessons } from './learn-typing-lessons.js';
 import { renderHandVisualizer, resetHandVisualizer } from './hand-visualizer.js';
-import { getDOMReferences } from './utils/dom-elements.js';
+// Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+import { getLessonDOMReferences } from './utils/dom-elements.js';
 import { cleanupSimpleDrillElements } from './lesson-simple-drill.js';
 import { resetCharacterDrillState } from './lesson-character-drill.js';
 
@@ -155,7 +156,8 @@ export function createKeyboard(keyboardContainer, keyLayout) {
 
 export function clearKeyboardHighlights(keyboardContainer) {
     if (!keyboardContainer) {
-        const domElements = getDOMReferences();
+        // Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+        const domElements = getLessonDOMReferences();
         if (domElements.keyboardContainer) {
             keyboardContainer = domElements.keyboardContainer;
         } else {
@@ -244,36 +246,54 @@ export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, 
 }
 
 function cleanupCharacterDrillElements() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+    const domElements = getLessonDOMReferences();
     if (domElements.lessonInstruction) {
         domElements.lessonInstruction.innerHTML = '';
     }
 }
 
 export function cleanupAllLessonUI() {
-    const domElements = getDOMReferences();
-    const keyboardContainer = domElements.keyboardContainer;
+    const domElements = getLessonDOMReferences();
+    if (!domElements || !domElements.keyboardContainer) {
+        console.error("Gagal mendapatkan referensi DOM di cleanupAllLessonUI.");
+        return;
+    }
+    const keyboardContainer = domElements.keyboardContainer;
 
-    if (keyboardContainer) {
-        const keys = keyboardContainer.querySelectorAll('.key');
-        keys.forEach(key => {
-            key.style.animation = 'none';
-            key.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash', 'is-animating', 'active');
-            key.style.borderImageSource = 'none';
-            key.style.border = '1px solid #444';
-        });
-    }
+    // --- reset semua key ---
+    if (keyboardContainer) {
+        const keys = keyboardContainer.querySelectorAll('.key');
+        keys.forEach(key => {
+            key.style.animation = 'none';
+            key.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash', 'is-animating', 'active');
+            key.style.borderImageSource = 'none';
+            key.style.border = '1px solid #444';
+        });
+    }
 
-    cleanupSimpleDrillElements(domElements.lessonInstruction);
-    cleanupCharacterDrillElements();
-    
-    if (domElements.lessonTextDisplay) {
-        domElements.lessonTextDisplay.innerHTML = '';
-    }
+    // 🚫 jangan hapus instruksi di sini
+    // cleanupSimpleDrillElements(domElements.lessonInstruction);
+    // cleanupCharacterDrillElements();
+    
+    if (domElements.lessonTextDisplay) {
+        domElements.lessonTextDisplay.innerHTML = '';
+        domElements.lessonTextDisplay.style.display = ''; // pastikan tetap terlihat
+    }
+    if (domElements.lessonInstruction) {
+        domElements.lessonInstruction.style.display = ''; // pastikan tetap terlihat
+    }
 
-    clearKeyboardHighlights(domElements.keyboardContainer);
-    resetHandVisualizer();
+    clearKeyboardHighlights(domElements.keyboardContainer);
+    resetHandVisualizer();
+
+    // ✅ pastikan overlay free-typing selalu disembunyikan
+    const overlay = document.getElementById("hold-key-overlay");
+    if (overlay) {
+        overlay.style.display = "none";
+    }
 }
+
 
 export function showLessonCompleteNotification(lessons, currentLessonIdx, domElements) {
     const {

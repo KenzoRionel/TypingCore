@@ -1,14 +1,14 @@
 // js/game/game-events.js
 
-// Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
-import { getDOMReferences } from '../utils/dom-elements.js';
+// Perbaikan: Ganti import { DOM } menjadi import { getGameDOMReferences }
+import { getGameDOMReferences } from '../utils/dom-elements.js';
 import { gameState } from './game-state.js';
 import { processTypedWord, startTimer, endTest, updateRealtimeStats, startInactivityTimer, generateAndAppendWords } from './game-logic.js';
 import { renderCurrentLine, updateWordHighlighting, triggerShakeAnimation, prepareAndRenderLines } from '../utils/text-display.js';
 
 export function handleKeydown(e) {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Perbaikan: Panggil getGameDOMReferences()
+    const DOM = getGameDOMReferences();
 
     if (gameState.isTestInvalid) {
         e.preventDefault();

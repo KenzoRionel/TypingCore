@@ -1,22 +1,22 @@
 // js/utils/text-display.js
 
-// Perbaikan: Ganti `import { DOM }` menjadi `import { getDOMReferences }`
-import { getDOMReferences } from './dom-elements.js';
+// Perbaikan: Ganti `import { DOM }` menjadi `import { getGameDOMReferences }`
+import { getGameDOMReferences } from './dom-elements.js';
 import { gameState } from '../game/game-state.js';
 
 const MAX_OVERTYPED_CHARS_HIGHLIGHT = 5;
 
 export function prepareAndRenderLines() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Perbaikan: Panggil getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     if (!DOM.textDisplay || !gameState.fullTextWords.length) return;
     calculateLines();
     renderCurrentLine();
 }
 
 export function renderCurrentLine() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Perbaikan: Panggil getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     DOM.textDisplay.innerHTML = '';
     const startLine = gameState.currentLineIndex;
     const endLine = Math.min(startLine + 3, gameState.lines.length);
@@ -49,8 +49,8 @@ export function renderCurrentLine() {
 }
 
 function calculateLines() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Perbaikan: Panggil getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     DOM.textDisplay.innerHTML = '';
     gameState.lines = [];
     const wordElements = gameState.fullTextWords.map((word, index) => {
@@ -86,8 +86,8 @@ function calculateLines() {
 }
 
 export function updateWordHighlighting() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Perbaikan: Panggil getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     // Hapus kursor lama terlebih dahulu
     const oldCursor = DOM.textDisplay.querySelector('.blinking-cursor');
     if (oldCursor) {
@@ -162,8 +162,8 @@ export function updateWordHighlighting() {
 window.updateWordHighlighting = updateWordHighlighting; // Ekspor ke window
 
 export function triggerShakeAnimation() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Perbaikan: Panggil getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     if (!DOM.textDisplay.classList.contains('error-shake')) {
         DOM.textDisplay.classList.add('error-shake');
         setTimeout(() => {

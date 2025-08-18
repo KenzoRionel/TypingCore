@@ -1,7 +1,7 @@
 // js/game/game-logic.js
 
-// Perbaikan: Ganti import { DOM } menjadi import { getDOMReferences }
-import { getDOMReferences } from '../utils/dom-elements.js';
+// Perbaikan: Ganti import { DOM } menjadi import { getGameDOMReferences }
+import { getGameDOMReferences } from '../utils/dom-elements.js';
 import { setWpmSpeedometer, setAccuracySpeedometer, setTimerSpeedometer, timerMax } from '../utils/speedometer.js';
 import { prepareAndRenderLines, renderCurrentLine, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
 import { renderResultChart } from '../history/result-chart.js';
@@ -9,15 +9,17 @@ let hasStartedTyping = false; // Flag untuk melacak apakah mengetik sudah dimula
 
 // --- FUNGSI BARU UNTUK MENGATUR VISIBILITAS STATS CONTAINER ---
 function showStatsContainer() {
-    const DOM = getDOMReferences();
-    if (DOM.statsContainer) { 
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
+    if (DOM && DOM.statsContainer) { 
         DOM.statsContainer.classList.add('show');
     }
 }
 
 function hideStatsContainer() {
-    const DOM = getDOMReferences();
-    if (DOM.statsContainer) { 
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
+    if (DOM && DOM.statsContainer) { 
         DOM.statsContainer.classList.remove('show');
     }
 }
@@ -44,8 +46,8 @@ export function generateAndAppendWords(numWords) {
 
 // export function processTypedWord() { ... tidak ada perubahan di sini }
 export function processTypedWord() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     // Perbaikan: Gunakan DOM.hiddenInput
     const currentWordTyped = DOM.hiddenInput.value;
     const targetWord = gameState.fullTextWords[gameState.typedWordIndex];
@@ -97,8 +99,8 @@ export function processTypedWord() {
 
 
 export function updateRealtimeStats() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     if (!gameState.startTime) {
         setWpmSpeedometer(0);
         setAccuracySpeedometer(0);
@@ -139,7 +141,8 @@ export function updateRealtimeStats() {
 }
 
 export function calculateAndDisplayFinalResults() {
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
 
     const textDisplayContainer = document.querySelector('.text-display-container');
     if (textDisplayContainer) textDisplayContainer.style.display = 'none';
@@ -208,8 +211,8 @@ export function calculateAndDisplayFinalResults() {
 
 
 export function endTest() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     clearInterval(gameState.timerInterval);
     clearInterval(gameState.updateStatsInterval);
     clearTimeout(gameState.inactivityTimer); // Hentikan timer inaktivitas
@@ -224,8 +227,8 @@ export function endTest() {
 }
 
 export function invalidateTest(reason) {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     gameState.isTestInvalid = true;
     endTest(); // Panggil endTest untuk menghentikan semua
     
@@ -244,8 +247,8 @@ export function invalidateTest(reason) {
 }
 
 export function resetTestState() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     clearInterval(gameState.timerInterval);
     clearInterval(gameState.updateStatsInterval);
     clearTimeout(gameState.inactivityTimer); // Hentikan timer inaktivitas saat reset
@@ -308,8 +311,8 @@ export function resetTestState() {
 }
 
 export function startTimer() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    // Ganti getDOMReferences() dengan getGameDOMReferences()
+    const DOM = getGameDOMReferences();
     if (gameState.timerInterval) clearInterval(gameState.timerInterval);
     
     // Mulai timer utama
@@ -332,25 +335,19 @@ export function startTimer() {
 }
 
 export function startInactivityTimer() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
+    
+    const DOM = getGameDOMReferences();
     clearTimeout(gameState.inactivityTimer); // Hapus timer lama jika ada
     gameState.inactivityTimer = setTimeout(() => {
         invalidateTest("User AFK / Tidak ada aktivitas.");
     }, 10000);
 }
 
-// --- MODIFIKASI: Tambahkan event listener untuk input pertama kali ---
-// Fungsi ini akan dipanggil dari luar game-logic (misalnya main.js)
-// untuk menginisialisasi event listener setelah DOM dimuat.
 export function initGameListeners() {
-    // Perbaikan: Panggil getDOMReferences()
-    const DOM = getDOMReferences();
-    // Perbaikan: Gunakan DOM.hiddenInput
+
+    const DOM = getGameDOMReferences();
+
     DOM.hiddenInput.addEventListener('input', (event) => {
-        // Jika belum mulai mengetik dan input bukan spasi pertama
-        // (spasi pertama bisa jadi bagian dari input normal atau error)
-        // Kita anggap input pertama yang bukan spasi adalah awal mengetik
         if (!hasStartedTyping && event.data && event.data.trim() !== '') {
             hasStartedTyping = true;
             showStatsContainer(); // Tampilkan speedometer
@@ -364,8 +361,8 @@ export function initGameListeners() {
             hasStartedTyping = true;
             showStatsContainer();
             if (!gameState.startTime) {
-                    gameState.startTime = new Date().getTime();
-                    startTimer();
+                gameState.startTime = new Date().getTime();
+                startTimer();
             }
         }
         // ... Logika penanganan input mengetik Anda yang sudah ada ...

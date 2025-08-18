@@ -415,3 +415,16 @@ export function resetFreeTypingState() {
     }
     clearAnimation();
 }
+
+export function cleanupFreeTypingOverlay() {
+    // Hilangkan semua efek overlay
+    document.body.classList.remove('lesson-overlay-active');
+    document.body.classList.remove('show-hold-key-overlay');
+
+    // Bersihkan elemen overlay
+    const overlay = document.querySelector('.lesson-overlay');
+    if (overlay) overlay.remove();
+
+    const overlayText = document.getElementById('hold-key-overlay-text');
+    if (overlayText) overlayText.remove();
+}

@@ -1,5 +1,6 @@
 // js/learn-typing-logic.js
-import { getDOMReferences } from './utils/dom-elements.js';
+// Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+import { getLessonDOMReferences } from './utils/dom-elements.js';
 import { lessons } from './learn-typing-lessons.js';
 import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
 import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
@@ -16,7 +17,7 @@ import {
     highlightWrongKeyOnKeyboard,
 } from './learn-typing-ui.js';
 import { renderHandVisualizer } from './hand-visualizer.js';
-import { renderFreeTypingLesson, resetFreeTypingState } from './lesson-free-typing.js';
+import { renderFreeTypingLesson, resetFreeTypingState, cleanupFreeTypingOverlay } from './lesson-free-typing.js';
 import { renderSimpleDrillLesson } from './lesson-simple-drill.js';
 import { renderCharacterDrillLesson, resetCharacterDrillState } from './lesson-character-drill.js';
 import { attachInputHandlers } from './input-handler.js';
@@ -24,7 +25,8 @@ import { keyLayout } from './keyboard-layout.js';
 import { initDarkMode } from './utils/dark-mode.js'; // Impor modul dark mode
 
 function showLessonElements() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
     domElements.lessonHeader.style.display = '';
     domElements.keyboardContainer.style.display = '';
     domElements.prevLessonBtn.style.display = '';
@@ -33,15 +35,22 @@ function showLessonElements() {
 }
 
 export function resetLessonState() {
-    const domElements = getDOMReferences();
+    const domElements = getLessonDOMReferences();
     const currentLessonIndex = getState('currentLessonIndex');
     const lessonId = `lesson${currentLessonIndex + 1}`;
     const lesson = lessons[currentLessonIndex];
     updateState('waitingForAnim', false);
 
+    // ✅ Selalu reset overlay hold-key sebelum masuk ke lesson baru
+    const holdOverlay = document.getElementById("hold-key-overlay");
+    if (holdOverlay) {
+        holdOverlay.style.display = "none";
+    }
+    updateState("isHoldKeyActive", false); // pastikan state-nya ikut mati
+
     if (!lesson) return;
 
-    switch(lesson.type) {
+    switch (lesson.type) {
         case 'simple-drill':
             updateState(lessonId, { sequenceIndex: 0, nextCharIndex: 0, finished: false });
             break;
@@ -58,7 +67,8 @@ export function resetLessonState() {
 }
 
 export function renderLesson() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
     const currentLessonIndex = getState('currentLessonIndex');
 
     if (!lessons || !lessons[currentLessonIndex]) {
@@ -68,32 +78,41 @@ export function renderLesson() {
 
     const lesson = lessons[currentLessonIndex];
 
+    if (lesson.type === 'free-typing') {
+        domElements.lessonTextDisplay.style.display = '';
+    } else {
+        domElements.lessonTextDisplay.style.display = 'none';
+    }
+
     document.body.className = document.body.className.replace(/\blesson-type-\S+/g, '');
     if (lesson.type) {
         document.body.classList.add(`lesson-type-${lesson.type}`);
+    }
+
+    // Tambahkan pengecekan null sebelum mengakses properti
+    if (!domElements) {
+        console.error("Gagal mendapatkan referensi DOM untuk pelajaran.");
+        return;
     }
 
     if (domElements.prevLessonBtn) {
         domElements.prevLessonBtn.style.visibility = (currentLessonIndex === 0) ? 'hidden' : 'visible';
     }
     if (domElements.lessonTitle) domElements.lessonTitle.textContent = lesson.title;
-    if (domElements.lessonTextDisplay) {
-        domElements.lessonTextDisplay.style.display = '';
-    }
 
     domElements.lessonTextDisplay.classList.remove('lesson-4-display');
 
     switch (lesson.type) {
         case 'simple-drill':
-            if (domElements.lessonTextDisplay) {
-                domElements.lessonTextDisplay.style.display = 'none';
-                domElements.lessonTextDisplay.innerHTML = '';
-            }
-            renderSimpleDrillLesson(currentLessonIndex, domElements.lessonInstruction, domElements.keyboardContainer);
+            renderSimpleDrillLesson(
+                currentLessonIndex,
+                domElements.lessonInstruction,
+                domElements.keyboardContainer
+            );
             break;
+
         case 'character-drill':
             if (domElements.lessonTextDisplay) {
-                domElements.lessonTextDisplay.style.display = 'none';
                 domElements.lessonTextDisplay.innerHTML = '';
             }
             renderCharacterDrillLesson({
@@ -103,6 +122,7 @@ export function renderLesson() {
                 lessonTextDisplay: domElements.lessonTextDisplay,
             });
             break;
+
         case 'free-typing':
             domElements.lessonTextDisplay.classList.add('lesson-4-display');
             renderFreeTypingLesson({
@@ -125,13 +145,16 @@ export function renderLesson() {
 
 function loadLesson() {
     cleanupAllLessonUI();
+    cleanupFreeTypingOverlay();
     resetLessonState();
     renderLesson();
     showLessonElements();
+
 }
 
 export function goToNextLesson() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
     const currentLessonIndex = getState('currentLessonIndex');
     if (currentLessonIndex < lessons.length - 1) {
         updateState('currentLessonIndex', currentLessonIndex + 1);
@@ -143,7 +166,8 @@ export function goToNextLesson() {
 }
 
 export function goToPreviousLesson() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
     const currentLessonIndex = getState('currentLessonIndex');
     if (currentLessonIndex > 0) {
         updateState('currentLessonIndex', currentLessonIndex - 1);
@@ -153,7 +177,8 @@ export function goToPreviousLesson() {
 }
 
 export function retryLesson() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
     const { lessonCompleteNotification } = domElements;
     if (lessonCompleteNotification) {
         lessonCompleteNotification.classList.remove('active');
@@ -168,7 +193,13 @@ export function dispatchFinishedEvent(lessonIndex) {
 }
 
 export function setupEventListeners() {
-    const domElements = getDOMReferences();
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    if (!domElements) {
+        console.error("Gagal mendapatkan referensi DOM di setupEventListeners.");
+        return;
+    }
+
     const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn, lessonListBtn } = domElements;
 
     createKeyboard(domElements.keyboardContainer, keyLayout);
@@ -198,7 +229,7 @@ export function setupEventListeners() {
     });
 
     attachInputHandlers(loadLesson);
-    
+
     // START - PERBAIKAN BUG
     if (lessonListBtn) {
         lessonListBtn.addEventListener('click', () => {

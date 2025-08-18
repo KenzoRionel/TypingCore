@@ -1,130 +1,126 @@
-// dom-elements.js
+// js/utils/dom-elements.js
 
 /**
- * Mencari dan mengembalikan semua referensi elemen DOM yang dibutuhkan.
- * Jika hiddenInput belum ada, akan membuatnya secara dinamis.
+ * Mencari dan mengembalikan referensi elemen DOM yang dibutuhkan untuk halaman TYPING GAME.
  * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
  */
-export function getDOMReferences() {
+export function getGameDOMReferences() {
+    const hiddenInput = getOrCreateHiddenInput();
+    const textDisplay = document.getElementById('textDisplay');
+    const restartButton = document.getElementById('restartButton');
+    const wpmTicksContainer = document.getElementById('wpmTicks');
+    const accuracyTicksContainer = document.getElementById('accuracyTicks');
+    const timerTicksContainer = document.getElementById('timerTicks');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+
+    // Pastikan semua elemen penting ada sebelum mengembalikannya
+    if (!hiddenInput || !textDisplay || !restartButton || !wpmTicksContainer || !accuracyTicksContainer || !timerTicksContainer || !darkModeToggle) {
+        console.error("ERROR: Beberapa elemen DOM kunci untuk game tidak ditemukan.");
+        return null;
+    }
+
+    return {
+        hiddenInput,
+        textDisplay,
+        restartButton,
+        wpmTicksContainer,
+        accuracyTicksContainer,
+        timerTicksContainer,
+        darkModeToggle,
+    };
+}
+
+/**
+ * Mencari dan mengembalikan referensi elemen DOM yang dibutuhkan untuk halaman PELAJARAN.
+ * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
+ */
+export function getLessonDOMReferences() {
+    const hiddenInput = getOrCreateHiddenInput();
     const keyboardContainer = document.getElementById('virtual-keyboard');
-    if (!keyboardContainer) {
-        console.error("ERROR: Elemen DOM penting #virtual-keyboard tidak ditemukan.");
-        return null;
-    }
-
     const lessonHeader = document.getElementById('lesson-header');
-    if (!lessonHeader) {
-        console.error("ERROR: Elemen DOM penting #lesson-header tidak ditemukan.");
-        return null;
-    }
-
     const lessonTitle = document.getElementById('lesson-title');
-    if (!lessonTitle) {
-        console.error("ERROR: Elemen DOM penting #lesson-title tidak ditemukan.");
-        return null;
-    }
-
     const lessonInstruction = document.getElementById('lesson-instruction');
-    if (!lessonInstruction) {
-        console.error("ERROR: Elemen DOM penting #lesson-instruction tidak ditemukan.");
-        return null;
-    }
-
     const lessonTextDisplay = document.getElementById('lesson-text-display');
-    if (!lessonTextDisplay) {
-        console.error("ERROR: Elemen DOM penting #lesson-text-display tidak ditemukan.");
-        return null;
-    }
-
     const prevLessonBtn = document.getElementById('prev-lesson-btn');
-    if (!prevLessonBtn) {
-        console.error("ERROR: Elemen DOM penting #prev-lesson-btn tidak ditemukan.");
-        return null;
-    }
-
     const nextLessonBtn = document.getElementById('next-lesson-btn');
-    if (!nextLessonBtn) {
-        console.error("ERROR: Elemen DOM penting #next-lesson-btn tidak ditemukan.");
-        return null;
-    }
-
-    // PERBAIKAN: Tambahkan elemen tombol "Coba lagi"
     const retryLessonBtn = document.getElementById('retry-lesson-btn');
-    if (!retryLessonBtn) {
-        console.error("ERROR: Elemen DOM penting #retry-lesson-btn tidak ditemukan.");
-        return null;
-    }
-    
     const lessonCompleteNotification = document.getElementById('lesson-complete-notification');
-    if (!lessonCompleteNotification) {
-        console.error("ERROR: Elemen DOM penting #lesson-complete-notification tidak ditemukan.");
-        return null;
-    }
-
     const continueBtn = document.getElementById('continue-to-next-lesson-btn');
-    if (!continueBtn) {
-        console.error("ERROR: Elemen DOM penting #continue-to-next-lesson-btn tidak ditemukan.");
-        return null;
-    }
-
-    // Hapus pengambilan nextLessonPreview karena elemennya sudah tidak ada
-    
-    // Perbaikan ada di sini: Mengambil elemen wadah progress bar
     const progressContainerWrapper = document.getElementById('progress-container-wrapper');
-    if (!progressContainerWrapper) {
-        console.error("ERROR: Elemen DOM penting #progress-container-wrapper tidak ditemukan.");
-        return null;
-    }
-    
     const progressBar = document.getElementById('lesson-progress-bar');
-    if (!progressBar) {
-        console.error("ERROR: Elemen DOM penting #lesson-progress-bar tidak ditemukan.");
-        return null;
-    }
-
     const progressText = document.getElementById('progress-percentage');
-    if (!progressText) {
-        console.error("ERROR: Elemen DOM penting #progress-percentage tidak ditemukan.");
-        return null;
-    }
-
     const thumbAnimationContainer = document.getElementById('thumb-animation-container');
-    if (!thumbAnimationContainer) {
-        console.error("ERROR: Elemen DOM penting #thumb-animation-container tidak ditemukan.");
-        return null;
-    }
-
     const successAnimationSvg = document.getElementById('success-animation-svg');
-    if (!successAnimationSvg) {
-        console.error("ERROR: Elemen DOM penting #success-animation-svg tidak ditemukan.");
-        return null;
-    }
-
     const circlePath = document.getElementById('circle-path');
-    if (!circlePath) {
-        console.error("ERROR: Elemen DOM penting #circle-path tidak ditemukan.");
-        return null;
-    }
-
     const checkPath = document.getElementById('check-path');
-    if (!checkPath) {
-        console.error("ERROR: Elemen DOM penting #check-path tidak ditemukan.");
+    const lessonListBtn = document.getElementById('lessons-list');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+
+    // Perbaikan: Tambahkan lessonCompleteNotification ke dalam validasi
+    if (!hiddenInput || !keyboardContainer || !lessonHeader || !lessonTitle || !lessonInstruction || !lessonTextDisplay || !lessonCompleteNotification) {
+        console.error("ERROR: Beberapa elemen DOM kunci untuk pelajaran tidak ditemukan.");
         return null;
     }
     
-    // START - PERBAIKAN BUG
-    const lessonListBtn = document.getElementById('lessons-list');
-    if (!lessonListBtn) {
-        console.error("ERROR: Elemen DOM penting #lessons-list tidak ditemukan.");
+    return {
+        hiddenInput,
+        keyboardContainer,
+        lessonHeader,
+        lessonTitle,
+        lessonInstruction,
+        lessonTextDisplay,
+        prevLessonBtn,
+        nextLessonBtn,
+        retryLessonBtn,
+        lessonCompleteNotification,
+        continueBtn,
+        progressContainerWrapper,
+        progressBar,
+        progressText,
+        thumbAnimationContainer,
+        successAnimationSvg,
+        circlePath,
+        checkPath,
+        lessonListBtn,
+        darkModeToggle,
+    };
+}
+
+/**
+ * Mencari dan mengembalikan referensi elemen DOM yang dibutuhkan untuk halaman RIWAYAT SKOR.
+ * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
+ */
+export function getHistoryDOMReferences() {
+    const wpmProgressChart = document.getElementById('wpmProgressChart');
+    const accuracyProgressChart = document.getElementById('accuracyProgressChart');
+    const scoreHistoryList = document.getElementById('scoreHistoryList');
+    const noHistoryMessage = document.querySelector('.no-history');
+
+    // Kita tidak perlu hiddenInput di sini, jadi tidak dimasukkan dalam validasi
+    // Validasi opsional, tapi bagus untuk memastikan elemen penting ada
+    if (!wpmProgressChart || !accuracyProgressChart || !scoreHistoryList) {
+        console.error("ERROR: Beberapa elemen DOM kunci untuk riwayat skor tidak ditemukan.");
         return null;
     }
-    // END - PERBAIKAN BUG
 
+    return {
+        wpmProgressChart,
+        accuracyProgressChart,
+        scoreHistoryList,
+        noHistoryMessage,
+    };
+}
+
+/**
+ * Fungsi utilitas untuk mendapatkan atau membuat elemen input tersembunyi.
+ */
+function getOrCreateHiddenInput() {
     let hiddenInput = document.getElementById('hidden-input');
     if (!hiddenInput) {
         hiddenInput = document.createElement('input');
         hiddenInput.type = 'text';
         hiddenInput.id = 'hidden-input';
+        hiddenInput.className = 'hidden-input';
         hiddenInput.style.position = 'absolute';
         hiddenInput.style.opacity = '0';
         hiddenInput.style.pointerEvents = 'none';
@@ -137,28 +133,5 @@ export function getDOMReferences() {
         hiddenInput.spellcheck = false;
         document.body.appendChild(hiddenInput);
     }
-
-    return {
-        keyboardContainer,
-        lessonHeader,
-        lessonTitle,
-        lessonInstruction,
-        lessonTextDisplay,
-        prevLessonBtn,
-        nextLessonBtn,
-        retryLessonBtn, // PERBAIKAN: Kembalikan tombol "Coba lagi"
-        lessonCompleteNotification,
-        continueBtn,
-        hiddenInput,
-        progressBar,
-        progressText,
-        progressContainerWrapper, // Ditambahkan: Wadah progress bar utama
-        thumbAnimationContainer,
-        successAnimationSvg,
-        circlePath,
-        checkPath,
-        // START - PERBAIKAN BUG
-        lessonListBtn,
-        // END - PERBAIKAN BUG
-    };
+    return hiddenInput;
 }
