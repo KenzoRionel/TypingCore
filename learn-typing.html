@@ -17,15 +17,16 @@
 
 <body>
     <div id="loading-screen">
-  <div class="spinner"></div>
-  <p class="loading-text">Loading TypingCore...</p>
-</div>
+        <div class="spinner"></div>
+        <p class="loading-text">Loading TypingCore...</p>
+    </div>
     <div class="wrapper">
         <main class="main-content learn-typing-content">
             <header id="header" class="site-header d-flex align-items-center">
                 <nav class="navbar navbar-expand navbar-light flex-grow-1">
                     <div class="container-fluid">
-                        <button id="mainSidebarToggleBtn" class="navbar-toggler d-lg-none me-2" type="button" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <button id="mainSidebarToggleBtn" class="navbar-toggler d-lg-none me-2" type="button"
+                            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                             <span class="navbar-toggler-icon"></span>
                         </button>
 
@@ -37,8 +38,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
                                 </li>
-                               <li class="nav-item">
-                                    <a class="nav-link active" href="lessons.html"><i class="fas fa-graduation-cap"></i></a>
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="lessons.html"><i
+                                            class="fas fa-graduation-cap"></i></a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="add-text.html"><i class="fas fa-plus-circle"></i></a>
@@ -55,7 +57,8 @@
                             <ul class="navbar-nav align-items-center">
                                 <!-- Tombol mode malam/siang yang dipindahkan ke header -->
                                 <li class="nav-item">
-                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
+                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link"
+                                        aria-label="Toggle Dark Mode">
                                         <span class="slider">
                                             <span class="slider-icon sun">☀️</span>
                                             <span class="slider-icon moon">🌙</span>
@@ -63,7 +66,8 @@
                                     </button>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-globe"></i> Bahasa
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
@@ -72,13 +76,16 @@
                                     </ul>
                                 </li>
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-user-circle"></i> User
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
                                         <li><a class="dropdown-item" href="#">Profil</a></li>
                                         <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
                                         <li><a class="dropdown-item" href="#">Logout</a></li>
                                     </ul>
                                 </li>
@@ -89,48 +96,54 @@
             </header>
 
             <section id="learn-typing-section">
-    <div id="lesson-header" class="lesson-header">
-        <h2 id="lesson-title">Pelajaran 1: Tombol F dan J</h2>
-        <p id="lesson-instruction">Tekan tombol 'f' menggunakan jari telunjuk kiri Anda.</p>
-    </div>
-    <input type="text" id="hidden-input" class="hidden-input" autofocus>
-    <div id="lesson-text-display" class="lesson-text"></div>
-    
-    <div id="progress-container-wrapper" class="progress-container-wrapper">
-        <div class="lesson-progress">
-            <div class="progress-container">
-                <div class="progress-bar" id="lesson-progress-bar"></div>
-            </div>
-            <span class="progress-text" id="progress-percentage">0%</span>
-        </div>
-    </div>
-    
-    <div class="keyboard-and-navigation-wrapper">
-        <button id="prev-lesson-btn" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Sebelumnya
-        </button>
-        <div id="virtual-keyboard" class="keyboard-container">
-            <div id="hand-visualizer">
-                <img id="hand-f" class="hand-image" src="img/hand_f.svg" alt="Tangan untuk tombol F">
-                <img id="hand-j" class="hand-image" src="img/hand_j.svg" alt="Tangan untuk tombol J">
-                <img id="hand-space" class="hand-image" src="img/hand_space.svg" alt="Tangan untuk tombol spasi">
-                <img id="hand-d" class="hand-image" src="img/hand_d.svg" alt="Tangan untuk tombol D">
-                <img id="hand-k" class="hand-image" src="img/hand_k.png" alt="Tangan untuk tombol K">
-                <img id="hand-s" class="hand-image" src="img/hand_s.svg" alt="Tangan untuk tombol S">
-                <img id="hand-l" class="hand-image" src="img/hand_l.svg" alt="Tangan untuk tombol L">
-                <img id="hand-a" class="hand-image" src="img/hand_a.svg" alt="Tangan untuk tombol A">
-                <img id="hand-;" class="hand-image" src="img/hand_;.svg" alt="Tangan untuk tombol ;">
-            </div>
-        </div>
-        <button id="next-lesson-btn" class="btn btn-primary">
-            Skip <i class="fas fa-arrow-right"></i>
-        </button>
-    </div>
+                <div id="lesson-header" class="lesson-header">
+                    <h2 id="lesson-title">Pelajaran 1: Tombol F dan J</h2>
+                    <p id="lesson-instruction">Tekan tombol 'f' menggunakan jari telunjuk kiri Anda.</p>
+                </div>
+                <input type="text" id="hidden-input" class="hidden-input" autofocus>
+                <div class ="lesson-wrapper">
+                    <div id="lesson-text-display" class="lesson-text"></div>
+                <div id="typing-stats" class="typing-stats">
+                    <div>WPM: <span id="wpm">0</span></div>
+                    <div>Akurasi: <span id="accuracy">100%</span></div>
+                </div>
+                </div>
+                <div id="progress-container-wrapper" class="progress-container-wrapper">
+                    <div class="lesson-progress">
+                        <div class="progress-container">
+                            <div class="progress-bar" id="lesson-progress-bar"></div>
+                        </div>
+                        <span class="progress-text" id="progress-percentage">0%</span>
+                    </div>
+                </div>
 
-                
+                <div class="keyboard-and-navigation-wrapper">
+                    <button id="prev-lesson-btn" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Sebelumnya
+                    </button>
+                    <div id="virtual-keyboard" class="keyboard-container">
+                        <div id="hand-visualizer">
+                            <img id="hand-f" class="hand-image" src="img/hand_f.svg" alt="Tangan untuk tombol F">
+                            <img id="hand-j" class="hand-image" src="img/hand_j.svg" alt="Tangan untuk tombol J">
+                            <img id="hand-space" class="hand-image" src="img/hand_space.svg"
+                                alt="Tangan untuk tombol spasi">
+                            <img id="hand-d" class="hand-image" src="img/hand_d.svg" alt="Tangan untuk tombol D">
+                            <img id="hand-k" class="hand-image" src="img/hand_k.png" alt="Tangan untuk tombol K">
+                            <img id="hand-s" class="hand-image" src="img/hand_s.svg" alt="Tangan untuk tombol S">
+                            <img id="hand-l" class="hand-image" src="img/hand_l.svg" alt="Tangan untuk tombol L">
+                            <img id="hand-a" class="hand-image" src="img/hand_a.svg" alt="Tangan untuk tombol A">
+                            <img id="hand-;" class="hand-image" src="img/hand_;.svg" alt="Tangan untuk tombol ;">
+                        </div>
+                    </div>
+                    <button id="next-lesson-btn" class="btn btn-primary">
+                        Skip <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+
             </section>
         </main>
-        
+
         <div id="lesson-complete-notification" class="lesson-complete-notification" style="display: none;">
             <div class="notification-content">
                 <div class="notification-header">
@@ -149,28 +162,28 @@
                         <path id="circle-path" class="circle-path"
                             d="M50 2 C76.48 2 98 23.52 98 50 C98 76.48 76.48 98 50 98 C23.52 98 2 76.48 2 50 C2 23.52 23.52 2 50 2 Z"
                             fill="none" stroke-width="10" stroke-linecap="round" stroke-miterlimit="10" />
-                        <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none"
-                            stroke-width="6" stroke-linecap="round" stroke-miterlimit="10" />
+                        <path id="check-path" class="check-path" d="M34 50 L46 62 L66 42" fill="none" stroke-width="6"
+                            stroke-linecap="round" stroke-miterlimit="10" />
                     </svg>
                 </div>
                 <div class="notification-buttons-wrapper">
-            <button id="retry-lesson-btn" class="btn btn-secondary">Coba lagi</button>
-            <button id="lessons-list" class="btn btn-info" href="lessons.html">Daftar Pelajaran</button>
-            <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
-        </div>
+                    <button id="retry-lesson-btn" class="btn btn-secondary">Coba lagi</button>
+                    <button id="lessons-list" class="btn btn-info" href="lessons.html">Daftar Pelajaran</button>
+                    <button id="continue-to-next-lesson-btn" class="btn btn-success">Lanjutkan</button>
+                </div>
             </div>
         </div>
     </div>
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="js/learn-typing.js" type="module"></script>
     <script>
-  window.addEventListener("load", () => {
-    const loader = document.getElementById("loading-screen");
-    loader.style.opacity = "0";
-    loader.style.visibility = "hidden";
-    setTimeout(() => loader.remove(), 500); // hapus setelah animasi
-  });
-</script>
+        window.addEventListener("load", () => {
+            const loader = document.getElementById("loading-screen");
+            loader.style.opacity = "0";
+            loader.style.visibility = "hidden";
+            setTimeout(() => loader.remove(), 500); // hapus setelah animasi
+        });
+    </script>
 
 </body>
 

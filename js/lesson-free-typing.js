@@ -15,6 +15,29 @@ import { dispatchFinishedEvent } from './learn-typing-logic.js';
 
 let lessonTextDisplayRef = null;
 
+// --- Statistik Free Typing ---
+let startTime = null;
+let correctCount = 0;
+let wrongCount = 0;
+
+function startTimer() {
+    if (!startTime) startTime = Date.now();
+}
+
+function updateStatsDisplay() {
+    const elapsedMinutes = (Date.now() - startTime) / 60000;
+    const wpm = elapsedMinutes > 0 ? Math.round((correctCount / 5) / elapsedMinutes) : 0;
+    const accuracy = (correctCount + wrongCount) > 0
+        ? Math.round((correctCount / (correctCount + wrongCount)) * 100)
+        : 100;
+
+    const wpmEl = document.getElementById("wpm");
+    const accEl = document.getElementById("accuracy");
+
+    if (wpmEl) wpmEl.textContent = wpm;
+    if (accEl) accEl.textContent = accuracy + "%";
+}
+
 function getLessonState(lessonId) {
     const defaultState = {
         currentCharIndex: 0,
@@ -79,7 +102,7 @@ function updateScrollPosition(allChars, currentCharIndex) {
         if (targetTopLineIndex > maxTopLineIndex) {
             targetTopLineIndex = maxTopLineIndex;
         }
-        
+
         scrollOffset = linePositions[targetTopLineIndex];
     }
     scrollContainer.style.transform = `translateY(-${scrollOffset}px)`;
@@ -104,8 +127,8 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
             lessonInstruction.style.display = 'block';
         }
     }
-    
-    // Perbaikan: Pastikan elemen overlay dan teks instruksi ada di DOM saat pelajaran dimulai
+
+    // Overlay untuk hold key
     if (lesson.requiredHoldKey) {
         let overlay = document.querySelector('.lesson-overlay');
         if (!overlay) {
@@ -130,8 +153,21 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
     }
 
     const isInitialRender = !lessonTextDisplayRef.querySelector('.scrollable-text-container');
-    
+
     if (isInitialRender) {
+        const statsContainer = document.getElementById("typing-stats");
+        if (statsContainer) {
+            // reset dulu biar transisi jalan
+            statsContainer.classList.remove("show");
+            statsContainer.querySelector("#wpm").textContent = "0";
+            statsContainer.querySelector("#accuracy").textContent = "100%";
+
+            // kasih waktu 1 frame sebelum fade-in
+            requestAnimationFrame(() => {
+                statsContainer.classList.add("show");
+            });
+        }
+
         lessonTextDisplayRef.innerHTML = '<div class="scrollable-text-container"></div>';
         const scrollContainer = lessonTextDisplayRef.querySelector('.scrollable-text-container');
         lesson.sequence.forEach((char) => {
@@ -169,8 +205,19 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
 
             }, { once: true });
         }, 300);
+
+        // Reset stats setiap mulai ulang free typing
+        startTime = null;
+        correctCount = 0;
+        wrongCount = 0;
+
+        const wpmEl = document.getElementById("wpm");
+        const accEl = document.getElementById("accuracy");
+        if (wpmEl) wpmEl.textContent = "0";
+        if (accEl) accEl.textContent = "100%";
+
     }
-    
+
     const scrollContainer = lessonTextDisplayRef.querySelector('.scrollable-text-container');
     const allChars = Array.from(scrollContainer.children);
 
@@ -220,7 +267,6 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
     }
 }
 
-
 export function handleFreeTypingInput({ e, domElements, animationFunctions, type }) {
     const currentLessonIndex = getState('currentLessonIndex');
     const lessonId = `lesson${currentLessonIndex + 1}`;
@@ -233,7 +279,7 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
     if (lesson.requiredHoldKey) {
         const lessonCompleteNotification = document.getElementById('lesson-complete-notification');
         const isNotificationActive = lessonCompleteNotification && lessonCompleteNotification.classList.contains('active');
-        
+
         if (isNotificationActive) {
             if (isHoldKeyActive) {
                 updateState(lessonId, { isHoldKeyActive: false });
@@ -248,11 +294,9 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
         if (type === 'keydown' && isHoldKey) {
             if (!prevIsHoldKeyActive) {
                 updateState(lessonId, { isHoldKeyActive: true });
-                // Hapus kedua kelas untuk menghilangkan overlay dan blur
                 document.body.classList.remove('show-hold-key-overlay');
                 document.body.classList.remove('lesson-overlay-active');
 
-                // PERBAIKAN: Langsung render visualizer tangan saat tombol j ditahan
                 const nextChar = lesson.sequence[currentCharIndex];
                 const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
                 if (nextChar && keyElement) {
@@ -266,13 +310,11 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
 
         if (type === 'keyup' && isHoldKey) {
             if (prevIsHoldKeyActive) {
-                // Perbaikan: Hanya tampilkan kembali overlay jika pelajaran belum selesai.
                 if (currentCharIndex < lesson.sequence.length) {
                     updateState(lessonId, { isHoldKeyActive: false });
                     document.body.classList.add('show-hold-key-overlay');
                     document.body.classList.add('lesson-overlay-active');
                 } else {
-                    // Jika pelajaran selesai, kita tidak perlu menampilkan kembali overlay
                     updateState(lessonId, { isHoldKeyActive: false });
                     document.body.classList.remove('show-hold-key-overlay');
                     document.body.classList.remove('lesson-overlay-active');
@@ -283,7 +325,6 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
 
         if (!isHoldKeyActive) {
             if (type === 'keydown' && e.key.length === 1) {
-                // Saat tombol salah ditekan, pastikan overlay dan blur terlihat
                 document.body.classList.add('show-hold-key-overlay');
                 document.body.classList.add('lesson-overlay-active');
                 animationFunctions.highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
@@ -291,9 +332,8 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
             }
         }
     }
-    
+
     if (type === 'keydown' && (!lesson.requiredHoldKey || isHoldKeyActive)) {
-        
         if (e.key === 'Dead' || e.key.startsWith('Alt') || e.key.startsWith('Control') || e.key.startsWith('Shift') || e.key.startsWith('Meta')) return;
 
         const allChars = Array.from(lessonTextDisplayRef.querySelector('.scrollable-text-container').children);
@@ -306,15 +346,15 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
 
                 charToRemoveStyle.textContent = originalChar === ' ' ? '\u00A0' : originalChar;
                 charToRemoveStyle.classList.remove('correct-box', 'corrected-box', 'error-char');
-                
-                if(allChars[currentCharIndex]) allChars[currentCharIndex].classList.remove('cursor');
+
+                if (allChars[currentCharIndex]) allChars[currentCharIndex].classList.remove('cursor');
                 charToRemoveStyle.classList.add('cursor');
 
                 currentCharIndex--;
                 userTypingHistory.pop();
                 updateState(lessonId, { currentCharIndex, userTypingHistory });
                 clearWrongInputFeedback(lessonId);
-                
+
                 updateScrollPosition(allChars, currentCharIndex);
             }
         } else if (currentCharIndex < lesson.sequence.length) {
@@ -323,10 +363,14 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
             const typingCharElement = allChars[currentCharIndex];
 
             if (isCorrect) {
+                startTimer();
+                correctCount++;
+                updateStatsDisplay();
+
                 clearWrongInputFeedback(lessonId);
                 const wasWrong = (userTypingHistory[currentCharIndex] && userTypingHistory[currentCharIndex].isCorrect === false) || false;
                 userTypingHistory[currentCharIndex] = { key: e.key, isCorrect: true, wasWrong, originalChar: expectedChar };
-                
+
                 typingCharElement.classList.remove('cursor');
                 typingCharElement.classList.add(wasWrong ? 'corrected-box' : 'correct-box');
                 if (allChars[currentCharIndex + 1]) {
@@ -367,6 +411,10 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                     dispatchFinishedEvent(currentLessonIndex);
                 }
             } else {
+                startTimer();
+                wrongCount++;
+                updateStatsDisplay();
+
                 if (typingCharElement) {
                     clearWrongInputFeedback(lessonId);
                     const wrongInputState = {
@@ -405,26 +453,53 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
 export function resetFreeTypingState() {
     const currentLessonIndex = getState('currentLessonIndex');
     const lessonId = `lesson${currentLessonIndex + 1}`;
+
+    startTime = null;
+    correctCount = 0;
+    wrongCount = 0;
+
+    const wpmEl = document.getElementById("wpm");
+    const accEl = document.getElementById("accuracy");
+    if (wpmEl) wpmEl.textContent = "0";
+    if (accEl) accEl.textContent = "100%";
+
     clearWrongInputFeedback(lessonId);
     updateState(lessonId, { currentCharIndex: 0, userTypingHistory: [], finished: false, isHoldKeyActive: false });
+
     if (lessonTextDisplayRef) {
         lessonTextDisplayRef.innerHTML = '';
         lessonTextDisplayRef.dataset.lessonId = '';
         document.body.classList.remove('lesson-overlay-active');
         document.body.classList.remove('show-hold-key-overlay');
     }
-    clearAnimation();
+    // Saat reset / skip
+    const statsContainer = document.getElementById("typing-stats");
+    if (statsContainer) {
+        statsContainer.classList.remove("show"); // fade-out
+    }
 }
 
 export function cleanupFreeTypingOverlay() {
-    // Hilangkan semua efek overlay
     document.body.classList.remove('lesson-overlay-active');
     document.body.classList.remove('show-hold-key-overlay');
 
-    // Bersihkan elemen overlay
     const overlay = document.querySelector('.lesson-overlay');
     if (overlay) overlay.remove();
 
     const overlayText = document.getElementById('hold-key-overlay-text');
     if (overlayText) overlayText.remove();
+}
+
+export function cleanupTypingStats() {
+    const statsContainer = document.getElementById("typing-stats");
+    if (statsContainer) {
+        statsContainer.remove();
+    }
+}
+
+export function hideTypingStats() {
+    const statsContainer = document.getElementById("typing-stats");
+    if (statsContainer) {
+        statsContainer.classList.remove("show");
+    }
 }

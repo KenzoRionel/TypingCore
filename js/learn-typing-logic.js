@@ -17,7 +17,7 @@ import {
     highlightWrongKeyOnKeyboard,
 } from './learn-typing-ui.js';
 import { renderHandVisualizer } from './hand-visualizer.js';
-import { renderFreeTypingLesson, resetFreeTypingState, cleanupFreeTypingOverlay } from './lesson-free-typing.js';
+import { renderFreeTypingLesson, resetFreeTypingState, cleanupFreeTypingOverlay, cleanupTypingStats, hideTypingStats  } from './lesson-free-typing.js';
 import { renderSimpleDrillLesson } from './lesson-simple-drill.js';
 import { renderCharacterDrillLesson, resetCharacterDrillState } from './lesson-character-drill.js';
 import { attachInputHandlers } from './input-handler.js';
@@ -80,8 +80,12 @@ export function renderLesson() {
 
     if (lesson.type === 'free-typing') {
         domElements.lessonTextDisplay.style.display = '';
+        const stats = document.getElementById("typing-stats");
+        if (stats) stats.style.display = "block"; // ✅ tampilkan kalau free typing
     } else {
         domElements.lessonTextDisplay.style.display = 'none';
+        const stats = document.getElementById("typing-stats");
+        if (stats) stats.style.display = "none"; // ✅ sembunyikan kalau bukan free typing
     }
 
     document.body.className = document.body.className.replace(/\blesson-type-\S+/g, '');
@@ -189,8 +193,14 @@ export function retryLesson() {
 }
 
 export function dispatchFinishedEvent(lessonIndex) {
+    // 🚀 Sembunyikan stats biar ga ikut tampil di notifikasi
+    const stats = document.getElementById("typing-stats");
+    if (stats) stats.style.display = "none";
+
+    // Tetap trigger event selesai
     document.dispatchEvent(new Event(`lesson${lessonIndex + 1}-finished`));
 }
+
 
 export function setupEventListeners() {
     // Perbaikan: Gunakan getLessonDOMReferences()

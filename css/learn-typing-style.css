@@ -166,8 +166,13 @@ virtual-keyboard .key.next-key {
 
 /* PERUBAHAN: Tambahkan keyframes untuk fade-in */
 @keyframes fade-in-effect {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .key.next-key {
@@ -183,9 +188,12 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
 }
 
 @keyframes jelly-effect {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.1);
     }
@@ -238,7 +246,8 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
 }
 
 .wrong-input-overlay {
-    color: #ff4d4f; /* Warna merah untuk input salah */
+    color: #ff4d4f;
+    /* Warna merah untuk input salah */
     font-weight: bold;
     /* Efek transisi jika kamu inginkan */
 }
@@ -727,6 +736,7 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
         transform: translateY(-20px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -738,34 +748,82 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
     from {
         height: 0;
     }
+
     to {
-        height: 10.5rem; /* Sesuaikan dengan tinggi .lesson-4-display */
+        height: 10.5rem;
+        /* Sesuaikan dengan tinggi .lesson-4-display */
     }
 }
 
 /* learn-typing.css */
 
 /* Kontainer utama untuk teks pelajaran 4 */
-.lesson-4-display {
+.lesson-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 790px;
     margin: 0 auto;
-    /* PERBAIKAN: Sesuaikan margin vertikal agar lebih di tengah */
+    position: relative;
+}
+
+.lesson-4-display {
+    flex: 0 0 auto;
+    margin: 0 auto;
     margin-top: 0px;
     margin-bottom: 0px;
-    /* PERBAIKAN: Hapus flexbox properties dari container luar */
-    max-width: 785px;
     font-size: 2.5rem;
     font-family: monospace;
     color: var(--text-color-light);
     white-space: normal;
-    text-align: left;
-    /* PERBAIKAN: Atur tinggi tetap dan sembunyikan overflow */
-    height: 10.3rem; /* Cukup untuk sekitar 3 baris. Sesuaikan jika perlu. */
+    text-align: center;
+    height: 10.3rem;
     overflow: hidden;
     position: relative;
     padding-top: 0px;
     padding-bottom: 0px;
-    padding-left: 0px; /* Typo 'opx' diperbaiki menjadi '0px' */
-    box-sizing: border-box; /* PERBAIKAN: Tambahkan box-sizing */
+    padding-left: 0px;
+}
+
+/* Teks typing */
+.lesson-text {
+    flex: 1 0 auto;
+    margin: auto;
+    /* biar cursor dan teks tetap fokus di tengah */
+}
+
+/* Statistik di kanan */
+.typing-stats {
+  position: absolute;
+  width: 180px;
+  left: 100%;
+  margin-left: 40px;
+  top: 30px;
+  font-weight: bold;
+  font-family: monospace;
+  color: #f5f5f5;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none; /* biar ga bisa diklik saat hidden */
+}
+
+#typing-stats.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.typing-stats div {
+  margin-bottom: 8px;
+  font-size: 1.7rem;
+  justify-content: space-between;
+}
+
+.typing-stats div span {
+  font-weight: bold;
+  color: #4CAF50; /* default warna hijau (WPM) */
+}
+
+.typing-stats div:last-child span {
+  color: #2196F3; /* warna biru untuk akurasi */
 }
 
 /* PERUBAHAN: Kelas untuk memicu animasi "reveal" */
@@ -780,8 +838,10 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
     justify-content: flex-start;
     position: absolute;
     width: 100%;
-    transition: transform 0.3s ease-out; /* Animasi untuk scrolling */
-    box-sizing: border-box; /* PERBAIKAN: Tambahkan box-sizing */
+    transition: transform 0.3s ease-out;
+    /* Animasi untuk scrolling */
+    box-sizing: border-box;
+    /* PERBAIKAN: Tambahkan box-sizing */
 }
 
 /* Gaya untuk setiap huruf (box) di dalam pelajaran 4 */
@@ -796,7 +856,8 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
     border: 1px solid transparent;
     transition: background-color 0.3s ease, border-color 0.3s ease;
     line-height: 1;
-    box-sizing: border-box; /* PERBAIKAN: Tambahkan box-sizing */
+    box-sizing: border-box;
+    /* PERBAIKAN: Tambahkan box-sizing */
 }
 
 /* Kotak untuk karakter yang diketik dengan benar */
@@ -944,8 +1005,8 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
 }
 
 .key.jelly-effect {
-animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
-transition: none !important;
+    animation: jelly-effect 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+    transition: none !important;
 }
 
 /* Gaya untuk overlay gelap */
@@ -1023,41 +1084,65 @@ body #lesson-instruction {
 
 /*Loading Screen*/
 #loading-screen {
-  position: fixed;
-  inset: 0;
-  background: #dbdbdb; /* default light mode */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
+    position: fixed;
+    inset: 0;
+    background: #dbdbdb;
+    /* default light mode */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 body.dark-mode #loading-screen {
-  background: #1a1a1a; /* dark mode */
+    background: #1a1a1a;
+    /* dark mode */
 }
 
 .spinner {
-  width: 60px;
-  height: 60px;
-  border: 6px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #00ffff; /* cyan biar matching */
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+    width: 60px;
+    height: 60px;
+    border: 6px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #00ffff;
+    /* cyan biar matching */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
 .loading-text {
-  margin-top: 15px;
-  font-size: 1rem;
-  color: #333;
+    margin-top: 15px;
+    font-size: 1rem;
+    color: #333;
 }
 
 body.dark-mode .loading-text {
-  color: #e0e0e0; /* soft white di dark mode */
+    color: #e0e0e0;
+    /* soft white di dark mode */
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
+
 /*End Loading Screen*/
+
+/*Style WPM Free Typing*/
+.lesson-text {
+    display: inline-block;
+    width: 70%;
+    vertical-align: top;
+}
+
+.typing-stats {
+    display: inline-block;
+    width: 25%;
+    margin-left: 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/*End WPM Free Typing*/
