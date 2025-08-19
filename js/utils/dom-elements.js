@@ -12,6 +12,15 @@ export function getGameDOMReferences() {
     const accuracyTicksContainer = document.getElementById('accuracyTicks');
     const timerTicksContainer = document.getElementById('timerTicks');
     const darkModeToggle = document.getElementById('darkModeToggle');
+    const wpmNeedle = document.getElementById('wpmNeedle');
+    const wpmValue = document.getElementById('wpmValue');
+    const accuracyNeedle = document.getElementById('accuracyNeedle');
+    const accuracyValue = document.getElementById('accuracyValue');
+    const timerNeedle = document.getElementById('timerNeedle');
+    const timerValue = document.getElementById('timerValue');
+    const statsContainer = document.getElementById('stats-container'); // dipake show/hide
+    const header = document.querySelector('header');
+    const menuButton = document.getElementById('MenuButton');
 
     // Pastikan semua elemen penting ada sebelum mengembalikannya
     if (!hiddenInput || !textDisplay || !restartButton || !wpmTicksContainer || !accuracyTicksContainer || !timerTicksContainer || !darkModeToggle) {
@@ -27,6 +36,15 @@ export function getGameDOMReferences() {
         accuracyTicksContainer,
         timerTicksContainer,
         darkModeToggle,
+        wpmNeedle,
+        wpmValue,
+        accuracyNeedle,
+        accuracyValue,
+        timerNeedle,
+        timerValue,
+        statsContainer,
+        header,
+        menuButton
     };
 }
 
@@ -61,7 +79,7 @@ export function getLessonDOMReferences() {
         console.error("ERROR: Beberapa elemen DOM kunci untuk pelajaran tidak ditemukan.");
         return null;
     }
-    
+
     return {
         hiddenInput,
         keyboardContainer,
@@ -115,19 +133,12 @@ export function getHistoryDOMReferences() {
  * Fungsi utilitas untuk mendapatkan atau membuat elemen input tersembunyi.
  */
 function getOrCreateHiddenInput() {
-    let hiddenInput = document.getElementById('hidden-input');
+    let hiddenInput = document.getElementById('hiddenTextInput');
     if (!hiddenInput) {
         hiddenInput = document.createElement('input');
         hiddenInput.type = 'text';
-        hiddenInput.id = 'hidden-input';
-        hiddenInput.className = 'hidden-input';
-        hiddenInput.style.position = 'absolute';
-        hiddenInput.style.opacity = '0';
-        hiddenInput.style.pointerEvents = 'none';
-        hiddenInput.style.width = '1px';
-        hiddenInput.style.height = '1px';
-        hiddenInput.style.top = '-9999px';
-        hiddenInput.style.left = '-9999px';
+        hiddenInput.id = 'hiddenTextInput';
+        hiddenInput.className = 'sr-only'; // pakai class helper, ga usah inline style
         hiddenInput.autocapitalize = 'off';
         hiddenInput.autocomplete = 'off';
         hiddenInput.spellcheck = false;

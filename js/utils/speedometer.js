@@ -98,27 +98,27 @@ export function createSpeedometerTicks(container, minVal, maxVal, step, tickColo
 export function setWpmSpeedometer(wpm) {
     // Ganti getDOMReferences()
     const DOM = getGameDOMReferences();
-    if (!DOM.wpmNeedle || !DOM.wpmValueText) return;
+    if (!DOM.wpmNeedle || !DOM.wpmValue) return;
     wpm = Math.max(0, Math.min(wpmMax, wpm));
     const angle = (wpm / wpmMax) * 240 - 120;
     DOM.wpmNeedle.style.setProperty('--needle-angle', `${angle}deg`);
-    DOM.wpmValueText.textContent = Math.round(wpm);
+    DOM.wpmValue.textContent = Math.round(wpm);
 }
 
 export function setAccuracySpeedometer(accuracy) {
     // Ganti getDOMReferences()
     const DOM = getGameDOMReferences();
-    if (!DOM.accuracyNeedle || !DOM.accuracyValueText) return;
+    if (!DOM.accuracyNeedle || !DOM.accuracyValue) return;
     accuracy = Math.max(0, Math.min(accuracyMax, accuracy));
     const angle = (accuracy / accuracyMax) * 240 - 120;
     DOM.accuracyNeedle.style.setProperty('--needle-angle', `${angle}deg`);
-    DOM.accuracyValueText.textContent = `${Math.round(accuracy)}%`;
+    DOM.accuracyValue.textContent = `${Math.round(accuracy)}%`;
 }
 
 export function setTimerSpeedometer(timeLeftVal) {
     // Ganti getDOMReferences()
     const DOM = getGameDOMReferences();
-    if (!DOM.timerNeedle || !DOM.timerValueText) return;
+    if (!DOM.timerNeedle || !DOM.timerValue) return;
     timeLeftVal = Math.max(0, Math.min(timerMax, timeLeftVal));
 
     const MIN_ANGLE_TIMER = -120;
@@ -127,7 +127,7 @@ export function setTimerSpeedometer(timeLeftVal) {
     const angle = MIN_ANGLE_TIMER + (percentageRemaining * (MAX_ANGLE_TIMER - MIN_ANGLE_TIMER));
 
     DOM.timerNeedle.style.setProperty('--needle-angle', `${angle}deg`);
-    DOM.timerValueText.textContent = Math.round(timeLeftVal);
+    DOM.timerValue.textContent = Math.round(timeLeftVal);
 }
 
 // Modifikasi setTimerSpeedometerMax agar menggunakan warna dinamis

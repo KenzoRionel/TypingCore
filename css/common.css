@@ -5,8 +5,7 @@
     width: 180px; /* Ukuran yang disesuaikan agar muat di kartu */
     height: 180px; /* Ukuran yang disesuaikan agar muat di kartu */
     border-radius: 50%;
-    background-color: #444; /* Warna dasar speedometer */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    background-color: transparent; /* Warna dasar speedometer */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -18,7 +17,7 @@
     width: 160px; /* Sedikit lebih kecil dari container untuk efek bingkai */
     height: 160px;
     border-radius: 50%;
-    background-color: #2a2a2a; /* Warna muka speedometer */
+    background-color: transparent; /* Warna muka speedometer */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -37,7 +36,7 @@
     position: absolute;
     width: 1px;       /* Ukuran lebar tick yang tipis */
     height: 6px;      /* Ukuran tinggi tick */
-    background-color: #666; /* Warna default tick */
+    background-color: transparent; /* Warna default tick */
     border-radius: 0.5px; /* Membulatkan sudut tick yang tipis */
     top: 50%; /* Posisikan tick di tengah-tengah container */
     left: 50%;

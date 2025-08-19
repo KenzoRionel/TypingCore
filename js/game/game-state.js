@@ -8,6 +8,7 @@ export const gameState = {
     startTime: null,
     timerInterval: null,
     updateStatsInterval: null,
+    isTypingActive: false,
     totalCorrectWords: 0,
     totalIncorrectWords: 0,
     typedWordCorrectness: [],

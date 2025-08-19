@@ -5,8 +5,7 @@
     width: 180px; /* Ukuran yang disesuaikan agar muat di kartu */
     height: 180px; /* Ukuran yang disesuaikan agar muat di kartu */
     border-radius: 50%;
-    background-color: #444; /* Warna dasar speedometer */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    background-color: transparent; /* Warna dasar speedometer */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -18,7 +17,7 @@
     width: 160px; /* Sedikit lebih kecil dari container untuk efek bingkai */
     height: 160px;
     border-radius: 50%;
-    background-color: #2a2a2a; /* Warna muka speedometer */
+    background-color: transparent; /* Warna muka speedometer */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -37,7 +36,7 @@
     position: absolute;
     width: 1px;       /* Ukuran lebar tick yang tipis */
     height: 6px;      /* Ukuran tinggi tick */
-    background-color: #666; /* Warna default tick */
+    background-color: #3a3a3a; /* Warna default tick */
     border-radius: 0.5px; /* Membulatkan sudut tick yang tipis */
     top: 50%; /* Posisikan tick di tengah-tengah container */
     left: 50%;
@@ -46,19 +45,12 @@
     /* Transform rotasi dan translateY akan ditambahkan oleh JavaScript */
 }
 
-/* Warna spesifik untuk ticks berdasarkan rentang */
-.tick.green { background-color: #71b12b; }
-.tick.yellow { background-color: #e6c82d; }
-.tick.orange { background-color: #ea7f2f; }
-.tick.red { background-color: #e04422; }
-
-
 /* ----- Jarum Speedometer ----- */
 .speedometer-needle {
     position: absolute;
     width: 3px;      /* Lebar jarum */
     height: 70px;    /* Panjang jarum, disesuaikan dengan ukuran speedometer */
-    background-color: #ffffff; /* Warna jarum */
+    background-color: #4e4e4e; /* Warna jarum */
     border-radius: 2px;
     z-index: 10; /* Pastikan jarum di atas ticks */
 
@@ -75,11 +67,10 @@
     position: absolute;
     width: 24px;
     height: 24px;
-    background-color: #333; /* Warna pin tengah */
+    background-color: #4e4e4e; /* Warna pin tengah */
     border-radius: 50%;
     z-index: 11; /* Pastikan pin di atas jarum */
     border: 2px solid #555;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); /* Pusatkan pin */
@@ -91,8 +82,7 @@
     bottom: 25px; /* Posisikan angka agar terlihat bagus di bawah pin */
     font-size: 2em; /* Ukuran font angka */
     font-weight: bold;
-    color: #eee; /* Warna angka */
-    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+    color: #4e4e4e; /* Warna angka */
     z-index: 12; /* Pastikan angka di atas semuanya */
     text-align: center;
     width: 100%; /* Agar bisa text-align center */
@@ -102,7 +92,7 @@
     position: absolute;
     bottom: 10px; /* Posisikan unit di bawah angka */
     font-size: 0.8em; /* Ukuran font unit */
-    color: #aaa; /* Warna unit */
+    color: #4e4e4e; /* Warna unit */
     z-index: 12;
     text-align: center;
     width: 100%; /* Agar bisa text-align center */
@@ -138,16 +128,14 @@
     /* Properti untuk transisi hide (hanya memudar, tidak mempengaruhi layout) */
     opacity: 0;
     pointer-events: none; /* Tidak bisa diklik/diinteraksi saat transparan */
-    
     transition: opacity 0.5s ease-in-out;
 }
 
 #stats-container.show {
-    /* Properti yang berubah saat ditampilkan (hanya memudar) */
     opacity: 1;
-    pointer-events: auto; /* Bisa diklik/diinteraksi kembali */
-    
-    transition: opacity 0.5s ease-in-out;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1); /* efek zoom-in halus */
 }
 
 #stats-container .stat-item {
