@@ -11,6 +11,11 @@ const STORAGE_KEY = 'darkMode';
  * Ganti semua gambar sesuai tema
  */
 function swapImages(isDark) {
+    const logo = document.getElementById('logoWebsite');
+    if (logo) {
+        logo.src = isDark ? 'img/dark-mode/TypingCore.svg' : 'img/TypingCore.svg';
+    }
+
     document.querySelectorAll('.lesson-image').forEach(wrapper => {
         const img = wrapper.querySelector('img');
         if (!img) return;

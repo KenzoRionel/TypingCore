@@ -188,6 +188,7 @@ export function endTest() {
     gameState.startTime = null;
     setTimerSpeedometer(0);
     hideStatsContainer();
+    if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 }
 
 export function invalidateTest(reason) {
@@ -208,73 +209,82 @@ export function invalidateTest(reason) {
 }
 
 export function resetTestState() {
-    const DOM = getGameDOMReferences();
-    clearInterval(gameState.timerInterval);
-    clearInterval(gameState.updateStatsInterval);
-    clearTimeout(gameState.inactivityTimer);
-    gameState.isTestInvalid = false;
-    gameState.typedWordIndex = 0;
-    gameState.correctChars = 0;
-    gameState.incorrectChars = 0;
-    gameState.startTime = null;
-    gameState.timeRemaining = gameState.TIMED_TEST_DURATION;
-    gameState.totalCorrectWords = 0;
-    gameState.totalIncorrectWords = 0;
-    gameState.typedWordCorrectness = [];
-    gameState.userTypedWords = [];
-    gameState.lines = [];
-    gameState.currentLineIndex = 0;
-    gameState.history = [];
+  const DOM = getGameDOMReferences();
+  clearInterval(gameState.timerInterval);
+  clearInterval(gameState.updateStatsInterval);
+  clearTimeout(gameState.inactivityTimer);
+  gameState.isTestInvalid = false;
+  gameState.typedWordIndex = 0;
+  gameState.correctChars = 0;
+  gameState.incorrectChars = 0;
+  gameState.startTime = null;
+  gameState.timeRemaining = gameState.TIMED_TEST_DURATION;
+  gameState.totalCorrectWords = 0;
+  gameState.totalIncorrectWords = 0;
+  gameState.typedWordCorrectness = [];
+  gameState.userTypedWords = [];
+  gameState.lines = [];
+  gameState.currentLineIndex = 0;
+  gameState.history = [];
 
-    if (DOM.accuracySpan) DOM.accuracySpan.textContent = '0%';
-    if (DOM.timerSpan) DOM.timerSpan.textContent = gameState.TIMED_TEST_DURATION;
+  if (DOM.accuracySpan) DOM.accuracySpan.textContent = '0%';
+  if (DOM.timerSpan) DOM.timerSpan.textContent = gameState.TIMED_TEST_DURATION;
 
-    DOM.hiddenInput.value = '';
-    DOM.hiddenInput.disabled = false;
-    gameState.fullTextWords = [];
-    DOM.textDisplay.innerHTML = '';
-    DOM.textDisplay.scrollTop = 0;
-    DOM.textDisplay.classList.remove('error-shake');
+  DOM.hiddenInput.value = '';
+  DOM.hiddenInput.disabled = false;
+  gameState.fullTextWords = [];
+  DOM.textDisplay.innerHTML = '';
+  DOM.textDisplay.scrollTop = 0;
+  DOM.textDisplay.classList.remove('error-shake');
 
-    setWpmSpeedometer(0);
-    setAccuracySpeedometer(0);
-    setTimerSpeedometer(timerMax);
+  setWpmSpeedometer(0);
+  setAccuracySpeedometer(0);
+  setTimerSpeedometer(timerMax);
 
-    const resultsArea = document.getElementById('resultsDisplayArea');
-    if (resultsArea) {
-        resultsArea.style.display = 'none';
-    }
-    const textDisplayContainer = document.querySelector('.text-display-container');
-    if (textDisplayContainer) {
-        // Biarkan sesuai layout aslinya (flex), kalau layout-mu memang pakai flex
-        textDisplayContainer.style.display = 'flex';
-    }
+  const resultsArea = document.getElementById('resultsDisplayArea');
+  if (resultsArea) {
+    resultsArea.style.display = 'none';
+  }
+  const textDisplayContainer = document.querySelector('.text-display-container');
+  if (textDisplayContainer) {
+    // Biarkan sesuai layout aslinya (flex), kalau layout-mu memang pakai flex
+    textDisplayContainer.style.display = 'flex';
+  }
 
-    if (DOM.finalWPM) DOM.finalWPM.textContent = '--';
-    if (DOM.finalAccuracy) DOM.finalAccuracy.textContent = '--%';
-    if (DOM.finalTime) DOM.finalTime.textContent = `-- detik`;
-    if (DOM.finalErrors) DOM.finalErrors.textContent = '--';
-    if (DOM.finalTotalWords) DOM.finalTotalWords.textContent = '--';
-    if (DOM.finalCorrectWords) DOM.finalCorrectWords.textContent = '--';
-    if (DOM.finalIncorrectWords) DOM.finalIncorrectWords.textContent = '--';
+  if (DOM.finalWPM) DOM.finalWPM.textContent = '--';
+  if (DOM.finalAccuracy) DOM.finalAccuracy.textContent = '--%';
+  if (DOM.finalTime) DOM.finalTime.textContent = `-- detik`;
+  if (DOM.finalErrors) DOM.finalErrors.textContent = '--';
+  if (DOM.finalTotalWords) DOM.finalTotalWords.textContent = '--';
+  if (DOM.finalCorrectWords) DOM.finalCorrectWords.textContent = '--';
+  if (DOM.finalIncorrectWords) DOM.finalIncorrectWords.textContent = '--';
 
-    generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
-    prepareAndRenderLines();
+  // Sembunyikan logo dan speedometer saat restart
+  hideStatsContainer();
+  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 
-    // 🔑 kunci ulang tinggi kontainer & reset scroll
-    lockTextDisplayHeightTo3Lines();
-    DOM.textDisplay.scrollTop = 0;
+  // Tampilkan kembali header, menu button, dan restart button saat restart
+  if (DOM.header) DOM.header.classList.remove("hidden");
+  if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+  if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
 
-    // 🔑 pastikan typedWordIndex balik ke 0
-    gameState.currentLineIndex = 0;
-    gameState.typedWordIndex = 0;
+  generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
+  prepareAndRenderLines();
 
-    // 🔑 baru update highlight/cursor setelah fokus
-    setTimeout(() => {
-        updateWordHighlighting();
-    }, 0);
+  // 🔑 kunci ulang tinggi kontainer & reset scroll
+  lockTextDisplayHeightTo3Lines();
+  DOM.textDisplay.scrollTop = 0;
 
-    DOM.hiddenInput.focus();
+  // 🔑 pastikan typedWordIndex balik ke 0
+  gameState.currentLineIndex = 0;
+  gameState.typedWordIndex = 0;
+
+  // 🔑 baru update highlight/cursor setelah fokus
+  setTimeout(() => {
+    updateWordHighlighting();
+  }, 0);
+
+  DOM.hiddenInput.focus();
 }
 
 export function startTimer() {

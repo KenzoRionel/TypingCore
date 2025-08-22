@@ -1,177 +1,180 @@
 .text-display-container {
-    display: flex;
-    /* Mengaktifkan Flexbox */
-    /* Warna latar belakang abu-abu terang */
-    justify-content: center;
-    /* Menyelaraskan item anak (text-display) di tengah sumbu utama (horizontal) */
-    align-items: center;
-    position: relative;
-    /* Opsional: Menyelaraskan item anak di tengah sumbu silang (vertikal), jika container memiliki tinggi */
-    /* Berikan tinggi pada container jika ingin memusatkan vertikal juga */
-    max-width: 100%;
+  display: flex;
+  /* Mengaktifkan Flexbox */
+  /* Warna latar belakang abu-abu terang */
+  justify-content: center;
+  /* Menyelaraskan item anak (text-display) di tengah sumbu utama (horizontal) */
+  align-items: center;
+  position: relative;
+  /* Opsional: Menyelaraskan item anak di tengah sumbu silang (vertikal), jika container memiliki tinggi */
+  /* Berikan tinggi pada container jika ingin memusatkan vertikal juga */
+  max-width: 100%;
 }
 
 /* --- textDisplay Styling --- */
 #textDisplay {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    max-width: 100%;
-    width: 100%;
-    margin-top: 30px;
-    padding: 0;
-    /* core fix */
-    overflow-y: hidden;
-    line-height: 1.5em;
-    max-height: none;
-    /* Biarkan tinggi otomatis */
-    font-family: monospace;
-    font-size: 1.8em;
-    color: #666;
-    white-space: normal;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  max-width: 100%;
+  width: 100%;
+  margin-top: 30px;
+  padding: 0;
+  /* core fix */
+  overflow-y: hidden;
+  line-height: 1.5em;
+  max-height: none;
+  /* Biarkan tinggi otomatis */
+  font-family: monospace;
+  font-size: 1.8em;
+  color: #666;
+  white-space: normal;
 }
 
 .text-line {
-    margin: 0;
-    /* pastikan ga ada jarak vertikal ekstra */
-    padding: 0;
+  margin: 0;
+  /* pastikan ga ada jarak vertikal ekstra */
+  padding: 0;
 }
 
 .correct {
-    color: #000;
-    /* atau sesuai tema */
+  color: #000;
+  /* atau sesuai tema */
 }
 
 .wrong {
-    color: red;
+  color: red;
 }
 
 .word-container .wrong-extra {
-    color: #e53935;
+  color: #e53935;
 }
 
 #hiddenTextInput {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 
 /* --- Styling untuk Baris Teks di dalam text-display --- */
 .text-line {
-    width: 100%;
-    flex-shrink: 0;
-    flex-grow: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+  flex-grow: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .text-line.active {
-    background: #f5f5f5;
-    border-radius: 6px;
+  background: #f5f5f5;
+  border-radius: 6px;
 }
 
 .word-container {
-    display: inline-block;
-    flex-wrap: wrap;
-    min-width: 0;
-    margin-right: 7px;
-    padding: 2px 0;
-    position: relative;
-    white-space: normal;
-    word-break: break-word;
-    transition: background-color 0.1s ease, color 0.1s ease;
-    border-radius: 4px;
+  display: inline-block;
+  flex-wrap: wrap;
+  min-width: 0;
+  margin-right: 7px;
+  padding: 2px 0;
+  position: relative;
+  white-space: normal;
+  word-break: break-word;
+  transition: background-color 0.1s ease, color 0.1s ease;
+  border-radius: 4px;
 }
 
 .word-container span {
-    color: inherit;
-    transition: color 0.1s ease;
+  color: inherit;
+  transition: color 0.1s ease;
 }
 #textDisplay:not(.caret-mode-active) .word-container.current-word-target {
-    background-color: #e0e0e0;
-    color: #333;
+  background-color: #e0e0e0;
+  color: #333;
 }
 
-#textDisplay:not(.caret-mode-active) .word-container.current-word-target span.correct {
-    background-color: transparent;
-    color: #0068bd;
+#textDisplay:not(.caret-mode-active)
+  .word-container.current-word-target
+  span.correct {
+  background-color: transparent;
+  color: #0068bd;
 }
 
-#textDisplay:not(.caret-mode-active) .word-container.current-word-target span.wrong {
-    color: #F44336;
+#textDisplay:not(.caret-mode-active)
+  .word-container.current-word-target
+  span.wrong {
+  color: #f44336;
 }
 
 #textDisplay:not(.caret-mode-active) .word-container.word-correct {
-    background-color: transparent;
-    color: #0068bd;
+  background-color: transparent;
+  color: #0068bd;
 }
 
 #textDisplay:not(.caret-mode-active) .word-container.word-incorrect {
-    color: #D32F2F;
+  color: #d32f2f;
 }
 
 .word-container .space-char.wrong {
-    background-color: #F44336;
-    color: #fff;
-    border-radius: 2px;
-    padding: 0 2px;
-    margin-left: 2px;
-    margin-right: 2px;
+  background-color: #f44336;
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 2px;
+  margin-left: 2px;
+  margin-right: 2px;
 }
 
 .word-container.shake {
-    animation: shake 0.2s;
+  animation: shake 0.2s;
 }
 
 @keyframes shake {
-    0% {
-        transform: translateX(0);
-    }
+  0% {
+    transform: translateX(0);
+  }
 
-    25% {
-        transform: translateX(-4px);
-    }
+  25% {
+    transform: translateX(-4px);
+  }
 
-    50% {
-        transform: translateX(4px);
-    }
+  50% {
+    transform: translateX(4px);
+  }
 
-    75% {
-        transform: translateX(-4px);
-    }
+  75% {
+    transform: translateX(-4px);
+  }
 
-    100% {
-        transform: translateX(0);
-    }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .blinking-cursor {
-    position: absolute;
-    display: inline-block;
-    width: 1.5px;
-    height: 1.6em;
-    background-color: #333;
-    animation: blink 1s infinite;
-    transition: left 0.08s cubic-bezier(0.25, 0.1, 0.25, 1.0);
-    z-index: 10;
-    top: 0.15em;
+  position: absolute;
+  display: inline-block;
+  width: 1.5px;
+  height: 1.6em;
+  background-color: #333;
+  animation: blink 1s infinite;
+  transition: left 0.08s cubic-bezier(0.25, 0.1, 0.25, 1);
+  z-index: 10;
+  top: 0.15em;
 }
 
 @keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
 
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0;
-    }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* --- Aturan Spesifik untuk Mode Kursor "Caret" --- */
@@ -179,33 +182,51 @@
 /* Hapus highlight latar belakang untuk kata yang sudah selesai */
 .caret-mode-active .word-container.word-correct,
 .caret-mode-active .word-container.word-incorrect {
-    background-color: transparent;
+  background-color: transparent;
 }
 
 /* Ubah warna teks untuk kata yang sudah selesai */
 .caret-mode-active .word-container.word-correct {
-    color: #414141;
-    /* Biru */
+  color: #414141;
+  /* Biru */
 }
 
 .caret-mode-active .word-container.word-incorrect {
-    color: #D32F2F;
-    /* Merah */
+  color: #d32f2f;
+  /* Merah */
 }
 
 /* Hapus highlight latar belakang untuk kata yang sedang diketik */
 .caret-mode-active .word-container.current-word-target {
-    background-color: transparent;
+  background-color: transparent;
 }
 
 /* Atur warna karakter untuk kata yang sedang diketik */
 .caret-mode-active .word-container.current-word-target span.correct {
-    color: #414141;
-    /* Abu-abu cerah */
+  color: #414141;
+  /* Abu-abu cerah */
 }
 
 /* Warna untuk karakter salah tetap sama (merah) */
 .caret-mode-active .word-container.current-word-target span.wrong {
-    color: #F44336;
-    /* Merah */
+  color: #f44336;
+  /* Merah */
+}
+
+.text-display-container {
+  position: relative;
+  overflow: visible;
+  
+}
+.logo-pop {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  bottom: calc(100% + 8px);
+  opacity: 0;
+  transition: transform .5s ease, opacity .5s ease;
+}
+.logo-pop.pop {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }

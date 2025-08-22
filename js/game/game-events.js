@@ -47,29 +47,35 @@ export function handleKeydown(e) {
     return;
   }
 
-  // Mulai tes pada ketikan pertama (bukan spasi/kombinasi)
-  if (
-    e.key.length === 1 &&
-    !e.ctrlKey &&
-    !e.altKey &&
-    !e.metaKey &&
-    e.key !== "Backspace"
-  ) {
-    // Kalau belum pernah start → set startTime
-    if (!gameState.startTime) {
-      gameState.startTime = Date.now();
-      startTimer();
+    // Mulai tes pada ketikan pertama (bukan spasi/kombinasi)
+    if (
+      e.key.length === 1 &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      !e.metaKey &&
+      e.key !== "Backspace"
+    ) {
+      // Kalau belum pernah start → set startTime
+      if (!gameState.startTime) {
+        gameState.startTime = Date.now();
+        startTimer();
+        // Tampilkan logo dan speedometer saat mulai mengetik
+        if (typeof window.triggerLogoPop === 'function') window.triggerLogoPop();
+        showStatsContainer();
+      }
+
+      // Set typing mode aktif tiap kali user ngetik
+      gameState.isTypingActive = true;
+
+      // Tampilkan kembali logo dan speedometer saat melanjutkan mengetik
+      if (typeof window.triggerLogoPop === 'function') window.triggerLogoPop();
+      showStatsContainer();
+
+      // Hide header/menu dan restart button saat mulai mengetik
+      if (DOM.header) DOM.header.classList.add("hidden");
+      if (DOM.menuButton) DOM.menuButton.classList.add("hidden");
+      if (DOM.restartButton) DOM.restartButton.classList.add("hidden");
     }
-
-    // Set typing mode aktif tiap kali user ngetik
-    gameState.isTypingActive = true;
-
-    // Hide header/menu dan tampilkan speedometer
-    if (DOM.header) DOM.header.classList.add("hidden");
-    if (DOM.menuButton) DOM.menuButton.classList.add("hidden");
-    if (DOM.restartButton) DOM.restartButton.classList.add("hidden");
-    showStatsContainer();
-  }
 
   // Pastikan buffer kata aman
   const WORD_BUFFER_THRESHOLD = 80;
@@ -219,6 +225,18 @@ function advanceLineIndex() {
   }
 }
 
+// Fungsi untuk menangani pergerakan mouse
+function handleMouseMove() {
+  if (gameState.isTypingActive && gameState.startTime) {
+    // Tampilkan kembali logo dan speedometer saat mouse bergerak
+    if (typeof window.triggerLogoPop === 'function') window.triggerLogoPop();
+    showStatsContainer();
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initTextDisplayResizeObserver();
+  
+  // Tambahkan event listener untuk pergerakan mouse
+  document.addEventListener('mousemove', handleMouseMove);
 });

@@ -273,10 +273,6 @@ export function cleanupAllLessonUI() {
             key.style.border = '1px solid #444';
         });
     }
-
-    // 🚫 jangan hapus instruksi di sini
-    // cleanupSimpleDrillElements(domElements.lessonInstruction);
-    // cleanupCharacterDrillElements();
     
     if (domElements.lessonTextDisplay) {
         domElements.lessonTextDisplay.innerHTML = '';
