@@ -46,6 +46,16 @@ export function renderCurrentLine() {
         DOM.textDisplay.appendChild(lineContainer);
     }
     updateWordHighlighting();
+    if (gameState.currentLineIndex >= 1) { // baru scroll mulai baris kedua
+        const activeLine = DOM.textDisplay.querySelector('.text-line');
+        if (activeLine) {
+            activeLine.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    }
+
 }
 
 function calculateLines() {
@@ -140,7 +150,7 @@ export function updateWordHighlighting() {
         if (gameState.cursorMode === 'caret') {
             const cursor = document.createElement('span');
             cursor.classList.add('blinking-cursor');
-            
+
             let cursorPosition = 0;
             const typedLength = currentWordTypedValue.length;
 
