@@ -11,6 +11,8 @@ const keyFingerMap = {
     'l': { id: 'hand-l' },
     'a': { id: 'hand-a' },
     ';': { id: 'hand-;' },
+    'h': { id: 'hand-h' },
+    'g': { id: 'hand-g' }
     // Tambahkan kunci lain di sini sesuai kebutuhan pelajaran
 };
 

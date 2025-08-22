@@ -132,3 +132,13 @@ body.dark-mode .completion-progress-text{ color: #ffffff; }
 body.dark-mode .typing-stats {
     color: #f1f1f1;
 }
+/*WPM Per Teks*/
+/* Angka WPM di atas teks*/
+body.dark-mode .word-wpm span:first-child {
+  color: #ececec; /* abu-abu untuk angka */
+}
+/* Pesan motivasi tetap hijau */
+body.dark-mode .word-wpm span:last-child {
+  color: #ececec; /* abu-abu untuk pesan */
+}
+/*End WPM Per Teks*/

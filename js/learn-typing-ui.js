@@ -92,15 +92,17 @@ export function createHandVisualizerElement() {
     const visualizerContainer = document.createElement('div');
     visualizerContainer.id = 'hand-visualizer';
     const handImages = [
-        { id: 'hand-f', src: 'img/hand_f.png', alt: 'Tangan untuk tombol F' },
-        { id: 'hand-j', src: 'img/hand_j.png', alt: 'Tangan untuk tombol J' },
-        { id: 'hand-space', src: 'img/hand_space.png', alt: 'Tangan untuk tombol spasi' },
-        { id: 'hand-d', src: 'img/hand_d.png', alt: 'Tangan untuk tombol D' },
-        { id: 'hand-k', src: 'img/hand_k.png', alt: 'Tangan untuk tombol K' },
-        { id: 'hand-s', src: 'img/hand_s.png', alt: 'Tangan untuk tombol S' },
-        { id: 'hand-l', src: 'img/hand_l.png', alt: 'Tangan untuk tombol L' },
-        { id: 'hand-a', src: 'img/hand_a.png', alt: 'Tangan untuk tombol A' },
-        { id: 'hand-;', src: 'img/hand_;png', alt: 'Tangan untuk tombol ;' }
+        { id: 'hand-f', src: 'img/hand_f.svg', alt: 'Tangan untuk tombol F' },
+        { id: 'hand-j', src: 'img/hand_j.svg', alt: 'Tangan untuk tombol J' },
+        { id: 'hand-space', src: 'img/hand_space.svg', alt: 'Tangan untuk tombol spasi' },
+        { id: 'hand-d', src: 'img/hand_d.svg', alt: 'Tangan untuk tombol D' },
+        { id: 'hand-k', src: 'img/hand_k.svg', alt: 'Tangan untuk tombol K' },
+        { id: 'hand-s', src: 'img/hand_s.svg', alt: 'Tangan untuk tombol S' },
+        { id: 'hand-l', src: 'img/hand_l.svg', alt: 'Tangan untuk tombol L' },
+        { id: 'hand-a', src: 'img/hand_a.svg', alt: 'Tangan untuk tombol A' },
+        { id: 'hand-;', src: 'img/hand_;png', alt: 'Tangan untuk tombol ;' },
+        { id: 'hand-h', src: 'img/hand_h.svg', alt: 'Tangan untuk tombol H' },
+        { id: 'hand-g', src: 'img/hand_g.svg', alt: 'Tangan untuk tombol G' }
     ];
     handImages.forEach(hand => {
         const img = document.createElement('img');

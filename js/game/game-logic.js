@@ -3,10 +3,10 @@
 // Perbaikan: Ganti import { DOM } menjadi import { getGameDOMReferences }
 import { getGameDOMReferences } from '../utils/dom-elements.js';
 import { setWpmSpeedometer, setAccuracySpeedometer, setTimerSpeedometer, timerMax } from '../utils/speedometer.js';
-import { prepareAndRenderLines, renderCurrentLine, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
+import { prepareAndRenderLines, renderAllLines, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
 import { renderResultChart } from '../history/result-chart.js';
 import { gameState } from './game-state.js';
-
+import { lockTextDisplayHeightTo3Lines } from '../utils/text-display.js';
 export function generateAndAppendWords(numWords) {
     if (!window.defaultKataKata || window.defaultKataKata.length === 0) {
         console.error("Tidak dapat menghasilkan kata baru: window.defaultKataKata kosong atau tidak terdefinisi.");
@@ -260,6 +260,20 @@ export function resetTestState() {
 
     generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
     prepareAndRenderLines();
+
+    // 🔑 kunci ulang tinggi kontainer & reset scroll
+    lockTextDisplayHeightTo3Lines();
+    DOM.textDisplay.scrollTop = 0;
+
+    // 🔑 pastikan typedWordIndex balik ke 0
+    gameState.currentLineIndex = 0;
+    gameState.typedWordIndex = 0;
+
+    // 🔑 baru update highlight/cursor setelah fokus
+    setTimeout(() => {
+        updateWordHighlighting();
+    }, 0);
+
     DOM.hiddenInput.focus();
 }
 

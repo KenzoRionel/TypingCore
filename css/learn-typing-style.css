@@ -750,7 +750,7 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
     }
 
     to {
-        height: 10.5rem;
+        height: 8.3rem;
         /* Sesuaikan dengan tinggi .lesson-4-display */
     }
 }
@@ -777,7 +777,7 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
     color: var(--text-color-light);
     white-space: normal;
     text-align: center;
-    height: 10.3rem;
+    height: 8.3rem;
     overflow: hidden;
     position: relative;
     padding-top: 0px;
@@ -794,36 +794,40 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
 
 /* Statistik di kanan */
 .typing-stats {
-  position: absolute;
-  width: 180px;
-  left: 100%;
-  margin-left: 40px;
-  top: 30px;
-  font-weight: bold;
-  font-family: monospace;
-  color: #4e4e4e;
-  opacity: 0;
-  transition: opacity 0.3s ease-in-out;
-  pointer-events: none; /* biar ga bisa diklik saat hidden */
+    position: absolute;
+    width: 180px;
+    left: 100%;
+    margin-left: 40px;
+    top: 30px;
+    font-weight: bold;
+    font-family: monospace;
+    color: #4e4e4e;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+    /* biar ga bisa diklik saat hidden */
 }
 
 #typing-stats.show {
-  opacity: 1;
-  pointer-events: auto;
+    opacity: 1;
+    pointer-events: auto;
 }
+
 .typing-stats div {
-  margin-bottom: 8px;
-  font-size: 1.7rem;
-  justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 1.7rem;
+    justify-content: space-between;
 }
 
 .typing-stats div span {
-  font-weight: bold;
-  color: #4CAF50; /* default warna hijau (WPM) */
+    font-weight: bold;
+    color: #4CAF50;
+    /* default warna hijau (WPM) */
 }
 
 .typing-stats div:last-child span {
-  color: #2196F3; /* warna biru untuk akurasi */
+    color: #2196F3;
+    /* warna biru untuk akurasi */
 }
 
 /* PERUBAHAN: Kelas untuk memicu animasi "reveal" */
@@ -847,9 +851,10 @@ body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active
 /* Gaya untuk setiap huruf (box) di dalam pelajaran 4 */
 .lesson-4-display .typing-char {
     display: inline-block;
+    position: relative;
     padding: 0px 0px;
     margin: 0.5px;
-    margin-top: 10px;
+    margin-top: 20px;
     border-radius: 4px;
     color: inherit;
     background-color: transparent;
@@ -1146,3 +1151,47 @@ body.dark-mode .loading-text {
 }
 
 /*End WPM Free Typing*/
+
+/*WPM Per Teks*/
+.word-wpm {
+  position: absolute;
+  margin-top: 3px;
+  left: 0px;
+  top: -20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px) scale(0.8);
+  animation: popFadeIn 0.3s forwards;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.word-wpm.fade-out {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.9);
+}
+
+/* Keyframes untuk muncul dengan “pop” */
+@keyframes popFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.word-wpm .wpm-sup {
+  font-size: 0.8em;       /* lebih kecil dari angka */
+  vertical-align: super;  /* naik ke atas */
+  margin-left: 2px;
+  color: #05b5fa;         /* opsional: beda warna biar makin jelas */
+}
+/* Angka WPM */
+.word-wpm span:first-child {
+  color: #4e4e4e; /* abu-abu untuk angka */
+}
+/* Pesan motivasi tetap hijau */
+.word-wpm span:last-child {
+  color: #4e4e4e; /* abu-abu untuk pesan */
+}
+/*End WPM Per Teks*/

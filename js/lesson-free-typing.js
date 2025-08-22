@@ -19,6 +19,15 @@ let lessonTextDisplayRef = null;
 let startTime = null;
 let correctCount = 0;
 let wrongCount = 0;
+let wordStartTime = null;
+let wordCharCount = 0;
+let lastWordShownIndex = -1;
+let shownWords = new Set();
+let shownShortWordSets = new Set();
+let shownExactWords = new Set();
+let wordBestWpm = new Map();
+
+
 
 function startTimer() {
     if (!startTime) startTime = Date.now();
@@ -81,7 +90,7 @@ function updateScrollPosition(allChars, currentCharIndex) {
     });
 
     const totalLines = linePositions.length;
-    if (totalLines <= 3) {
+    if (totalLines <= 2) {
         scrollContainer.style.transform = `translateY(0px)`;
         return;
     }
@@ -96,7 +105,7 @@ function updateScrollPosition(allChars, currentCharIndex) {
 
     let scrollOffset = 0;
     if (currentLineIndex > 1) {
-        const maxTopLineIndex = totalLines - 3;
+        const maxTopLineIndex = totalLines - 2;
         let targetTopLineIndex = currentLineIndex - 1;
 
         if (targetTopLineIndex > maxTopLineIndex) {
@@ -160,7 +169,7 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
             // reset dulu biar transisi jalan
             statsContainer.classList.remove("show");
             statsContainer.querySelector("#wpm").textContent = "0";
-            statsContainer.querySelector("#accuracy").textContent = "100%";
+            statsContainer.querySelector("#accuracy").textContent = "0%";
 
             // kasih waktu 1 frame sebelum fade-in
             requestAnimationFrame(() => {
@@ -214,7 +223,7 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
         const wpmEl = document.getElementById("wpm");
         const accEl = document.getElementById("accuracy");
         if (wpmEl) wpmEl.textContent = "0";
-        if (accEl) accEl.textContent = "100%";
+        if (accEl) accEl.textContent = "0%";
 
     }
 
@@ -327,13 +336,14 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
             if (type === 'keydown' && e.key.length === 1) {
                 document.body.classList.add('show-hold-key-overlay');
                 document.body.classList.add('lesson-overlay-active');
-                animationFunctions.highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
+                highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
                 return;
             }
         }
     }
 
     if (type === 'keydown' && (!lesson.requiredHoldKey || isHoldKeyActive)) {
+        if (e.key === ' ') e.preventDefault();
         if (e.key === 'Dead' || e.key.startsWith('Alt') || e.key.startsWith('Control') || e.key.startsWith('Shift') || e.key.startsWith('Meta')) return;
 
         const allChars = Array.from(lessonTextDisplayRef.querySelector('.scrollable-text-container').children);
@@ -347,8 +357,9 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                 charToRemoveStyle.textContent = originalChar === ' ' ? '\u00A0' : originalChar;
                 charToRemoveStyle.classList.remove('correct-box', 'corrected-box', 'error-char');
 
-                if (allChars[currentCharIndex]) allChars[currentCharIndex].classList.remove('cursor');
-                charToRemoveStyle.classList.add('cursor');
+                if (allChars[currentCharIndex]) {
+                    allChars[currentCharIndex].classList.add('cursor');
+                }
 
                 currentCharIndex--;
                 userTypingHistory.pop();
@@ -359,24 +370,92 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
             }
         } else if (currentCharIndex < lesson.sequence.length) {
             const expectedChar = lesson.sequence[currentCharIndex];
-            const isCorrect = (e.key.toLowerCase() === expectedChar.toLowerCase()) || (e.key === ' ' && expectedChar === ' ');
+            const pressedChar = e.key === ' ' ? ' ' : e.key;
+            const normalizedExpected = expectedChar === '\u00A0' ? ' ' : expectedChar;
+            const normalizedPressed = pressedChar === '\u00A0' ? ' ' : pressedChar;
+            const isCorrect =
+                normalizedExpected.toLowerCase() === normalizedPressed.toLowerCase();
             const typingCharElement = allChars[currentCharIndex];
+            // --- DEBUG LOG ---
+            console.log({
+                keyPressed: e.key,
+                pressedChar,
+                expectedChar,
+                normalizedPressed,
+                normalizedExpected,
+                isCorrect
+            });
+            // --- END DEBUG LOG ---
 
             if (isCorrect) {
                 startTimer();
                 correctCount++;
                 updateStatsDisplay();
 
-                clearWrongInputFeedback(lessonId);
-                const wasWrong = (userTypingHistory[currentCharIndex] && userTypingHistory[currentCharIndex].isCorrect === false) || false;
-                userTypingHistory[currentCharIndex] = { key: e.key, isCorrect: true, wasWrong, originalChar: expectedChar };
+                const prevIndex = currentCharIndex;
 
-                typingCharElement.classList.remove('cursor');
-                typingCharElement.classList.add(wasWrong ? 'corrected-box' : 'correct-box');
-                if (allChars[currentCharIndex + 1]) {
-                    allChars[currentCharIndex + 1].classList.add('cursor');
+                // === LOGIKA KATA ===
+                if (expectedChar === ' ') {
+                    if (wordStartTime && wordCharCount > 0) {
+                        const elapsed = (Date.now() - wordStartTime) / 60000;
+                        const wordWpm = elapsed > 0 ? Math.round((wordCharCount / 5) / elapsed) : 0;
+
+                        if (wordWpm > 0) {
+                            const wordStartIdx = currentCharIndex - wordCharCount;
+                            const wordEndIdx = currentCharIndex - 1;
+                            const anchor = getWordAnchorSpan(allChars, wordStartIdx, wordEndIdx)
+                                || allChars[wordStartIdx]
+                                || typingCharElement;
+
+                            // Ambil kata persis
+                            const wordChars = allChars
+                                .slice(wordStartIdx, wordEndIdx + 1)
+                                .map(el => el.textContent)
+                                .join("")
+                                .toLowerCase();
+
+                            const prevBest = wordBestWpm.get(wordChars) || 0;
+
+                            // Tampilkan hanya kalau lebih tinggi dari rekor sebelumnya
+                            if (wordWpm > prevBest) {
+                                showWordWPM(anchor, wordWpm);
+                                wordBestWpm.set(wordChars, wordWpm);
+                            }
+                        }
+                    }
+                    wordStartTime = null;
+                    wordCharCount = 0;
                 }
 
+
+                else {
+                    // mulai timing saat huruf pertama kata
+                    if (!wordStartTime) {
+                        wordStartTime = Date.now();
+                        wordCharCount = 0;
+                    }
+                    wordCharCount++;
+                }
+
+                // === UPDATE DOM UNTUK KARAKTER BENAR ===
+                clearWrongInputFeedback(lessonId);
+                const wasWrongPrev = userTypingHistory[prevIndex]?.isCorrect === false || false;
+                typingCharElement.classList.remove('cursor');
+                typingCharElement.classList.add(wasWrongPrev ? 'corrected-box' : 'correct-box');
+
+                userTypingHistory[prevIndex] = {
+                    key: (expectedChar === ' ' ? ' ' : e.key),
+                    isCorrect: true,
+                    wasWrong: wasWrongPrev,
+                    originalChar: expectedChar
+                };
+
+                // INCREMENT TEPAT SEKALI DI SINI
+                currentCharIndex++;
+
+                if (allChars[currentCharIndex]) {
+                    allChars[currentCharIndex].classList.add('cursor');
+                }
                 const keyElement = keyboardContainer.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`);
                 if (keyElement && animateJellyEffect) {
                     animateJellyEffect(keyElement);
@@ -389,7 +468,6 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                     setIsCorrectInputAnimationActive(false);
                 }, 50);
 
-                currentCharIndex++;
                 updateState(lessonId, { currentCharIndex, userTypingHistory });
 
                 const progressValue = calculateLessonProgress(lesson);
@@ -457,11 +535,19 @@ export function resetFreeTypingState() {
     startTime = null;
     correctCount = 0;
     wrongCount = 0;
+    wordStartTime = null;
+    wordCharCount = 0;
+    lastWordShownIndex = -1;
+    shownWords.clear();
+    shownShortWordSets.clear();
+    shownExactWords.clear();
+    wordBestWpm.clear();
+
 
     const wpmEl = document.getElementById("wpm");
     const accEl = document.getElementById("accuracy");
     if (wpmEl) wpmEl.textContent = "0";
-    if (accEl) accEl.textContent = "100%";
+    if (accEl) accEl.textContent = "0%";
 
     clearWrongInputFeedback(lessonId);
     updateState(lessonId, { currentCharIndex: 0, userTypingHistory: [], finished: false, isHoldKeyActive: false });
@@ -503,3 +589,65 @@ export function hideTypingStats() {
         statsContainer.classList.remove("show");
     }
 }
+
+function getWordAnchorSpan(allChars, startIdx, endIdx) {
+    if (!Array.isArray(allChars) || allChars.length === 0) return null;
+
+    // Normalisasi index
+    const len = allChars.length;
+    let s = Math.max(0, Math.min(startIdx ?? 0, len - 1));
+    // Ambil huruf pertama kata sebagai anchor
+    return allChars[s] || null;
+}
+
+function showWordWPM(spanEl, wpm) {
+    if (!spanEl) return;
+
+    // Hapus SEMUA word-wpm yang masih ada biar tidak nimpa
+    document.querySelectorAll('.word-wpm').forEach(el => el.remove());
+
+    const wpmEl = document.createElement('div');
+    wpmEl.className = 'word-wpm';
+
+    // angka
+    const numEl = document.createElement('span');
+    numEl.textContent = wpm;
+
+    // teks "WPM" kecil & naik
+    const supEl = document.createElement('span');
+    supEl.className = 'wpm-sup';
+    supEl.textContent = "WPM";
+
+    // pesan motivasi
+    const message = getWpmMessage(wpm);
+    const msgEl = document.createElement('span');
+    msgEl.textContent = " " + message;
+
+    wpmEl.appendChild(numEl);
+    wpmEl.appendChild(supEl);
+    wpmEl.appendChild(msgEl);
+
+    spanEl.appendChild(wpmEl);
+
+    // kasih efek fade-out kalau ga ada WPM baru lagi
+    setTimeout(() => {
+        if (wpmEl && wpmEl.parentElement) {
+            wpmEl.classList.add('fade-out');
+            setTimeout(() => {
+                if (wpmEl && wpmEl.parentElement) {
+                    wpmEl.remove();
+                }
+            }, 600);
+        }
+    }, 1500);
+}
+
+function getWpmMessage(wpm) {
+    if (wpm < 20) return "Keep going!";
+    if (wpm < 40) return "Good!";
+    if (wpm < 60) return "Nice!";
+    if (wpm < 120) return "WOW!⭐";
+    return "🔥LEGEND!";
+}
+
+

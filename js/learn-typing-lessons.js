@@ -49,7 +49,7 @@ export const lessons = [
         title: "Pelajaran 4: Test Mengetik F dan J",
         type: "free-typing",
         image: 'test-fj.svg',
-        sequence: ['f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j', ' ', 'f', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'j', 'f', 'j',
+        sequence: ['f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j', ' ', 'f', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'j', ' ', 'f', 'j',
             'j', 'f', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'f', ' ', 'j', 'f', 'j', 'f', ' ', 'f', 'j', 'f', 'j', ' ', 'f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j',
             ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'j', 'f'],
         preview: ['f', 'j']
@@ -309,5 +309,4 @@ export const lessons = [
     },
 
 ];
-console.log("Memeriksa data pelajaran 17:");
-console.log(lessons[16]);
+
