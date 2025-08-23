@@ -12,19 +12,22 @@ export function prepareAndRenderText() {
   // Reset state rendering dinamis
   gameState.currentVisibleLines = 0;
   gameState.totalRenderedLines = 0;
-  
+
   renderVisibleLines();
   updateWordHighlighting();
   ensureScrollSync();
-  
+
   // Tambahkan event listener untuk scroll
   addScrollEventListener();
 }
 
 export function renderVisibleLines() {
   const DOM = getGameDOMReferences();
-  const wordsToRender = gameState.fullTextWords.slice(gameState.totalRenderedLines, gameState.totalRenderedLines + gameState.lineBufferSize);
-  
+  const wordsToRender = gameState.fullTextWords.slice(
+    gameState.totalRenderedLines,
+    gameState.totalRenderedLines + gameState.lineBufferSize
+  );
+
   if (gameState.totalRenderedLines === 0) {
     // Render awal - hapus semua dan render dari awal
     renderAllLines(wordsToRender, gameState.totalRenderedLines);
@@ -32,15 +35,21 @@ export function renderVisibleLines() {
     // Tambahkan kata baru tanpa menghapus yang sudah ada
     appendLines(wordsToRender, gameState.totalRenderedLines);
   }
-  
+
   // Update jumlah baris yang dirender
   gameState.totalRenderedLines += wordsToRender.length;
-  
+
   // Update currentVisibleLines
-  gameState.currentVisibleLines = Math.min(gameState.totalRenderedLines, gameState.fullTextWords.length);
+  gameState.currentVisibleLines = Math.min(
+    gameState.totalRenderedLines,
+    gameState.fullTextWords.length
+  );
 }
 
-export function renderAllLines(wordsToRender = gameState.fullTextWords, startIndex = 0) {
+export function renderAllLines(
+  wordsToRender = gameState.fullTextWords,
+  startIndex = 0
+) {
   const DOM = getGameDOMReferences();
   DOM.textDisplay.innerHTML = "";
 
@@ -68,7 +77,7 @@ export function renderAllLines(wordsToRender = gameState.fullTextWords, startInd
 
 function appendLines(wordsToRender, startIndex) {
   const DOM = getGameDOMReferences();
-  
+
   wordsToRender.forEach((word, i) => {
     const wordContainer = document.createElement("span");
     wordContainer.classList.add("word-container");
@@ -87,7 +96,7 @@ function appendLines(wordsToRender, startIndex) {
     spaceSpan.classList.add("space-char");
     DOM.textDisplay.appendChild(spaceSpan);
   });
-  
+
   updateWordHighlighting();
   ensureScrollSync();
 }
@@ -99,7 +108,7 @@ export function lockTextDisplayHeightTo3Lines() {
 
   // Mendapatkan tinggi satu baris dari kata pertama
   const lineHeight = words[0].offsetHeight;
-  
+
   // Menetapkan tinggi maksimum 3 baris secara dinamis
   DOM.textDisplay.style.maxHeight = `${lineHeight * 3}px`;
   // Hapus baris ini karena akan memblokir scroll
@@ -108,13 +117,13 @@ export function lockTextDisplayHeightTo3Lines() {
 
 function calculateLines() {
   const DOM = getGameDOMReferences();
-  
+
   // Perbaikan: Hindari membersihkan DOM sebelum offsetTop dihitung
   const container = document.createElement("div");
   container.style.visibility = "hidden";
   container.style.position = "absolute";
   container.style.width = DOM.textDisplay.offsetWidth + "px";
-  
+
   gameState.lines = [];
 
   const wordElements = gameState.fullTextWords.map((word, index) => {
@@ -143,7 +152,7 @@ function calculateLines() {
     .map(Number)
     .sort((a, b) => a - b);
   sortedTops.forEach((top) => gameState.lines.push(linesMap[top]));
-  
+
   // Hapus elemen dummy setelah perhitungan selesai
   document.body.removeChild(container);
 }
@@ -152,31 +161,29 @@ export function updateWordHighlighting() {
   const DOM = getGameDOMReferences();
   const oldCursor = DOM.textDisplay.querySelector(".blinking-cursor");
   if (oldCursor) oldCursor.remove();
+
+  // Reset status kata-kata sebelumnya
   const allWordContainers = DOM.textDisplay.querySelectorAll(".word-container");
   allWordContainers.forEach((wc) => {
     wc.classList.remove("current-word-target");
     const wordIndex = parseInt(wc.id.replace("word-", ""), 10);
     if (wordIndex < gameState.typedWordIndex) {
-      wc.classList.toggle(
-        "word-correct",
-        gameState.typedWordCorrectness[wordIndex]
-      );
-      wc.classList.toggle(
-        "word-incorrect",
-        !gameState.typedWordCorrectness[wordIndex]
-      );
+      wc.classList.toggle("word-correct", gameState.typedWordCorrectness[wordIndex]);
+      wc.classList.toggle("word-incorrect", !gameState.typedWordCorrectness[wordIndex]);
     } else {
       wc.classList.remove("word-correct", "word-incorrect");
     }
   });
-  const currentWordElement = document.getElementById(
-    `word-${gameState.typedWordIndex}`
-  );
+
+  const currentWordElement = document.getElementById(`word-${gameState.typedWordIndex}`);
   if (!currentWordElement) return;
   currentWordElement.classList.add("current-word-target");
   currentWordElement.classList.remove("word-correct", "word-incorrect");
+
   const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || "";
   const typedValue = DOM.hiddenInput.value || "";
+
+  // Rebuild current word chars
   currentWordElement.innerHTML = "";
   const baseSpans = [];
   for (let i = 0; i < targetWord.length; i++) {
@@ -185,47 +192,57 @@ export function updateWordHighlighting() {
     currentWordElement.appendChild(s);
     baseSpans.push(s);
   }
-  let i = 0;
-  let t = 0;
-  let lastAnchor = null;
-  while (t < typedValue.length) {
-    const ch = typedValue[t];
-    const expected = targetWord[i];
-    if (expected !== undefined) {
-      if (ch === expected) {
-        const base = baseSpans[i];
-        if (base) {
-          base.classList.add("correct");
-          base.classList.remove("wrong");
-          lastAnchor = base;
-        }
-        i++;
-        t++;
-      } else {
-        const extra = document.createElement("span");
-        extra.className = "wrong-extra";
-        extra.textContent = ch;
-        const anchorBase = baseSpans[i];
-        if (anchorBase) {
-          currentWordElement.insertBefore(extra, anchorBase);
-        } else {
-          currentWordElement.appendChild(extra);
-        }
-        lastAnchor = extra;
-        t++;
-      }
-    } else {
-      const extra = document.createElement("span");
-      extra.className = "wrong-extra";
-      extra.textContent = ch;
-      currentWordElement.appendChild(extra);
-      lastAnchor = extra;
-      t++;
+
+  // Temukan mismatch pertama di area overlap
+  const minLen = Math.min(typedValue.length, targetWord.length);
+  let firstMismatchIndex = -1;
+  for (let i = 0; i < minLen; i++) {
+    if (typedValue[i] !== targetWord[i]) {
+      firstMismatchIndex = i;
+      break;
     }
   }
+
+  if (firstMismatchIndex === -1) {
+    // Belum ada mismatch pada area yang sudah diketik:
+    // -> huruf yang sudah diketik tetap correct (hanya sampai typedValue.length)
+    for (let i = 0; i < typedValue.length && i < targetWord.length; i++) {
+      baseSpans[i].classList.add("correct");
+    }
+  } else {
+    // Ada mismatch → semua huruf yang sudah diketik jadi wrong
+    const upto = Math.min(typedValue.length, targetWord.length);
+    for (let i = 0; i < upto; i++) {
+      baseSpans[i].classList.remove("correct");
+      baseSpans[i].classList.add("wrong");
+    }
+    // chars setelah typedLength (belum diketik) dibiarkan tanpa style
+  }
+
+  // Tambahkan extra wrong chars kalau typed lebih panjang dari target
+  if (typedValue.length > targetWord.length) {
+    for (let i = targetWord.length; i < typedValue.length; i++) {
+      const extra = document.createElement("span");
+      extra.className = "wrong-extra";
+      extra.textContent = typedValue[i];
+      currentWordElement.appendChild(extra);
+    }
+  }
+
+  // Caret mode: posisikan kursor setelah last typed char (kalau ada)
   if (gameState.cursorMode === "caret") {
     const cursor = document.createElement("span");
     cursor.classList.add("blinking-cursor");
+
+    let lastAnchor = null;
+    if (typedValue.length === 0) {
+      lastAnchor = null;
+    } else if (typedValue.length <= targetWord.length) {
+      lastAnchor = baseSpans[Math.min(typedValue.length - 1, baseSpans.length - 1)];
+    } else {
+      lastAnchor = currentWordElement.lastElementChild;
+    }
+
     let cursorLeft = 0;
     if (lastAnchor) {
       const a = lastAnchor.getBoundingClientRect();
@@ -235,9 +252,12 @@ export function updateWordHighlighting() {
     cursor.style.left = `${cursorLeft}px`;
     currentWordElement.appendChild(cursor);
   }
+
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
 }
+
+
 
 window.updateWordHighlighting = updateWordHighlighting;
 
@@ -252,24 +272,26 @@ export function triggerShakeAnimation() {
 }
 
 export function ensureScrollSync() {
-    const DOM = getGameDOMReferences();
-    const currentWordEl = document.getElementById(`word-${gameState.typedWordIndex}`);
-    if (!currentWordEl) return;
-    const container = DOM.textDisplay;
+  const DOM = getGameDOMReferences();
+  const currentWordEl = document.getElementById(
+    `word-${gameState.typedWordIndex}`
+  );
+  if (!currentWordEl) return;
+  const container = DOM.textDisplay;
 
-    // Dapatkan posisi top dari kata saat ini relatif terhadap kontainer
-    const currentWordTop = currentWordEl.offsetTop - container.offsetTop;
+  // Dapatkan posisi top dari kata saat ini relatif terhadap kontainer
+  const currentWordTop = currentWordEl.offsetTop - container.offsetTop;
 
-    // Dapatkan tinggi satu baris dari elemen kata pertama sebagai referensi
-    const firstWord = document.getElementById('word-0');
-    if (!firstWord) return;
-    const lineHeight = firstWord.offsetHeight;
+  // Dapatkan tinggi satu baris dari elemen kata pertama sebagai referensi
+  const firstWord = document.getElementById("word-0");
+  if (!firstWord) return;
+  const lineHeight = firstWord.offsetHeight;
 
-    // Jika kata saat ini berada di baris ke-2 atau lebih
-    if (currentWordTop >= lineHeight) {
-        // Atur posisi scroll agar baris saat ini menjadi baris pertama yang terlihat
-        container.scrollTop = currentWordTop - lineHeight;
-    }
+  // Jika kata saat ini berada di baris ke-2 atau lebih
+  if (currentWordTop >= lineHeight) {
+    // Atur posisi scroll agar baris saat ini menjadi baris pertama yang terlihat
+    container.scrollTop = currentWordTop - lineHeight;
+  }
 }
 
 function getLineTopPositions() {
@@ -300,11 +322,15 @@ export function initTextDisplayResizeObserver() {
 
 function addScrollEventListener() {
   const DOM = getGameDOMReferences();
-  DOM.textDisplay.addEventListener('scroll', () => {
-    const scrollPosition = DOM.textDisplay.scrollTop + DOM.textDisplay.clientHeight;
+  DOM.textDisplay.addEventListener("scroll", () => {
+    const scrollPosition =
+      DOM.textDisplay.scrollTop + DOM.textDisplay.clientHeight;
     const threshold = DOM.textDisplay.scrollHeight - 50; // Threshold untuk menambah baris
 
-    if (scrollPosition >= threshold && gameState.totalRenderedLines < gameState.fullTextWords.length) {
+    if (
+      scrollPosition >= threshold &&
+      gameState.totalRenderedLines < gameState.fullTextWords.length
+    ) {
       renderVisibleLines();
     }
   });

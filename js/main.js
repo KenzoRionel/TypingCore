@@ -227,16 +227,31 @@ document.addEventListener("visibilitychange", () => {
     DOM &&
     document.hidden &&
     gameState.startTime &&
-    !gameState.isTestInvalid
+    !gameState.isTestInvalid &&
+    gameState.inactivityTimer
   ) {
     invalidateTest("Tab diganti saat tes berlangsung.");
+
+    // Tambahan sesuai requirement
+    if (DOM.header) DOM.header.classList.remove("hidden");
+    if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+    if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
+
+    // Speedometer & logo tetap sembunyi
+    hideStatsContainer();
+    if (typeof window.resetLogoPop === "function") window.resetLogoPop();
   }
 });
 
+
 // Blur window
 window.addEventListener("blur", () => {
+  const DOM = getGameDOMReferences();
   if (gameState.startTime && !gameState.isTestInvalid) {
     invalidateTest("Jendela browser tidak aktif.");
+    if (DOM.header) DOM.header.classList.remove("hidden");
+    if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+    if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
   }
 });
 
