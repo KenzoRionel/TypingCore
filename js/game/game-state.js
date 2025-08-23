@@ -17,22 +17,23 @@ export const gameState = {
     timeRemaining: 60,
     
     // Properti baru untuk rendering dinamis per baris
-    lines: [], // Akan berisi array dari objek kata untuk setiap baris
-    currentLineIndex: 0, // Melacak indeks baris yang sedang ditampilkan
+    lines: [], 
+    currentLineIndex: 0, 
 
-    // Properti yang sudah tidak digunakan dihapus
-    // WORDS_PER_LOGICAL_LINE, DISPLAY_LOGICAL_LINES_COUNT, currentLogicalLineOffset
-
-    INITIAL_WORD_BUFFER: 150, // Jumlah kata yang dibuat di awal
+    INITIAL_WORD_BUFFER: 100,
     MAX_OVERTYPED_CHARS_HIGHLIGHT: 5,
-    cursorMode: 'highlight', // 'highlight' atau 'caret'
+    cursorMode: 'highlight',
     
-    // Properti baru untuk data grafik hasil
-    history: [], // Array untuk menyimpan {time, wpm, rawWpm, errors}
+    history: [],
+    currentVisibleLines: 0, // Baris yang sedang ditampilkan
+    lineBufferSize: 100, // Jumlah baris buffer di depan
+    totalRenderedLines: 0, // Total baris yang telah dirender
 
-    // Properti untuk tes tidak valid
     inactivityTimer: null,
     isTestInvalid: false,
+
+    // Properti baru:
+    RENDERED_LINE_BUFFER: 3, // Jumlah baris yang akan dirender di awal dan setiap kali scroll
 };
 
 window.gameState = gameState;

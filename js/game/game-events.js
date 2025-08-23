@@ -16,7 +16,7 @@ import {
   renderAllLines,
   updateWordHighlighting,
   triggerShakeAnimation,
-  prepareAndRenderLines,
+  prepareAndRenderText,
   lockTextDisplayHeightTo3Lines,
   initTextDisplayResizeObserver
 } from "../utils/text-display.js";
@@ -93,7 +93,7 @@ export function handleKeydown(e) {
     if (window.defaultKataKata && window.defaultKataKata.length > 0) {
       const prevLength = gameState.fullTextWords.length;
       generateAndAppendWords(100);
-      prepareAndRenderLines();
+      prepareAndRenderText();
       if (gameState.typedWordIndex >= gameState.fullTextWords.length) {
         gameState.typedWordIndex = prevLength;
       }

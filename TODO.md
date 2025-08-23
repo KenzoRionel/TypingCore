@@ -35,3 +35,6 @@ Semua perubahan utama telah diterapkan. Perlu dilakukan testing untuk memverifik
 - Fungsi `endTest()` sudah memiliki logika untuk menyembunyikan logo dan speedometer
 - Fungsi `resetTestState()` telah dimodifikasi untuk menangani tampilan UI saat restart
 - Event listener mousemove telah diperbaiki untuk menangani tampilan UI saat pointer bergerak
+
+
+Tambahan Ide: Menambahkan gambar tombol keyboard dengan logika saat mengetik gambar bergantian bergerak.

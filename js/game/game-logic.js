@@ -3,7 +3,7 @@
 // Perbaikan: Ganti import { DOM } menjadi import { getGameDOMReferences }
 import { getGameDOMReferences } from '../utils/dom-elements.js';
 import { setWpmSpeedometer, setAccuracySpeedometer, setTimerSpeedometer, timerMax } from '../utils/speedometer.js';
-import { prepareAndRenderLines, renderAllLines, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
+import { prepareAndRenderText, renderAllLines, updateWordHighlighting, triggerShakeAnimation } from '../utils/text-display.js';
 import { renderResultChart } from '../history/result-chart.js';
 import { gameState } from './game-state.js';
 import { lockTextDisplayHeightTo3Lines } from '../utils/text-display.js';
@@ -269,7 +269,7 @@ export function resetTestState() {
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
 
   generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
-  prepareAndRenderLines();
+  prepareAndRenderText();
 
   // 🔑 kunci ulang tinggi kontainer & reset scroll
   lockTextDisplayHeightTo3Lines();
