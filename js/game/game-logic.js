@@ -1,6 +1,4 @@
-// js/game/game-logic.js
-
-// Perbaikan: Ganti import { DOM } menjadi import { getGameDOMReferences }
+//js/game/game-logic.js
 import { getGameDOMReferences } from "../utils/dom-elements.js";
 import {
   setWpmSpeedometer,
@@ -17,6 +15,7 @@ import {
 import { renderResultChart } from "../history/result-chart.js";
 import { gameState } from "./game-state.js";
 import { lockTextDisplayHeightTo3Lines } from "../utils/text-display.js";
+
 export function generateAndAppendWords(numWords) {
   if (!window.defaultKataKata || window.defaultKataKata.length === 0) {
     console.error(
@@ -67,53 +66,39 @@ export function processTypedWord() {
     incorrectCharsInWord += currentWordTyped.length - targetWord.length;
   }
 
-  // Tambahkan ke total
   gameState.correctChars += correctCharsInWord;
   gameState.incorrectChars += incorrectCharsInWord;
 
-  // Hitung benar/salah kata
   const isWordCorrect = currentWordTyped === targetWord;
   gameState.typedWordCorrectness[gameState.typedWordIndex] = isWordCorrect;
   if (isWordCorrect) gameState.totalCorrectWords++;
   else gameState.totalIncorrectWords++;
 
-  // ===================================
-  // ✅ Hitung RAW WPM per kata
-  // ===================================
   const now = Date.now();
-  const startTime = gameState.wordStartTime || gameState.startTime;
-  const elapsedMs = now - startTime;
-  const elapsedMinutes = elapsedMs / 60000;
+  const elapsedMs = now - (gameState.wordStartTime || gameState.startTime);
 
-  const rawCharCount = currentWordTyped.length; // Semua karakter termasuk typo
-  const rawWpm =
-    elapsedMinutes > 0 ? Math.round(rawCharCount / 5 / elapsedMinutes) : 0;
-
-  // Hitung error percentage (per kata)
-  const totalChars = currentWordTyped.length || 1;
-  const errorPercentage = (incorrectCharsInWord / totalChars) * 100;
-
-  // Simpan ke history untuk grafik
   if (!gameState.history) gameState.history = [];
-gameState.history.push({
-  word: targetWord,
-  typed: currentWordTyped,
-  rawWpm,
-  correct: isWordCorrect,
-  errorCount: incorrectCharsInWord,     // <-- Tambah ini
-  correctCount: correctCharsInWord,     // <-- Tambah ini
-  startTime,
-  endTime: now,
-  durationMs: elapsedMs                 // <-- Tambah ini
-});
 
-  // ✅ Update waktu mulai kata berikutnya
+  const errorPerSecond =
+    elapsedMs > 0 ? incorrectCharsInWord / (elapsedMs / 1000) : 0;
+  gameState.history.push({
+    word: targetWord || "",
+    typed: currentWordTyped || "",
+    correct: isWordCorrect,
+    errorCount: incorrectCharsInWord,
+    correctCount: correctCharsInWord,
+    startTime: gameState.wordStartTime || gameState.startTime,
+    endTime: now,
+    durationMs: elapsedMs,
+    errorPerSecond: errorPerSecond,
+  });
+
   gameState.wordStartTime = now;
 }
 
+// ✅ KODE YANG DIUBAH
 export function updateRealtimeStats() {
   const DOM = getGameDOMReferences();
-
   if (!gameState.startTime) {
     try {
       setWpmSpeedometer(0);
@@ -126,29 +111,50 @@ export function updateRealtimeStats() {
     return;
   }
 
-  const elapsedMinutes = (Date.now() - gameState.startTime) / 60000;
-  if (elapsedMinutes <= 0) return;
+  const now = Date.now();
+  const elapsedMs = now - gameState.startTime;
+  const elapsedMinutes = elapsedMs / 60000;
+  const totalCorrectChars = gameState.correctChars + (DOM.hiddenInput?.value?.length || 0);
+  const totalIncorrectChars = gameState.incorrectChars;
+  const totalTypedChars = totalCorrectChars + totalIncorrectChars;
 
-  // ✅ Hitung hanya dari data final, jangan pakai kata aktif
-  const totalCorrect = gameState.correctChars;
-  const totalIncorrect = gameState.incorrectChars;
-  const totalChars = totalCorrect + totalIncorrect;
+  // ✅ PERBAIKAN UTAMA: Tambah batas minimum waktu atau karakter.
+  let instantWPM = 0;
+  if (totalTypedChars >= 1 && elapsedMinutes > 0.00833) { // 0.00833 minutes = 0.5 seconds
+      instantWPM = Math.round((totalCorrectChars / 5) / elapsedMinutes);
+  }
 
-  const grossWPM =
-    totalCorrect > 0 ? Math.round(totalCorrect / 5 / elapsedMinutes) : 0;
-  const accuracyPercent =
-    totalChars > 0 ? Math.round((totalCorrect / totalChars) * 100) : 100;
+  const alpha = 0.1; 
+  if (gameState.smootherWPM === undefined) {
+    gameState.smootherWPM = instantWPM;
+  } else {
+    gameState.smootherWPM = (alpha * instantWPM) + ((1 - alpha) * gameState.smootherWPM);
+  }
+
+  const accuracyPercent = totalTypedChars > 0 ? Math.round((totalCorrectChars / totalTypedChars) * 100) : 100;
 
   try {
-    setWpmSpeedometer(grossWPM);
+    setWpmSpeedometer(Math.round(gameState.smootherWPM));
   } catch (e) {}
   try {
     setAccuracySpeedometer(accuracyPercent);
   } catch (e) {}
 
-  if (DOM.wpmDisplay) DOM.wpmDisplay.textContent = String(grossWPM);
-  if (DOM.accuracyDisplay)
-    DOM.accuracyDisplay.textContent = `${accuracyPercent}%`;
+  if (DOM.wpmDisplay) DOM.wpmDisplay.textContent = String(Math.round(gameState.smootherWPM));
+  if (DOM.accuracyDisplay) DOM.accuracyDisplay.textContent = `${accuracyPercent}%`;
+
+  const currentSecond = Math.floor((now - gameState.startTime) / 1000);
+  const totalKeystrokes = gameState.keystrokeLog.filter(ts => {
+    const tsSecond = Math.floor((ts - gameState.startTime) / 1000);
+    return tsSecond === currentSecond;
+  }).length;
+  const wpm = Math.round((totalKeystrokes / 5) * 60);
+
+  if (gameState.rawWpmPerSecond.length <= currentSecond) {
+    gameState.rawWpmPerSecond.push(wpm);
+  } else {
+    gameState.rawWpmPerSecond[currentSecond] = wpm;
+  }
 }
 
 export function calculateAndDisplayFinalResults() {
@@ -159,7 +165,6 @@ export function calculateAndDisplayFinalResults() {
   );
   if (textDisplayContainer) textDisplayContainer.style.display = "none";
 
-  // Konsisten pakai DOM.menuButton
   if (DOM.menuButton) DOM.menuButton.style.display = "none";
 
   const resultsArea = document.getElementById("resultsDisplayArea");
@@ -183,19 +188,36 @@ export function calculateAndDisplayFinalResults() {
     totalTestMinutes > 0
       ? Math.round(totalTypedChars / 5 / totalTestMinutes)
       : 0;
+
+  /** ✅ Hitung Konsistensi berdasarkan keystroke */
   let consistency = 0;
-  const wpmHistory = gameState.history.map((h) => h.rawWpm);
-  if (wpmHistory.length > 1) {
-    const mean = finalWPM;
+  const keystrokeLog = gameState.keystrokeLog || [];
+  const perSecond = new Array(gameState.TIMED_TEST_DURATION).fill(0);
+
+  keystrokeLog.forEach((ts) => {
+    const sec = Math.floor((ts - gameState.startTime) / 1000);
+    if (sec >= 0 && sec < perSecond.length) {
+      perSecond[sec]++;
+    }
+  });
+
+  const wpmBySecond = perSecond.map((c) => Math.round((c / 5) * 60));
+
+  // Filter hanya WPM > 0
+  const nonZeroWPMs = wpmBySecond.filter((wpm) => wpm > 0);
+  if (nonZeroWPMs.length > 1) {
+    const mean =
+      nonZeroWPMs.reduce((sum, wpm) => sum + wpm, 0) / nonZeroWPMs.length;
     const stdDev = Math.sqrt(
-      wpmHistory.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b) /
-        wpmHistory.length
+      nonZeroWPMs.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b) /
+        nonZeroWPMs.length
     );
     if (mean > 0) {
       consistency = Math.max(0, Math.round((1 - stdDev / mean) * 100));
     }
   }
 
+  // ✅ Update UI
   document.getElementById("finalWPM").textContent = finalWPM;
   document.getElementById("finalAccuracy").textContent = `${finalAccuracy}%`;
   document.getElementById(
@@ -205,13 +227,16 @@ export function calculateAndDisplayFinalResults() {
     "finalChars"
   ).textContent = `${finalCorrectChars} / ${finalIncorrectChars} / ${totalTypedChars}`;
   document.getElementById("finalConsistency").textContent = `${consistency}%`;
+  const rawWpmEl = document.getElementById("finalRawWPM");
+  if (rawWpmEl) rawWpmEl.textContent = String(finalRawWPM);
 
   const historyData = gameState.history.slice();
-  renderResultChart(historyData, finalWPM, gameState.TIMED_TEST_DURATION);
-
+  renderResultChart(historyData, finalWPM, gameState.TIMED_TEST_DURATION, gameState.rawWpmPerSecond, gameState.correctCharsPerSecond);
+  
   if (typeof window.saveScore === "function") {
     window.saveScore(
       finalWPM,
+      finalRawWPM,
       finalAccuracy,
       gameState.TIMED_TEST_DURATION,
       finalIncorrectChars,
@@ -221,6 +246,11 @@ export function calculateAndDisplayFinalResults() {
       gameState.totalIncorrectWords
     );
   }
+
+  // Debugging
+  console.log("Keystroke log:", keystrokeLog.length);
+  console.log("WPM per detik:", wpmBySecond);
+  console.log("Konsistensi:", consistency + "%");
 }
 
 export function endTest() {
@@ -248,6 +278,7 @@ export function invalidateTest(reason) {
   );
   if (textDisplayContainer) {
     textDisplayContainer.style.display = "flex";
+    DOM.textDisplay.innerHTML = "";
     DOM.textDisplay.innerHTML = `<div class="invalid-test-message">Tes dibatalkan: ${reason}</div>`;
   }
 
@@ -256,12 +287,10 @@ export function invalidateTest(reason) {
     resultsArea.style.display = "none";
   }
 
-  // ✅ Tambahan agar header & tombol kembali muncul
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
 
-  // ✅ Speedometer & logo tetap sembunyi
   hideStatsContainer();
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 }
@@ -284,7 +313,13 @@ export function resetTestState() {
   gameState.lines = [];
   gameState.currentLineIndex = 0;
   gameState.history = [];
-  gameState.wordStartTime = Date.now();
+  gameState.wordStartTime = null;
+  gameState.keystrokeLog = [];
+  gameState.rawWpmPerSecond = []; 
+  gameState.correctCharsPerSecond = []; 
+  
+  // ✅ TAMBAHAN: Reset smootherWPM saat state direset
+  gameState.smootherWPM = undefined;
 
   if (DOM.accuracySpan) DOM.accuracySpan.textContent = "0%";
   if (DOM.timerSpan) DOM.timerSpan.textContent = gameState.TIMED_TEST_DURATION;
@@ -308,7 +343,6 @@ export function resetTestState() {
     ".text-display-container"
   );
   if (textDisplayContainer) {
-    // Biarkan sesuai layout aslinya (flex), kalau layout-mu memang pakai flex
     textDisplayContainer.style.display = "flex";
   }
 
@@ -320,11 +354,9 @@ export function resetTestState() {
   if (DOM.finalCorrectWords) DOM.finalCorrectWords.textContent = "--";
   if (DOM.finalIncorrectWords) DOM.finalIncorrectWords.textContent = "--";
 
-  // Sembunyikan logo dan speedometer saat restart
   hideStatsContainer();
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 
-  // Tampilkan kembali header, menu button, dan restart button saat restart
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
@@ -332,15 +364,12 @@ export function resetTestState() {
   generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
   prepareAndRenderText();
 
-  // 🔑 kunci ulang tinggi kontainer & reset scroll
   lockTextDisplayHeightTo3Lines();
   DOM.textDisplay.scrollTop = 0;
 
-  // 🔑 pastikan typedWordIndex balik ke 0
   gameState.currentLineIndex = 0;
   gameState.typedWordIndex = 0;
 
-  // 🔑 baru update highlight/cursor setelah fokus
   setTimeout(() => {
     updateWordHighlighting();
   }, 0);
@@ -351,21 +380,16 @@ export function resetTestState() {
 export function startTimer() {
   const DOM = getGameDOMReferences();
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
-
   gameState.timerInterval = setInterval(() => {
     gameState.timeRemaining--;
     setTimerSpeedometer(gameState.timeRemaining);
-
     if (gameState.timeRemaining <= 0) {
       endTest();
     }
   }, 1000);
-
   gameState.updateStatsInterval = setInterval(() => {
     updateRealtimeStats();
   }, 100);
-
-  startInactivityTimer();
 }
 
 export function startInactivityTimer() {
@@ -375,7 +399,42 @@ export function startInactivityTimer() {
   }, 3000);
 }
 
-export function initGameListeners() {}
+export function initGameListeners() {
+  const DOM = getGameDOMReferences();
+
+  if (DOM.hiddenInput) {
+    DOM.hiddenInput.addEventListener("keydown", (event) => {
+      const now = Date.now();
+      
+      if (!gameState.startTime) {
+        gameState.startTime = now;
+        gameState.wordStartTime = now;
+        startTimer();
+      }
+      if (!gameState.keystrokeLog) gameState.keystrokeLog = [];
+      gameState.keystrokeLog.push(now);
+
+      const currentSecond = Math.floor((now - gameState.startTime) / 1000);
+      const typedChar = event.key;
+      const currentInputLength = DOM.hiddenInput.value.length;
+      
+      if (typedChar.length === 1 && typedChar !== 'Backspace') {
+        const targetChar = gameState.fullTextWords[gameState.typedWordIndex]?.[currentInputLength];
+        const isCorrect = typedChar === targetChar;
+
+        while (gameState.correctCharsPerSecond.length <= currentSecond) {
+          gameState.correctCharsPerSecond.push(0);
+        }
+        
+        if (isCorrect) {
+          gameState.correctCharsPerSecond[currentSecond]++;
+        }
+      }
+
+      startInactivityTimer();
+    });
+  }
+}
 
 export function showStatsContainer() {
   const DOM = getGameDOMReferences();

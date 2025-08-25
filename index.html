@@ -1,220 +1,340 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Speed Typing Test - Kata Umum</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/text-display.css">
-    <link rel="stylesheet" href="css/custom-button.css">
-    <link rel="stylesheet" href="css/speedometer-style.css">
-    <link rel="stylesheet" href="css/dark-mode.css">
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/text-display.css" />
+    <link rel="stylesheet" href="css/custom-button.css" />
+    <link rel="stylesheet" href="css/speedometer-style.css" />
+    <link rel="stylesheet" href="css/dark-mode.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div class="wrapper">
-        <main class="main-content">
-            <header id="header" class="site-header d-flex align-items-center">
-                <nav class="navbar navbar-expand navbar-light flex-grow-1">
-                    <div class="container-fluid">
-                        <button id="mainSidebarToggleBtn" class="navbar-toggler d-lg-none me-2" type="button" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
+      <main class="main-content">
+        <header id="header" class="site-header d-flex align-items-center">
+          <nav class="navbar navbar-expand navbar-light flex-grow-1">
+            <div class="container-fluid">
+              <button
+                id="mainSidebarToggleBtn"
+                class="navbar-toggler d-lg-none me-2"
+                type="button"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
 
-                        <a class="navbar-brand py-0 me-auto" id="Brand" href="index.html">
-                            <img id="logoWebsite" src="img/TypingCore.svg" alt="Logo Website" style="height: 60px;">
-                        </a>
-                        <div class="navbar-collapse justify-content-between" id="navbarSupportedContent">
-                            <ul class="navbar-nav align-items-center">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
-                                </li>
-                               <li class="nav-item">
-                                    <a class="nav-link active" href="lessons.html"><i class="fas fa-graduation-cap"></i></a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="add-text.html"><i class="fas fa-plus-circle"></i></a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="score-history.html"><i class="fas fa-bars"></i></a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="navbar-collapse justify-content-end" id="navbarSupportedContent2">
-                            <ul class="navbar-nav align-items-center">
-                                <!-- Tombol mode malam/siang yang dipindahkan ke header -->
-                                <li class="nav-item">
-                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
-                                        <span class="slider">
-                                            <span class="slider-icon sun">☀️</span>
-                                            <span class="slider-icon moon">🌙</span>
-                                        </span>
-                                    </button>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-globe"></i> Bahasa
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
-                                        <li><a class="dropdown-item" href="#">Bahasa Indonesia</a></li>
-                                        <li><a class="dropdown-item" href="#">English</a></li>
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-user-circle"></i> User
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-                                        <li><a class="dropdown-item" href="#">Profil</a></li>
-                                        <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#">Logout</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
-            </header>
-            <div id="MenuButton" class="d-flex gap-2 justify-content-center my-3">
-                <!-- Tombol waktu -->
-                <button class="btn btn-outline-primary time-mode-btn" data-time="30">30</button>
-                <button class="btn btn-outline-primary time-mode-btn" data-time="60">60</button>
-                <button class="btn btn-outline-primary time-mode-btn" data-time="120">120</button>
-                <button class="btn btn-outline-primary time-mode-btn" data-time="180">180</button>
-                <!-- Tombol jenis kata -->
-                <button class="btn btn-outline-success word-type-btn" data-word-type="200">IND</button>
-                <button class="btn btn-outline-success word-type-btn" data-word-type="1000">IND 1K</button>
-                <button class="btn btn-outline-success word-type-btn" data-word-type="10000">IND 10K</button>
-                <!-- Tombol mode kursor -->
-                <div class="btn-group ms-3" role="group" aria-label="Cursor Modes">
-                    <button type="button" class="btn btn-outline-secondary cursor-mode-btn active" data-cursor-mode="highlight"><i class="fas fa-highlighter"></i></button>
-                    <button type="button" class="btn btn-outline-secondary cursor-mode-btn" data-cursor-mode="caret"><i class="fas fa-i-cursor"></i></button>
-                </div>
+              <a class="navbar-brand py-0 me-auto" id="Brand" href="index.html">
+                <img
+                  id="logoWebsite"
+                  src="img/TypingCore.svg"
+                  alt="Logo Website"
+                  style="height: 60px"
+                />
+              </a>
+              <div
+                class="navbar-collapse justify-content-between"
+                id="navbarSupportedContent"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <li class="nav-item">
+                    <a class="nav-link" href="index.html"
+                      ><i class="fas fa-keyboard"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link active" href="lessons.html"
+                      ><i class="fas fa-graduation-cap"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="add-text.html"
+                      ><i class="fas fa-plus-circle"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="score-history.html"
+                      ><i class="fas fa-history"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="score-history.html"
+                      ><i class="fas fa-bars"></i
+                    ></a>
+                  </li>
+                </ul>
+              </div>
+              <div
+                class="navbar-collapse justify-content-end"
+                id="navbarSupportedContent2"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <!-- Tombol mode malam/siang yang dipindahkan ke header -->
+                  <li class="nav-item">
+                    <button
+                      id="darkModeToggle"
+                      class="dark-mode-slide-toggle nav-link"
+                      aria-label="Toggle Dark Mode"
+                    >
+                      <span class="slider">
+                        <span class="slider-icon sun">☀️</span>
+                        <span class="slider-icon moon">🌙</span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdownLang"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-globe"></i> Bahasa
+                    </a>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="navbarDropdownLang"
+                    >
+                      <li>
+                        <a class="dropdown-item" href="#">Bahasa Indonesia</a>
+                      </li>
+                      <li><a class="dropdown-item" href="#">English</a></li>
+                    </ul>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdownUser"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-user-circle"></i> User
+                    </a>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="navbarDropdownUser"
+                    >
+                      <li><a class="dropdown-item" href="#">Profil</a></li>
+                      <li><a class="dropdown-item" href="#">Pengaturan</a></li>
+                      <li><hr class="dropdown-divider" /></li>
+                      <li><a class="dropdown-item" href="#">Logout</a></li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <section id="typing-test" class="page active">
-                <div class="main-typing-area">
-                    <div class="typing-area-left-side"> 
-                        <div class="text-display-container">
-                            <div id="textDisplay" class="text-display"></div>
-                        </div>
-                        <div class="results-container" id="resultsDisplayArea" style="display: none;">
-                            <div class="chart-container">
-                                <canvas id="resultChart"></canvas>
-                            </div>
-                            <div class="results-summary">
-                                <div class="summary-main">
-                                    <div class="summary-item">
-                                        <span class="summary-label">WPM</span>
-                                        <span id="finalWPM" class="summary-value">--</span>
-                                    </div>
-                                    <div class="summary-item">
-                                        <span class="summary-label">Akurasi</span>
-                                        <span id="finalAccuracy" class="summary-value">--%</span>
-                                    </div>
-                                </div>
-                                <div class="summary-details">
-                                    <div class="details-item">
-                                        <span class="details-label">Waktu Test</span>
-                                        <span id="finalTime">--s</span>
-                                    </div>
-                                    <div class="details-item">
-                                        <span class="details-label">Karakter</span>
-                                        <span id="finalChars">-- / -- / --</span>
-                                    </div>
-                                    <div class="details-item">
-                                        <span class="details-label">Konsistensi</span>
-                                        <span id="finalConsistency">--%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-center">
-                            <textarea id="hiddenTextInput" class="hidden-text-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" wrap="off"></textarea>
-                            <button id="restartButton" class="btn restart-btn d-flex align-items-center justify-content-center flex-shrink-0" aria-label="Mulai Ulang">
-                                <i class="fas fa-redo-alt fa-lg"></i>
-                            </button>
-                        </div>
-                        <div id="stats-container">
-                            <div class="stat-item">
-                                <div class="speedometer-container">
-                                    <div class="speedometer-gauge-face">
-                                        <div class="speedometer-ticks" id="wpmTicks"></div>
-                                        <div class="speedometer-needle" id="wpmNeedle"></div>
-                                        <div class="speedometer-center-pin"></div>
-                                        <div class="speed-display" id="wpmValue">0</div>
-                                        <div class="speed-unit">WPM</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-item">
-                                <div class="speedometer-container">
-                                    <div class="speedometer-gauge-face">
-                                        <div class="speedometer-ticks" id="accuracyTicks"></div>
-                                        <div class="speedometer-needle" id="accuracyNeedle"></div>
-                                        <div class="speedometer-center-pin"></div>
-                                        <div class="speed-display" id="accuracyValue">0%</div>
-                                        <div class="speed-unit">AKURASI</div> </div>
-                                </div>
-                            </div>
-                            
-                            <div class="stat-item">
-                                <div class="speedometer-container">
-                                    <div class="speedometer-gauge-face">
-                                        <div class="speedometer-ticks" id="timerTicks"></div>
-                                        <div class="speedometer-needle" id="timerNeedle"></div>
-                                        <div class="speedometer-center-pin"></div>
-                                        <div class="speed-display" id="timerValue">60</div>
-                                        <div class="speed-unit">DETIK</div> </div>
-                                </div>
-                            </div>
-                        </div>
+          </nav>
+        </header>
+        <div id="MenuButton" class="d-flex gap-2 justify-content-center my-3">
+          <!-- Tombol waktu -->
+          <button class="btn btn-outline-primary time-mode-btn" data-time="30">
+            30
+          </button>
+          <button class="btn btn-outline-primary time-mode-btn" data-time="60">
+            60
+          </button>
+          <button class="btn btn-outline-primary time-mode-btn" data-time="120">
+            120
+          </button>
+          <button class="btn btn-outline-primary time-mode-btn" data-time="180">
+            180
+          </button>
+          <!-- Tombol jenis kata -->
+          <button
+            class="btn btn-outline-success word-type-btn"
+            data-word-type="200"
+          >
+            IND
+          </button>
+          <button
+            class="btn btn-outline-success word-type-btn"
+            data-word-type="1000"
+          >
+            IND 1K
+          </button>
+          <button
+            class="btn btn-outline-success word-type-btn"
+            data-word-type="10000"
+          >
+            IND 10K
+          </button>
+          <!-- Tombol mode kursor -->
+          <div class="btn-group ms-3" role="group" aria-label="Cursor Modes">
+            <button
+              type="button"
+              class="btn btn-outline-secondary cursor-mode-btn active"
+              data-cursor-mode="highlight"
+            >
+              <i class="fas fa-highlighter"></i>
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary cursor-mode-btn"
+              data-cursor-mode="caret"
+            >
+              <i class="fas fa-i-cursor"></i>
+            </button>
+          </div>
+        </div>
+        <section id="typing-test" class="page active">
+          <div class="main-typing-area">
+            <div class="typing-area-left-side">
+              <div class="text-display-container">
+                <div id="textDisplay" class="text-display"></div>
+              </div>
+              <div
+                class="results-container"
+                id="resultsDisplayArea"
+                style="display: none"
+              >
+                <div class="chart-container">
+                  <canvas id="resultChart"></canvas>
+                </div>
+                <div class="results-summary">
+                  <div class="summary-main">
+                    <div class="summary-item">
+                      <span class="summary-label">WPM</span>
+                      <span id="finalWPM" class="summary-value">--</span>
                     </div>
+                    <div class="summary-item">
+                      <span class="summary-label">Akurasi</span>
+                      <span id="finalAccuracy" class="summary-value">--%</span>
                     </div>
-                    <div class="results-container" id="resultsDisplayArea" style="display: none;">
-                        <div class="chart-container">
-                            <canvas id="resultChart"></canvas>
-                        </div>
-                        <div class="results-summary">
-                            <div class="summary-main">
-                                <div class="summary-item">
-                                    <span class="summary-label">WPM</span>
-                                    <span id="finalWPM" class="summary-value">--</span>
-                                </div>
-                                <div class="summary-item">
-                                    <span class="summary-label">Akurasi</span>
-                                    <span id="finalAccuracy" class="summary-value">--%</span>
-                                </div>
-                            </div>
-                            <div class="summary-details">
-                                <div class="details-item">
-                                    <span class="details-label">Waktu Test</span>
-                                    <span id="finalTime">--s</span>
-                                </div>
-                                <div class="details-item">
-                                    <span class="details-label">Karakter (Benar/Salah/Total)</span>
-                                    <span id="finalChars">-- / -- / --</span>
-                                </div>
-                                <div class="details-item">
-                                    <span class="details-label">Konsistensi</span>
-                                    <span id="finalConsistency">--%</span>
-                                </div>
-                            </div>
-                        </div>
+                  </div>
+                  <div class="summary-details">
+                    <div class="details-item">
+                      <span class="details-label">Waktu Test</span>
+                      <span id="finalTime">--s</span>
                     </div>
-            </section>
-        </main>
+                    <div class="details-item">
+                      <span class="details-label">Karakter</span>
+                      <span id="finalChars">-- / -- / --</span>
+                    </div>
+                    <div class="details-item">
+                      <span class="details-label">Konsistensi</span>
+                      <span id="finalConsistency">--%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-center">
+                <textarea
+                  id="hiddenTextInput"
+                  class="hidden-text-input"
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  wrap="off"
+                ></textarea>
+                <button
+                  id="restartButton"
+                  class="btn restart-btn d-flex align-items-center justify-content-center flex-shrink-0"
+                  aria-label="Mulai Ulang"
+                >
+                  <i class="fas fa-redo-alt fa-lg"></i>
+                </button>
+              </div>
+              <div id="stats-container">
+                <div class="stat-item">
+                  <div class="speedometer-container">
+                    <div class="speedometer-gauge-face">
+                      <div class="speedometer-ticks" id="wpmTicks"></div>
+                      <div class="speedometer-needle" id="wpmNeedle"></div>
+                      <div class="speedometer-center-pin"></div>
+                      <div class="speed-display" id="wpmValue">0</div>
+                      <div class="speed-unit">WPM</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stat-item">
+                  <div class="speedometer-container">
+                    <div class="speedometer-gauge-face">
+                      <div class="speedometer-ticks" id="accuracyTicks"></div>
+                      <div class="speedometer-needle" id="accuracyNeedle"></div>
+                      <div class="speedometer-center-pin"></div>
+                      <div class="speed-display" id="accuracyValue">0%</div>
+                      <div class="speed-unit">AKURASI</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stat-item">
+                  <div class="speedometer-container">
+                    <div class="speedometer-gauge-face">
+                      <div class="speedometer-ticks" id="timerTicks"></div>
+                      <div class="speedometer-needle" id="timerNeedle"></div>
+                      <div class="speedometer-center-pin"></div>
+                      <div class="speed-display" id="timerValue">60</div>
+                      <div class="speed-unit">DETIK</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="results-container"
+            id="resultsDisplayArea"
+            style="display: none"
+          >
+            <div class="chart-container">
+              <canvas id="resultChart"></canvas>
+            </div>
+            <div class="results-summary">
+              <div class="summary-main">
+                <div class="summary-item">
+                  <span class="summary-label">WPM</span>
+                  <span id="finalWPM" class="summary-value">--</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Akurasi</span>
+                  <span id="finalAccuracy" class="summary-value">--%</span>
+                </div>
+              </div>
+              <div class="summary-details">
+                <div class="details-item">
+                  <span class="details-label">RAW WPM</span>
+                  <span id="finalRawWPM">--</span>
+                </div>
+                <div class="details-item">
+                  <span class="details-label">Waktu Test</span>
+                  <span id="finalTime">--s</span>
+                </div>
+                <div class="details-item">
+                  <span class="details-label"
+                    >Karakter (Benar/Salah/Total)</span
+                  >
+                  <span id="finalChars">-- / -- / --</span>
+                </div>
+                <div class="details-item">
+                  <span class="details-label">Konsistensi</span>
+                  <span id="finalConsistency">--%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
     <script src="js/history/score-manager.js" type="module"></script>
     <script src="js/history/result-chart.js" type="module"></script>
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="js/main.js" type="module"></script>
-</body>
+  </body>
 </html>

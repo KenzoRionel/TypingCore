@@ -1,7 +1,10 @@
-// js/history/result-chart.js
-let resultChartInstance = null;
+//js/history/result-chart.js
 
-export function renderResultChart(historyData, finalWPM, totalTime) {
+let resultChartInstance = null;
+const ROLLING_WINDOW_SECONDS = 5; 
+
+// ✅ PERUBAHAN: Sekarang fungsi menerima `rawWpmPerSecond` DAN `correctCharsPerSecond`
+export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSecond, correctCharsPerSecond) {
   const canvas = document.getElementById("resultChart");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
@@ -10,201 +13,175 @@ export function renderResultChart(historyData, finalWPM, totalTime) {
     resultChartInstance.destroy();
     resultChartInstance = null;
   }
-
-  // Buat array waktu dari 0 sampai totalTime (dalam detik)
-  const labels = Array.from({length: totalTime + 1}, (_, i) => i);
   
-  // Mapping data ke interval waktu yang sesuai
-  let cumulativeTime = 0;
-  const rawWpmBySecond = Array(totalTime + 1).fill(null);
-  const errorCountsBySecond = Array(totalTime + 1).fill(null);
-  const netWpmBySecond = Array(totalTime + 1).fill(null);
+  const netWpmData = [];
+  const errorCountsBySecond = Array(totalTime).fill(null);
   
-  // Hitung Net WPM kumulatif per detik
-  let cumCorrect = 0;
-  let cumMs = 0;
+  let cumulativeCorrectChars = 0;
   
-  // Mapping data ke interval waktu yang lebih akurat
-  historyData.forEach((data, index) => {
-    const durationMs = data.durationMs || 0;
-    const startSecond = Math.floor(cumulativeTime / 1000);
-    cumulativeTime += durationMs;
-    const endSecond = Math.floor(cumulativeTime / 1000);
-    
-    // Raw WPM untuk kata ini
-    const rawWpm = data.rawWpm ?? 0;
-    
-    // Error count untuk kata ini
-    const errorCount = (data.errorCount != null) ? data.errorCount : computeErrorCount(data);
-    
-    // Net WPM kumulatif
-    const corr = (data.correctCount != null) ? data.correctCount : computeCorrectCount(data);
-    const ms = (data.endTime && data.startTime) ? (data.endTime - data.startTime) : (data.durationMs ?? 0);
-    cumCorrect += corr;
-    cumMs += ms;
-    const minutes = cumMs / 60000;
-    const netWpm = minutes > 0 ? +(((cumCorrect / 5) / minutes).toFixed(2)) : 0;
-    
-    // Distribusikan data ke detik-detik yang sesuai
-    for (let second = startSecond; second <= endSecond && second <= totalTime; second++) {
-      if (second >= 0) {
-        rawWpmBySecond[second] = rawWpm;
-        netWpmBySecond[second] = netWpm;
-        if (errorCount > 0) {
-          // Untuk error, hanya set pada detik terakhir kata ini
-          if (second === endSecond) {
-            errorCountsBySecond[second] = errorCount;
-          }
-        }
+  // Hitung error untuk setiap detik
+  historyData.forEach(data => {
+      const endSecond = Math.floor((data.endTime - (historyData[0]?.startTime || 0)) / 1000);
+      const errorCount = data.errorCount != null ? data.errorCount : computeErrorCount(data);
+      if (errorCount > 0 && endSecond >= 0 && endSecond < totalTime) {
+          errorCountsBySecond[endSecond] = (errorCountsBySecond[endSecond] || 0) + errorCount;
       }
-    }
   });
-  
-  // Isi data yang kosong dengan nilai 0 untuk menghindari line chart putus
-  for (let i = 0; i <= totalTime; i++) {
-    if (rawWpmBySecond[i] === null) rawWpmBySecond[i] = 0;
-    if (netWpmBySecond[i] === null) netWpmBySecond[i] = 0;
+
+  // ✅ PERUBAHAN: Gunakan `correctCharsPerSecond` untuk menghitung Net WPM
+  for (let i = 0; i < totalTime; i++) {
+      cumulativeCorrectChars += correctCharsPerSecond[i] || 0;
+
+      const cumulativeTimeMs = (i + 1) * 1000;
+      const netWpm = cumulativeTimeMs > 0 ? Math.round(cumulativeCorrectChars / 5 / (cumulativeTimeMs / 60000)) : 0;
+      netWpmData.push(netWpm);
   }
 
-  // Skala WPM kiri: default 100, kalau lewat naikkan otomatis
+  const labels = Array.from({ length: totalTime }, (_, i) => String(i + 1));
+  
+  // Hitung max axis
   const wpmMaxCandidate = Math.max(
-    0,
+    100,
     finalWPM || 0,
-    ...rawWpmBySecond.filter(v => v != null),
-    ...netWpmBySecond.filter(v => v != null)
+    ...rawWpmPerSecond, 
+    ...netWpmData
   );
-  const yWpmMax = Math.max(100, Math.ceil(wpmMaxCandidate / 10) * 10);
+  const yWpmMax = Math.ceil(wpmMaxCandidate / 10) * 10;
+  const yErrMax = Math.max(6, ...errorCountsBySecond.filter((v) => v != null));
 
-  // Errors scale
-  const maxErrObserved = Math.max(0, ...errorCountsBySecond.map(v => v ?? 0));
-  const yErrMax = Math.max(6, maxErrObserved);
-
-  // Plugin: garis PB (Net WPM akhir) putus-putus + label
   const pbLine = {
-    id: 'pbLine',
+    id: "pbLine",
     afterDatasetsDraw(chart) {
-      const { ctx, chartArea: { left, right }, scales: { yWpm } } = chart;
+      const {
+        ctx,
+        chartArea: { left, right },
+        scales: { yWpm },
+      } = chart;
       const y = yWpm.getPixelForValue(finalWPM);
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = '#6f6f6f';
+      ctx.strokeStyle = "#6f6f6f";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(left, y);
       ctx.lineTo(right, y);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = '#bdbdbd';
-      ctx.font = '12px sans-serif';
+      ctx.fillStyle = "#bdbdbd";
+      ctx.font = "12px sans-serif";
       ctx.fillText(`PB: ${finalWPM}`, right - 70, y - 6);
       ctx.restore();
-    }
+    },
   };
 
+  const xInterval = Math.ceil(totalTime / 10);
+
   resultChartInstance = new Chart(ctx, {
-    type: 'line',
+    type: "line",
     data: {
       labels,
       datasets: [
         {
-          label: 'Raw WPM (per kata)',
-          data: rawWpmBySecond,
-          borderColor: '#9aa0a6',
-          backgroundColor: 'rgba(154,160,166,0.15)',
-          tension: 0.35,
-          pointRadius: 0,
-          yAxisID: 'yWpm'
-        },
-        {
-          label: 'Net WPM (kumulatif)',
-          data: netWpmBySecond,
-          borderColor: '#f4c20d',
-          backgroundColor: 'rgba(244,194,13,0.10)',
+          label: "Net WPM",
+          data: netWpmData, // ✅ Menggunakan data yang baru dihitung
+          borderColor: "#f4c20d",
+          backgroundColor: "#f4c20d",
           borderWidth: 3,
-          tension: 0.2,
+          tension: 0.25,
           pointRadius: 2,
           pointHoverRadius: 3,
-          yAxisID: 'yWpm'
+          yAxisID: "yWpm",
         },
         {
-          label: 'Errors (char)',
+          label: "RAW WPM",
+          data: rawWpmPerSecond, 
+          borderColor: "#9aa0a6",
+          backgroundColor: "#9aa0a6",
+          borderWidth: 2,
+          tension: 0.25,
+          pointRadius: 3,
+          pointHoverRadius: 3,
+          yAxisID: "yWpm",
+          spanGaps: true,
+        },
+        {
+          label: "Errors",
           data: errorCountsBySecond,
-          type: 'scatter',
-          pointStyle: 'crossRot',
+          type: "scatter",
+          pointStyle: "crossRot",
           radius: 4,
           borderWidth: 1,
-          backgroundColor: '#ff6b6b',
-          borderColor: '#ff6b6b',
-          yAxisID: 'yErr'
-        }
-      ]
+          backgroundColor: "#ff6b6b",
+          borderColor: "#ff6b6b",
+          yAxisID: "yErr",
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       animation: false,
-      interaction: { mode: 'index', intersect: false },
+      interaction: { mode: "index", intersect: false },
       scales: {
         x: {
-          title: { display: true, text: `Time (seconds) - Total: ${totalTime}` },
-          beginAtZero: true,
+          title: { display: true, text: `Waktu (detik)` },
           ticks: {
-            autoSkip: false,
-            maxRotation: 0,
-            minRotation: 0,
-            callback: function (value, index, values) {
-              // Tampilkan semua waktu dalam detik pada sumbu x
-              const timeValue = labels[index];
-              if (timeValue === undefined) return null;
-              
-              // Tampilkan semua label waktu
-              return timeValue;
-            }
+            autoSkip: true,
+            maxTicksLimit: 10,
+            stepSize: xInterval,
+            callback: (value) => `${value + 1}`,
           },
-          grid: { color: 'rgba(255,255,255,0.06)' }
+          grid: { color: "rgba(255,255,255,0.06)" },
         },
         yWpm: {
-          position: 'left',
+          position: "left",
           beginAtZero: true,
           max: yWpmMax,
-          title: { display: true, text: 'words per minute' },
-          grid: { color: 'rgba(255,255,255,0.06)' }
+          title: { display: true, text: "Kata per Menit" },
+          ticks: { stepSize: Math.ceil(yWpmMax / 5) },
+          grid: { color: "rgba(255,255,255,0.06)" },
         },
         yErr: {
-          position: 'right',
+          position: "right",
           min: 0,
           max: yErrMax,
-          title: { display: true, text: 'Errors' },
-          grid: { drawOnChartArea: false }
-        }
+          title: { display: true, text: "Eror" },
+          grid: { drawOnChartArea: false },
+        },
       },
       plugins: {
         legend: { display: true, labels: { usePointStyle: true } },
         tooltip: {
           callbacks: {
-            afterBody: () => [`PB: ${finalWPM}`]
-          }
-        }
-      }
+            title: (context) => {
+              const idx = context[0].dataIndex;
+              return `Waktu: ${idx + 1}s`;
+            },
+            label: (context) => {
+              const label = context.dataset.label;
+              const value = context.parsed.y;
+              return `${label}: ${Math.round(value)}`;
+            },
+          },
+        },
+      },
     },
-    plugins: [pbLine]
+    plugins: [pbLine],
   });
 }
 
-/* ===== Helper buat fallback hitung benar/salah kalau field nggak ada ===== */
+// Helper
 function computeErrorCount(d) {
-  const typed = d.typed || '';
-  const word = d.word || '';
+  const typed = d.typed || "",
+    word = d.word || "";
   let inc = 0;
-  for (let i = 0; i < typed.length; i++) {
-    if (word[i] !== typed[i]) inc++;
-  }
+  for (let i = 0; i < typed.length; i++) if (word[i] !== typed[i]) inc++;
   if (typed.length > word.length) inc += typed.length - word.length;
   return inc;
 }
 function computeCorrectCount(d) {
-  const typed = d.typed || '';
-  const word = d.word || '';
+  const typed = d.typed || "",
+    word = d.word || "";
   let cor = 0;
   const n = Math.min(typed.length, word.length);
   for (let i = 0; i < n; i++) if (typed[i] === word[i]) cor++;
