@@ -1,50 +1,123 @@
 // js/data/default-words.js
 
 export const top200Words = [
-    "saya", "kamu", "dia", "kita", "mereka", "ini", "itu", "ada", "tidak", "ya",
-    "mau", "bisa", "akan", "sudah", "belum", "lagi", "sekarang", "nanti",
-    "kemarin", "besok", "hari", "minggu", "bulan", "tahun", "pagi", "siang", "sore",
-    "malam", "makan", "minum", "tidur", "duduk", "berdiri", "jalan", "pulang", "pergi",
-    "datang", "bawa", "ambil", "lihat", "dengar", "bicara", "tulis", "baca", "kerja",
-    "main", "belajar", "uang", "rumah", "bola", "kota", "peta", "kunci", "tali",
-    "kaca", "kursi", "padi", "susu", "roti", "kuda", "ikan", "ayam", "batu", "paku",
-    "kain", "pipa", "pena", "tas", "topi", "jari", "mata", "telinga", "mulut", "hidung",
-    "tangan", "kaki", "kepala", "rambut", "kulit", "gigi", "pintu", "jendela", "lantai",
-    "dinding", "atap", "langit", "bumi", "air", "api", "angin", "hujan", "panas", "dingin",
-    "besar", "kecil", "panjang", "pendek", "berat", "ringan", "cepat", "lambat", "baru",
-    "lama", "bagus", "jelek", "dekat", "jauh", "atas", "bawah", "dalam", "luar", "depan",
-    "belakang", "kiri", "kanan", "tengah", "samping", "sebelah", "sini", "sana", "mana",
-    "apa", "siapa", "mengapa", "bagaimana", "berapa", "kapan", "setiap", "semua", "banyak",
-    "sedikit", "cukup", "kurang", "lebih", "sangat", "agak", "sekali", "juga", "saja",
-    "hanya", "pasti", "mungkin", "harap", "tolong", "maaf", "terima", "kasih", "sama",
-    "permisi", "selamat", "datang", "jalan", "hati", "awas", "stop", "mulai", "selesai",
-    "ikut", "cari", "temu", "beri", "kirim", "bayar", "janti", "tanya", "jawab", "bantu",
-    "pakai", "buat", "pindah", "ubah", "ganti", "potong", "buang", "simpan", "jemur",
-    "cuci", "masak", "goreng", "rebus", "bakar"
-    // ...lanjutkan hingga 200 kata unik dan mudah diketik
+"saya", "kamu", "dia", "kita", "mereka", "ini", "itu", "ada", "tidak", "ya",
+  "mau", "bisa", "akan", "sudah", "belum", "lagi", "sekarang", "nanti",
+  "hari", "minggu", "bulan", "tahun", "pagi", "siang", "sore", "malam",
+  "makan", "minum", "tidur", "duduk", "berdiri", "jalan", "pergi", "datang",
+  "bawa", "ambil", "lihat", "dengar", "bicara", "tulis", "baca", "kerja", "main",
+  "belajar", "uang", "rumah", "bola", "kota", "kunci", "tali", "kursi", "meja",
+  "padi", "susu", "roti", "ikan", "ayam", "batu", "paku", "kain", "tas", "topi",
+  "jari", "mata", "telinga", "mulut", "hidung", "tangan", "kaki", "kepala", "rambut",
+  "dan", "atau", "tetapi", "sedang", "karena", "sehingga", "jika",
+  "apabila", "walau", "meski", "supaya", "agar", "untuk", "dengan",
+  "tanpa", "sampai", "hingga", "ketika", "saat", "lalu", "kemudian",
+  "sebelum", "telah", "namun", "justru", "malah",
+  "bahkan", "lagi", "apalagi", "lain", "atau juga", "beserta", "terhadap", 
+  "bagi", "tentang", "maka", "jadi", "sebab", "lanjut", "akhir",
+  "bagai", "sesuai", "dasar", "menurut", "tentu", "pada", "di", "ke", "dari", "oleh",
+  "kulit", "gigi", "pintu", "jendela", "lantai", "dinding", "atap", "langit", "bumi",
+  "air", "api", "angin", "hujan", "panas", "dingin", "besar", "kecil", "panjang",
+  "pendek", "berat", "ringan", "cepat", "lambat", "baru", "lama", "bagus", "jelek",
+  "dekat", "jauh", "atas", "bawah", "dalam", "luar", "depan", "belakang", "kiri",
+  "kanan", "tengah", "samping", "mana", "apa", "siapa", "mengapa", "bagaimana",
+  "berapa", "kapan", "setiap", "semua", "banyak", "sedikit", "cukup", "lebih",
+  "sangat", "juga", "saja", "hanya", "pasti", "mungkin", "harap", "tolong",
+  "maaf", "terima", "kasih", "sama", "permisi", "selamat", "ikut", "cari", "temu",
+  "beri", "kirim", "bayar", "tanya", "jawab", "bantu", "pakai", "buat", "pindah",
+  "ubah", "ganti", "potong", "buang", "simpan", "jemur", "cuci", "masak", "goreng",
+  "rebus", "bakar", "tunggu", "teman", "keluarga", "saudara", "adik", "kakak",
+  "ortu", "guru", "murid", "sekolah", "kampus", "kelas", "belanja", "toko", "pasar",
+  "harga", "murah", "mahal", "mobil", "motor", "sepeda", "jalan",
+  "kereta", "kapal", "laut", "sungai", "gunung", "pantai",
+  "hutan", "kebun", "taman", "bunga", "pohon", "daun", "akar", "buah", "sayur",
+  "daging", "telur", "keju", "teh", "kopi", "sirup", "gula", "garam", "lada",
+  "minyak", "mentega", "kertas", "buku", "pensil", "hp", "chat", "telepon", "kamera",
+  "foto", "video", "musik", "lagu", "film"
 ];
 
+
+
 export const top1000Words = [
-    "dan", "di", "ke", "dari", "adalah", "itu", "yang", "dengan", "untuk", "pada",
-    "saya", "kamu", "dia", "kami", "mereka", "ini", "atau", "tidak", "akan", "bisa",
-    "ada", "jadi", "karena", "sebagai", "oleh", "sudah", "belum", "lagi", "hanya", "juga",
-    "lebih", "kurang", "setelah", "sebelum", "tentang", "dalam", "luar", "atas", "bawah", "antara",
-    "besar", "kecil", "panjang", "pendek", "mudah", "sulit", "cepat", "lambat", "baru", "lama",
-    "baik", "buruk", "benar", "salah", "depan", "belakang", "kanan", "kiri", "atas", "bawah",
-    "hari", "bulan", "tahun", "minggu", "jam", "menit", "detik", "pagi", "siang", "malam",
-    "mata", "telinga", "mulut", "hidung", "tangan", "kaki", "kepala", "rambut", "kulit", "gigi",
-    "rumah", "sekolah", "kantor", "pasar", "toko", "jalan", "mobil", "motor", "sepeda", "kereta",
-    "air", "api", "tanah", "udara", "langit", "awan", "hujan", "panas", "dingin", "lembab",
-    "makan", "minum", "tidur", "bangun", "jalan", "lari", "duduk", "berdiri", "baca", "tulis",
-    "lihat", "dengar", "bicara", "pikir", "rasa", "sentuh", "ambil", "beri", "bawa", "taruh",
-    "buka", "tutup", "nyala", "mati", "masuk", "keluar", "naik", "turun", "datang", "pergi",
-    "teman", "keluarga", "ayah", "ibu", "anak", "saudara", "kakek", "nenek", "suami", "istri",
-    "kerja", "main", "belajar", "ajar", "tanya", "jawab", "beli", "jual", "bayar", "pinjam",
-    "pulang", "pergi", "singgah", "tinggal", "berangkat", "kembali", "mulai", "selesai", "lanjut", "henti",
-    "besar", "kecil", "panjang", "pendek", "tebal", "tipis", "berat", "ringan", "keras", "lembut",
-    "putih", "hitam", "merah", "kuning", "hijau", "biru", "coklat", "ungu", "abu", "emas",
-    "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh"
-    // ...lanjutkan hingga 1000 kata paling umum bahasa Indonesia...
+    // 1–100: kata kerja dasar sehari-hari
+  "ambil","bawa","tulis","baca","lihat","dengar","cari","temui","antar","kirim",
+  "taruh","angkat","turun","lempar","tangkap","potong","iris","kupas","aduk","campur",
+  "tuang","siram","panaskan","dinginkan","masak","rebus","goreng","bakar","hitung","ukur",
+  "catat","uji","periksa","perbaiki","siapkan","rapikan","bersihkan","pelihara","rawat","ikat",
+  "bungkus","kirimkan","ambilkan","tangkapkan","lemparkan","taruhkan","angkatkan","turunkan","susun","atur",
+  "rapi","bersihkan","gosok","sapu","lap","sirami","tumis","hias","warnai","gambar",
+  "latih","belajar","ajar","mengajar","latihkan","main","bermain","kerja","bekerja","buat",
+  "ubah","ganti","buang","simpan","nyalakan","matikan","buka","tutup","pilih","pesan",
+  "antar","ambilkan","kembalikan","bayar","cicil","tawar","pilihkan","ambilkan","tangkapkan","lemparkan",
+  
+  // 101–200: kata benda dasar
+  "rumah","meja","kursi","kasur","bantal","selimut","lampu","kompor","panci","wajan",
+  "piring","gelas","sendok","garpu","pisau","botol","talenan","kulkas","laptop","hp",
+  "kamera","jam","kalender","peta","tangga","pintu","jendela","atap","lantai","dinding",
+  "tas","topi","sepatu","kaos","celana","jaket","rok","baju","nasi","mie",
+  "sate","ayam","ikan","daging","sayur","buah","roti","keju","telur","teh",
+  "kopi","susu","sirup","gula","garam","lada","minyak","mentega","cokelat","jus",
+  "sup","bubur","kue","keripik","permen","uang","kota","kampus","kelas","sekolah",
+  "toko","pasar","bandara","stasiun","pelabuhan","kereta","kapal","pesawat","pantai","gunung",
+  "hutan","taman","kebun","bunga","pohon","daun","akar","rumput","sungai","laut",
+  "meja","lemari","sofa","kasur","bantal","selimut","lampu","kompor","panci","wajan","pulpen",
+
+  // 201–300: kata sifat dasar
+  "besar","kecil","panjang","pendek","berat","ringan","cepat","lambat","baru","lama",
+  "bagus","jelek","dekat","jauh","atas","bawah","dalam","luar","depan","belakang",
+  "kiri","kanan","tengah","samping","bersih","kotor","basah","kering","hangat","dingin",
+  "terang","gelap","senang","sedih","marah","takut","bosan","capek","sakit","sehat",
+  "malu","bangga","puas","cemas","lucu","ramah","cantik","tampan","indah","buruk",
+  "tenang","ribut","gila","bijak","cerdas","bodoh","kuat","lemah","ringan","keras",
+  "lunak","tinggi","rendah","rapat","jarang","sempit","lebar","luas","muda","tua",
+  
+  // 301–400: kata kerja tambahan
+  "rapikan","susun","aturkan","bersihkan","pelihara","rawat","tanam","tebang","panen","cabut",
+  "pangkas","ikat","bungkus","kirimkan","ambilkan","tangkapkan","lemparkan","taruhkan","angkatkan","turunkan",
+  "sapu","pel","gosok","lap","sirami","panaskan","dinginkan","potong","iris","kupas",
+  "campur","aduk","tuang","tabur","saring","rendam","tumis","goreng","rebus","bakar",
+  "masak","hidangkan","sajikan","ambil","taruh","angkat","turun","lempar","tangkap","pindah",
+  "bawa","antar","kirim","kembalikan","temui","kunjungi","tonton","dengar","lihat","amati",
+  
+  // 401–500: kata benda tambahan
+  "kendaraan","mobil","motor","sepeda","bus","angkot","truk","taksi","kapal","pesawat",
+  "stasiun","bandara","pelabuhan","jalan","toko","pasar","sekolah","kampus","kelas","perpustakaan",
+  "laboratorium","kantor","rumah sakit","puskesmas","taman","kebun","hutan","pantai","gunung","sungai",
+  "laut","pulau","kota","desa","kampung","jalan raya","trotoar","gedung","rumah","apartemen",
+  "buku","kertas","pena","pulpen","pensil","penghapus","penggaris","laptop","hp","tablet",
+  
+  // 501–600: kata sifat tambahan
+  "senang","sedih","marah","takut","bosan","capek","sakit","sehat","bersih","kotor",
+  "cantik","tampan","basah","kering","gelap","terang","lucu","ramah","malu","lapar",
+  "haus","ingin","butuh","besar","kecil","panjang","pendek","berat","ringan","cepat",
+  "lambat","baru","lama","bagus","jelek","dekat","jauh","atas","bawah","dalam",
+  "luar","depan","belakang","kiri","kanan","tengah","samping","rapat","jarang","luas",
+  
+  // 601–700: kata kerja lanjutan
+  "rapikan","susun","atur","bersihkan","pelihara","rawat","tanam","tebang","panen","cabut",
+  "pangkas","ikat","bungkus","kirim","ambil","tangkap","lempar","taruh","angkat","turun",
+  "sapu","pel","gosok","lap","sirami","panaskan","dinginkan","potong","iris","kupas",
+  "campur","aduk","tuang","tabur","saring","rendam","tumis","goreng","rebus","bakar",
+  "hidangkan","sajikan","ambilkan","antar","kembalikan","temui","kunjungi","tonton","dengar","lihat",
+  
+  // 701–800: kata benda lanjutan
+  "teman","keluarga","saudara","adik","kakak","ortu","guru","murid","anak","bayi",
+  "remaja","dewasa","orang","pria","wanita","lelaki","perempuan","keluarga","tetangga","tetua",
+  "pemimpin","warga","masyarakat","komunitas","organisasi","kelompok","tim","panitia","perusahaan","kantor",
+  "pabrik","toko","lapangan","rumah sakit","puskesmas","sekolah","kampus","kelas","laboratorium","perpustakaan",
+  
+  // 801–900: kata sifat lanjutan
+  "bahagia","sedih","marah","takut","bosan","capek","puas","malu","bangga","cemas",
+  "senang","lucu","ramah","cantik","tampan","indah","buruk","tenang","ribut","kuat",
+  "lemah","keras","lunak","tinggi","rendah","rapat","jarang","sempit","lebar","luas",
+  "muda","tua","baru","lama","besar","kecil","panjang","pendek","berat","ringan",
+  
+  // 901–1000: kata kerja & benda tambahan
+  "gunakan","pakai","buat","ubah","ganti","buang","simpan","ambil","antar","kirim",
+  "taruh","angkat","turun","lempar","tangkap","tonton","lihat","dengar","baca","tulis",
+  "susun","rapikan","atur","bersihkan","pelihara","rawat","tanam","pangkas","panen","cabut",
+  "pukul","tepuk","dorong","tarik","angkatkan","turunkan","lemparkan","tangkapkan","bungkus","bawa",
+  "ambilkan","antar","kembalikan","temui","kunjungi","tonton","dengar","lihat","amati","catat"
 ];
 
 export const top10000Words = [
@@ -69,7 +142,7 @@ export const top10000Words = [
     "intensi", "interaksi", "internalisasi", "interval", "intuisi", "invasi",
     "ironi", "irigasi", "jargon", "jeda", "jenaka", "jenggala", "jernih",
     "juxtaposisi", "kabar", "kala", "kandas", "kapabel", "kapital", "karakter",
-    "karsa", "kausal", "keabadian", "kedap", "kekal", "kelakar", "keniscayaan",
+    "karsa", "kau", "keabadian", "kedap", "kekal", "kelakar", "keniscayaan",
     "kental", "kias", "khazanah", "khusyuk", "kidung", "kimia", "klandestin",
     "klise", "kohesi", "kolaborasi", "kolektif", "komitmen", "kompatibel",
     "kompeten", "konsep", "konklusi", "konkret", "konsensus", "konstan",

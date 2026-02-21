@@ -153,42 +153,16 @@
           <button class="btn btn-outline-primary time-mode-btn" data-time="180">
             180
           </button>
-          <!-- Tombol jenis kata -->
           <button
-            class="btn btn-outline-success word-type-btn"
-            data-word-type="200"
+            id="settingsButton"
+            type="button"
+            class="btn btn-outline-dark ms-2"
+            aria-label="Pengaturan"
+            data-bs-toggle="modal"
+            data-bs-target="#settingsModal"
           >
-            IND
+            <i class="fas fa-cog"></i>
           </button>
-          <button
-            class="btn btn-outline-success word-type-btn"
-            data-word-type="1000"
-          >
-            IND 1K
-          </button>
-          <button
-            class="btn btn-outline-success word-type-btn"
-            data-word-type="10000"
-          >
-            IND 10K
-          </button>
-          <!-- Tombol mode kursor -->
-          <div class="btn-group ms-3" role="group" aria-label="Cursor Modes">
-            <button
-              type="button"
-              class="btn btn-outline-secondary cursor-mode-btn active"
-              data-cursor-mode="highlight"
-            >
-              <i class="fas fa-highlighter"></i>
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-secondary cursor-mode-btn"
-              data-cursor-mode="caret"
-            >
-              <i class="fas fa-i-cursor"></i>
-            </button>
-          </div>
         </div>
         <section id="typing-test" class="page active">
           <div class="main-typing-area">
@@ -250,6 +224,20 @@
                 </button>
               </div>
               <div id="stats-container">
+                <div class="text-stats-container" style="display: none; gap: 30px; justify-content: center; align-items: center; width: 100%; font-family: inherit;">
+                  <div class="text-stat-item">
+                    <span style="font-size: 0.9rem; opacity: 0.7;">WPM</span>
+                    <div id="wpmTextDisplay" style="font-size: 2.5rem; font-weight: bold;">0</div>
+                  </div>
+                  <div class="text-stat-item">
+                    <span style="font-size: 0.9rem; opacity: 0.7;">AKURASI</span>
+                    <div id="accuracyTextDisplay" style="font-size: 2.5rem; font-weight: bold;">0%</div>
+                  </div>
+                  <div class="text-stat-item">
+                    <span style="font-size: 0.9rem; opacity: 0.7;">DETIK</span>
+                    <div id="timerTextDisplay" style="font-size: 2.5rem; font-weight: bold;">60</div>
+                  </div>
+                </div>
                 <div class="stat-item">
                   <div class="speedometer-container">
                     <div class="speedometer-gauge-face">
@@ -331,6 +319,335 @@
           </div>
         </section>
       </main>
+      <!-- Modal Pengaturan -->
+      <div
+        class="modal fade"
+        id="settingsModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Pengaturan</h5>
+            </div>
+            <div class="modal-body">
+              <!-- Pilihan Kursor -->
+              <div class="mb-4">
+                <h6 class="mb-2">Pilihan Kursor</h6>
+                <div class="d-flex gap-3">
+                  <!-- Highlight Cursor -->
+                  <div class="text-center">
+                    <!-- Slot untuk gambar preview -->
+                    <div
+                      class="cursor-preview-slot"
+                      style="height: 50px; margin-bottom: 8px"
+                    >
+                      <img
+                        src="img/cursor-highlight.png"
+                        alt="Highlight Cursor"
+                        style="
+                          max-height: 100%;
+                          max-width: 100%;
+                          object-fit: contain;
+                        "
+                      />
+                    </div>
+
+                    <!-- Tombol -->
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="cursorMode"
+                      id="cursorHighlight"
+                      value="highlight"
+                      checked
+                    />
+                    <label
+                      class="btn btn-outline-primary w-100"
+                      for="cursorHighlight"
+                      title="Highlight Mode"
+                    >
+                      <i class="fas fa-highlighter"></i>
+                    </label>
+                  </div>
+
+                  <!-- Caret Cursor -->
+                  <div class="text-center">
+                    <!-- Slot untuk gambar preview -->
+                    <div
+                      class="cursor-preview-slot"
+                      style="height: 50px; margin-bottom: 8px"
+                    >
+                      <img
+                        src="img/cursor-caret.png"
+                        alt="Caret Cursor"
+                        style="
+                          max-height: 100%;
+                          max-width: 100%;
+                          object-fit: contain;
+                        "
+                      />
+                    </div>
+
+                    <!-- Tombol -->
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="cursorMode"
+                      id="cursorCaret"
+                      value="caret"
+                    />
+                    <label
+                      class="btn btn-outline-primary w-100"
+                      for="cursorCaret"
+                      title="Caret Mode"
+                    >
+                      <i class="fas fa-i-cursor"></i>
+                    </label>
+                  </div>
+
+                  <!-- Underline Cursor -->
+                  <div class="text-center">
+                    <div
+                      class="cursor-preview-slot"
+                      style="height: 50px; margin-bottom: 8px"
+                    >
+                      <img
+                        src="img/cursor-underline.png"
+                        alt="Underline Cursor"
+                        style="max-height: 100%; max-width: 100%; object-fit: contain;"
+                      />
+                    </div>
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="cursorMode"
+                      id="cursorUnderline"
+                      value="underline"
+                    />
+                    <label
+                      class="btn btn-outline-primary w-100"
+                      for="cursorUnderline"
+                      title="Underline Mode"
+                    >
+                      <i class="fas fa-underline"></i>
+                    </label>
+                  </div>
+
+                  <!-- Box/Outline Cursor -->
+                  <div class="text-center">
+                    <div
+                      class="cursor-preview-slot"
+                      style="height: 50px; margin-bottom: 8px"
+                    >
+                      <img
+                        src="img/cursor-box.png"
+                        alt="Box Cursor"
+                        style="max-height: 100%; max-width: 100%; object-fit: contain;"
+                      />
+                    </div>
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="cursorMode"
+                      id="cursorBox"
+                      value="box"
+                    />
+                    <label
+                      class="btn btn-outline-primary w-100"
+                      for="cursorBox"
+                      title="Box/Outline Mode"
+                    >
+                      <i class="fas fa-border-all"></i>
+                    </label>
+                  </div>
+
+                  <!-- Hidden Cursor -->
+                  <div class="text-center">
+                    <div
+                      class="cursor-preview-slot"
+                      style="height: 50px; margin-bottom: 8px"
+                    >
+                      <img
+                        src="img/cursor-hidden.png"
+                        alt="Hidden Cursor"
+                        style="max-height: 100%; max-width: 100%; object-fit: contain;"
+                      />
+                    </div>
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="cursorMode"
+                      id="cursorHidden"
+                      value="hidden"
+                    />
+                    <label
+                      class="btn btn-outline-primary w-100"
+                      for="cursorHidden"
+                      title="Hidden Mode"
+                    >
+                      <i class="fas fa-eye-slash"></i>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pilihan Bahasa & Word Set -->
+              <div class="mb-4">
+                <h6 class="mb-2">Bahasa & Word Set</h6>
+                <!-- Tombol Bahasa -->
+                <div
+                  class="btn-group mb-3"
+                  role="group"
+                  aria-label="Language Selection"
+                >
+                  <input
+                    type="radio"
+                    class="btn-check"
+                    name="language"
+                    id="langInd"
+                    value="ind"
+                    checked
+                  />
+                  <label class="btn btn-outline-secondary" for="langInd"
+                    >Bahasa Indonesia</label
+                  >
+
+                  <input
+                    type="radio"
+                    class="btn-check"
+                    name="language"
+                    id="langEng"
+                    value="en"
+                  />
+                  <label class="btn btn-outline-secondary" for="langEng"
+                    >English</label
+                  >
+                </div>
+
+                <!-- Pilihan Word Set (Tersembunyi Awal) -->
+                <div
+                  id="wordSetContainer"
+                  style="display: none; margin-top: 10px"
+                >
+                  <h6 class="mb-2">Pilih Word Set</h6>
+                  <div class="btn-group" role="group">
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="wordSet"
+                      id="wordSet200"
+                      value="200"
+                      checked
+                    />
+                    <label class="btn btn-outline-success" for="wordSet200"
+                      >Top 200</label
+                    >
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="wordSet"
+                      id="wordSet1000"
+                      value="1000"
+                    />
+                    <label class="btn btn-outline-success" for="wordSet1000"
+                      >Top 1K</label
+                    >
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="wordSet"
+                      id="wordSet10000"
+                      value="10000"
+                    />
+                    <label class="btn btn-outline-success" for="wordSet10000"
+                      >Top 10K</label
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pilihan Font -->
+              <div class="mb-4">
+                <h6 class="mb-2">Pilih Font</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark font-choice-btn"
+                    data-font="default"
+                    style="font-family: Arial"
+                  >
+                    Default
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark font-choice-btn"
+                    data-font="monospace"
+                    style="font-family: monospace"
+                  >
+                    Monospace
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark font-choice-btn"
+                    data-font="serif"
+                    style="font-family: serif"
+                  >
+                    Serif
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-dark font-choice-btn"
+                    data-font="sans-serif"
+                    style="font-family: sans-serif"
+                  >
+                    Sans
+                  </button>
+                </div>
+              </div>
+
+              <!-- Pilihan Tampilan Statistik -->
+              <div class="mb-4">
+                <h6 class="mb-2">Tampilan Statistik</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    class="btn btn-outline-info stats-mode-btn active"
+                    data-mode="speedometer"
+                  >
+                    <i class="fas fa-tachometer-alt"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-info stats-mode-btn"
+                    data-mode="text"
+                  >
+                    <i class="fas fa-font"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="saveSettings" class="btn btn-primary">
+                Simpan
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <script src="js/history/score-manager.js" type="module"></script>
     <script src="js/history/result-chart.js" type="module"></script>

@@ -28,6 +28,21 @@ export function getGameDOMReferences() {
         return null;
     }
 
+    // Terapkan kelas mode kursor yang disimpan (jika ada)
+    try {
+        const savedCursor = localStorage.getItem('cursorMode');
+        if (savedCursor && textDisplay) {
+            textDisplay.classList.remove('caret-mode-active','underline-mode-active','box-mode-active','hidden-mode-active');
+            switch (savedCursor) {
+                case 'caret': textDisplay.classList.add('caret-mode-active'); break;
+                case 'underline': textDisplay.classList.add('underline-mode-active'); break;
+                case 'box': textDisplay.classList.add('box-mode-active'); break;
+                case 'hidden': textDisplay.classList.add('hidden-mode-active'); break;
+                default: break;
+            }
+        }
+    } catch(e) {}
+
     return {
         hiddenInput,
         textDisplay,
@@ -79,6 +94,21 @@ export function getLessonDOMReferences() {
         console.error("ERROR: Beberapa elemen DOM kunci untuk pelajaran tidak ditemukan.");
         return null;
     }
+
+    // Terapkan kelas mode kursor ke lessonTextDisplay agar mode yang dipilih digunakan
+    try {
+        const savedCursor = localStorage.getItem('cursorMode');
+        if (savedCursor && lessonTextDisplay) {
+            lessonTextDisplay.classList.remove('caret-mode-active','underline-mode-active','box-mode-active','hidden-mode-active');
+            switch (savedCursor) {
+                case 'caret': lessonTextDisplay.classList.add('caret-mode-active'); break;
+                case 'underline': lessonTextDisplay.classList.add('underline-mode-active'); break;
+                case 'box': lessonTextDisplay.classList.add('box-mode-active'); break;
+                case 'hidden': lessonTextDisplay.classList.add('hidden-mode-active'); break;
+                default: break;
+            }
+        }
+    } catch(e) {}
 
     return {
         hiddenInput,

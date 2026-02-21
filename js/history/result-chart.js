@@ -82,7 +82,7 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
       labels,
       datasets: [
         {
-          label: "Net WPM",
+          label: "WPM",
           data: netWpmData, // ✅ Menggunakan data yang baru dihitung
           borderColor: "#f4c20d",
           backgroundColor: "#f4c20d",
@@ -93,13 +93,13 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           yAxisID: "yWpm",
         },
         {
-          label: "RAW WPM",
+          label: "RAW",
           data: rawWpmPerSecond, 
           borderColor: "#9aa0a6",
           backgroundColor: "#9aa0a6",
           borderWidth: 2,
           tension: 0.25,
-          pointRadius: 3,
+          pointRadius: 2,
           pointHoverRadius: 3,
           yAxisID: "yWpm",
           spanGaps: true,
@@ -155,7 +155,7 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           callbacks: {
             title: (context) => {
               const idx = context[0].dataIndex;
-              return `Waktu: ${idx + 1}s`;
+              return `${idx + 1}`;
             },
             label: (context) => {
               const label = context.dataset.label;

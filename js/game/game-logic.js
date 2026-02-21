@@ -114,24 +114,30 @@ export function updateRealtimeStats() {
   const now = Date.now();
   const elapsedMs = now - gameState.startTime;
   const elapsedMinutes = elapsedMs / 60000;
-  const totalCorrectChars = gameState.correctChars + (DOM.hiddenInput?.value?.length || 0);
+  const totalCorrectChars =
+    gameState.correctChars + (DOM.hiddenInput?.value?.length || 0);
   const totalIncorrectChars = gameState.incorrectChars;
   const totalTypedChars = totalCorrectChars + totalIncorrectChars;
 
   // ✅ PERBAIKAN UTAMA: Tambah batas minimum waktu atau karakter.
   let instantWPM = 0;
-  if (totalTypedChars >= 1 && elapsedMinutes > 0.00833) { // 0.00833 minutes = 0.5 seconds
-      instantWPM = Math.round((totalCorrectChars / 5) / elapsedMinutes);
+  if (totalTypedChars >= 1 && elapsedMinutes > 0.00833) {
+    // 0.00833 minutes = 0.5 seconds
+    instantWPM = Math.round(totalCorrectChars / 5 / elapsedMinutes);
   }
 
-  const alpha = 0.1; 
+  const alpha = 0.1;
   if (gameState.smootherWPM === undefined) {
     gameState.smootherWPM = instantWPM;
   } else {
-    gameState.smootherWPM = (alpha * instantWPM) + ((1 - alpha) * gameState.smootherWPM);
+    gameState.smootherWPM =
+      alpha * instantWPM + (1 - alpha) * gameState.smootherWPM;
   }
 
-  const accuracyPercent = totalTypedChars > 0 ? Math.round((totalCorrectChars / totalTypedChars) * 100) : 100;
+  const accuracyPercent =
+    totalTypedChars > 0
+      ? Math.round((totalCorrectChars / totalTypedChars) * 100)
+      : 100;
 
   try {
     setWpmSpeedometer(Math.round(gameState.smootherWPM));
@@ -140,11 +146,27 @@ export function updateRealtimeStats() {
     setAccuracySpeedometer(accuracyPercent);
   } catch (e) {}
 
-  if (DOM.wpmDisplay) DOM.wpmDisplay.textContent = String(Math.round(gameState.smootherWPM));
-  if (DOM.accuracyDisplay) DOM.accuracyDisplay.textContent = `${accuracyPercent}%`;
+// Update Tampilan Teks (Baru)
+  const wpmText = document.getElementById("wpmTextDisplay");
+  const accText = document.getElementById("accuracyTextDisplay");
+  
+  const displayWPM = String(Math.round(gameState.smootherWPM || 0));
+  const displayAcc = `${accuracyPercent}%`;
+
+  if (wpmText) wpmText.textContent = displayWPM;
+  if (accText) accText.textContent = displayAcc;
+
+  // Pertahankan update DOM reference lama jika masih dipakai
+  if (DOM.wpmDisplay) DOM.wpmDisplay.textContent = displayWPM;
+  if (DOM.accuracyDisplay) DOM.accuracyDisplay.textContent = displayAcc;
+
+  if (DOM.wpmDisplay)
+    DOM.wpmDisplay.textContent = String(Math.round(gameState.smootherWPM));
+  if (DOM.accuracyDisplay)
+    DOM.accuracyDisplay.textContent = `${accuracyPercent}%`;
 
   const currentSecond = Math.floor((now - gameState.startTime) / 1000);
-  const totalKeystrokes = gameState.keystrokeLog.filter(ts => {
+  const totalKeystrokes = gameState.keystrokeLog.filter((ts) => {
     const tsSecond = Math.floor((ts - gameState.startTime) / 1000);
     return tsSecond === currentSecond;
   }).length;
@@ -231,8 +253,14 @@ export function calculateAndDisplayFinalResults() {
   if (rawWpmEl) rawWpmEl.textContent = String(finalRawWPM);
 
   const historyData = gameState.history.slice();
-  renderResultChart(historyData, finalWPM, gameState.TIMED_TEST_DURATION, gameState.rawWpmPerSecond, gameState.correctCharsPerSecond);
-  
+  renderResultChart(
+    historyData,
+    finalWPM,
+    gameState.TIMED_TEST_DURATION,
+    gameState.rawWpmPerSecond,
+    gameState.correctCharsPerSecond
+  );
+
   if (typeof window.saveScore === "function") {
     window.saveScore(
       finalWPM,
@@ -265,28 +293,43 @@ export function endTest() {
   gameState.startTime = null;
   setTimerSpeedometer(0);
   hideStatsContainer();
+  if (DOM.header) DOM.header.classList.remove("hidden");
+  if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+  if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 }
 
 export function invalidateTest(reason) {
   const DOM = getGameDOMReferences();
-  gameState.isTestInvalid = true;
-  endTest();
 
+  // Set flag dan hentikan semua aktivitas
+  gameState.isTestInvalid = true;
+  clearInterval(gameState.timerInterval);
+  clearInterval(gameState.updateStatsInterval);
+  clearTimeout(gameState.inactivityTimer);
+
+  // Disable input biar user nggak ngetik lagi
+  if (DOM.hiddenInput) {
+    DOM.hiddenInput.disabled = true;
+    DOM.hiddenInput.value = "";
+  }
+
+  // Hapus teks dan tampilkan pesan invalid
   const textDisplayContainer = document.querySelector(
     ".text-display-container"
   );
   if (textDisplayContainer) {
     textDisplayContainer.style.display = "flex";
-    DOM.textDisplay.innerHTML = "";
     DOM.textDisplay.innerHTML = `<div class="invalid-test-message">Tes dibatalkan: ${reason}</div>`;
   }
 
+  // Sembunyikan hasil tes
   const resultsArea = document.getElementById("resultsDisplayArea");
   if (resultsArea) {
     resultsArea.style.display = "none";
   }
 
+  // Tampilkan menu & tombol restart lagi
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
@@ -315,9 +358,9 @@ export function resetTestState() {
   gameState.history = [];
   gameState.wordStartTime = null;
   gameState.keystrokeLog = [];
-  gameState.rawWpmPerSecond = []; 
-  gameState.correctCharsPerSecond = []; 
-  
+  gameState.rawWpmPerSecond = [];
+  gameState.correctCharsPerSecond = [];
+
   // ✅ TAMBAHAN: Reset smootherWPM saat state direset
   gameState.smootherWPM = undefined;
 
@@ -380,13 +423,22 @@ export function resetTestState() {
 export function startTimer() {
   const DOM = getGameDOMReferences();
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+  
   gameState.timerInterval = setInterval(() => {
     gameState.timeRemaining--;
+    
+    // Update Speedometer Timer
     setTimerSpeedometer(gameState.timeRemaining);
+    
+    // Update Teks Timer
+    const timerText = document.getElementById("timerTextDisplay");
+    if (timerText) timerText.textContent = gameState.timeRemaining;
+
     if (gameState.timeRemaining <= 0) {
       endTest();
     }
   }, 1000);
+
   gameState.updateStatsInterval = setInterval(() => {
     updateRealtimeStats();
   }, 100);
@@ -396,7 +448,7 @@ export function startInactivityTimer() {
   clearTimeout(gameState.inactivityTimer);
   gameState.inactivityTimer = setTimeout(() => {
     invalidateTest("User AFK / Tidak ada aktivitas.");
-  }, 3000);
+  }, 30000);
 }
 
 export function initGameListeners() {
@@ -404,8 +456,12 @@ export function initGameListeners() {
 
   if (DOM.hiddenInput) {
     DOM.hiddenInput.addEventListener("keydown", (event) => {
+      if (gameState.isTestInvalid) {
+        event.preventDefault();
+        return;
+      }
       const now = Date.now();
-      
+
       if (!gameState.startTime) {
         gameState.startTime = now;
         gameState.wordStartTime = now;
@@ -417,15 +473,18 @@ export function initGameListeners() {
       const currentSecond = Math.floor((now - gameState.startTime) / 1000);
       const typedChar = event.key;
       const currentInputLength = DOM.hiddenInput.value.length;
-      
-      if (typedChar.length === 1 && typedChar !== 'Backspace') {
-        const targetChar = gameState.fullTextWords[gameState.typedWordIndex]?.[currentInputLength];
+
+      if (typedChar.length === 1 && typedChar !== "Backspace") {
+        const targetChar =
+          gameState.fullTextWords[gameState.typedWordIndex]?.[
+            currentInputLength
+          ];
         const isCorrect = typedChar === targetChar;
 
         while (gameState.correctCharsPerSecond.length <= currentSecond) {
           gameState.correctCharsPerSecond.push(0);
         }
-        
+
         if (isCorrect) {
           gameState.correctCharsPerSecond[currentSecond]++;
         }
@@ -438,14 +497,30 @@ export function initGameListeners() {
 
 export function showStatsContainer() {
   const DOM = getGameDOMReferences();
-  if (DOM.statsContainer) {
-    DOM.statsContainer.classList.add("show");
+  if (!DOM || !DOM.statsContainer) return;
+  DOM.statsContainer.classList.add("show");
+
+  // Sesuaikan tampilan berdasarkan mode statistik yang dipilih
+  const textStats = document.querySelector('.text-stats-container');
+  const speedContainers = document.querySelectorAll('.speedometer-container');
+
+  if (gameState.statsMode === 'text') {
+    if (textStats) textStats.style.display = 'flex';
+    speedContainers.forEach((el) => (el.style.display = 'none'));
+  } else {
+    if (textStats) textStats.style.display = 'none';
+    speedContainers.forEach((el) => (el.style.display = 'flex'));
   }
 }
 
 export function hideStatsContainer() {
   const DOM = getGameDOMReferences();
-  if (DOM.statsContainer) {
-    DOM.statsContainer.classList.remove("show");
-  }
+  if (!DOM || !DOM.statsContainer) return;
+  DOM.statsContainer.classList.remove("show");
+
+  // Pastikan semua sub-komponen statistik tersembunyi saat container disembunyikan
+  const textStats = document.querySelector('.text-stats-container');
+  const speedContainers = document.querySelectorAll('.speedometer-container');
+  if (textStats) textStats.style.display = 'none';
+  speedContainers.forEach((el) => (el.style.display = 'none'));
 }

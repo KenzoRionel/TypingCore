@@ -66,7 +66,7 @@
   display: inline-block;
   flex-wrap: wrap;
   min-width: 0;
-  margin-right: 12px;
+  margin-right: 0;
   padding: 2px 0;
   position: relative;
   white-space: normal;
@@ -78,10 +78,38 @@
 .word-container span {
   color: inherit;
   transition: color 0.1s ease;
+  position: relative;
+  display: inline-block;
+  min-width: 0.4em;
+}
+
+/* Space character styling - behave like a visible character */
+.space-char {
+  display: inline-block;
+  position: relative;
+  /* Use ch unit so width matches monospace character width */
+  width: 1ch;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+  white-space: pre;
+  margin: 0;
+  /* match word-container vertical padding so height equals characters */
+  padding: 2px 0;
+  box-sizing: border-box;
 }
 #textDisplay:not(.caret-mode-active) .word-container.current-word-target {
   background-color: #e0e0e0;
   color: #333;
+}
+
+/* Highlight spasi terpisah ketika kata aktif */
+.word-container.current-word-target + .space-char,
+.space-char.current-space-target {
+  background-color: #e0e0e000;
+  color: #333;
+  border-radius: 4px;
 }
 
 #textDisplay:not(.caret-mode-active)
@@ -110,9 +138,8 @@
   background-color: #f44336;
   color: #fff;
   border-radius: 2px;
-  padding: 0 2px;
-  margin-left: 2px;
-  margin-right: 2px;
+  padding: 0;
+  margin: 0;
 }
 
 .word-container.shake {
@@ -143,14 +170,11 @@
 
 .blinking-cursor {
   position: absolute;
-  display: inline-block;
-  width: 1.5px;
-  height: 1.6em;
-  background-color: #333;
+  background-color: #333; /* Warna default */
   animation: blink 1s infinite;
-  transition: left 0.08s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: left 0.1s ease, top 0.1s ease, width 0.1s ease, height 0.1s ease;
   z-index: 10;
-  top: 0.15em;
+  pointer-events: none;
 }
 
 @keyframes blink {
@@ -217,4 +241,75 @@
 .logo-pop.pop {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
+}
+
+/* Styling Kursor Menggunakan Pseudo-element */
+.has-cursor {
+  position: relative;
+}
+
+.has-cursor::after {
+  content: "";
+  position: absolute;
+  background-color: #555; /* Warna kursor */
+  animation: cursorBlink 1s infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Mode Caret (Garis Tegak) */
+[data-cursor-mode="caret"] .has-cursor.cursor-before::after {
+  left: -1px;
+  top: 10%;
+  width: 2px;
+  height: 80%;
+}
+[data-cursor-mode="caret"] .has-cursor.cursor-after::after {
+  right: -2px;
+  top: 10%;
+  width: 2px;
+  height: 80%;
+}
+
+/* Override posisi caret untuk spasi agar berada di tengah vertikal */
+[data-cursor-mode="caret"] .space-char.has-cursor::after {
+  left: 50%;
+  transform: translateX(-50%);
+  top: 10%;
+  width: 2px;
+  height: 80%;
+}
+
+/* Make space highlight occupy similar vertical space as word-container */
+.space-char.current-space-target {
+  display: inline-block;
+  /* same vertical padding as word characters */
+  padding: 1px 0;
+  box-sizing: border-box;
+}
+
+/* Mode Underline */
+/* Mode Underline */
+[data-cursor-mode="underline"] .has-cursor.cursor-before::after,
+[data-cursor-mode="underline"] .has-cursor.cursor-after::after {
+  left: 0;
+  bottom: 0px;
+  width: 100%;
+  height: 3px;
+}
+
+/* Mode Box (Blok) */
+[data-cursor-mode="box"] .has-cursor.cursor-before::after,
+[data-cursor-mode="box"] .has-cursor.cursor-after::after {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(85, 85, 85, 0.3);
+  border-bottom: 2px solid #555;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }

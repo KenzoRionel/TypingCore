@@ -47,6 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  // Baris ini diperlukan untuk menghindari error, tapi tidak digunakan untuk menutup modal
+  const settingsModalElement = document.getElementById("settingsModal");
+  if (!settingsModalElement) {
+    console.error("Elemen modal pengaturan tidak ditemukan.");
+    return;
+  }
+  const settingsModal = new bootstrap.Modal(settingsModalElement);
+
   initDarkMode(DOM.darkModeToggle);
   setupLogoPop();
 
@@ -74,19 +82,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Listener utama mengetik (SATU pintu)
   DOM.hiddenInput.addEventListener("keydown", handleKeydown);
-
-  // Expose resetTest
   window.resetTest = resetTestState;
-
-  // Inisialisasi listener game (kosong agar tak bentrok, tapi dipanggil untuk konsistensi arsitektur)
   initGameListeners();
-
-  // Reset awal + render awal
   resetTestState();
 
-  // Tombol mode waktu
   document.querySelectorAll(".time-mode-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
       const selectedTime = parseInt(this.getAttribute("data-time"), 10);
@@ -106,6 +106,47 @@ document.addEventListener("DOMContentLoaded", () => {
       DOM.hiddenInput.focus();
     });
   });
+
+  const defaultTimeBtn = document.querySelector(
+    '.time-mode-btn[data-time="60"]'
+  );
+  if (defaultTimeBtn) defaultTimeBtn.classList.add("active");
+
+  const defaultWordBtn = document.querySelector(
+    '.word-type-btn[data-word-type="200"]'
+  );
+  if (defaultWordBtn) defaultWordBtn.classList.add("active");
+
+  // Set nilai default ke gameState
+  if (window.gameState) {
+    window.gameState.TIMED_TEST_DURATION = 60;
+    window.gameState.timeRemaining = 60;
+    // Load saved cursor mode jika ada, fallback ke highlight
+    const savedCursor = localStorage.getItem('cursorMode') || 'highlight';
+    window.gameState.cursorMode = savedCursor;
+  }
+
+  // Muat preferensi statistik dari localStorage (jika ada) dan inisialisasi tampilan
+  (function initStatsModeDisplay() {
+    const stored = localStorage.getItem('statsMode');
+    const modeToUse = stored || (window.gameState ? window.gameState.statsMode : 'speedometer');
+    if (window.gameState) window.gameState.statsMode = modeToUse;
+
+    // Set tombol aktif di modal pengaturan sesuai mode
+    document.querySelectorAll('.stats-mode-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-mode') === modeToUse);
+    });
+
+    const textStats = document.querySelector('.text-stats-container');
+    const speedContainers = document.querySelectorAll('.speedometer-container');
+    if (modeToUse === 'text') {
+      if (textStats) textStats.style.display = 'flex';
+      speedContainers.forEach((el) => (el.style.display = 'none'));
+    } else {
+      if (textStats) textStats.style.display = 'none';
+      speedContainers.forEach((el) => (el.style.display = 'flex'));
+    }
+  })();
 
   // -- letakkan di luar DOMContentLoaded (bagian bawah file) --
   function setupLogoPop() {
@@ -165,59 +206,211 @@ document.addEventListener("DOMContentLoaded", () => {
     if (el) el.classList.remove("pop");
   }
 
-  // Tombol jenis kata
-  document.querySelectorAll(".word-type-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      document
-        .querySelectorAll(".word-type-btn")
-        .forEach((b) => b.classList.remove("active"));
-      this.classList.add("active");
-
-      const selectedType = this.getAttribute("data-word-type");
-      if (selectedType === "200") {
-        window.defaultKataKata = top200Words;
-      } else if (selectedType === "1000") {
-        window.defaultKataKata = top1000Words;
-      } else if (selectedType === "10000") {
-        window.defaultKataKata = top10000Words;
-      }
-      if (typeof window.resetTest === "function") {
-        window.resetTest();
-      }
-      DOM.hiddenInput.focus();
-    });
-  });
-
-  // Tombol mode kursor
-  document.querySelectorAll(".cursor-mode-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      document
-        .querySelectorAll(".cursor-mode-btn")
-        .forEach((b) => b.classList.remove("active"));
-      this.classList.add("active");
-
-      const selectedMode = this.getAttribute("data-cursor-mode");
-      if (window.gameState) {
-        window.gameState.cursorMode = selectedMode;
-      }
-
-      if (selectedMode === "caret") {
-        DOM.textDisplay.classList.add("caret-mode-active");
-      } else {
-        DOM.textDisplay.classList.remove("caret-mode-active");
-      }
-      if (typeof window.updateWordHighlighting === "function") {
-        window.updateWordHighlighting();
-      }
-      DOM.hiddenInput.focus();
-    });
-  });
+  // --- Handle fokus global ---
   document.addEventListener("click", (e) => {
-    // cek biar ga bikin infinite loop klik
-    if (DOM.hiddenInput && e.target !== DOM.hiddenInput) {
+    // Pastikan klik di luar input tidak ganggu modal
+    if (
+      DOM.hiddenInput &&
+      e.target !== DOM.hiddenInput &&
+      !e.target.closest("#settingsModal")
+    ) {
       DOM.hiddenInput.focus();
     }
   });
+
+  // --- Preview update saat ganti cursor mode ---
+  const cursorPreviewText = document.getElementById("cursorPreviewText");
+  document.querySelectorAll('input[name="cursorMode"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.checked) {
+        switch (input.value) {
+          case "caret":
+            cursorPreviewText.textContent = "|";
+            break;
+          case "underline":
+            cursorPreviewText.textContent = "_";
+            break;
+          case "box":
+            cursorPreviewText.textContent = "█";
+            break;
+          case "hidden":
+            cursorPreviewText.textContent = "";
+            break;
+          default:
+            cursorPreviewText.textContent = "█";
+        }
+      }
+    });
+  });
+
+  // --- Tampilkan word set saat pilih bahasa ---
+  document.querySelectorAll('input[name="language"]').forEach((langInput) => {
+    langInput.addEventListener("change", () => {
+      const wordSetContainer = document.getElementById("wordSetContainer");
+      wordSetContainer.style.display = "block";
+    });
+  });
+
+  // --- Event untuk font choice button ---
+  document.querySelectorAll(".font-choice-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selectedFont = btn.getAttribute("data-font");
+      const textDisplay = document.querySelector(".text-display-container");
+
+      document
+        .querySelectorAll(".font-choice-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      textDisplay.style.fontFamily =
+        selectedFont === "default" ? "" : selectedFont;
+
+      saveBtn.disabled = false; // Enable save
+    });
+  });
+
+  // --- Event untuk stats mode button ---
+  document.querySelectorAll(".stats-mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selectedMode = btn.getAttribute("data-mode");
+
+      document
+        .querySelectorAll(".stats-mode-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Preview langsung update tampilan
+      const speedometerContainer = document.querySelector(
+        ".speedometer-container"
+      );
+      const textStatsContainer = document.querySelector(
+        ".text-stats-container"
+      );
+
+      if (selectedMode === "speedometer") {
+        speedometerContainer.style.display = "flex";
+        textStatsContainer.style.display = "none";
+      } else {
+        speedometerContainer.style.display = "none";
+        textStatsContainer.style.display = "flex";
+      }
+
+      saveBtn.disabled = false; // Enable save
+    });
+  });
+
+  // --- Simpan pengaturan ---
+  const saveBtn = document.getElementById("saveSettings");
+
+  // Aktifkan logika enable save jika ada perubahan
+  const settingsInputs = document.querySelectorAll(
+    "#settingsModal input, #settingsModal select, #settingsModal .font-choice-btn, #settingsModal .stats-mode-btn"
+  );
+  settingsInputs.forEach((el) => {
+    el.addEventListener("change", () => (saveBtn.disabled = false));
+    el.addEventListener("click", () => (saveBtn.disabled = false));
+  });
+
+  saveBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Cursor mode
+    const selectedCursor = document.querySelector(
+      'input[name="cursorMode"]:checked'
+    ).value;
+    gameState.cursorMode = selectedCursor;
+    // persist pilihan agar halaman mengetik lain dapat menggunakannya
+    try { localStorage.setItem('cursorMode', selectedCursor); } catch (e) {}
+
+    // Normalisasi kelas mode kursor pada elemen textDisplay
+    DOM.textDisplay.classList.remove(
+      "caret-mode-active",
+      "underline-mode-active",
+      "box-mode-active",
+      "hidden-mode-active"
+    );
+    switch (selectedCursor) {
+      case "caret":
+        DOM.textDisplay.classList.add("caret-mode-active");
+        break;
+      case "underline":
+        DOM.textDisplay.classList.add("underline-mode-active");
+        break;
+      case "box":
+        DOM.textDisplay.classList.add("box-mode-active");
+        break;
+      case "hidden":
+        DOM.textDisplay.classList.add("hidden-mode-active");
+        break;
+      default:
+        break;
+    }
+
+    // Word set
+    const selectedWordSet = document.querySelector(
+      'input[name="wordSet"]:checked'
+    ).value;
+    if (selectedWordSet === "200") {
+      window.defaultKataKata = top200Words;
+    } else if (selectedWordSet === "1000") {
+      window.defaultKataKata = top1000Words;
+    } else if (selectedWordSet === "10000") {
+      window.defaultKataKata = top10000Words;
+    }
+
+    // Font
+    const activeFontBtn = document.querySelector(".font-choice-btn.active");
+    const selectedFont = activeFontBtn
+      ? activeFontBtn.getAttribute("data-font")
+      : "default";
+    DOM.textDisplay.style.fontFamily =
+      selectedFont === "default" ? "" : selectedFont;
+
+    // Statistik tampilan
+    const activeStatsBtn = document.querySelector(".stats-mode-btn.active");
+    const selectedStatsMode = activeStatsBtn
+      ? activeStatsBtn.getAttribute("data-mode")
+      : "speedometer";
+    gameState.statsMode = selectedStatsMode;
+    // Simpan preferensi agar bertahan antar sesi
+    try {
+      localStorage.setItem('statsMode', selectedStatsMode);
+    } catch (e) {}
+
+    // Reset tes supaya perubahan langsung berlaku
+    if (typeof window.resetTest === "function") {
+      window.resetTest();
+    }
+
+    // Pastikan tampilan statistik mengikuti pilihan baru setelah simpan
+    try {
+      showStatsContainer();
+    } catch (e) {}
+
+    // Update highlight dan pastikan fokus kembali kalau modal ditutup nanti
+    setTimeout(() => {
+      if (typeof window.updateWordHighlighting === "function") {
+        window.updateWordHighlighting();
+      }
+    }, 100);
+
+    // Disable tombol simpan sampai ada perubahan lagi
+    saveBtn.disabled = true;
+
+    // Baris di bawah ini yang harus dihapus agar modal tidak tertutup otomatis.
+    // settingsModal.hide();
+
+  });
+
+  // Fokus kembali ke input setelah modal ditutup
+  document
+    .getElementById("settingsModal")
+    .addEventListener("hidden.bs.modal", () => {
+      setTimeout(() => {
+        if (DOM.hiddenInput) DOM.hiddenInput.focus();
+      }, 100);
+    });
 });
 
 // Page Visibility API
@@ -243,7 +436,6 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-
 // Blur window
 window.addEventListener("blur", () => {
   const DOM = getGameDOMReferences();
@@ -255,16 +447,16 @@ window.addEventListener("blur", () => {
   }
 });
 
-  // Gerak mouse: munculkan header/menu, sembunyikan speedometer dan logo
-  document.addEventListener("mousemove", () => {
-    const DOM = getGameDOMReferences();
-    if (DOM.header) DOM.header.classList.remove("hidden");
-    if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
-    if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
-    hideStatsContainer();
-    // Pointer gerak = fokus hilang, tandai lagi
-    gameState.isTypingActive = false;
+// Gerak mouse: munculkan header/menu, sembunyikan speedometer dan logo
+document.addEventListener("mousemove", () => {
+  const DOM = getGameDOMReferences();
+  if (DOM.header) DOM.header.classList.remove("hidden");
+  if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+  if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
+  hideStatsContainer();
+  // Pointer gerak = fokus hilang, tandai lagi
+  gameState.isTypingActive = false;
 
-    // Sembunyikan logo saat pointer bergerak
-    if (typeof window.resetLogoPop === "function") window.resetLogoPop();
-  });
+  // Sembunyikan logo saat pointer bergerak
+  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+});

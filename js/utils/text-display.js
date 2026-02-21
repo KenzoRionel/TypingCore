@@ -8,6 +8,7 @@ const MAX_OVERTYPED_CHARS_HIGHLIGHT = 5;
 export function prepareAndRenderText() {
   const DOM = getGameDOMReferences();
   if (!DOM.textDisplay || !gameState.fullTextWords.length) return;
+  if (gameState.isTestInvalid) return;
 
   // Reset state rendering dinamis
   gameState.currentVisibleLines = 0;
@@ -22,6 +23,7 @@ export function prepareAndRenderText() {
 }
 
 export function renderVisibleLines() {
+  if (gameState.isTestInvalid) return;
   const DOM = getGameDOMReferences();
   const wordsToRender = gameState.fullTextWords.slice(
     gameState.totalRenderedLines,
@@ -58,6 +60,7 @@ export function renderAllLines(
     wordContainer.classList.add("word-container");
     wordContainer.id = `word-${startIndex + i}`;
 
+    // Render hanya kata, TANPA spasi
     word.split("").forEach((char) => {
       const charSpan = document.createElement("span");
       charSpan.textContent = char;
@@ -66,9 +69,11 @@ export function renderAllLines(
 
     DOM.textDisplay.appendChild(wordContainer);
 
+    // Spasi sebagai elemen TERPISAH (bukan bagian dari word container)
     const spaceSpan = document.createElement("span");
     spaceSpan.textContent = " ";
     spaceSpan.classList.add("space-char");
+    spaceSpan.id = `space-${startIndex + i}`;
     DOM.textDisplay.appendChild(spaceSpan);
   });
   updateWordHighlighting();
@@ -83,6 +88,7 @@ function appendLines(wordsToRender, startIndex) {
     wordContainer.classList.add("word-container");
     wordContainer.id = `word-${startIndex + i}`;
 
+    // Render hanya kata, TANPA spasi
     word.split("").forEach((char) => {
       const charSpan = document.createElement("span");
       charSpan.textContent = char;
@@ -91,9 +97,11 @@ function appendLines(wordsToRender, startIndex) {
 
     DOM.textDisplay.appendChild(wordContainer);
 
+    // Spasi sebagai elemen TERPISAH (bukan bagian dari word container)
     const spaceSpan = document.createElement("span");
     spaceSpan.textContent = " ";
     spaceSpan.classList.add("space-char");
+    spaceSpan.id = `space-${startIndex + i}`;
     DOM.textDisplay.appendChild(spaceSpan);
   });
 
@@ -159,105 +167,95 @@ function calculateLines() {
 
 export function updateWordHighlighting() {
   const DOM = getGameDOMReferences();
-  const oldCursor = DOM.textDisplay.querySelector(".blinking-cursor");
-  if (oldCursor) oldCursor.remove();
+  if (gameState.isTestInvalid) return;
 
-  // Reset status kata-kata sebelumnya
-  const allWordContainers = DOM.textDisplay.querySelectorAll(".word-container");
-  allWordContainers.forEach((wc) => {
-    wc.classList.remove("current-word-target");
-    const wordIndex = parseInt(wc.id.replace("word-", ""), 10);
-    if (wordIndex < gameState.typedWordIndex) {
-      wc.classList.toggle("word-correct", gameState.typedWordCorrectness[wordIndex]);
-      wc.classList.toggle("word-incorrect", !gameState.typedWordCorrectness[wordIndex]);
-    } else {
-      wc.classList.remove("word-correct", "word-incorrect");
-    }
+  // 1. Reset & Bersihkan SEMUA Class Kursor
+  const allElements = DOM.textDisplay.querySelectorAll(".word-container, .space-char, .word-container span");
+  allElements.forEach(el => {
+    el.classList.remove("current-word-target", "has-cursor", "cursor-before", "cursor-after", "current-space-target");
   });
 
-  const currentWordElement = document.getElementById(`word-${gameState.typedWordIndex}`);
-  if (!currentWordElement) return;
-  currentWordElement.classList.add("current-word-target");
-  currentWordElement.classList.remove("word-correct", "word-incorrect");
+  const currentWordEl = document.getElementById(`word-${gameState.typedWordIndex}`);
+  if (!currentWordEl) return;
+  
+  currentWordEl.classList.add("current-word-target");
 
   const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || "";
   const typedValue = DOM.hiddenInput.value || "";
 
-  // Rebuild current word chars
-  currentWordElement.innerHTML = "";
+  // 2. Rebuild Karakter dalam kata yang sedang aktif
+  currentWordEl.innerHTML = "";
   const baseSpans = [];
   for (let i = 0; i < targetWord.length; i++) {
     const s = document.createElement("span");
     s.textContent = targetWord[i];
-    currentWordElement.appendChild(s);
+    currentWordEl.appendChild(s);
     baseSpans.push(s);
   }
 
-  // Temukan mismatch pertama di area overlap
+  // Warna karakter (Benar/Salah)
   const minLen = Math.min(typedValue.length, targetWord.length);
-  let firstMismatchIndex = -1;
   for (let i = 0; i < minLen; i++) {
-    if (typedValue[i] !== targetWord[i]) {
-      firstMismatchIndex = i;
-      break;
-    }
+    baseSpans[i].classList.add(typedValue[i] === targetWord[i] ? "correct" : "wrong");
   }
 
-  if (firstMismatchIndex === -1) {
-    // Belum ada mismatch pada area yang sudah diketik:
-    // -> huruf yang sudah diketik tetap correct (hanya sampai typedValue.length)
-    for (let i = 0; i < typedValue.length && i < targetWord.length; i++) {
-      baseSpans[i].classList.add("correct");
-    }
-  } else {
-    // Ada mismatch → semua huruf yang sudah diketik jadi wrong
-    const upto = Math.min(typedValue.length, targetWord.length);
-    for (let i = 0; i < upto; i++) {
-      baseSpans[i].classList.remove("correct");
-      baseSpans[i].classList.add("wrong");
-    }
-    // chars setelah typedLength (belum diketik) dibiarkan tanpa style
-  }
-
-  // Tambahkan extra wrong chars kalau typed lebih panjang dari target
+  // Karakter extra (kelebihan ketik)
   if (typedValue.length > targetWord.length) {
     for (let i = targetWord.length; i < typedValue.length; i++) {
       const extra = document.createElement("span");
       extra.className = "wrong-extra";
       extra.textContent = typedValue[i];
-      currentWordElement.appendChild(extra);
+      currentWordEl.appendChild(extra);
     }
   }
 
-  // Caret mode: posisikan kursor setelah last typed char (kalau ada)
-  if (gameState.cursorMode === "caret") {
-    const cursor = document.createElement("span");
-    cursor.classList.add("blinking-cursor");
+  // 3. Logika Penempatan Kursor - Termasuk spasi yang terpisah
+  const allChars = currentWordEl.querySelectorAll("span");
+  const nextSpace = currentWordEl.nextElementSibling; // Spasi yang terpisah
+  const mode = gameState.cursorMode || 'caret';
 
-    let lastAnchor = null;
-    if (typedValue.length === 0) {
-      lastAnchor = null;
-    } else if (typedValue.length <= targetWord.length) {
-      lastAnchor = baseSpans[Math.min(typedValue.length - 1, baseSpans.length - 1)];
+  // PENTING: Check kondisi dalam urutan yang tepat dengan else-if
+  if (typedValue.length === 0 && allChars.length > 0) {
+    // Belum ada input: kursor di depan karakter pertama
+    allChars[0].classList.add("has-cursor", "cursor-before");
+  } 
+  else if (typedValue.length > 0 && typedValue.length < targetWord.length) {
+    // Sedang mengetik (belum selesai): kursor di dalam word container
+    if (mode === "caret") {
+      // Mode Caret: Kursor di SETELAH karakter terakhir yang diketik
+      const caretIndex = typedValue.length - 1;
+      if (allChars[caretIndex]) {
+        allChars[caretIndex].classList.add("has-cursor", "cursor-after");
+      }
     } else {
-      lastAnchor = currentWordElement.lastElementChild;
+      // Mode Underline/Box: Kursor di SEBELUM karakter yang akan diketik
+      const nextIndex = typedValue.length;
+      if (allChars[nextIndex]) {
+        allChars[nextIndex].classList.add("has-cursor", "cursor-before");
+      }
     }
-
-    let cursorLeft = 0;
-    if (lastAnchor) {
-      const a = lastAnchor.getBoundingClientRect();
-      const ref = currentWordElement.getBoundingClientRect();
-      cursorLeft = Math.round(a.right - ref.left);
+  } 
+   else if (typedValue.length === targetWord.length && nextSpace) {
+     // Kata selesai, kursor pindah ke spasi (elemen terpisah)
+     // Tandai juga spasi sebagai target agar mendapat highlight latar belakang
+     nextSpace.classList.add("has-cursor", "cursor-before", "current-space-target");
+  } 
+  else if (typedValue.length > targetWord.length && allChars.length > 0) {
+    // Kelebihan ketik: Kursor di karakter extra terakhir
+    const lastExtra = allChars[allChars.length - 1];
+    if (lastExtra) {
+      if (mode === "caret") {
+        lastExtra.classList.add("has-cursor", "cursor-after");
+      } else {
+        lastExtra.classList.add("has-cursor", "cursor-before");
+      }
     }
-    cursor.style.left = `${cursorLeft}px`;
-    currentWordElement.appendChild(cursor);
   }
 
+  DOM.textDisplay.dataset.cursorMode = mode;
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
 }
-
-
 
 window.updateWordHighlighting = updateWordHighlighting;
 

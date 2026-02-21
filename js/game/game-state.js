@@ -15,7 +15,7 @@ export const gameState = {
     userTypedWords: [],
     TIMED_TEST_DURATION: 60,
     timeRemaining: 60,
-
+    statsMode: 'speedometer',
     // Properti baru untuk rendering dinamis per baris
     lines: [], 
     currentLineIndex: 0, 
