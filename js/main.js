@@ -148,6 +148,63 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   })();
 
+  // Muat preferensi font dari localStorage
+  (function initFontDisplay() {
+    const savedFont = localStorage.getItem('selectedFont') || 'default';
+    DOM.textDisplay.style.fontFamily = savedFont === 'default' ? '' : savedFont;
+    
+    // Set tombol font aktif di modal pengaturan
+    document.querySelectorAll('.font-choice-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-font') === savedFont);
+    });
+  })();
+
+  // Muat preferensi cursor mode dari localStorage
+  (function initCursorModeDisplay() {
+    const savedCursorMode = localStorage.getItem('cursorMode') || 'highlight';
+    
+    // Set radio button cursor mode aktif di modal pengaturan
+    const cursorRadio = document.querySelector(`input[name="cursorMode"][value="${savedCursorMode}"]`);
+    if (cursorRadio) {
+      cursorRadio.checked = true;
+    }
+  })();
+
+  // Muat preferensi cursor blink dari localStorage
+  (function initCursorBlinkDisplay() {
+    const savedBlink = localStorage.getItem('cursorBlink') !== 'false';
+    const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
+    
+    if (cursorBlinkToggle) {
+      cursorBlinkToggle.checked = savedBlink;
+    }
+    
+    // Apply kelas no-blink jika disabled
+    if (!savedBlink) {
+      DOM.textDisplay.classList.add("cursor-no-blink");
+    }
+  })();
+
+  // Muat preferensi word set dari localStorage
+  (function initWordSetDisplay() {
+    const savedWordSet = localStorage.getItem('wordSet') || '200';
+    
+    // Set radio button word set aktif di modal pengaturan
+    const wordSetRadio = document.querySelector(`input[name="wordSet"][value="${savedWordSet}"]`);
+    if (wordSetRadio) {
+      wordSetRadio.checked = true;
+    }
+    
+    // Setel kata-kata yang sesuai
+    if (savedWordSet === '1000') {
+      window.defaultKataKata = top1000Words;
+    } else if (savedWordSet === '10000') {
+      window.defaultKataKata = top10000Words;
+    } else {
+      window.defaultKataKata = top200Words;
+    }
+  })();
+
   // -- letakkan di luar DOMContentLoaded (bagian bawah file) --
   function setupLogoPop() {
     const container = document.querySelector(".text-display-container");
@@ -358,6 +415,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (selectedWordSet === "10000") {
       window.defaultKataKata = top10000Words;
     }
+    // Simpan pilihan word set ke localStorage
+    try {
+      localStorage.setItem('wordSet', selectedWordSet);
+    } catch (e) {}
 
     // Font
     const activeFontBtn = document.querySelector(".font-choice-btn.active");
@@ -366,6 +427,10 @@ document.addEventListener("DOMContentLoaded", () => {
       : "default";
     DOM.textDisplay.style.fontFamily =
       selectedFont === "default" ? "" : selectedFont;
+    // Simpan pilihan font ke localStorage
+    try {
+      localStorage.setItem('selectedFont', selectedFont);
+    } catch (e) {}
 
     // Statistik tampilan
     const activeStatsBtn = document.querySelector(".stats-mode-btn.active");
@@ -376,6 +441,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // Simpan preferensi agar bertahan antar sesi
     try {
       localStorage.setItem('statsMode', selectedStatsMode);
+    } catch (e) {}
+
+    // Cursor Blink Toggle
+    const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
+    const shouldBlink = cursorBlinkToggle ? cursorBlinkToggle.checked : true;
+    if (shouldBlink) {
+      DOM.textDisplay.classList.remove("cursor-no-blink");
+    } else {
+      DOM.textDisplay.classList.add("cursor-no-blink");
+    }
+    // Simpan preferensi blink ke localStorage
+    try {
+      localStorage.setItem('cursorBlink', shouldBlink ? 'true' : 'false');
     } catch (e) {}
 
     // Reset tes supaya perubahan langsung berlaku

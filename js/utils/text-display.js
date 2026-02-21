@@ -169,11 +169,62 @@ export function updateWordHighlighting() {
   const DOM = getGameDOMReferences();
   if (gameState.isTestInvalid) return;
 
-  // 1. Reset & Bersihkan SEMUA Class Kursor
+  // 1. Reset & Bersihkan SEMUA Class Kursor, dan terapkan underline untuk kata yang salah
   const allElements = DOM.textDisplay.querySelectorAll(".word-container, .space-char, .word-container span");
   allElements.forEach(el => {
     el.classList.remove("current-word-target", "has-cursor", "cursor-before", "cursor-after", "current-space-target");
   });
+
+  // 2. Update styling untuk kata-kata yang sudah selesai (sebelum kata saat ini)
+  for (let i = 0; i < gameState.typedWordIndex; i++) {
+    const wordEl = document.getElementById(`word-${i}`);
+    if (wordEl) {
+      // Periksa apakah kata ini salah
+      const isWordCorrect = gameState.typedWordCorrectness[i];
+      const targetWord = gameState.fullTextWords[i] || "";
+      const typedWord = gameState.userTypedWords[i] || "";
+      
+      if (isWordCorrect === false) {
+        // Tambahkan underline merah untuk kata yang salah
+        wordEl.classList.add("completed-wrong");
+        
+        // Rebuild karakter spans untuk kata yang salah agar warna correct/wrong tetap ditampilkan
+        wordEl.innerHTML = "";
+        for (let j = 0; j < targetWord.length; j++) {
+          const charSpan = document.createElement("span");
+          charSpan.textContent = targetWord[j];
+          // Tentukan apakah karakter ini benar atau salah
+          if (j < typedWord.length) {
+            charSpan.classList.add(typedWord[j] === targetWord[j] ? "correct" : "wrong");
+          }
+          wordEl.appendChild(charSpan);
+        }
+        
+        // Tambahkan karakter extra jika ada
+        if (typedWord.length > targetWord.length) {
+          for (let j = targetWord.length; j < typedWord.length; j++) {
+            const extraSpan = document.createElement("span");
+            extraSpan.className = "wrong-extra";
+            extraSpan.textContent = typedWord[j];
+            wordEl.appendChild(extraSpan);
+          }
+        }
+      } else {
+        // Untuk kata yang selesai dan benar, rebuild dengan warna correct
+        wordEl.classList.remove("completed-wrong");
+        wordEl.innerHTML = "";
+        
+        for (let j = 0; j < targetWord.length; j++) {
+          const charSpan = document.createElement("span");
+          charSpan.textContent = targetWord[j];
+          if (j < typedWord.length && typedWord[j] === targetWord[j]) {
+            charSpan.classList.add("correct");
+          }
+          wordEl.appendChild(charSpan);
+        }
+      }
+    }
+  }
 
   const currentWordEl = document.getElementById(`word-${gameState.typedWordIndex}`);
   if (!currentWordEl) return;
@@ -183,7 +234,7 @@ export function updateWordHighlighting() {
   const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || "";
   const typedValue = DOM.hiddenInput.value || "";
 
-  // 2. Rebuild Karakter dalam kata yang sedang aktif
+  // 3. Rebuild Karakter dalam kata yang sedang aktif
   currentWordEl.innerHTML = "";
   const baseSpans = [];
   for (let i = 0; i < targetWord.length; i++) {
@@ -193,10 +244,26 @@ export function updateWordHighlighting() {
     baseSpans.push(s);
   }
 
-  // Warna karakter (Benar/Salah)
+  // Warna karakter (Benar/Salah) - dengan tracking error yang berlanjut
   const minLen = Math.min(typedValue.length, targetWord.length);
+  let hasErrorBefore = false; // Track jika ada error sebelumnya
+  
   for (let i = 0; i < minLen; i++) {
-    baseSpans[i].classList.add(typedValue[i] === targetWord[i] ? "correct" : "wrong");
+    const isCorrect = typedValue[i] === targetWord[i];
+    
+    // Jika karakter ini benar tapi ada error sebelumnya, tetap tampilkan merah
+    if (isCorrect && hasErrorBefore) {
+      baseSpans[i].classList.add("wrong");
+    } else if (isCorrect) {
+      // Mode hidden: jangan tampilkan warna saat mengetik
+      if (gameState.cursorMode !== "hidden") {
+        baseSpans[i].classList.add("correct");
+      }
+    } else {
+      // Karakter salah
+      baseSpans[i].classList.add("wrong");
+      hasErrorBefore = true;
+    }
   }
 
   // Karakter extra (kelebihan ketik)
