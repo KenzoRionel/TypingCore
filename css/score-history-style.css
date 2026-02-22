@@ -1,5 +1,3 @@
-
-
 .chart-container {
     background-color: #fff;
     border: 1px solid #ddd;
@@ -74,11 +72,188 @@
     margin: 0;
 }
 
+/* Replay Container Styles */
+.replay-container {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.replay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.replay-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.replay-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.replay-btn {
+    background-color: #0068bd;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.replay-btn:hover {
+    background-color: #0056a3;
+}
+
+.replay-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.replay-info {
+    margin-bottom: 15px;
+    color: #555;
+    font-size: 0.9em;
+}
+
+.replay-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.replay-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.replay-stat-label {
+    font-size: 0.75rem;
+    color: #777;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.replay-stat-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.replay-text-display {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 15px;
+    min-height: 60px;
+    margin-bottom: 15px;
+    /* Smaller font for replay text - make it even smaller so all text is visible */
+    font-size: 1.5em;
+    line-height: 1.2;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.replay-char {
+    display: inline;
+}
+
+.replay-word {
+    display: inline;
+}
+
+.replay-words-container {
+    display: inline;
+}
+
+.replay-word.completed-wrong {
+    text-decoration: underline;
+    text-decoration-color: #f44336;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.replay-char.correct {
+    color: #0068bd;
+}
+
+.replay-char.wrong {
+    color: #f44336;
+}
+
+.replay-char.untyped {
+    color: #999;
+}
+
+.replay-char.cursor {
+    position: relative;
+}
+
+.replay-char.cursor::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 2px;
+    background-color: #0068bd;
+    animation: cursorBlink 1s infinite;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.replay-progress {
+    width: 100%;
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.replay-progress-bar {
+    height: 100%;
+    background-color: #0068bd;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.no-replay {
+    font-style: italic;
+    color: #777;
+    text-align: center;
+    margin: 0;
+}
+
 /* Media query untuk tabel di mobile agar lebih compact */
 @media (max-width: 768px) {
     .score-table th,
     .score-table td {
         padding: 8px;
         font-size: 0.85em;
+    }
+    
+    .replay-text-display {
+        font-size: 0.6em;
     }
 }

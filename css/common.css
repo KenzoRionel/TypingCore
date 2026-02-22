@@ -1,5 +1,75 @@
-/* Gaya untuk Container Speedometer */
-/* Ini adalah gaya utama untuk wadah speedometer, yang akan digunakan oleh WPM, Akurasi, dan Waktu */
+/* ==================== SMOOTH CURSOR TRANSITIONS ==================== */
+/* Transisi kursor yang sangat halus dan mulus untuk semua elemen */
+
+/* Body untuk transisi kursor global yang smooth */
+body {
+    cursor: auto;
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Universal selector untuk transisi cursor yang smooth di semua elemen */
+*,
+*::before,
+*::after {
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Elemen interaktif dengan transisi kursor yang sangat smooth */
+button,
+a,
+input,
+textarea,
+select,
+[role="button"],
+[type="button"],
+[type="submit"],
+[type="reset"],
+[type="checkbox"],
+[type="radio"] {
+  cursor: pointer;
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Input text dan textarea dengan cursor text - transisi yang smooth */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+textarea {
+  cursor: text;
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Elemen yang disabled - transisi smooth ke not-allowed */
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Elemen yang draggable - smooth grab transition */
+[draggable="true"] {
+  cursor: grab;
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Saat dragging - immediate response */
+[draggable="true"]:active {
+  cursor: grabbing;
+  transition: cursor 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Link hover state dengan smooth transition */
+a {
+  transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), color 0.3s ease;
+}
+
+/* ====================== END SMOOTH CURSOR ======================= */
+
 .speedometer-container {
     position: relative;
     width: 180px; /* Ukuran yang disesuaikan agar muat di kartu */

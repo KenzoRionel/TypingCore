@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerInterval;
     let updateStatsInterval;
 
+    // Replay data - keystroke logging
+    let keystrokeLog = [];
+
     let totalCorrectWords = 0;
     let totalIncorrectWords = 0;
 
@@ -165,18 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             totalIncorrectWords++;
         }
-
-        // Ini bagian ini tidak diperlukan lagi karena updateWordHighlighting akan menggambar ulang
-        // const finishedWordElement = document.getElementById(`word-${typedWordIndex}`);
-        // if (finishedWordElement) {
-        //     if (isWordCorrect) {
-        //         finishedWordElement.classList.add('word-correct');
-        //         finishedWordElement.classList.remove('word-incorrect', 'current-word-target');
-        //     } else {
-        //         finishedWordElement.classList.add('word-incorrect');
-        //         finishedWordElement.classList.remove('word-correct', 'current-word-target');
-        //     }
-        // }
     }
 
     function renderAndUpdateTextDisplay() {
@@ -542,6 +533,41 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDisplayArea.style.display = 'block'; // Atau 'flex'/'grid' tergantung tata letak Anda
         }
 
+        // Prepare replay data with complete keystroke details including timeElapsed
+        // Calculate running correct/incorrect chars for each keystroke
+        const keystrokeDetails = [];
+        let runningCorrectChars = 0;
+        let runningIncorrectChars = 0;
+        
+        // We need to track character correctness per keystroke
+        // Reconstruct from keystrokeLog and userTypedWords
+        keystrokeLog.forEach((timestamp, index) => {
+            const elapsedMs = timestamp - startTime;
+            const elapsedSeconds = elapsedMs / 1000;
+            const elapsedMinutes = elapsedMs / 60000;
+            
+            // Calculate correct chars at this point - we need to estimate based on time
+            // Since we don't have per-keystroke correctness in default mode,
+            // we'll use an approximation based on final stats
+            const progressRatio = (index + 1) / keystrokeLog.length;
+            const estimatedCorrectChars = Math.round(correctChars * progressRatio);
+            const estimatedIncorrectChars = Math.round(incorrectChars * progressRatio);
+            const totalChars = estimatedCorrectChars + estimatedIncorrectChars;
+            
+            keystrokeDetails.push({
+                timestamp: elapsedMs,
+                index: index,
+                wpm: elapsedMinutes > 0 ? Math.round((estimatedCorrectChars / 5) / elapsedMinutes) : 0,
+                accuracy: totalChars > 0 ? Math.round((estimatedCorrectChars / totalChars) * 100) : 100,
+                timeElapsed: Math.round(elapsedSeconds)
+            });
+        });
+        
+        const replayData = {
+            text: fullTextWords.join(' '),
+            keystrokes: keystrokeDetails
+        };
+
         if (typeof window.saveScore === 'function') {
             window.saveScore(
                 finalWPM,
@@ -551,7 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 "Tes Kata Umum (Acak)",
                 'default',
                 totalCorrectWords,
-                totalIncorrectWords
+                totalIncorrectWords,
+                replayData
             );
         }
     }
@@ -572,6 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
         incorrectChars = 0;
         startTime = null;
         timeRemaining = TIMED_TEST_DURATION;
+        
+        // Reset keystroke log
+        keystrokeLog = [];
 
         totalCorrectWords = 0;
         totalIncorrectWords = 0;
@@ -651,6 +681,11 @@ document.addEventListener('DOMContentLoaded', () => {
             startTime = new Date().getTime();
             startTimer();
         }
+        
+        // Log keystroke for replay
+        if (startTime && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            keystrokeLog.push(Date.now());
+        }
 
         const targetWord = fullTextWords[typedWordIndex] || '';
         const currentTypedLength = hiddenTextInput.value.length;
@@ -671,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === ' ') {
             e.preventDefault();
 
-            // Hanya proses kata jika ada sesuatu yang diketik atau ini bukan kata pertama
+            // Hanya proses kata jika ada sesuatu yang diketik atau ini bukan Kata pertama
             if (hiddenTextInput.value.length > 0 || typedWordIndex > 0) {
                 processTypedWord();
             }

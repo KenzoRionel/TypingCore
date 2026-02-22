@@ -13,7 +13,7 @@ export const top200Words = [
   "apabila", "walau", "meski", "supaya", "agar", "untuk", "dengan",
   "tanpa", "sampai", "hingga", "ketika", "saat", "lalu", "kemudian",
   "sebelum", "telah", "namun", "justru", "malah",
-  "bahkan", "lagi", "apalagi", "lain", "atau juga", "beserta", "terhadap", 
+  "bahkan", "lagi", "apalagi", "lain", "beserta", "terhadap", 
   "bagi", "tentang", "maka", "jadi", "sebab", "lanjut", "akhir",
   "bagai", "sesuai", "dasar", "menurut", "tentu", "pada", "di", "ke", "dari", "oleh",
   "kulit", "gigi", "pintu", "jendela", "lantai", "dinding", "atap", "langit", "bumi",

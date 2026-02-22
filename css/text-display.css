@@ -6,7 +6,7 @@
   max-width: 100%;
   width: 100%;
   margin-top: 30px;
-  padding: 0;
+  padding: 0 50px 0 50px;
   /* core fix */
   overflow-y: hidden;
   line-height: 1.5em;
@@ -16,6 +16,28 @@
   font-size: 2.0em;
   color: #666;
   white-space: normal;
+  letter-spacing: 0;
+  word-spacing: 0;
+  font-feature-settings: "kern" 0;
+}
+
+/* Fix untuk font sans-serif - mengatasi jarak antar huruf yang terlihat lebih besar */
+#textDisplay.font-sans-serif {
+  letter-spacing: -0.03em;
+  word-spacing: 0;
+  font-feature-settings: "kern" 0;
+}
+
+/* Adjust space character width untuk sans-serif agar lebih sesuai */
+#textDisplay.font-sans-serif .space-char {
+  width: 0.75ch;
+}
+
+/* Reset margins dan padding pada span elements untuk sans-serif */
+#textDisplay.font-sans-serif .word-container span {
+  margin: 0;
+  padding: 0;
+  min-width: 0.35em;
 }
 
 .text-line {
@@ -100,8 +122,9 @@
   display: inline-block;
   flex-wrap: wrap;
   min-width: 0;
+  margin: 0;
   margin-right: 0;
-  padding: 2px 0;
+  padding: 0;
   position: relative;
   white-space: normal;
   word-break: break-word;
@@ -114,7 +137,9 @@
   transition: color 0.1s ease, background-color 0.1s ease;
   position: relative;
   display: inline-block;
-  min-width: 0.4em;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 
 /* Space character styling - behave like a visible character */
@@ -129,8 +154,8 @@
   vertical-align: baseline;
   white-space: pre;
   margin: 0;
+  padding: 0;
   /* match word-container vertical padding so height equals characters */
-  padding: 2px 0;
   box-sizing: border-box;
   transition: background-color 0.1s ease, color 0.1s ease, border 0.1s ease;
 }
@@ -230,7 +255,11 @@
   position: absolute;
   background-color: #333; /* Warna default */
   animation: blink 1s infinite;
-  transition: left 0.1s ease, top 0.1s ease, width 0.1s ease, height 0.1s ease;
+  transition: left 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              top 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              width 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              height 0.13s cubic-bezier(0.4, 0.0, 0.2, 1),
+              background-color 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
   z-index: 10;
   pointer-events: none;
 }
@@ -296,8 +325,8 @@
 .text-display-container {
   position: relative;
   overflow: visible;
-  
 }
+
 .logo-pop {
   position: absolute;
   left: 50%;
@@ -324,44 +353,50 @@
   animation: cursorBlink 1s infinite;
   pointer-events: none;
   z-index: 10;
-  transition: left 0.1s ease, right 0.1s ease, top 0.1s ease, bottom 0.1s ease, width 0.1s ease, height 0.1s ease;
+  transition: left 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              right 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              top 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              bottom 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              width 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
+              height 0.13s cubic-bezier(0.4, 0.0, 0.2, 1),
+              background-color 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 /* Mode Caret (Garis Tegak) */
 [data-cursor-mode="caret"] .has-cursor.cursor-before::after {
   left: -1px;
-  top: 10%;
+  top: 0;
   width: 2px;
-  height: 80%;
+  height: 100%;
 }
 [data-cursor-mode="caret"] .has-cursor.cursor-after::after {
   left: 100%;
-  top: 10%;
+  top: 0;
   width: 2px;
-  height: 80%;
+  height: 100%;
 }
 
 /* Override posisi caret untuk spasi - cursor-before di sisi kiri */
 [data-cursor-mode="caret"] .space-char.has-cursor.cursor-before::after {
   left: -1px;
-  top: 10%;
+  top: 0;
   width: 2px;
-  height: 80%;
+  height: 100%;
 }
 
 /* Override posisi caret untuk spasi - cursor-after di sisi kanan */
 [data-cursor-mode="caret"] .space-char.has-cursor.cursor-after::after {
   right: -1px;
-  top: 10%;
+  top: 0;
   width: 2px;
-  height: 80%;
+  height: 100%;
 }
 
 /* Make space highlight occupy similar vertical space as word-container */
 .space-char.current-space-target {
   display: inline-block;
   /* same vertical padding as word characters */
-  padding: 1px 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -389,7 +424,7 @@
 /* Mode Hidden - Hanya Border, Tanpa Background */
 .hidden-mode-active .word-container.current-word-target {
   border: 1px solid #ccc;
-  padding: 3px 4px;
+  padding: 0;
   background-color: transparent !important; /* Memastikan tidak ada warna latar */
   color: inherit;
 }

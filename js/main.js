@@ -153,6 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const savedFont = localStorage.getItem('selectedFont') || 'default';
     DOM.textDisplay.style.fontFamily = savedFont === 'default' ? '' : savedFont;
     
+    // Tambahkan class untuk penanganan sans-serif
+    DOM.textDisplay.classList.toggle("font-sans-serif", savedFont === "sans-serif");
+    
     // Set tombol font aktif di modal pengaturan
     document.querySelectorAll('.font-choice-btn').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-font') === savedFont);
@@ -321,6 +324,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       textDisplay.style.fontFamily =
         selectedFont === "default" ? "" : selectedFont;
+      
+      // Tambahkan class untuk penanganan sans-serif
+      DOM.textDisplay.classList.toggle("font-sans-serif", selectedFont === "sans-serif");
 
       saveBtn.disabled = false; // Enable save
     });
@@ -427,6 +433,10 @@ document.addEventListener("DOMContentLoaded", () => {
       : "default";
     DOM.textDisplay.style.fontFamily =
       selectedFont === "default" ? "" : selectedFont;
+    
+    // Tambahkan class untuk penanganan sans-serif
+    DOM.textDisplay.classList.toggle("font-sans-serif", selectedFont === "sans-serif");
+    
     // Simpan pilihan font ke localStorage
     try {
       localStorage.setItem('selectedFont', selectedFont);

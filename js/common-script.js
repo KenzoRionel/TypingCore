@@ -42,8 +42,8 @@ window.defaultKataKata = [
 
 
     const mainContent = document.querySelector('.main-content'); // Dapatkan main-content
-    // --- Fungsi Global untuk Menyimpan Skor (tetap sama) ---
-    window.saveScore = function(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords) {
+    // --- Fungsi Global untuk Menyimpan Skor (updated with replayData support) ---
+    window.saveScore = function(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null) {
         const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
         const newScore = {
             wpm: wpm,
@@ -56,6 +56,12 @@ window.defaultKataKata = [
             incorrectWords: incorrectWords,
             date: new Date().toISOString()
         };
+        
+        // Add replay data if available
+        if (replayData) {
+            newScore.replayData = replayData;
+        }
+        
         scores.unshift(newScore);
         localStorage.setItem('typingScores', JSON.stringify(scores));
         console.log("Skor disimpan:", newScore);

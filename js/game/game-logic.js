@@ -261,17 +261,65 @@ export function calculateAndDisplayFinalResults() {
     gameState.correctCharsPerSecond
   );
 
+  // Prepare replay data - save text that was actually typed (not target words)
+  // Using join(' ') to include spaces between words
+  const typedText = gameState.userTypedWords.filter(w => w && w.length > 0).join(' ');
+  
+  // Calculate WPM and accuracy at each keystroke
+  const keystrokeDetails = [];
+  let runningCorrectChars = 0;
+  let runningIncorrectChars = 0;
+  
+  // Get correct chars per second data
+  const correctCharsPerSecond = gameState.correctCharsPerSecond || [];
+  
+  gameState.keystrokeLog.forEach((timestamp, index) => {
+    const elapsedMs = timestamp - gameState.startTime;
+    const elapsedSeconds = elapsedMs / 1000;
+    const elapsedMinutes = elapsedMs / 60000;
+    
+    // Calculate correct chars up to this point
+    const currentSecond = Math.floor(elapsedSeconds);
+    runningCorrectChars = 0;
+    for (let i = 0; i <= currentSecond && i < correctCharsPerSecond.length; i++) {
+      runningCorrectChars += correctCharsPerSecond[i] || 0;
+    }
+    
+    // For incorrect chars, estimate based on index
+    runningIncorrectChars = Math.max(0, index - runningCorrectChars);
+    
+    const totalChars = runningCorrectChars + runningIncorrectChars;
+    
+    keystrokeDetails.push({
+      timestamp: elapsedMs,
+      index: index,
+      wpm: elapsedMinutes > 0 ? Math.round((runningCorrectChars / 5) / elapsedMinutes) : 0,
+      accuracy: totalChars > 0 ? Math.round((runningCorrectChars / totalChars) * 100) : 100,
+      timeElapsed: Math.round(elapsedSeconds)
+    });
+  });
+  
+  // Build target text (full text that should have been typed)
+  const targetText = gameState.fullTextWords.slice(0, gameState.typedWordIndex + 1).join(' ');
+  
+  const replayData = {
+    text: typedText,
+    targetText: targetText,
+    keystrokes: keystrokeDetails,
+    keystrokeDetails: gameState.keystrokeDetails || []
+  };
+
   if (typeof window.saveScore === "function") {
     window.saveScore(
       finalWPM,
-      finalRawWPM,
       finalAccuracy,
       gameState.TIMED_TEST_DURATION,
       finalIncorrectChars,
       "Tes Kata Umum (Acak)",
       "default",
       gameState.totalCorrectWords,
-      gameState.totalIncorrectWords
+      gameState.totalIncorrectWords,
+      replayData
     );
   }
 
@@ -360,6 +408,8 @@ export function resetTestState() {
   gameState.keystrokeLog = [];
   gameState.rawWpmPerSecond = [];
   gameState.correctCharsPerSecond = [];
+  gameState.keystrokeDetails = [];
+  gameState.inputHistory = [];
 
   // ✅ TAMBAHAN: Reset smootherWPM saat state direset
   gameState.smootherWPM = undefined;
@@ -475,19 +525,50 @@ export function initGameListeners() {
       const currentInputLength = DOM.hiddenInput.value.length;
 
       if (typedChar.length === 1 && typedChar !== "Backspace") {
-        const targetChar =
-          gameState.fullTextWords[gameState.typedWordIndex]?.[
-            currentInputLength
-          ];
-        const isCorrect = typedChar === targetChar;
+        let targetChar;
+        let isCorrect;
+        
+        // Handle space character specially - spaces are always correct
+        if (typedChar === ' ') {
+          // Space is used to move to next word, always correct
+          targetChar = ' ';
+          isCorrect = true;
+        } else {
+          targetChar = gameState.fullTextWords[gameState.typedWordIndex]?.[currentInputLength];
+          isCorrect = typedChar === targetChar;
+        }
 
         while (gameState.correctCharsPerSecond.length <= currentSecond) {
           gameState.correctCharsPerSecond.push(0);
         }
 
-        if (isCorrect) {
+        if (isCorrect && typedChar !== ' ') {
+          // Don't count space as correct character for WPM calculation
           gameState.correctCharsPerSecond[currentSecond]++;
         }
+        
+        // Store detailed keystroke info for replay
+        if (!gameState.keystrokeDetails) gameState.keystrokeDetails = [];
+        if (!gameState.inputHistory) gameState.inputHistory = [];
+        
+        // Store the FULL accumulated text state (all completed words + current word)
+        // userTypedWords contains all completed words, hiddenInput contains current word being typed
+        const completedWords = gameState.userTypedWords.filter(w => w && w.length > 0);
+        let fullInputState = completedWords.join(' ');
+        const currentInput = DOM.hiddenInput.value;
+        
+        if (currentInput) {
+          fullInputState = fullInputState ? fullInputState + ' ' + currentInput : currentInput;
+        }
+        
+        gameState.inputHistory.push(fullInputState);
+        
+        gameState.keystrokeDetails.push({
+          char: typedChar,
+          isCorrect: isCorrect,
+          timestamp: now,
+          inputState: fullInputState
+        });
       }
 
       startInactivityTimer();

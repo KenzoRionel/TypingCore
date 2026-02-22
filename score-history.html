@@ -82,8 +82,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="js/history/score-manager.js" type="module"></script>
+<script src="js/history/typing-replay.js" type="module"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => displayFullScoreHistory());
+document.addEventListener('DOMContentLoaded', () => {
+    displayFullScoreHistory();
+    initReplayContainer();
+});
 </script>
 </body>
 </html>

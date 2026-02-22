@@ -13,7 +13,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.3s;
+    transition: background 0.3s, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
     padding: 0;
 }
 

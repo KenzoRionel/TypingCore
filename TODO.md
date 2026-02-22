@@ -1,10 +1,22 @@
-# TODO - Text Statistics Display Implementation
+# Typing Replay Fix - TODO List
 
-## Tasks:
-- [ ] 1. Update js/game/game-state.js - Add statsMode property
-- [ ] 2. Update js/utils/dom-elements.js - Add references for text stats elements
-- [ ] 3. Update index.html - Add text-stats-container
-- [ ] 4. Update js/game/game-logic.js - Add text stats update logic
-- [ ] 5. Update js/main.js - Ensure statsMode is properly saved and applied
+## Problem
+Only the beginning text runs and changes when replay types, while other texts are only displayed without being updated during replay.
 
-## Status: In Progress
+## Root Cause
+In game-logic.js, keystrokeDetails stores inputState which is DOM.hiddenInput.value - this only contains the CURRENT WORD being typed, not all accumulated text.
+
+## Solution Plan
+
+### 1. Fix game-logic.js
+- Modify keystrokeDetails storage to include FULL accumulated text (all completed words + current word)
+- This ensures each keystroke records complete typing state up to that point
+
+### 2. Fix typing-replay.js  
+- Update renderReplayText() function to properly use full inputState from keystrokeDetails
+- Ensure display updates correctly for all words during replay
+
+## Implementation Steps:
+
+- [ ] Edit js/game/game-logic.js - update keystrokeDetails storage in initGameListeners()
+- [ ] Edit js/history/typing-replay.js - update renderReplayText() function logic

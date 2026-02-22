@@ -34,6 +34,11 @@ export const gameState = {
 
     // Properti baru:
     RENDERED_LINE_BUFFER: 3, // Jumlah baris yang akan dirender di awal dan setiap kali scroll
+    
+    // Replay data recording
+    keystrokeLog: [],
+    correctCharsPerSecond: [],
+    fullText: '', // Store the full text being typed
 };
 
 window.gameState = gameState;

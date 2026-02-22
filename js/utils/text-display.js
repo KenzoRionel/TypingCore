@@ -119,8 +119,6 @@ export function lockTextDisplayHeightTo3Lines() {
 
   // Menetapkan tinggi maksimum 3 baris secara dinamis
   DOM.textDisplay.style.maxHeight = `${lineHeight * 3}px`;
-  // Hapus baris ini karena akan memblokir scroll
-  // DOM.textDisplay.style.overflowY = "hidden";
 }
 
 function calculateLines() {
