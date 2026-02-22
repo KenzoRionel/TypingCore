@@ -1,22 +1,27 @@
-# Typing Replay Fix - TODO List
+# TODO: Fix Double Text & Multiple Initialization Issue
 
-## Problem
-Only the beginning text runs and changes when replay types, while other texts are only displayed without being updated during replay.
+## Problem Analysis
+- Double teks terlihat di display
+- Console log menunjukkan `initReplayContainer` dipanggil multiple times
+- Container replay dibuat berulang kali meskipun sudah ada check `existingContainer`
 
-## Root Cause
-In game-logic.js, keystrokeDetails stores inputState which is DOM.hiddenInput.value - this only contains the CURRENT WORD being typed, not all accumulated text.
+## Tasks
 
-## Solution Plan
+### 1. Fix js/history/typing-replay.js
+- [x] Add initialization flag to prevent multiple initialization
+- [x] Fix auto-initialization logic at bottom of file
+- [x] Ensure clearReplayDOM() is called before creating new container
+- [x] Add better duplicate detection for keystrokes data
 
-### 1. Fix game-logic.js
-- Modify keystrokeDetails storage to include FULL accumulated text (all completed words + current word)
-- This ensures each keystroke records complete typing state up to that point
+### 2. Verify js/score-history-script.js
+- [x] Check for any logic that might trigger re-render multiple times
 
-### 2. Fix typing-replay.js  
-- Update renderReplayText() function to properly use full inputState from keystrokeDetails
-- Ensure display updates correctly for all words during replay
+### 3. Verify js/history/history-dom.js
+- [x] Ensure no duplicate event listeners
 
-## Implementation Steps:
-
-- [ ] Edit js/game/game-logic.js - update keystrokeDetails storage in initGameListeners()
-- [ ] Edit js/history/typing-replay.js - update renderReplayText() function logic
+## Progress
+- [x] Create TODO.md (Done)
+- [x] Edit typing-replay.js - Added isInitialized flag to prevent multiple initialization
+- [x] Added eventListenersAdded flag to prevent duplicate event listeners
+- [x] Fixed auto-initialization with { once: true } option
+- [x] Test and verify fix
