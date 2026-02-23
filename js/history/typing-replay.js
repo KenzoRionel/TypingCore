@@ -7,12 +7,16 @@ let replayState = {
     replayData: null,
     text: '',
     intervalId: null,
+    timerIntervalId: null,
     container: null,
     playButton: null,
     scoreId: null,
     lastTimestamp: 0,
-    renderToken: 0 
+    renderToken: 0,
+    startTime: 0,
+    totalDuration: 0
 };
+
 
 // Flag to prevent multiple initialization
 let isInitialized = false;
@@ -261,8 +265,17 @@ function playReplay() {
         replayState.currentIndex = 0;
     }
     
+    // Get total duration from first keystroke's timeElapsed (countdown start value)
+    const firstKeystroke = keystrokes[0];
+    replayState.totalDuration = firstKeystroke?.timeElapsed || 60;
+    
     replayState.isPlaying = true;
+    replayState.startTime = Date.now();
     updatePlayButton();
+    
+    // Start continuous timer for smooth time display
+    startContinuousTimer();
+
     
     const run = () => {
         if (currentToken !== replayState.renderToken) {
@@ -300,15 +313,52 @@ function pauseReplay() {
         clearTimeout(replayState.intervalId);
         replayState.intervalId = null;
     }
+    // Stop continuous timer
+    if (replayState.timerIntervalId) {
+        clearInterval(replayState.timerIntervalId);
+        replayState.timerIntervalId = null;
+    }
 }
+
 
 function stopReplay() {
     console.log('[REPLAY] Replay dihentikan/reset.');
     pauseReplay();
     replayState.renderToken++; 
     replayState.currentIndex = 0;
+    replayState.startTime = 0;
+    // Reset time display to total duration
+    const time = document.getElementById('replay-time');
+    if (time && replayState.totalDuration) {
+        time.textContent = replayState.totalDuration + 's';
+    }
     renderReplayText();
 }
+
+function startContinuousTimer() {
+    // Clear any existing timer
+    if (replayState.timerIntervalId) {
+        clearInterval(replayState.timerIntervalId);
+    }
+    
+    // Update time display every 100ms for smooth countdown
+    replayState.timerIntervalId = setInterval(() => {
+        if (!replayState.isPlaying) return;
+        
+        const elapsedMs = Date.now() - replayState.startTime;
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        
+        // Calculate remaining time (countdown)
+        const remainingTime = Math.max(0, replayState.totalDuration - elapsedSeconds);
+        
+        // Update time display
+        const time = document.getElementById('replay-time');
+        if (time) {
+            time.textContent = remainingTime + 's';
+        }
+    }, 100);
+}
+
 
 function resetReplay() { stopReplay(); }
 
@@ -339,12 +389,19 @@ function updateLiveStats() {
     if (data) {
         const wpm = document.getElementById('replay-wpm');
         const acc = document.getElementById('replay-accuracy');
-        const time = document.getElementById('replay-time');
+        
+        // Display WPM with real-time value from keystroke data
         if (wpm) wpm.textContent = data.wpm || 0;
+        
+        // Display accuracy percentage
         if (acc) acc.textContent = (data.accuracy || 0) + '%';
-        if (time) time.textContent = (data.timeElapsed || 0) + 's';
+        
+        // Note: Time is now updated continuously by startContinuousTimer()
+        // This ensures smooth countdown display independent of keystroke timing
     }
 }
+
+
 
 function showNoReplayMessage(message) {
     const textDisplay = document.getElementById('replay-text-display');

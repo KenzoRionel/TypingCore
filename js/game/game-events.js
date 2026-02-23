@@ -20,6 +20,18 @@ import {
   lockTextDisplayHeightTo3Lines,
   initTextDisplayResizeObserver
 } from "../utils/text-display.js";
+import {
+  highlightKeyOnKeyboard,
+  highlightWrongKeyOnKeyboard,
+  clearKeyboardHighlights
+} from "../learn-typing-ui.js";
+import {
+  highlightActiveKeyOnKeyboard,
+  clearActiveKeyHighlight
+} from "../index-keyboard.js";
+
+
+
 
 export function handleKeydown(e) {
   const DOM = getGameDOMReferences();
@@ -129,14 +141,30 @@ export function handleKeydown(e) {
     ) {
       e.preventDefault();
       triggerShakeAnimation();
+  // Highlight wrong key on keyboard
+      const keyboardContainer = document.getElementById('virtual-keyboard-container');
+      if (keyboardContainer) {
+        highlightWrongKeyOnKeyboard(keyboardContainer, e.key);
+        // Also highlight as active key
+        highlightActiveKeyOnKeyboard(keyboardContainer, e.key);
+      }
+
       return;
     }
   }
 
+
   if (e.key === " ") {
     e.preventDefault();
 
+    // Highlight the space key on keyboard
+    const keyboardContainer = document.getElementById('virtual-keyboard-container');
+    if (keyboardContainer) {
+      highlightActiveKeyOnKeyboard(keyboardContainer, ' ');
+    }
+
     if (DOM.hiddenInput.value.length === 0) return;
+
 
     processTypedWord();
 
@@ -201,19 +229,32 @@ export function handleKeydown(e) {
     updateWordHighlighting();
     updateRealtimeStats();
   } else if (e.key === "Backspace") {
+    // Highlight the backspace key on keyboard
+    const keyboardContainer = document.getElementById('virtual-keyboard-container');
+    if (keyboardContainer) {
+      highlightActiveKeyOnKeyboard(keyboardContainer, e.key);
+    }
+    
     setTimeout(() => {
       updateWordHighlighting();
       updateRealtimeStats();
     }, 0);
   } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    // Handle regular character keys
+    const keyboardContainer = document.getElementById('virtual-keyboard-container');
+    if (keyboardContainer) {
+      highlightActiveKeyOnKeyboard(keyboardContainer, e.key);
+    }
+    
     setTimeout(() => {
-      gameState.userTypedWords[gameState.typedWordIndex] =
-        DOM.hiddenInput.value;
+      gameState.userTypedWords[gameState.typedWordIndex] = DOM.hiddenInput.value;
       updateWordHighlighting();
       updateRealtimeStats();
     }, 0);
   }
+
 }
+
 
 function advanceLineIndex() {
   if (gameState.currentLineIndex === 0) {
@@ -239,4 +280,14 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Tambahkan event listener untuk pergerakan mouse
   document.addEventListener('mousemove', handleMouseMove);
+  
+  // Tambahkan event listener untuk keyup untuk menghapus highlight tombol aktif dengan delay
+  document.addEventListener('keyup', (e) => {
+    const keyboardContainer = document.getElementById('virtual-keyboard-container');
+    if (keyboardContainer) {
+      // Gunakan clearActiveKeyHighlight dengan delay agar animasi tetap terlihat saat mengetik cepat
+      clearActiveKeyHighlight(keyboardContainer);
+    }
+  });
+
 });

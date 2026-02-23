@@ -3,12 +3,14 @@
 import { getLessonDOMReferences } from './utils/dom-elements.js';
 
 let appState = {
-    hiddenInput: null,
-    currentLessonIndex: 0,
-    waitingForAnim: false,
-    lessonStates: {},
-    isTransitioning: false,
+    hiddenInput: null,
+    currentLessonIndex: 0,
+    waitingForAnim: false,
+    lessonStates: {},
+    isTransitioning: false,
 };
+
+
 
 export function initDOMAndState() {
     const domReferences = getLessonDOMReferences(); // Ganti fungsi ini
@@ -60,5 +62,5 @@ export function initializeLessonState(lessonId, initialState) {
 }
 
 export function getHiddenInput() {
-    return appState.hiddenInput;
+    return appState.hiddenInput;
 }

@@ -22,18 +22,28 @@ import {
   showStatsContainer,
 } from "./game/game-logic.js";
 
-import { gameState } from "./game/game-state.js";
 import {
+
   top200Words,
   top1000Words,
   top10000Words,
 } from "./data/default-words.js";
 import { initDarkMode } from "./utils/dark-mode.js";
+import {
+  initIndexKeyboard,
+  saveKeyboardSettings,
+  loadKeyboardVisibility,
+  getKeyboardVisibility,
+  setKeyboardVisibility,
+  updateKeyboardVisibilityUI
+} from "./index-keyboard.js";
+
 
 // Set default kata-kata saat aplikasi pertama kali dijalankan
 window.defaultKataKata = top200Words;
 
 function shuffleArray(array) {
+
   return array.slice().sort(() => Math.random() - 0.5);
 }
 
@@ -58,7 +68,17 @@ document.addEventListener("DOMContentLoaded", () => {
   initDarkMode(DOM.darkModeToggle);
   setupLogoPop();
 
+  // Inisialisasi keyboard virtual untuk halaman index
+  initIndexKeyboard({
+    hideStats: hideStatsContainer,
+    showStats: showStatsContainer,
+    statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+  });
+
+
+
   // Initial Setup Speedometer ticks
+
   createSpeedometerTicks(DOM.wpmTicksContainer, 0, wpmMax, 10, wpmTickColors);
   createSpeedometerTicks(
     DOM.accuracyTicksContainer,
@@ -207,6 +227,28 @@ document.addEventListener("DOMContentLoaded", () => {
       window.defaultKataKata = top200Words;
     }
   })();
+
+  // Muat preferensi tampilan keyboard dari localStorage
+  (function initKeyboardVisibilityDisplay() {
+    const savedKeyboardVisibility = loadKeyboardVisibility();
+    const keyboardToggle = document.getElementById('keyboardToggle');
+    
+    if (keyboardToggle) {
+      keyboardToggle.checked = savedKeyboardVisibility;
+    }
+    
+    // Update global state
+    setKeyboardVisibility(savedKeyboardVisibility);
+    console.log('DEBUG: main.js - updateKeyboardVisibilityUI called from initKeyboardVisibilityDisplay');
+    updateKeyboardVisibilityUI({
+      hideStats: hideStatsContainer,
+      showStats: showStatsContainer,
+      statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+    });
+
+  })();
+
+
 
   // -- letakkan di luar DOMContentLoaded (bagian bawah file) --
   function setupLogoPop() {
@@ -374,6 +416,15 @@ document.addEventListener("DOMContentLoaded", () => {
     el.addEventListener("click", () => (saveBtn.disabled = false));
   });
 
+  // Event listener untuk keyboard toggle
+  const keyboardToggle = document.getElementById('keyboardToggle');
+  if (keyboardToggle) {
+    keyboardToggle.addEventListener('change', () => {
+      saveBtn.disabled = false;
+    });
+  }
+
+
   saveBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -466,7 +517,22 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem('cursorBlink', shouldBlink ? 'true' : 'false');
     } catch (e) {}
 
+    // Keyboard Visibility Toggle
+    const keyboardToggleBtn = document.getElementById('keyboardToggle');
+    if (keyboardToggleBtn) {
+      const shouldShowKeyboard = keyboardToggleBtn.checked;
+      console.log('DEBUG: main.js - saveKeyboardSettings called');
+      saveKeyboardSettings(shouldShowKeyboard, {
+        hideStats: hideStatsContainer,
+        showStats: showStatsContainer,
+        statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+      });
+    }
+
+
+
     // Reset tes supaya perubahan langsung berlaku
+
     if (typeof window.resetTest === "function") {
       window.resetTest();
     }

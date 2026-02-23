@@ -15,6 +15,11 @@ import {
 import { renderResultChart } from "../history/result-chart.js";
 import { gameState } from "./game-state.js";
 import { lockTextDisplayHeightTo3Lines } from "../utils/text-display.js";
+import {
+  setKeyboardVisibility,
+  updateKeyboardVisibilityUI,
+} from "../index-keyboard.js";
+
 
 export function generateAndAppendWords(numWords) {
   if (!window.defaultKataKata || window.defaultKataKata.length === 0) {
@@ -268,38 +273,32 @@ export function calculateAndDisplayFinalResults() {
   // Build target text (full text that should have been typed)
   const targetText = gameState.fullTextWords.slice(0, gameState.typedWordIndex + 1).join(' ');
   
-  // Use gameState.keystrokeDetails which contains full inputState data
-  // Convert absolute timestamps to relative timestamps for replay
+  // OPTIMIZED: Only store minimal keystroke data to prevent localStorage quota exceeded
+  // Store only essential data, reconstruct state during replay from these keystrokes
   const keystrokesForReplay = (gameState.keystrokeDetails || []).map((keystroke, index) => {
     const elapsedMs = keystroke.timestamp - gameState.startTime;
-    const elapsedSeconds = elapsedMs / 1000;
-    const elapsedMinutes = elapsedMs / 60000;
-    
-    // Calculate WPM and accuracy at this point
-    const inputLength = keystroke.inputState ? keystroke.inputState.length : 0;
-    const correctChars = keystroke.isCorrect && !keystroke.isDeletion ? inputLength : Math.max(0, inputLength - 1);
-    const totalChars = inputLength;
     
     return {
       timestamp: elapsedMs,
-      index: index,
-      wpm: elapsedMinutes > 0 ? Math.round((correctChars / 5) / elapsedMinutes) : 0,
-      accuracy: totalChars > 0 ? Math.round((correctChars / totalChars) * 100) : 100,
-      timeElapsed: Math.round(elapsedSeconds),
-      // Include the critical inputState for replay rendering
-      inputState: keystroke.inputState || '',
       char: keystroke.char || '',
       isCorrect: keystroke.isCorrect || false,
-      isDeletion: keystroke.isDeletion || false
+      isDeletion: keystroke.isDeletion || false,
+      inputState: keystroke.inputState || '',
+      wpm: keystroke.wpm || 0,
+      accuracy: keystroke.accuracy || 100,
+      timeElapsed: keystroke.timeElapsed || gameState.TIMED_TEST_DURATION
     };
   });
+
+
   
   const replayData = {
     text: typedText,
     targetText: targetText,
-    keystrokes: keystrokesForReplay,
-    keystrokeDetails: gameState.keystrokeDetails || []
+    keystrokes: keystrokesForReplay
+    // REMOVED: keystrokeDetails - too large, causes QuotaExceededError
   };
+
 
 
   if (typeof window.saveScore === "function") {
@@ -328,17 +327,46 @@ export function endTest() {
   clearInterval(gameState.updateStatsInterval);
   clearTimeout(gameState.inactivityTimer);
   DOM.hiddenInput.disabled = true;
+  
+  // Set flag global bahwa tes sudah selesai
+  window.isTestCompleted = true;
+  console.log('DEBUG: endTest() - window.isTestCompleted set to true');
+  
+  // Update UI keyboard untuk menyembunyikan keyboard saat tes selesai
+  // Panggil SEBELUM calculateAndDisplayFinalResults untuk menghindari error di saveScore
+  try {
+    updateKeyboardVisibilityUI({
+      hideStats: hideStatsContainer,
+      showStats: showStatsContainer,
+      statsMode: gameState.statsMode || 'speedometer'
+    });
+    console.log('DEBUG: endTest() - updateKeyboardVisibilityUI called successfully');
+  } catch (e) {
+    console.error('DEBUG: endTest() - Error calling updateKeyboardVisibilityUI:', e);
+  }
+  
   if (!gameState.isTestInvalid) {
     calculateAndDisplayFinalResults();
   }
   gameState.startTime = null;
   setTimerSpeedometer(0);
   hideStatsContainer();
+
+
+
+
+
+
+
+
+
+  
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 }
+
 
 export function invalidateTest(reason) {
   const DOM = getGameDOMReferences();
@@ -381,10 +409,16 @@ export function invalidateTest(reason) {
 
 export function resetTestState() {
   const DOM = getGameDOMReferences();
+  
+  // Reset flag global bahwa tes sudah selesai
+  window.isTestCompleted = false;
+  console.log('DEBUG: resetTestState() - window.isTestCompleted set to false');
+  
   clearInterval(gameState.timerInterval);
   clearInterval(gameState.updateStatsInterval);
   clearTimeout(gameState.inactivityTimer);
   gameState.isTestInvalid = false;
+
   gameState.typedWordIndex = 0;
   gameState.correctChars = 0;
   gameState.incorrectChars = 0;
@@ -461,9 +495,23 @@ export function resetTestState() {
   }, 0);
 
   DOM.hiddenInput.focus();
+  
+  // Update UI keyboard untuk menampilkan keyboard kembali jika user menginginkannya
+  // Panggil setelah semua state direset dan window.isTestCompleted = false
+  try {
+    updateKeyboardVisibilityUI({
+      hideStats: hideStatsContainer,
+      showStats: showStatsContainer,
+      statsMode: gameState.statsMode || 'speedometer'
+    });
+    console.log('DEBUG: resetTestState() - updateKeyboardVisibilityUI called successfully');
+  } catch (e) {
+    console.error('DEBUG: resetTestState() - Error calling updateKeyboardVisibilityUI:', e);
+  }
 }
 
 export function startTimer() {
+
   const DOM = getGameDOMReferences();
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
   
@@ -557,13 +605,38 @@ export function initGameListeners() {
         
         gameState.inputHistory.push(fullInputState);
         
+        // Calculate real-time stats for this keystroke
+        const currentElapsedMs = now - gameState.startTime;
+        const currentElapsedMinutes = currentElapsedMs / 60000;
+        const currentTotalCorrectChars = gameState.correctChars + (isCorrect && typedChar !== ' ' ? 1 : 0);
+        const currentTotalIncorrectChars = gameState.incorrectChars + (isCorrect ? 0 : 1);
+        const currentTotalTypedChars = currentTotalCorrectChars + currentTotalIncorrectChars;
+        
+        // Calculate WPM (minimum 0.5 seconds to avoid division by zero)
+        let currentWPM = 0;
+        if (currentTotalTypedChars >= 1 && currentElapsedMinutes > 0.00833) {
+          currentWPM = Math.round(currentTotalCorrectChars / 5 / currentElapsedMinutes);
+        }
+        
+        // Calculate accuracy
+        const currentAccuracy = currentTotalTypedChars > 0 
+          ? Math.round((currentTotalCorrectChars / currentTotalTypedChars) * 100) 
+          : 100;
+        
+        // Calculate countdown time (mundur)
+        const timeRemaining = Math.max(0, gameState.TIMED_TEST_DURATION - Math.floor(currentElapsedMs / 1000));
+
         gameState.keystrokeDetails.push({
           char: typedChar,
           isCorrect: isCorrect,
           timestamp: now,
           inputState: fullInputState,
-          isDeletion: false
+          isDeletion: false,
+          wpm: currentWPM,
+          accuracy: currentAccuracy,
+          timeElapsed: timeRemaining
         });
+
 
       }
       
@@ -585,13 +658,38 @@ export function initGameListeners() {
         
         gameState.inputHistory.push(fullInputState);
         
+        // Calculate real-time stats for backspace keystroke
+        const currentElapsedMs = now - gameState.startTime;
+        const currentElapsedMinutes = currentElapsedMs / 60000;
+        const currentTotalCorrectChars = gameState.correctChars;
+        const currentTotalIncorrectChars = gameState.incorrectChars;
+        const currentTotalTypedChars = currentTotalCorrectChars + currentTotalIncorrectChars;
+        
+        // Calculate WPM (minimum 0.5 seconds to avoid division by zero)
+        let currentWPM = 0;
+        if (currentTotalTypedChars >= 1 && currentElapsedMinutes > 0.00833) {
+          currentWPM = Math.round(currentTotalCorrectChars / 5 / currentElapsedMinutes);
+        }
+        
+        // Calculate accuracy
+        const currentAccuracy = currentTotalTypedChars > 0 
+          ? Math.round((currentTotalCorrectChars / currentTotalTypedChars) * 100) 
+          : 100;
+        
+        // Calculate countdown time (mundur)
+        const timeRemaining = Math.max(0, gameState.TIMED_TEST_DURATION - Math.floor(currentElapsedMs / 1000));
+
         gameState.keystrokeDetails.push({
           char: 'Backspace',
           isCorrect: false,
           timestamp: now,
           inputState: fullInputState,
-          isDeletion: true
+          isDeletion: true,
+          wpm: currentWPM,
+          accuracy: currentAccuracy,
+          timeElapsed: timeRemaining
         });
+
       }
 
 
@@ -603,7 +701,17 @@ export function initGameListeners() {
 export function showStatsContainer() {
   const DOM = getGameDOMReferences();
   if (!DOM || !DOM.statsContainer) return;
+  
+  // Cek apakah keyboard virtual aktif - jika ya, jangan tampilkan statistik
+  const keyboardVisible = localStorage.getItem('typingCore_showKeyboard') === 'true';
+  if (keyboardVisible) {
+    // Keyboard aktif, sembunyikan statistik
+    hideStatsContainer();
+    return;
+  }
+  
   DOM.statsContainer.classList.add("show");
+
 
   // Sesuaikan tampilan berdasarkan mode statistik yang dipilih
   const textStats = document.querySelector('.text-stats-container');

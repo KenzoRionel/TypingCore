@@ -1,5 +1,18 @@
 // js/learn-typing-ui.js
+// ============================================
+// FILE KHUSUS UNTUK LEARN-TYPING.HTML
+// ============================================
+// File ini berisi logika UI keyboard virtual khusus untuk halaman learn-typing.html.
+// Untuk halaman index.html, gunakan js/index-keyboard.js yang terpisah.
+// 
+// Tujuan pemisahan:
+// - Agar perubahan keyboard di index.html tidak mempengaruhi learn-typing.html
+// - learn-typing.html membutuhkan hand visualizer dan animasi khusus pelajaran
+// - index.html membutuhkan keyboard yang lebih sederhana dengan toggle visibility
+// ============================================
+
 import { getState } from './learn-typing-state.js';
+
 import { lessons } from './learn-typing-lessons.js';
 import { renderHandVisualizer, resetHandVisualizer } from './hand-visualizer.js';
 // Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences

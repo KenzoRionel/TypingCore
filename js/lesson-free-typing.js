@@ -357,11 +357,17 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                 charToRemoveStyle.textContent = originalChar === ' ' ? '\u00A0' : originalChar;
                 charToRemoveStyle.classList.remove('correct-box', 'corrected-box', 'error-char');
 
+                // Hapus kursor dari posisi saat ini sebelum pindah
+                if (allChars[currentCharIndex]) {
+                    allChars[currentCharIndex].classList.remove('cursor');
+                }
+
+                currentCharIndex--;
+
                 if (allChars[currentCharIndex]) {
                     allChars[currentCharIndex].classList.add('cursor');
                 }
 
-                currentCharIndex--;
                 userTypingHistory.pop();
                 updateState(lessonId, { currentCharIndex, userTypingHistory });
                 clearWrongInputFeedback(lessonId);
@@ -649,5 +655,3 @@ function getWpmMessage(wpm) {
     if (wpm < 120) return "WOW!⭐";
     return "🔥LEGEND!";
 }
-
-
