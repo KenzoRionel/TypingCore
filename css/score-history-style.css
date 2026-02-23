@@ -312,3 +312,185 @@
         transform: translateY(0);
     }
 }
+
+/* --- Dark Mode Styles for Score History --- */
+
+/* Chart containers */
+body.dark-mode .chart-container {
+    background-color: #2c2c2c;
+    border-color: #444;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .chart-container h2 {
+    color: #ffffff;
+}
+
+/* Score list */
+body.dark-mode .score-list {
+    background-color: #2c2c2c;
+    border-color: #444;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Score table */
+body.dark-mode .score-table th {
+    background-color: #383838;
+    color: #ffffff;
+    border-color: #555;
+}
+
+body.dark-mode .score-table td {
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+body.dark-mode .score-table tr:nth-child(even) {
+    background-color: #333333;
+}
+
+body.dark-mode .score-table tr:hover {
+    background-color: #404040;
+}
+
+/* No history message */
+body.dark-mode .no-history {
+    color: #aaaaaa;
+}
+
+/* Replay container */
+body.dark-mode .replay-container {
+    background-color: #2c2c2c;
+    border-color: #444;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .replay-header h3 {
+    color: #ffffff;
+}
+
+/* Replay controls */
+body.dark-mode .replay-btn {
+    background-color: #0068bd;
+}
+
+body.dark-mode .replay-btn:hover {
+    background-color: #0056a3;
+}
+
+body.dark-mode .replay-btn:disabled {
+    background-color: #555;
+}
+
+/* Replay info */
+body.dark-mode .replay-info {
+    color: #aaaaaa;
+}
+
+/* Replay stats */
+body.dark-mode .replay-stats {
+    background-color: #383838;
+}
+
+body.dark-mode .replay-stat-label {
+    color: #888888;
+}
+
+body.dark-mode .replay-stat-value {
+    color: #ffffff;
+}
+
+/* Replay text display */
+body.dark-mode .replay-text-display {
+    background-color: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+/* Replay characters */
+body.dark-mode .replay-char.correct {
+    color: #83f0f8;
+}
+
+body.dark-mode .replay-char.wrong {
+    color: #ff6b6b;
+}
+
+body.dark-mode .replay-char.untyped {
+    color: #666666;
+}
+
+body.dark-mode .replay-char.deleted-char {
+    color: #ff6b6b;
+}
+
+/* Current word highlight */
+body.dark-mode .replay-word.current-word {
+    background-color: #3a4a5a;
+}
+
+/* Completed wrong word */
+body.dark-mode .replay-word.completed-wrong {
+    text-decoration-color: #ff6b6b;
+}
+
+/* Replay progress */
+body.dark-mode .replay-progress {
+    background-color: #444;
+}
+
+body.dark-mode .replay-progress-bar {
+    background-color: #0068bd;
+}
+
+/* No replay message */
+body.dark-mode .no-replay {
+    color: #aaaaaa;
+}
+
+/* Deletion info */
+body.dark-mode .replay-deletion-info {
+    background-color: #3a3a2a;
+    border-color: #665;
+}
+
+body.dark-mode .deleted-indicator {
+    color: #ccccaa;
+}
+
+/* Section heading */
+body.dark-mode #score-history-section h3 {
+    color: #ffffff;
+}
+
+/* Navbar icons in dark mode */
+body.dark-mode .main-header .nav-link i,
+body.dark-mode .navbar .nav-link i {
+    color: #ffffff !important;
+}
+
+body.dark-mode .navbar .dropdown-toggle {
+    color: #ffffff !important;
+}
+
+body.dark-mode .navbar .dropdown-menu {
+    background-color: #2c2c2c;
+    border-color: #444;
+}
+
+body.dark-mode .navbar .dropdown-item {
+    color: #ffffff !important;
+}
+
+body.dark-mode .navbar .dropdown-item:hover {
+    background-color: #383838;
+    color: #00ffff !important;
+}
+
+body.dark-mode .navbar .dropdown-divider {
+    border-color: #444;
+}
+
+body.dark-mode .navbar-toggler-icon {
+    filter: invert(1);
+}

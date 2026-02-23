@@ -8,6 +8,7 @@
     <link rel="icon" href="img/TypingCoreIcon.svg" width="256" height="256" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"> <link rel="stylesheet" href="css/score-history-style.css">
+    <link rel="stylesheet" href="css/dark-mode.css">
 </head>
 <body>
     <div class="wrapper">
@@ -36,6 +37,14 @@
                         </div>
                         <div class="navbar-collapse justify-content-end" id="navbarSupportedContent">
                             <ul class="navbar-nav align-items-center">
+                                <li class="nav-item">
+                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
+                                        <span class="slider">
+                                            <span class="slider-icon sun">☀️</span>
+                                            <span class="slider-icon moon">🌙</span>
+                                        </span>
+                                    </button>
+                                </li>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-globe"></i> Bahasa
@@ -83,11 +92,37 @@
 <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="js/history/score-manager.js" type="module"></script>
 <script src="js/history/typing-replay.js" type="module"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    displayFullScoreHistory();
-    initReplayContainer();
-});
+<script type="module">
+    import { initDarkMode } from './js/utils/dark-mode.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        initDarkMode(darkModeToggle);
+        displayFullScoreHistory();
+        initReplayContainer();
+        
+        // Watch for dark mode changes to refresh charts
+        const darkModeObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    if (target.tagName === 'BODY' && target.classList.contains('dark-mode')) {
+                        // Re-render charts with dark mode colors
+                        displayFullScoreHistory();
+                    } else if (mutation.oldValue && mutation.oldValue.includes('dark-mode') && !target.classList.contains('dark-mode')) {
+                        // Re-render charts with light mode colors
+                        displayFullScoreHistory();
+                    }
+                }
+            });
+        });
+        
+        darkModeObserver.observe(document.body, {
+            attributes: true,
+            attributeOldValue: true,
+            attributeFilter: ['class']
+        });
+    });
 </script>
 </body>
 </html>

@@ -6,6 +6,17 @@ import { getHistoryDOMReferences } from '../utils/dom-elements.js';
 let wpmChart;
 let accuracyChart;
 
+// Helper function to get chart colors based on dark mode
+function getChartColors() {
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    return {
+        textColor: isDarkMode ? '#e0e0e0' : '#666666',
+        gridColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+        titleColor: isDarkMode ? '#ffffff' : '#333333'
+    };
+}
+
+
 export function renderProgressCharts(scores) {
     // Perbaikan: Panggil getHistoryDOMReferences()
     const DOM = getHistoryDOMReferences();
@@ -21,11 +32,14 @@ export function renderProgressCharts(scores) {
     const wpmData = sortedScores.map(score => score.wpm);
     const accuracyData = sortedScores.map(score => score.accuracy);
 
-    if (wpmChart) wpmChart.destroy();
-    if (accuracyChart) accuracyChart.destroy();
+    if (wpmChart) wpmChart.destroy();
+    if (accuracyChart) accuracyChart.destroy();
+
+    const colors = getChartColors();
 
     // Ganti nama properti DOM
-    wpmChart = new Chart(DOM.wpmProgressChart, {
+	wpmChart = new Chart(DOM.wpmProgressChart, {
+
         type: 'line',
         data: {
             labels: labels,
@@ -40,28 +54,43 @@ export function renderProgressCharts(scores) {
                 pointHoverRadius: 8
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'WPM'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Jumlah Tes'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'WPM',
+                        color: colors.titleColor
+                    },
+                    ticks: {
+                        color: colors.textColor
+                    },
+                    grid: {
+                        color: colors.gridColor
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Jumlah Tes',
+                        color: colors.titleColor
+                    },
+                    ticks: {
+                        color: colors.textColor
+                    },
+                    grid: {
+                        color: colors.gridColor
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+
                 tooltip: {
                     callbacks: {
                         title: function(context) {
@@ -77,44 +106,59 @@ export function renderProgressCharts(scores) {
     });
 
     // Ganti nama properti DOM
-    accuracyChart = new Chart(DOM.accuracyProgressChart, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Akurasi (%)',
-                data: accuracyData,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                tension: 0.3,
-                fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: 'Akurasi (%)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Jumlah Tes'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
+	accuracyChart = new Chart(DOM.accuracyProgressChart, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Akurasi (%)',
+                data: accuracyData,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.3,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Akurasi (%)',
+                        color: colors.titleColor
+                    },
+                    ticks: {
+                        color: colors.textColor
+                    },
+                    grid: {
+                        color: colors.gridColor
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Jumlah Tes',
+                        color: colors.titleColor
+                    },
+                    ticks: {
+                        color: colors.textColor
+                    },
+                    grid: {
+                        color: colors.gridColor
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+
                 tooltip: {
                     callbacks: {
                         title: function(context) {
