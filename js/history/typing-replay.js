@@ -1,5 +1,5 @@
 // js/history/typing-replay.js
-// Modul untuk menangani fitur replay mengetik
+// Modul untuk menangani fitur replay mengetik dengan sinkronisasi waktu presisi
 
 let replayState = {
     isPlaying: false,
@@ -7,43 +7,35 @@ let replayState = {
     replayData: null,
     text: '',
     intervalId: null,
-    timerIntervalId: null,
     container: null,
     playButton: null,
     scoreId: null,
-    lastTimestamp: 0,
     renderToken: 0,
-    startTime: 0,
-    totalDuration: 0
+    totalDuration: 60,
+    lastRenderTime: 0,
+    renderInterval: 16, // ~60fps for smoother animation
+    firstTimestamp: 0 // Timestamp pertama untuk sinkronisasi waktu
 };
 
 
-// Flag to prevent multiple initialization
+let pendingRender = false;
+let rafId = null;
+
+
+
 let isInitialized = false;
-
-// Flag to prevent duplicate event listeners
 let eventListenersAdded = false;
-
-
 
 function clearReplayDOM() {
     const dups = document.querySelectorAll('#replay-container');
-    if (dups.length > 1) console.warn(`[REPLAY] Ditemukan ${dups.length} container duplikat! Menghapus...`);
     dups.forEach(el => el.remove());
 }
 
 export function initReplayContainer() {
-    console.log('[REPLAY] initReplayContainer dipanggil');
-    
-    // Prevent multiple initialization
-    if (isInitialized) {
-        console.log('[REPLAY] Already initialized, skipping.');
-        return;
-    }
-    
+    if (isInitialized) return;
+
     let existingContainer = document.getElementById('replay-container');
     if (existingContainer) {
-        console.log('[REPLAY] Container sudah ada, skipping creation.');
         replayState.container = existingContainer;
         replayState.playButton = document.getElementById('replay-play-btn');
         isInitialized = true;
@@ -52,13 +44,7 @@ export function initReplayContainer() {
 
     clearReplayDOM();
 
-
-    const DOM = getHistoryDOMReferences();
-    if (!DOM || (!DOM.scoreHistoryList && !document.querySelectorAll('.chart-container').length)) {
-        console.error('[REPLAY] DOM Reference tidak ditemukan, gagal init.');
-        return;
-    }
-
+    const DOM = { scoreHistoryList: document.getElementById('scoreHistoryList') };
     const replayContainer = document.createElement('div');
     replayContainer.id = 'replay-container';
     replayContainer.className = 'replay-container';
@@ -96,7 +82,7 @@ export function initReplayContainer() {
             <div id="replay-progress-bar" class="replay-progress-bar"></div>
         </div>
     `;
-    
+
     const chartContainers = document.querySelectorAll('.chart-container');
     if (chartContainers.length > 0) {
         chartContainers[chartContainers.length - 1].after(replayContainer);
@@ -106,141 +92,327 @@ export function initReplayContainer() {
 
     replayState.container = replayContainer;
     replayState.playButton = document.getElementById('replay-play-btn');
-    
-    // Only add event listeners once
+
     if (!eventListenersAdded) {
-        const playBtn = document.getElementById('replay-play-btn');
-        const resetBtn = document.getElementById('replay-reset-btn');
-        if (playBtn) playBtn.addEventListener('click', toggleReplay);
-        if (resetBtn) resetBtn.addEventListener('click', resetReplay);
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#replay-play-btn')) toggleReplay();
+            if (e.target.closest('#replay-reset-btn')) resetReplay();
+        });
         eventListenersAdded = true;
     }
-    
-    // Mark as initialized
+
     isInitialized = true;
-    
-    console.log('[REPLAY] Container berhasil dibuat dan event listener dipasang.');
-
-}
-
-
-function getHistoryDOMReferences() {
-    return { scoreHistoryList: document.getElementById('scoreHistoryList') };
 }
 
 export function loadReplay(scoreId) {
-    console.log(`[REPLAY] Memuat skor ID: ${scoreId}`);
     const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
     const score = scores[scoreId];
-    
+
     if (!score || !score.replayData) {
-        console.error('[REPLAY] Data replay tidak ditemukan di localStorage.');
         showNoReplayMessage('Replay tidak tersedia.');
         return;
     }
 
     stopReplay();
 
-    // Gunakan data replay asli tanpa filter duplikat yang bermasalah
-    const rawKeystrokes = score.replayData.keystrokes || [];
-    
-    console.log(`[REPLAY] Data keystrokes: ${rawKeystrokes.length}`);
-    
-    // Update replayData dengan data asli
     replayState.scoreId = scoreId;
-    replayState.replayData = {
-        ...score.replayData,
-        keystrokes: rawKeystrokes
-    };
+    replayState.replayData = score.replayData;
     replayState.currentIndex = 0;
-    
+    // Gunakan durasi asli dari score, default ke 60
+    replayState.totalDuration = score.duration || 60;
+
     updateReplayInfo(score);
-    renderReplayText(); 
+    renderReplayText();
     updateProgressBar();
     updateLiveStats();
-    
+
     if (replayState.playButton) replayState.playButton.disabled = false;
 }
 
+function playReplay() {
+    if (!replayState.replayData?.keystrokes.length) return;
 
-function renderReplayText() {
-    const textDisplay = document.getElementById('replay-text-display');
-    if (!textDisplay || !replayState.replayData) return;
-    
-    const targetText = replayState.replayData.targetText || "";
-    const keystrokes = replayState.replayData.keystrokes || [];
+    pauseReplay();
+    const currentToken = ++replayState.renderToken;
+    const keystrokes = replayState.replayData.keystrokes;
 
-    let currentInput = "";
-    if (replayState.currentIndex > 0) {
-        const idx = Math.min(replayState.currentIndex - 1, keystrokes.length - 1);
-        currentInput = keystrokes[idx]?.inputState || "";
+    if (replayState.currentIndex >= keystrokes.length) {
+        replayState.currentIndex = 0;
     }
 
-    console.log(`[RENDER] Index: ${replayState.currentIndex}, Input: "${currentInput}"`);
-    renderReplayCore(textDisplay, targetText, currentInput);
+    replayState.isPlaying = true;
+    updatePlayButton();
+    replayState.lastRenderTime = 0;
+    
+    // Simpan timestamp pertama untuk perhitungan waktu relatif
+    replayState.firstTimestamp = keystrokes[0]?.timestamp || 0;
+    console.log('[Replay] Starting replay with', keystrokes.length, 'keystrokes');
+
+    console.log('[Replay] First keystroke timestamp:', keystrokes[0]?.timestamp);
+    console.log('[Replay] Last keystroke timestamp:', keystrokes[keystrokes.length - 1]?.timestamp);
+
+    const run = () => {
+        if (currentToken !== replayState.renderToken || !replayState.isPlaying) return;
+
+        if (replayState.currentIndex >= keystrokes.length) {
+            console.log('[Replay] Reached end of keystrokes');
+            // Selesai replay - jangan reset, biarkan user melihat hasil akhir
+            replayState.isPlaying = false;
+            updatePlayButton();
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            if (replayState.intervalId) {
+                clearTimeout(replayState.intervalId);
+                replayState.intervalId = null;
+            }
+            return;
+        }
+
+
+
+        const current = keystrokes[replayState.currentIndex];
+        
+        // Render UI dengan requestAnimationFrame untuk smoothness maksimal
+        scheduleRender();
+
+        replayState.currentIndex++;
+        const next = keystrokes[replayState.currentIndex];
+
+        if (next) {
+            // Selisih waktu asli antar tekanan tombol
+            const rawDelay = next.timestamp - current.timestamp;
+            // Cap delay maksimum 2 detik untuk menghindari jeda terlalu lama
+            const delay = Math.min(Math.max(0, rawDelay), 2000);
+            
+            if (rawDelay > 2000) {
+                console.log('[Replay] Large delay detected:', rawDelay, 'ms, capped to 2000ms');
+            }
+            if (rawDelay < 0) {
+                console.log('[Replay] Negative delay detected:', rawDelay, 'ms, set to 0');
+            }
+            
+            replayState.intervalId = setTimeout(run, delay);
+        } else {
+            console.log('[Replay] No more keystrokes, finished - keeping final state visible');
+            // Selesai replay - jangan reset, biarkan user melihat hasil akhir
+            replayState.isPlaying = false;
+            updatePlayButton();
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            if (replayState.intervalId) {
+                clearTimeout(replayState.intervalId);
+                replayState.intervalId = null;
+            }
+        }
+
+    };
+    run();
 }
 
-function renderReplayCore(container, targetText, currentInput) {
-    // MENGHAPUS SEMUA CHILD SECARA TOTAL
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
+// Schedule render menggunakan requestAnimationFrame untuk smoothness
+function scheduleRender() {
+    // Selalu update stats (ringan) setiap keystroke
+    updateLiveStats();
+    updateProgressBar();
+    
+    // Cancel pending RAF jika ada
+    if (rafId) {
+        cancelAnimationFrame(rafId);
     }
+    
+    const now = performance.now();
+    const timeSinceLastRender = now - replayState.lastRenderTime;
+    
+    if (timeSinceLastRender >= replayState.renderInterval) {
+        // Render langsung dengan RAF untuk sync dengan refresh rate monitor
+        rafId = requestAnimationFrame(() => {
+            renderReplayText();
+            replayState.lastRenderTime = performance.now();
+        });
+    } else {
+        // Delay render untuk mencapai target frame rate
+        const waitTime = replayState.renderInterval - timeSinceLastRender;
+        setTimeout(() => {
+            if (replayState.isPlaying) {
+                rafId = requestAnimationFrame(() => {
+                    renderReplayText();
+                    replayState.lastRenderTime = performance.now();
+                });
+            }
+        }, waitTime);
+    }
+}
 
-    const fragment = document.createDocumentFragment();
-    const wordsWrapper = document.createElement('div');
-    wordsWrapper.className = 'replay-words-container';
+
+
+
+function updateLiveStats() {
+    const keystrokes = replayState.replayData?.keystrokes || [];
+    const data = keystrokes[Math.max(0, replayState.currentIndex - 1)];
+
+    const wpmEl = document.getElementById('replay-wpm');
+    const accEl = document.getElementById('replay-accuracy');
+    const timeEl = document.getElementById('replay-time');
+
+    if (data) {
+        if (wpmEl) wpmEl.textContent = data.wpm || 0;
+        if (accEl) accEl.textContent = (data.accuracy || 0) + '%';
+        
+        // SINKRONISASI WAKTU REAL-TIME
+        // Hitung waktu mundur dari timestamp relatif terhadap timestamp pertama
+        // Ini memastikan waktu dimulai dari totalDuration (misal: 60s) dan berkurang secara akurat
+        const relativeTimestamp = data.timestamp - replayState.firstTimestamp;
+        const elapsedSeconds = Math.floor(relativeTimestamp / 1000);
+        const remaining = Math.max(0, replayState.totalDuration - elapsedSeconds);
+        if (timeEl) timeEl.textContent = remaining + 's';
+
+        
+        // Console log setiap 20 keystroke untuk debugging (kurangi frekuensi)
+        if (replayState.currentIndex % 20 === 0) {
+            console.log('[Replay Stats] Index:', replayState.currentIndex, 
+                        'timeElapsed:', data.timeElapsed, 
+                        'timestamp:', data.timestamp,
+                        'displayed:', remaining + 's');
+        }
+    } else {
+        if (timeEl) timeEl.textContent = replayState.totalDuration + 's';
+    }
+}
+
+
+
+
+// Cache untuk incremental updates
+let replayTextCache = {
+    lastInput: null,
+    lastTargetWords: null,
+    container: null,
+    wordElements: []
+};
+
+function renderReplayText() {
+    const container = document.getElementById('replay-text-display');
+    if (!container || !replayState.replayData) return;
+
+    const targetText = replayState.replayData.targetText || "";
+    const keystrokes = replayState.replayData.keystrokes || [];
+    const currentInput = replayState.currentIndex > 0 
+        ? (keystrokes[replayState.currentIndex - 1]?.inputState || "") 
+        : "";
 
     const targetWords = targetText.split(' ');
     const currentWords = currentInput.split(' ');
     const currentWordIdx = Math.max(0, currentWords.length - 1);
 
-    targetWords.forEach((targetWord, wordIdx) => {
-        const wordSpan = document.createElement('span');
-        wordSpan.className = 'replay-word';
+    // 1. INITIAL BUILD (Hanya jika belum ada atau ganti pelajaran)
+    if (!replayTextCache.container || replayTextCache.lastTargetWords !== targetWords.join(' ')) {
+        container.innerHTML = '';
+        replayTextCache.wordElements = [];
+        
+        const wordsWrapper = document.createElement('div');
+        wordsWrapper.className = 'replay-words-container';
+        
+        targetWords.forEach((targetWord, wordIdx) => {
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'replay-word';
+            wordSpan.id = `replay-word-${wordIdx}`; // ID untuk referensi scroll
+            
+            for (let i = 0; i < targetWord.length; i++) {
+                const charSpan = document.createElement('span');
+                charSpan.className = 'replay-char untyped';
+                charSpan.textContent = targetWord[i];
+                wordSpan.appendChild(charSpan);
+            }
+            wordsWrapper.appendChild(wordSpan);
+            replayTextCache.wordElements[wordIdx] = wordSpan;
 
+            if (wordIdx < targetWords.length - 1) {
+                const spaceSpan = document.createElement('span');
+                spaceSpan.className = 'replay-char space-char untyped';
+                spaceSpan.textContent = ' ';
+                wordsWrapper.appendChild(spaceSpan);
+            }
+        });
+        container.appendChild(wordsWrapper);
+        replayTextCache.container = container;
+        replayTextCache.lastTargetWords = targetWords.join(' ');
+    }
+
+    // 2. INCREMENTAL UPDATE (Hanya update kata yang terdampak)
+    // Kita update dari kata sebelumnya sampai kata saat ini
+    const startIndex = Math.max(0, currentWordIdx - 1);
+    const endIndex = Math.min(targetWords.length - 1, currentWordIdx);
+
+    for (let wordIdx = startIndex; wordIdx <= endIndex; wordIdx++) {
+        const wordEl = replayTextCache.wordElements[wordIdx];
+        if (!wordEl) continue;
+
+        const targetWord = targetWords[wordIdx];
         const typedWord = currentWords[wordIdx] || "";
-        const isWordStarted = wordIdx < currentWords.length;
         const isCurrentWord = (wordIdx === currentWordIdx);
 
-        if (!isWordStarted) {
-            appendChars(wordSpan, targetWord, 'untyped');
-        } else {
-            const typedChars = typedWord.split('');
-            typedChars.forEach((char, i) => {
-                const charSpan = document.createElement('span');
-                charSpan.className = 'replay-char';
-                if (i < targetWord.length) {
-                    charSpan.classList.add(char === targetWord[i] ? 'correct' : 'wrong');
-                } else {
-                    charSpan.classList.add('wrong', 'wrong-extra');
+        // Update status aktif
+        wordEl.classList.toggle('active-word', isCurrentWord);
+
+        // Bersihkan extra characters (karakter berlebih)
+        const existingExtras = wordEl.querySelectorAll('.wrong-extra');
+        existingExtras.forEach(el => el.remove());
+
+        const charSpans = wordEl.querySelectorAll('.replay-char');
+        
+        // Loop karakter target
+        for (let i = 0; i < targetWord.length; i++) {
+            const charSpan = charSpans[i];
+            if (i < typedWord.length) {
+                const isCorrect = typedWord[i] === targetWord[i];
+                charSpan.className = `replay-char ${isCorrect ? 'correct' : 'wrong'}`;
+            } else {
+                charSpan.className = 'replay-char untyped';
+            }
+            
+            // Cursor logic: kursor berada di karakter yang akan diketik
+            charSpan.classList.toggle('cursor', isCurrentWord && i === typedWord.length);
+        }
+
+        // Handle Extra Characters (Jika user ngetik kepanjangan)
+        if (typedWord.length > targetWord.length) {
+            for (let i = targetWord.length; i < typedWord.length; i++) {
+                const extraSpan = document.createElement('span');
+                extraSpan.className = 'replay-char wrong wrong-extra';
+                extraSpan.textContent = typedWord[i];
+                // Kursor di karakter ekstra terakhir jika ini kata aktif
+                if (isCurrentWord && i === typedWord.length - 1) {
+                    extraSpan.classList.add('cursor');
                 }
-                charSpan.textContent = char;
-                wordSpan.appendChild(charSpan);
-            });
-
-            const remaining = targetWord.slice(typedChars.length);
-            appendChars(wordSpan, remaining, 'untyped');
-
-            if (isCurrentWord) {
-                wordSpan.classList.add('active-word');
-                const cursorTarget = wordSpan.children[typedChars.length] || wordSpan.lastElementChild;
-                if (cursorTarget) cursorTarget.classList.add('cursor');
+                wordEl.appendChild(extraSpan);
             }
         }
-        wordsWrapper.appendChild(wordSpan);
 
-        if (wordIdx < targetWords.length - 1) {
-            const spaceSpan = document.createElement('span');
-            spaceSpan.className = 'replay-char space-char';
-            spaceSpan.classList.add(wordIdx < currentWordIdx ? 'correct' : 'untyped');
-            spaceSpan.textContent = ' ';
-            wordsWrapper.appendChild(spaceSpan);
+        // Update spasi setelah kata
+        const nextEl = wordEl.nextElementSibling;
+        if (nextEl && nextEl.classList.contains('space-char')) {
+            const isPassed = wordIdx < currentWordIdx;
+            nextEl.className = `replay-char space-char ${isPassed ? 'correct' : 'untyped'}`;
+            // Kursor di spasi jika user baru saja menyelesaikan kata tapi belum pencet spasi
+            // (Tergantung logika inputState aplikasi lo)
         }
-    });
 
-    fragment.appendChild(wordsWrapper);
-    container.appendChild(fragment);
+        // 3. AUTO-SCROLL LOGIC
+        if (isCurrentWord) {
+            wordEl.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center' // Scroll agar kata aktif ada di tengah container
+            });
+        }
+    }
+    
+    replayTextCache.lastInput = currentInput;
 }
+
 
 function appendChars(parent, text, className) {
     for (const char of text) {
@@ -251,61 +423,6 @@ function appendChars(parent, text, className) {
     }
 }
 
-function playReplay() {
-    if (!replayState.replayData?.keystrokes) return;
-    
-    pauseReplay(); 
-    
-    const currentToken = ++replayState.renderToken;
-    const keystrokes = replayState.replayData.keystrokes;
-    
-    console.log(`[PLAY] Memulai sesi replay baru. Token: ${currentToken}`);
-    
-    if (replayState.currentIndex >= keystrokes.length) {
-        replayState.currentIndex = 0;
-    }
-    
-    // Get total duration from first keystroke's timeElapsed (countdown start value)
-    const firstKeystroke = keystrokes[0];
-    replayState.totalDuration = firstKeystroke?.timeElapsed || 60;
-    
-    replayState.isPlaying = true;
-    replayState.startTime = Date.now();
-    updatePlayButton();
-    
-    // Start continuous timer for smooth time display
-    startContinuousTimer();
-
-    
-    const run = () => {
-        if (currentToken !== replayState.renderToken) {
-            console.log(`[PLAY] Token ${currentToken} sudah tidak valid. Memberhentikan rekursi.`);
-            return;
-        }
-
-        if (!replayState.isPlaying || replayState.currentIndex >= keystrokes.length) {
-            if (replayState.currentIndex >= keystrokes.length) stopReplay();
-            return;
-        }
-
-        const current = keystrokes[replayState.currentIndex];
-        replayState.currentIndex++;
-        
-        renderReplayText();
-        updateProgressBar();
-        updateLiveStats();
-
-        const next = keystrokes[replayState.currentIndex];
-        if (next) {
-            const delay = Math.max(10, Math.min(1500, next.timestamp - current.timestamp));
-            replayState.intervalId = setTimeout(run, delay);
-        } else {
-            stopReplay();
-        }
-    };
-    run();
-}
-
 function pauseReplay() {
     replayState.isPlaying = false;
     updatePlayButton();
@@ -313,50 +430,27 @@ function pauseReplay() {
         clearTimeout(replayState.intervalId);
         replayState.intervalId = null;
     }
-    // Stop continuous timer
-    if (replayState.timerIntervalId) {
-        clearInterval(replayState.timerIntervalId);
-        replayState.timerIntervalId = null;
+    if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
     }
 }
 
 
 function stopReplay() {
-    console.log('[REPLAY] Replay dihentikan/reset.');
     pauseReplay();
-    replayState.renderToken++; 
+    replayState.renderToken++;
     replayState.currentIndex = 0;
-    replayState.startTime = 0;
-    // Reset time display to total duration
-    const time = document.getElementById('replay-time');
-    if (time && replayState.totalDuration) {
-        time.textContent = replayState.totalDuration + 's';
-    }
-    renderReplayText();
-}
-
-function startContinuousTimer() {
-    // Clear any existing timer
-    if (replayState.timerIntervalId) {
-        clearInterval(replayState.timerIntervalId);
-    }
     
-    // Update time display every 100ms for smooth countdown
-    replayState.timerIntervalId = setInterval(() => {
-        if (!replayState.isPlaying) return;
-        
-        const elapsedMs = Date.now() - replayState.startTime;
-        const elapsedSeconds = Math.floor(elapsedMs / 1000);
-        
-        // Calculate remaining time (countdown)
-        const remainingTime = Math.max(0, replayState.totalDuration - elapsedSeconds);
-        
-        // Update time display
-        const time = document.getElementById('replay-time');
-        if (time) {
-            time.textContent = remainingTime + 's';
-        }
-    }, 100);
+    // Reset cache untuk replay berikutnya
+    replayTextCache.lastInput = null;
+    replayTextCache.lastTargetWords = null;
+    replayTextCache.container = null;
+    replayTextCache.wordElements = [];
+    
+    renderReplayText();
+    updateProgressBar();
+    updateLiveStats();
 }
 
 
@@ -382,32 +476,6 @@ function updateProgressBar() {
     progressBar.style.width = `${progress}%`;
 }
 
-function updateLiveStats() {
-    if (!replayState.replayData?.keystrokes) return;
-    const keystrokes = replayState.replayData.keystrokes;
-    const data = keystrokes[Math.max(0, replayState.currentIndex - 1)];
-    if (data) {
-        const wpm = document.getElementById('replay-wpm');
-        const acc = document.getElementById('replay-accuracy');
-        
-        // Display WPM with real-time value from keystroke data
-        if (wpm) wpm.textContent = data.wpm || 0;
-        
-        // Display accuracy percentage
-        if (acc) acc.textContent = (data.accuracy || 0) + '%';
-        
-        // Note: Time is now updated continuously by startContinuousTimer()
-        // This ensures smooth countdown display independent of keystroke timing
-    }
-}
-
-
-
-function showNoReplayMessage(message) {
-    const textDisplay = document.getElementById('replay-text-display');
-    if (textDisplay) textDisplay.innerHTML = `<p class="no-replay">${message}</p>`;
-}
-
 function updateReplayInfo(score) {
     const info = document.getElementById('replay-score-info');
     if (info) {
@@ -418,18 +486,16 @@ function updateReplayInfo(score) {
     }
 }
 
+function showNoReplayMessage(message) {
+    const textDisplay = document.getElementById('replay-text-display');
+    if (textDisplay) textDisplay.innerHTML = `<p class="no-replay">${message}</p>`;
+}
+
 window.loadReplay = loadReplay;
 window.initReplayContainer = initReplayContainer;
 
-// Auto-initialization with guard to prevent multiple calls
-function setupAutoInitialization() {
-    if (isInitialized) return;
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initReplayContainer, { once: true });
-    } else {
-        initReplayContainer();
-    }
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initReplayContainer, { once: true });
+} else {
+    initReplayContainer();
 }
-
-setupAutoInitialization();

@@ -23,6 +23,10 @@ let isAnimating = false;
 let activeKeyTimeout = null;
 const ACTIVE_KEY_DELAY = 30; // ms to keep highlight after keyup (reduced for faster response)
 
+// Caps Lock state
+let isCapsLockActive = false;
+
+
 
 
 
@@ -507,4 +511,32 @@ export function initIndexKeyboard(options = {}) {
 export function saveKeyboardSettings(shouldShowKeyboard, options = {}) {
   saveKeyboardVisibility(shouldShowKeyboard);
   updateKeyboardVisibilityUI(options);
+}
+
+/**
+ * Mengupdate indikator Caps Lock pada keyboard
+ * @param {HTMLElement} keyboardContainer - Container keyboard
+ * @param {boolean} isCapsLockOn - Status Caps Lock (true = aktif)
+ */
+export function updateCapsLockIndicator(keyboardContainer, isCapsLockOn) {
+  if (!keyboardContainer) return;
+
+  isCapsLockActive = isCapsLockOn;
+  const capsLockKey = keyboardContainer.querySelector('[data-key="capslock"]');
+  
+  if (capsLockKey) {
+    if (isCapsLockOn) {
+      capsLockKey.classList.add('capslock-active');
+    } else {
+      capsLockKey.classList.remove('capslock-active');
+    }
+  }
+}
+
+/**
+ * Mendapatkan status Caps Lock saat ini
+ * @returns {boolean} Status Caps Lock
+ */
+export function getCapsLockState() {
+  return isCapsLockActive;
 }

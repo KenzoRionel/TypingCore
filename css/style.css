@@ -524,7 +524,7 @@ header.hidden,
 }
 
 #virtual-keyboard-container {
-    margin-top: 20px;
+    margin-top: 0px;
     width: 100%;
     max-width: 800px;
     margin-left: auto;
@@ -746,6 +746,29 @@ body.dark-mode #virtual-keyboard-container .key.active {
     box-shadow: 0 0 12px 2px var(--active-key-shadow-color);
 }
 
+/* Caps Lock key active styling with yellow highlight - using data-key attribute */
+#virtual-keyboard-container .key.capslock-active {
+    background-color: #ffd700 !important;
+    box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6) !important;
+    color: #333 !important;
+    animation: capslock-key-press-pop 0.12s cubic-bezier(.36, .07, .19, .97) forwards;
+}
+
+@keyframes capslock-key-press-pop {
+    0% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+    }
+    50% {
+        transform: translateY(2px) scale(1.08);
+        box-shadow: 0 0 15px 3px rgba(255, 215, 0, 0.8);
+    }
+    100% {
+        transform: translateY(2px) scale(1.05);
+        box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6);
+    }
+}
+
 /* Dark mode backspace key styling - using data-key attribute */
 body.dark-mode #virtual-keyboard-container .key.active[data-key="backspace"] {
     background-color: #ffd700 !important;
@@ -753,9 +776,15 @@ body.dark-mode #virtual-keyboard-container .key.active[data-key="backspace"] {
     color: #333 !important;
 }
 
-
+/* Dark mode Caps Lock key styling */
+body.dark-mode #virtual-keyboard-container .key.capslock-active {
+    background-color: #ffd700 !important;
+    box-shadow: 0 0 12px 2px rgba(255, 215, 0, 0.8) !important;
+    color: #333 !important;
+}
 
 /* Dark mode next key highlighting - DISABLED */
+
 /*
 body.dark-mode #virtual-keyboard-container .key.next-key {
     background-color: var(--active-key-bg-color);

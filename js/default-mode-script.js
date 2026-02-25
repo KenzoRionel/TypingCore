@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Replay data - keystroke logging
     let keystrokeLog = [];
+    let completedWordsForReplay = [];
+
 
     let totalCorrectWords = 0;
     let totalIncorrectWords = 0;
@@ -543,13 +545,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let tempUserTypedWords = [];
         
         // Process keystrokeLog to build inputHistory
-        keystrokeLog.forEach((timestamp, index) => {
-            const elapsedMs = timestamp - startTime;
+        keystrokeLog.forEach((keystroke, index) => {
+            const elapsedMs = keystroke.timestamp - startTime;
             const elapsedSeconds = elapsedMs / 1000;
             const elapsedMinutes = elapsedMs / 60000;
             
-            // Build the current input state from tempUserTypedWords
-            const currentInput = tempUserTypedWords.filter(w => w && w.length > 0).join(' ');
+            // Build the current input state from completed words + current input
+            const completedWords = userTypedWords.slice(0, keystroke.wordIndex).filter(w => w && w.length > 0);
+            const currentWordInput = keystroke.inputValue || '';
+            const currentInput = completedWords.concat(currentWordInput).join(' ');
             inputHistory.push(currentInput);
             
             // Calculate correct chars at this point - estimate based on progress
@@ -565,12 +569,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 accuracy: totalChars > 0 ? Math.round((estimatedCorrectChars / totalChars) * 100) : 100,
                 timeElapsed: Math.round(elapsedSeconds),
                 inputState: currentInput,
-                isDeletion: false
+                isDeletion: keystroke.isBackspace || false
             });
-            
-            // Update tempUserTypedWords for next iteration
-            // This is a simplified approximation
         });
+
         
         const replayData = {
             text: fullTextWords.join(' '),
@@ -695,13 +697,23 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Log keystroke for replay (including Backspace)
         if (startTime && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-            keystrokeLog.push(Date.now());
+            keystrokeLog.push({
+                timestamp: Date.now(),
+                inputValue: hiddenTextInput.value,
+                wordIndex: typedWordIndex
+            });
         }
         
         // Log Backspace for replay
         if (startTime && e.key === 'Backspace') {
-            keystrokeLog.push(Date.now());
+            keystrokeLog.push({
+                timestamp: Date.now(),
+                inputValue: hiddenTextInput.value,
+                wordIndex: typedWordIndex,
+                isBackspace: true
+            });
         }
+
 
         const targetWord = fullTextWords[typedWordIndex] || '';
         const currentTypedLength = hiddenTextInput.value.length;

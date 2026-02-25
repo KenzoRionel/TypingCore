@@ -27,7 +27,8 @@ import {
 } from "../learn-typing-ui.js";
 import {
   highlightActiveKeyOnKeyboard,
-  clearActiveKeyHighlight
+  clearActiveKeyHighlight,
+  updateCapsLockIndicator
 } from "../index-keyboard.js";
 
 
@@ -154,6 +155,17 @@ export function handleKeydown(e) {
   }
 
 
+  // Deteksi Caps Lock
+  if (e.key === 'CapsLock') {
+    const keyboardContainer = document.getElementById('virtual-keyboard-container');
+    if (keyboardContainer) {
+      // Toggle status Caps Lock (e.getModifierState tidak selalu akurat untuk CapsLock toggle)
+      // Kita gunakan cara sederhana: cek apakah karakter yang akan diketik uppercase/lowercase
+      const isCapsLockOn = e.getModifierState('CapsLock');
+      updateCapsLockIndicator(keyboardContainer, isCapsLockOn);
+    }
+  }
+
   if (e.key === " ") {
     e.preventDefault();
 
@@ -162,6 +174,7 @@ export function handleKeydown(e) {
     if (keyboardContainer) {
       highlightActiveKeyOnKeyboard(keyboardContainer, ' ');
     }
+
 
     if (DOM.hiddenInput.value.length === 0) return;
 
@@ -287,6 +300,28 @@ document.addEventListener("DOMContentLoaded", () => {
     if (keyboardContainer) {
       // Gunakan clearActiveKeyHighlight dengan delay agar animasi tetap terlihat saat mengetik cepat
       clearActiveKeyHighlight(keyboardContainer);
+    }
+  });
+
+  // Event listener untuk mendeteksi Caps Lock saat halaman dimuat atau fokus
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'CapsLock') {
+      const keyboardContainer = document.getElementById('virtual-keyboard-container');
+      if (keyboardContainer) {
+        const isCapsLockOn = e.getModifierState('CapsLock');
+        updateCapsLockIndicator(keyboardContainer, isCapsLockOn);
+      }
+    }
+  });
+
+  // Cek status Caps Lock saat halaman mendapatkan fokus
+  window.addEventListener('focus', () => {
+    const keyboardContainer = document.getElementById('virtual-keyboard-container');
+    if (keyboardContainer) {
+      // Simulasi event untuk mendapatkan status Caps Lock
+      const simulatedEvent = new KeyboardEvent('keydown', { key: 'CapsLock' });
+      const isCapsLockOn = simulatedEvent.getModifierState('CapsLock');
+      updateCapsLockIndicator(keyboardContainer, isCapsLockOn);
     }
   });
 
