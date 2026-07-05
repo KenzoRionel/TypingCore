@@ -244,6 +244,17 @@ export function calculateAndDisplayFinalResults() {
     }
   }
 
+  // ✅ Hitung XP: (WPM × Akurasi%) × (Lama Mengetik dalam Menit)
+  const accuracyDecimal = finalAccuracy / 100;
+  const earnedXP = Math.round(finalWPM * accuracyDecimal * totalTestMinutes);
+  
+  // Simpan XP ke localStorage
+  const currentXP = parseInt(localStorage.getItem("userXP")) || 0;
+  const newTotalXP = currentXP + earnedXP;
+  localStorage.setItem("userXP", newTotalXP);
+  
+  console.log(`XP Earned: ${earnedXP}, Total XP: ${newTotalXP}`);
+
   // ✅ Update UI
   document.getElementById("finalWPM").textContent = finalWPM;
   document.getElementById("finalAccuracy").textContent = `${finalAccuracy}%`;
@@ -257,7 +268,11 @@ export function calculateAndDisplayFinalResults() {
   const rawWpmEl = document.getElementById("finalRawWPM");
   if (rawWpmEl) rawWpmEl.textContent = String(finalRawWPM);
 
+  // ✅ Animate XP Bar
+  animateXPBar(earnedXP);
+
   const historyData = gameState.history.slice();
+
   renderResultChart(
     historyData,
     finalWPM,
@@ -319,7 +334,35 @@ export function calculateAndDisplayFinalResults() {
   console.log("Keystroke log:", keystrokeLog.length);
   console.log("WPM per detik:", wpmBySecond);
   console.log("Konsistensi:", consistency + "%");
+
+  // Scroll to top of page to show results
+  window.scrollTo(0, 0);
+
+  // Prevent spacebar from scrolling page down when test is completed
+  // Remove existing listener first to avoid duplicates
+  document.removeEventListener('keydown', preventSpaceScroll);
+  document.addEventListener('keydown', preventSpaceScroll);
 }
+
+/**
+ * Prevent spacebar from scrolling page when test is completed
+ * @param {KeyboardEvent} event
+ */
+function preventSpaceScroll(event) {
+  if (event.code === 'Space' || event.key === ' ') {
+    event.preventDefault();
+  }
+}
+
+/**
+ * Remove spacebar scroll prevention when test is reset
+ */
+function removeSpaceScrollPrevention() {
+  document.removeEventListener('keydown', preventSpaceScroll);
+}
+
+
+
 
 export function endTest() {
   const DOM = getGameDOMReferences();
@@ -362,9 +405,9 @@ export function endTest() {
 
   
   if (DOM.header) DOM.header.classList.remove("hidden");
-  if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+
 }
 
 
@@ -398,10 +441,13 @@ export function invalidateTest(reason) {
     resultsArea.style.display = "none";
   }
 
-  // Tampilkan menu & tombol restart lagi
+  // Tampilkan menu & tombol restart lagi - jangan tampilkan jika test sudah selesai
+  if (window.isTestCompleted) return;
+  
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
+
 
   hideStatsContainer();
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
@@ -481,6 +527,9 @@ export function resetTestState() {
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
 
+  // Remove spacebar scroll prevention when resetting test
+  removeSpaceScrollPrevention();
+
   generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
   prepareAndRenderText();
 
@@ -495,6 +544,7 @@ export function resetTestState() {
   }, 0);
 
   DOM.hiddenInput.focus();
+
   
   // Update UI keyboard untuk menampilkan keyboard kembali jika user menginginkannya
   // Panggil setelah semua state direset dan window.isTestCompleted = false
@@ -736,4 +786,113 @@ export function hideStatsContainer() {
   const speedContainers = document.querySelectorAll('.speedometer-container');
   if (textStats) textStats.style.display = 'none';
   speedContainers.forEach((el) => (el.style.display = 'none'));
+}
+
+/**
+ * Animate XP bar with earned XP amount showing progress to next level
+ * @param {number} earnedXP - The amount of XP earned
+ */
+function animateXPBar(earnedXP) {
+  const xpBarText = document.getElementById("xpBarText");
+  const xpBarProgress = document.getElementById("xpBarProgress");
+  
+  if (!xpBarText || !xpBarProgress) return;
+  
+  // Get current total XP
+  const currentTotalXP = parseInt(localStorage.getItem("userXP")) || 0;
+  const previousTotalXP = currentTotalXP - earnedXP;
+  
+  // Level thresholds (same as profile.html)
+  const levels = [
+    { level: 1, name: "Sight Seeker", xp: 0 },
+    { level: 2, name: "Key Finder", xp: 500 },
+    { level: 3, name: "Muscle Memory", xp: 1500 },
+    { level: 4, name: "Rhythm Rider", xp: 3500 },
+    { level: 5, name: "Tactile Pro", xp: 7000 },
+    { level: 6, name: "Silent Swift", xp: 12000 },
+    { level: 7, name: "Flow State", xp: 20000 },
+    { level: 8, name: "Mind-to-Key", xp: 35000 },
+    { level: 9, name: "Sonic Stroke", xp: 60000 },
+    { level: 10, name: "Ascended Typist", xp: 100000 },
+  ];
+  
+  // Find current and next level
+  function getCurrentLevel(xp) {
+    for (let i = levels.length - 1; i >= 0; i--) {
+      if (xp >= levels[i].xp) return levels[i];
+    }
+    return levels[0];
+  }
+  
+  function getNextLevel(xp) {
+    for (let i = 0; i < levels.length; i++) {
+      if (xp < levels[i].xp) return levels[i];
+    }
+    return null;
+  }
+  
+  const currentLevel = getCurrentLevel(currentTotalXP);
+  const nextLevel = getNextLevel(currentTotalXP);
+  const previousLevel = getCurrentLevel(previousTotalXP);
+  const previousNextLevel = getNextLevel(previousTotalXP);
+  
+  // Calculate progress percentages
+  let previousProgressPercent = 0;
+  let currentProgressPercent = 100;
+  
+  if (previousNextLevel) {
+    const prevLevelXP = previousLevel.xp;
+    const prevNextLevelXP = previousNextLevel.xp;
+    const xpInPreviousLevel = previousTotalXP - prevLevelXP;
+    const xpRequiredForPrevLevel = prevNextLevelXP - prevLevelXP;
+    previousProgressPercent = (xpInPreviousLevel / xpRequiredForPrevLevel) * 100;
+  }
+  
+  if (nextLevel) {
+    const currLevelXP = currentLevel.xp;
+    const nextLevelXP = nextLevel.xp;
+    const xpInCurrentLevel = currentTotalXP - currLevelXP;
+    const xpRequiredForCurrentLevel = nextLevelXP - currLevelXP;
+    currentProgressPercent = (xpInCurrentLevel / xpRequiredForCurrentLevel) * 100;
+  }
+  
+  // Reset state
+  xpBarText.classList.remove("show");
+  xpBarProgress.style.width = `${previousProgressPercent}%`;
+  
+  // Update text with earned XP and level info
+  const levelText = nextLevel ? `Level ${currentLevel.level}` : "Max Level";
+  xpBarText.textContent = `+${earnedXP} XP (${levelText})`;
+  
+  // Check if leveled up
+  const didLevelUp = currentLevel.level > previousLevel.level;
+  
+  // Small delay before animation starts
+  setTimeout(() => {
+    // Show text with animation
+    xpBarText.classList.add("show");
+    
+    if (didLevelUp) {
+      // Animate to 100% first, then reset to new progress
+      setTimeout(() => {
+        xpBarProgress.style.width = "100%";
+        
+        // After reaching 100%, reset and animate to new progress
+        setTimeout(() => {
+          xpBarProgress.style.transition = "none";
+          xpBarProgress.style.width = "0%";
+          
+          setTimeout(() => {
+            xpBarProgress.style.transition = "width 1s ease-out";
+            xpBarProgress.style.width = `${currentProgressPercent}%`;
+          }, 50);
+        }, 1000);
+      }, 100);
+    } else {
+      // Normal animation to new progress
+      setTimeout(() => {
+        xpBarProgress.style.width = `${currentProgressPercent}%`;
+      }, 100);
+    }
+  }, 300);
 }

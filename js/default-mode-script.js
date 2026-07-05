@@ -514,6 +514,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalActualTypedChars = finalCorrectChars + finalIncorrectChars;
         const finalAccuracy = totalActualTypedChars > 0 ? Math.round((finalCorrectChars / totalActualTypedChars) * 100) : 0;
 
+        // ✅ Hitung XP: (WPM × Akurasi%) × (Lama Mengetik dalam Menit)
+        const accuracyDecimal = finalAccuracy / 100;
+        const totalTestMinutes = finalTimeTaken / 60;
+        const earnedXP = Math.round(finalWPM * accuracyDecimal * totalTestMinutes);
+        
+        // Simpan XP ke localStorage
+        const currentXP = parseInt(localStorage.getItem("userXP")) || 0;
+        const newTotalXP = currentXP + earnedXP;
+        localStorage.setItem("userXP", newTotalXP);
+        
+        console.log(`XP Earned: ${earnedXP}, Total XP: ${newTotalXP}`);
+
         // ========================================================
 
         // Perbarui textContent dari elemen-elemen hasil di dalam resultsDisplayArea

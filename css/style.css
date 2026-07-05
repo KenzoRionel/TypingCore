@@ -366,7 +366,9 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
     width: 100%;
     background-color: #f4f7f6;
     padding: 20px;
+    position: relative;
 }
+
 
 .chart-container {
     height: 300px;
@@ -794,3 +796,67 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 */
 
 /* ==================== END VIRTUAL KEYBOARD STYLES ==================== */
+
+/* ==================== XP BAR STYLES ==================== */
+.xp-bar-container {
+    position: absolute;
+    top: -40px;
+    right: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 10;
+}
+
+.xp-bar-text {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #979da3;
+    margin-bottom: 3px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.xp-bar-text.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+.xp-bar-wrapper {
+    width: 200px;
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.xp-bar-progress {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #e0e0e0, #8BC34A);
+    border-radius: 2px;
+    transition: width 1s ease-out;
+    box-shadow: 0 1px 3px rgba(76, 175, 80, 0.3);
+}
+
+
+/* Dark mode support for XP bar */
+body.dark-mode .xp-bar-wrapper {
+    background-color: #444;
+}
+
+body.dark-mode .xp-bar-text {
+    color: #81C784;
+}
+
+body.dark-mode .xp-bar-progress {
+    background: linear-gradient(90deg, #81C784, #A5D6A7);
+    box-shadow: 0 1px 3px rgba(129, 199, 132, 0.3);
+}
+
+
+
+/* ==================== END XP BAR STYLES ==================== */

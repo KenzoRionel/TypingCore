@@ -113,26 +113,10 @@
                       <li><a class="dropdown-item" href="#">English</a></li>
                     </ul>
                   </li>
-                  <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
-                      id="navbarDropdownUser"
-                      role="button"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
+                  <li class="nav-item">
+                    <a class="nav-link" href="profile.html">
                       <i class="fas fa-user-circle"></i> User
                     </a>
-                    <ul
-                      class="dropdown-menu dropdown-menu-end"
-                      aria-labelledby="navbarDropdownUser"
-                    >
-                      <li><a class="dropdown-item" href="#">Profil</a></li>
-                      <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                      <li><hr class="dropdown-divider" /></li>
-                      <li><a class="dropdown-item" href="#">Logout</a></li>
-                    </ul>
                   </li>
                 </ul>
               </div>
@@ -175,6 +159,13 @@
                 id="resultsDisplayArea"
                 style="display: none"
               >
+                <!-- XP Bar Container - Positioned at top right -->
+                <div class="xp-bar-container">
+                  <div class="xp-bar-text" id="xpBarText">+0 XP</div>
+                  <div class="xp-bar-wrapper">
+                    <div class="xp-bar-progress" id="xpBarProgress"></div>
+                  </div>
+                </div>
                 <div class="chart-container">
                   <canvas id="resultChart"></canvas>
                 </div>

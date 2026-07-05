@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profil - TypingCore</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/dark-mode.css" />
+    <style>
+      .profile-container {
+        max-width: 900px;
+        margin: 20px 0 20px 0px;
+        padding: 20px;
+      }
+
+      .profile-header {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 20px;
+        align-items: center;
+      }
+
+      .profile-image {
+        flex-shrink: 0;
+      }
+
+      .profile-image img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+      }
+
+      .profile-info {
+        flex-grow: 1;
+      }
+
+        .level-badge {
+        font-size: 1.2rem;
+        color: #dddddd;
+        margin-bottom: 5px;
+        background-color: #e2e2e24d;
+        font-weight: 800;
+        
+        /* Membuat ukuran background sama sisi (kotak/lingkaran) */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem; /* Sesuaikan sedikit lebih besar dari font-size */
+        aspect-ratio: 1 / 1; 
+        
+        /* Opsional: Biar bentuknya bulat sempurna */
+        border-radius: 10%; 
+        
+        /* Hapus padding manual karena sudah diatur width & aspect-ratio */
+        padding: 0; 
+      }
+
+      .level-name {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .xp-text {
+        font-size: 0.95rem;
+        color: #888;
+      }
+
+      .xp-bar {
+        width: 100%;
+        max-width: 300px;
+        height: 8px;
+        background: #e0e0e0;
+        border-radius: 4px;
+        margin: 15px 0 50px 0;
+        overflow: hidden;
+      }
+
+      .xp-bar-fill {
+        height: 100%;
+        background: #333;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+
+      .history-section h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #ededed;
+      }
+
+      .history-table {
+        width: 100%;
+        max-width: 600px;
+        font-size: 1rem;
+      }
+
+      .history-table th,
+      .history-table td {
+        padding: 14px 0;
+        border-bottom: 1px solid #575757;
+      }
+
+      .history-table th {
+        font-weight: 500;
+        color: #666;
+      }
+
+      .wpm-high { color: #28a745; }
+      .wpm-med { color: #f0ad4e; }
+      .wpm-low { color: #dc3545; }
+
+      .empty-state {
+        color: #999;
+        padding: 30px 0;
+      }
+
+      @media (max-width: 768px) {
+        .profile-container {
+          margin: 30px;
+          padding: 20px;
+        }
+        
+        .profile-header {
+          flex-direction: column;
+          gap: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="main-content">
+        <header id="header" class="site-header d-flex align-items-center">
+          <nav class="navbar navbar-expand navbar-light flex-grow-1">
+            <div class="container-fluid">
+              <button
+                id="mainSidebarToggleBtn"
+                class="navbar-toggler d-lg-none me-2"
+                type="button"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
+
+              <a class="navbar-brand py-0 me-auto" id="Brand" href="index.html">
+                <img
+                  id="logoWebsite"
+                  src="img/TypingCore.svg"
+                  alt="Logo Website"
+                  style="height: 60px"
+                />
+              </a>
+              <div
+                class="navbar-collapse justify-content-between"
+                id="navbarSupportedContent"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <li class="nav-item">
+                    <a class="nav-link" href="index.html"
+                      ><i class="fas fa-keyboard"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="lessons.html"
+                      ><i class="fas fa-graduation-cap"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="add-text.html"
+                      ><i class="fas fa-plus-circle"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="score-history.html"
+                      ><i class="fas fa-history"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="score-history.html"
+                      ><i class="fas fa-bars"></i
+                    ></a>
+                  </li>
+                </ul>
+              </div>
+              <div
+                class="navbar-collapse justify-content-end"
+                id="navbarSupportedContent2"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <li class="nav-item">
+                    <button
+                      id="darkModeToggle"
+                      class="dark-mode-slide-toggle nav-link"
+                      aria-label="Toggle Dark Mode"
+                    >
+                      <span class="slider">
+                        <span class="slider-icon sun">☀️</span>
+                        <span class="slider-icon moon">🌙</span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdownLang"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-globe"></i> Bahasa
+                    </a>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="navbarDropdownLang"
+                    >
+                      <li>
+                        <a class="dropdown-item" href="#">Bahasa Indonesia</a>
+                      </li>
+                      <li><a class="dropdown-item" href="#">English</a></li>
+                    </ul>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link active" href="profile.html">
+                      <i class="fas fa-user-circle"></i> User
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
+        </header>
+
+        <div class="profile-container">
+          <div class="profile-header">
+            <div class="profile-image">
+              <img src="img/TypingCoreIcon.svg" alt="Profile" id="profileImage" />
+            </div>
+            <div class="profile-info">
+              <div class="level-badge" id="levelBadge">1</div>
+              <div class="level-name" id="levelName">Sight Seeker</div>
+              <div class="xp-text" id="xpText">0 XP</div>
+              <div class="xp-bar">
+                <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-section">
+            <h3>Last 10 Tests</h3>
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>WPM</th>
+                  <th>Acc</th>
+                  <th>XP</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr>
+                  <td colspan="4" class="empty-state">No history yet</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
+    <script type="module">
+      // Profile logic
+      const levels = [
+        { level: 1, name: "Sight Seeker", xp: 0 },
+        { level: 2, name: "Key Finder", xp: 500 },
+        { level: 3, name: "Muscle Memory", xp: 1500 },
+        { level: 4, name: "Rhythm Rider", xp: 3500 },
+        { level: 5, name: "Tactile Pro", xp: 7000 },
+        { level: 6, name: "Silent Swift", xp: 12000 },
+        { level: 7, name: "Flow State", xp: 20000 },
+        { level: 8, name: "Mind-to-Key", xp: 35000 },
+        { level: 9, name: "Sonic Stroke", xp: 60000 },
+        { level: 10, name: "Ascended Typist", xp: 100000 },
+      ];
+
+      let currentXP = parseInt(localStorage.getItem("userXP")) || 0;
+
+      function getCurrentLevel(xp) {
+        for (let i = levels.length - 1; i >= 0; i--) {
+          if (xp >= levels[i].xp) return levels[i];
+        }
+        return levels[0];
+      }
+
+      function getNextLevel(xp) {
+        for (let i = 0; i < levels.length; i++) {
+          if (xp < levels[i].xp) return levels[i];
+        }
+        return null;
+      }
+
+      function updateProfile() {
+        const currentLevel = getCurrentLevel(currentXP);
+        const nextLevel = getNextLevel(currentXP);
+
+        document.getElementById("levelBadge").textContent = ` ${currentLevel.level}`;
+        document.getElementById("levelName").textContent = currentLevel.name;
+
+        if (nextLevel) {
+          const xpNeeded = nextLevel.xp - currentXP;
+          document.getElementById("xpText").textContent = `${currentXP} XP · ${xpNeeded} to Level ${nextLevel.level}`;
+          
+          const prevLevelXP = currentLevel.xp;
+          const xpInLevel = currentXP - prevLevelXP;
+          const xpRequiredForLevel = nextLevel.xp - prevLevelXP;
+          const progressPercent = (xpInLevel / xpRequiredForLevel) * 100;
+          document.getElementById("xpBarFill").style.width = `${progressPercent}%`;
+        } else {
+          document.getElementById("xpText").textContent = `${currentXP} XP · Max Level`;
+          document.getElementById("xpBarFill").style.width = "100%";
+        }
+      }
+
+      function loadHistory() {
+        const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
+        const tbody = document.getElementById('historyTableBody');
+        
+        if (scores.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No history yet</td></tr>';
+          return;
+        }
+
+        const last10 = scores.slice(-10).reverse();
+        
+        tbody.innerHTML = last10.map(score => {
+          const date = new Date(score.date).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short'
+          });
+          
+          const accuracyDecimal = score.accuracy / 100;
+          const timeMinutes = score.time / 60;
+          const earnedXP = Math.round(score.wpm * accuracyDecimal * timeMinutes);
+          
+          let wpmClass = 'wpm-low';
+          if (score.wpm >= 80) wpmClass = 'wpm-high';
+          else if (score.wpm >= 50) wpmClass = 'wpm-med';
+          
+          return `
+            <tr>
+              <td>${date}</td>
+              <td class="${wpmClass}">${score.wpm}</td>
+              <td>${score.accuracy}%</td>
+              <td>+${earnedXP}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Init profile features setelah DOM ready
+      document.addEventListener('DOMContentLoaded', () => {
+        updateProfile();
+        loadHistory();
+      });
+
+      // Dark mode integration
+      import('./js/utils/dark-mode.js').then(darkMode => {
+        darkMode.initDarkMode(document.getElementById('darkModeToggle'));
+      });
+    </script>
+  </body>
+</html>

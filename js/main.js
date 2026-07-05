@@ -579,7 +579,9 @@ document.addEventListener("visibilitychange", () => {
   ) {
     invalidateTest("Tab diganti saat tes berlangsung.");
 
-    // Tambahan sesuai requirement
+    // Tambahan sesuai requirement - jangan tampilkan menu jika test sudah selesai
+    if (window.isTestCompleted) return;
+    
     if (DOM.header) DOM.header.classList.remove("hidden");
     if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
     if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
@@ -590,20 +592,28 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+
 // Blur window
 window.addEventListener("blur", () => {
   const DOM = getGameDOMReferences();
   if (gameState.startTime && !gameState.isTestInvalid) {
     invalidateTest("Jendela browser tidak aktif.");
+    // Jangan tampilkan menu jika test sudah selesai
+    if (window.isTestCompleted) return;
+    
     if (DOM.header) DOM.header.classList.remove("hidden");
     if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
     if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
   }
 });
 
+
 // Gerak mouse: munculkan header/menu, sembunyikan speedometer dan logo
 document.addEventListener("mousemove", () => {
   const DOM = getGameDOMReferences();
+  // Jangan tampilkan menu jika test sudah selesai
+  if (window.isTestCompleted) return;
+  
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
