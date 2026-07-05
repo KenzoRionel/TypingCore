@@ -107,6 +107,29 @@ document.addEventListener("DOMContentLoaded", () => {
   initGameListeners();
   resetTestState();
 
+  // --- Event listener untuk tombol 'X' di Modal Hasil (dipindah dari common-script.js) ---
+  if (window.closeButton) {
+    window.closeButton.addEventListener('click', () => {
+      if (window.resultModal) {
+        window.resultModal.classList.remove('show');
+        console.log('Result modal closed by close button');
+      }
+    });
+  }
+
+  // --- Event listener untuk tombol 'Coba Lagi' di Modal Hasil (dipindah dari common-script.js) ---
+  if (window.restartButtonModal) {
+    window.restartButtonModal.addEventListener('click', () => {
+      if (window.resetTest && typeof window.resetTest === 'function') {
+        window.resetTest();
+        console.log('Test restarted from modal');
+      }
+      if (window.resultModal) {
+        window.resultModal.classList.remove('show');
+      }
+    });
+  }
+
   document.querySelectorAll(".time-mode-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
       const selectedTime = parseInt(this.getAttribute("data-time"), 10);

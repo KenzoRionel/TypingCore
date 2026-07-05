@@ -43,53 +43,29 @@ window.defaultKataKata = [
 
     const mainContent = document.querySelector('.main-content'); // Dapatkan main-content
     // --- Fungsi Global untuk Menyimpan Skor (updated with replayData support) ---
-    window.saveScore = function(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null) {
-        const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
-        const newScore = {
-            wpm: wpm,
-            accuracy: accuracy,
-            time: time,
-            errors: errors,
-            type: type,
-            mode: mode,
-            correctWords: correctWords,
-            incorrectWords: incorrectWords,
-            date: new Date().toISOString()
-        };
-        
-        // Add replay data if available
-        if (replayData) {
-            newScore.replayData = replayData;
-        }
-        
-        scores.unshift(newScore);
-        localStorage.setItem('typingScores', JSON.stringify(scores));
-        console.log("Skor disimpan:", newScore);
-
-        if (window.location.pathname.includes('score-history.html') && typeof window.displayFullScoreHistory === 'function') {
-            window.displayFullScoreHistory();
-        }
+window.saveScore = function(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null) {
+    const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
+    const newScore = {
+        wpm: wpm,
+        accuracy: accuracy,
+        time: time,
+        errors: errors,
+        type: type,
+        mode: mode,
+        correctWords: correctWords,
+        incorrectWords: incorrectWords,
+        date: new Date().toISOString()
     };
 
-    // --- Event listener untuk tombol 'X' di Modal Hasil (tetap sama) ---
-    if (window.closeButton) {
-        window.closeButton.addEventListener('click', () => {
-            if (window.resultModal) {
-                window.resultModal.classList.remove('show');
-                console.log('Result modal closed by close button');
-            }
-        });
+    if (replayData) {
+        newScore.replayData = replayData;
     }
 
-    // --- Event listener untuk tombol 'Coba Lagi' di Modal Hasil (tetap sama) ---
-    if (window.restartButtonModal) {
-        window.restartButtonModal.addEventListener('click', () => {
-            if (window.resetTest && typeof window.resetTest === 'function') {
-                window.resetTest();
-                console.log('Test restarted from modal');
-            }
-            if (window.resultModal) {
-                window.resultModal.classList.remove('show');
-            }
-        });
+    scores.unshift(newScore);
+    localStorage.setItem('typingScores', JSON.stringify(scores));
+    console.log("Skor disimpan:", newScore);
+
+    if (window.location.pathname.includes('score-history.html') && typeof window.displayFullScoreHistory === 'function') {
+        window.displayFullScoreHistory();
     }
+};
