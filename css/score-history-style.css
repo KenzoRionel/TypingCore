@@ -139,6 +139,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Lebar tetap supaya kotak tidak melebar/menyempit saat jumlah digit
+       angkanya berubah (mis. "9" -> "72" -> "100") - itu yang sebelumnya
+       bikin teks WPM/Akurasi/Waktu terlihat bergeser kiri-kanan. */
+    min-width: 90px;
 }
 
 .replay-stat-label {
@@ -152,6 +156,9 @@
     font-size: 1.25rem;
     font-weight: bold;
     color: #333;
+    /* Semua digit angka dapat lebar yang sama, jadi tidak ada micro-shift
+       antar digit saat angkanya berganti-ganti tiap keystroke. */
+    font-variant-numeric: tabular-nums;
 }
 
 .replay-text-display {

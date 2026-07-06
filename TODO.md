@@ -1,1 +1,6 @@
-# TODO: Fix Dark/Light Mode Profile Page&#10;&#10;## [ ] 1. Buat CSS Variables Global (css/style.css)&#10;- Tambah :root light mode vars&#10;- Tambah body.dark-mode vars&#10;&#10;## [ ] 2. Edit profile.html&#10;- Hapus semua inline color/bg hard-coded&#10;- Update selectors tanpa inline styles&#10;&#10;## [ ] 3. Tambah Profile Selectors (css/style.css)&#10;- .profile-container & children&#10;- .history-table, .xp-bar, etc.&#10;&#10;## [ ] 4. Update css/dark-mode.css (Opsional)&#10;- Override vars dark mode&#10;&#10;## [x] 5. PLAN APPROVED ✓&#10;## [ ] 6. TEST & COMPLETE
+# TODO
+- [x] Buka dan identifikasi fungsi `window.resetTest` di `js/custom-mode-script.js`
+- [x] Identifikasi pemanggilan `window.resetTest()` di `js/game/game-logic.js`
+- [ ] Update `js/game/game-logic.js` sesuai instruksi: pindahkan isi fungsi resetTest jadi fungsi biasa tanpa `window.`, lalu ganti semua pemanggilan menjadi `resetTest()`.
+- [ ] Pastikan perubahan tidak mengubah logic resetTest.
+

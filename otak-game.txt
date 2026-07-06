@@ -1,0 +1,1972 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: js/learn-typing*, js/lessons*, js/main.js, js/common-script.js
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+js/common-script.js
+js/learn-typing-lessons.js
+js/learn-typing-logic.js
+js/learn-typing-state.js
+js/learn-typing-ui.js
+js/learn-typing.js
+js/lessons-generator.js
+js/main.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="js/lessons-generator.js">
+// js/lessons-generator.js
+
+import { initDarkMode } from './utils/dark-mode.js';
+import { lessons } from './learn-typing-lessons.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+  const lessonList = document.querySelector('.lesson-list');
+
+  if (lessonList) {
+    lessons.forEach((lesson, index) => {
+      const cardLink = document.createElement('a');
+      cardLink.href = `learn-typing.html?lessonIndex=${index}`;
+      cardLink.className = 'lesson-card';
+
+      let imageSrc;
+      if (lesson.image) {
+        imageSrc = `img/${lesson.image}`;
+      } else if (lesson.preview && lesson.preview.length === 2) {
+        imageSrc = `img/${lesson.preview.join('')}.svg`;
+      } else {
+        imageSrc = 'https://via.placeholder.com/200x150';
+      }
+
+      // Ambil judul pelajaran
+      let lessonTitle = lesson.title || "Pelajaran Tanpa Judul";
+
+      // Hapus jika diawali "Pelajaran <nomor>: "
+      if (/^Pelajaran\s\d+:\s/.test(lessonTitle)) {
+        lessonTitle = lessonTitle.replace(/^Pelajaran\s\d+:\s/, '');
+      }
+
+      // Hapus kata "Latihan" dan "Pengenalan" di manapun
+      lessonTitle = lessonTitle.replace(/\bLatihan\b/gi, '').replace(/\bPengenalan\b/gi, '');
+
+      // Rapikan spasi berlebih
+      lessonTitle = lessonTitle.trim();
+
+      // Fallback kalau kosong
+      if (!lessonTitle) {
+        lessonTitle = "Pelajaran Tanpa Judul";
+      }
+
+      cardLink.innerHTML = `
+        <div class="card-header">
+          <span class="lesson-number">${index + 1}</span>
+        </div>
+        <div class="card-body">
+          <div class="lesson-image" data-light-src="${imageSrc}">
+            <img src="${imageSrc}" alt="Gambar Pelajaran ${index + 1}">
+          </div>
+          ${lesson.isCompleted ? '<img class="lesson-completed-indicator" src="img/ok.png" alt="Pelajaran Selesai">' : ''}
+        </div>
+        <div class="card-footer">
+          <h3 class="lesson-title">${lessonTitle}</h3>
+        </div>
+      `;
+
+      lessonList.appendChild(cardLink);
+    });
+  }
+
+  // Inisialisasi dark mode (akan otomatis swap gambar via dark-mode.js)
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  initDarkMode(darkModeToggle);
+});
+</file>
+
+<file path="js/common-script.js">
+// common-script.js
+
+// Definisikan array kata-kata dalam Bahasa Indonesia secara global
+window.defaultKataKata = [
+    "dan", "yang", "untuk", "dengan", "adalah", "tidak", "pada", "saya", "itu",
+    "ini", "mereka", "kita", "kamu", "dia", "dari", "ke", "di", "akan", "telah",
+    "bisa", "harus", "sudah", "belum", "lagi", "lebih", "paling", "sangat",
+    "seperti", "jika", "maka", "atau", "namun", "tetapi", "serta", "yaitu",
+    "karena", "sehingga", "meskipun", "walaupun", "saat", "ketika", "setelah",
+    "sebelum", "sampai", "hingga", "selama", "antara", "melalui", "terhadap",
+    "menurut", "bagi", "oleh", "pada", "dalam", "luar", "atas", "bawah", "depan",
+    "belakang", "samping", "tengah", "ujung", "pangkal", "dasar", "puncak",
+    "tinggi", "rendah", "besar", "kecil", "panjang", "pendek", "berat", "ringan",
+    "cepat", "lambat", "kuat", "lemah", "baru", "lama", "tua", "muda", "baik",
+    "buruk", "indah", "jelek", "bersih", "kotor", "kaya", "miskin", "gelap",
+    "terang", "dingin", "panas", "kering", "basah", "ramai", "sepi", "senang",
+    "sedih", "marah", "takut", "cinta", "benci", "suka", "tidak", "mau", "pergi",
+    "datang", "ambil", "beri", "lihat", "dengar", "rasa", "sentuh", "cium",
+    "makan", "minum", "tidur", "bangun", "duduk", "berdiri", "jalan", "lari",
+    "lompat", "terbang", "berenang", "bicara", "tulis", "baca", "hitung",
+    "gambar", "main", "kerja", "belajar", "ajar", "cari", "temu", "jual", "beli",
+    "buka", "tutup", "masuk", "keluar", "naik", "turun", "hidup", "mati", "pagi",
+    "siang", "sore", "malam", "hari", "minggu", "bulan", "tahun", "jam", "menit",
+    "detik", "sekarang", "nanti", "kemarin", "besok", "dulu", "kemudian", "akhir",
+    "awal", "tujuan", "arah", "tempat", "waktu", "jumlah", "bagian", "jenis",
+    "warna", "bentuk", "ukuran", "suara", "cahaya", "udara", "air", "tanah",
+    "api", "angin", "hujan", "salju", "kabut", "awan", "matahari", "bulan",
+    "bintang", "langit", "bumi", "laut", "gunung", "sungai", "pulau", "desa",
+    "kota", "negara", "dunia", "manusia", "hewan", "tumbuhan", "benda", "alat",
+    "hasil", "proses", "sistem", "metode", "prinsip", "teori", "fakta", "data",
+    "informasi", "pengetahuan", "ide", "gagasan", "pikiran", "perasaan", "emosi",
+    "jiwa", "roh", "akal", "rasa", "hati", "tubuh", "darah", "otak", "mata",
+    "hidung", "mulut", "telinga", "tangan", "kaki", "jari", "rambut", "kulit",
+    "nama", "usia", "jenis", "kelamin", "pekerjaan", "pendidikan", "hobi",
+    "keluarga", "teman", "sahabat", "musuh", "guru", "murid", "siswa", "mahasiswa",
+    "dokter", "perawat", "polisi", "tentara", "petani", "nelayan", "pedagang",
+    "penulis", "seniman", "olahraga", "musik", "film", "buku", "berita", "surat",
+    "telepon", "internet", "komputer", "ponsel", "mobil", "motor", "sepeda",
+    "kereta", "pesawat", "kapal", "rumah", "gedung", "kantor", "sekolah", "pasar",
+    "toko", "restoran", "hotel", "bank", "jalan", "jembatan", "pintu", "jendela"
+];
+
+
+    const mainContent = document.querySelector('.main-content'); // Dapatkan main-content
+    // --- Fungsi Global untuk Menyimpan Skor (updated with replayData support) ---
+window.saveScore = function(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null) {
+    const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
+    const newScore = {
+        wpm: wpm,
+        accuracy: accuracy,
+        time: time,
+        errors: errors,
+        type: type,
+        mode: mode,
+        correctWords: correctWords,
+        incorrectWords: incorrectWords,
+        date: new Date().toISOString()
+    };
+
+    if (replayData) {
+        newScore.replayData = replayData;
+    }
+
+    scores.unshift(newScore);
+    localStorage.setItem('typingScores', JSON.stringify(scores));
+    console.log("Skor disimpan:", newScore);
+
+    if (window.location.pathname.includes('score-history.html') && typeof window.displayFullScoreHistory === 'function') {
+        window.displayFullScoreHistory();
+    }
+};
+</file>
+
+<file path="js/main.js">
+// js/main.js
+
+import { getGameDOMReferences } from "./utils/dom-elements.js";
+
+import {
+  createSpeedometerTicks,
+  wpmMax,
+  accuracyMax,
+  timerMax,
+  wpmTickColors,
+  accuracyTickColors,
+  setTimerSpeedometerMax,
+  getTimerTickColors,
+} from "./utils/speedometer.js";
+
+import { handleKeydown } from "./game/game-events.js";
+import {
+  resetTestState,
+  initGameListeners,
+  invalidateTest,
+  hideStatsContainer,
+  showStatsContainer,
+} from "./game/game-logic.js";
+
+import {
+
+  top200Words,
+  top1000Words,
+  top10000Words,
+} from "./data/default-words.js";
+import { initDarkMode } from "./utils/dark-mode.js";
+import {
+  initIndexKeyboard,
+  saveKeyboardSettings,
+  loadKeyboardVisibility,
+  getKeyboardVisibility,
+  setKeyboardVisibility,
+  updateKeyboardVisibilityUI
+} from "./index-keyboard.js";
+
+
+// Set default kata-kata saat aplikasi pertama kali dijalankan
+window.defaultKataKata = top200Words;
+
+function shuffleArray(array) {
+
+  return array.slice().sort(() => Math.random() - 0.5);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const DOM = getGameDOMReferences();
+
+  if (!DOM) {
+    console.error(
+      "Inisialisasi aplikasi dibatalkan karena beberapa elemen DOM kunci tidak ditemukan."
+    );
+    return;
+  }
+
+  // Baris ini diperlukan untuk menghindari error, tapi tidak digunakan untuk menutup modal
+  const settingsModalElement = document.getElementById("settingsModal");
+  if (!settingsModalElement) {
+    console.error("Elemen modal pengaturan tidak ditemukan.");
+    return;
+  }
+  const settingsModal = new bootstrap.Modal(settingsModalElement);
+
+  initDarkMode(DOM.darkModeToggle);
+  setupLogoPop();
+
+  // Inisialisasi keyboard virtual untuk halaman index
+  initIndexKeyboard({
+    hideStats: hideStatsContainer,
+    showStats: showStatsContainer,
+    statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+  });
+
+
+
+  // Initial Setup Speedometer ticks
+
+  createSpeedometerTicks(DOM.wpmTicksContainer, 0, wpmMax, 10, wpmTickColors);
+  createSpeedometerTicks(
+    DOM.accuracyTicksContainer,
+    0,
+    accuracyMax,
+    10,
+    accuracyTickColors
+  );
+  createSpeedometerTicks(
+    DOM.timerTicksContainer,
+    0,
+    timerMax,
+    5,
+    getTimerTickColors(timerMax)
+  );
+
+  if (DOM.restartButton) {
+    DOM.restartButton.addEventListener("click", () => {
+      resetTestState();
+      setupLogoPop();
+    });
+  }
+
+  DOM.hiddenInput.addEventListener("keydown", handleKeydown);
+  window.resetTest = resetTestState;
+  initGameListeners();
+  resetTestState();
+
+  // --- Event listener untuk tombol 'X' di Modal Hasil (dipindah dari common-script.js) ---
+  if (window.closeButton) {
+    window.closeButton.addEventListener('click', () => {
+      if (window.resultModal) {
+        window.resultModal.classList.remove('show');
+        console.log('Result modal closed by close button');
+      }
+    });
+  }
+
+  // --- Event listener untuk tombol 'Coba Lagi' di Modal Hasil (dipindah dari common-script.js) ---
+  if (window.restartButtonModal) {
+    window.restartButtonModal.addEventListener('click', () => {
+      if (window.resetTest && typeof window.resetTest === 'function') {
+        window.resetTest();
+        console.log('Test restarted from modal');
+      }
+      if (window.resultModal) {
+        window.resultModal.classList.remove('show');
+      }
+    });
+  }
+
+  document.querySelectorAll(".time-mode-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const selectedTime = parseInt(this.getAttribute("data-time"), 10);
+      document
+        .querySelectorAll(".time-mode-btn")
+        .forEach((b) => b.classList.remove("active"));
+      this.classList.add("active");
+
+      if (window.gameState) {
+        window.gameState.TIMED_TEST_DURATION = selectedTime;
+        window.gameState.timeRemaining = selectedTime;
+      }
+      setTimerSpeedometerMax(selectedTime);
+      if (typeof window.resetTest === "function") {
+        window.resetTest();
+      }
+      DOM.hiddenInput.focus();
+    });
+  });
+
+  const defaultTimeBtn = document.querySelector(
+    '.time-mode-btn[data-time="60"]'
+  );
+  if (defaultTimeBtn) defaultTimeBtn.classList.add("active");
+
+  const defaultWordBtn = document.querySelector(
+    '.word-type-btn[data-word-type="200"]'
+  );
+  if (defaultWordBtn) defaultWordBtn.classList.add("active");
+
+  // Set nilai default ke gameState
+  if (window.gameState) {
+    window.gameState.TIMED_TEST_DURATION = 60;
+    window.gameState.timeRemaining = 60;
+    // Load saved cursor mode jika ada, fallback ke highlight
+    const savedCursor = localStorage.getItem('cursorMode') || 'highlight';
+    window.gameState.cursorMode = savedCursor;
+  }
+
+  // Muat preferensi statistik dari localStorage (jika ada) dan inisialisasi tampilan
+  (function initStatsModeDisplay() {
+    const stored = localStorage.getItem('statsMode');
+    const modeToUse = stored || (window.gameState ? window.gameState.statsMode : 'speedometer');
+    if (window.gameState) window.gameState.statsMode = modeToUse;
+
+    // Set tombol aktif di modal pengaturan sesuai mode
+    document.querySelectorAll('.stats-mode-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-mode') === modeToUse);
+    });
+
+    const textStats = document.querySelector('.text-stats-container');
+    const speedContainers = document.querySelectorAll('.speedometer-container');
+    if (modeToUse === 'text') {
+      if (textStats) textStats.style.display = 'flex';
+      speedContainers.forEach((el) => (el.style.display = 'none'));
+    } else {
+      if (textStats) textStats.style.display = 'none';
+      speedContainers.forEach((el) => (el.style.display = 'flex'));
+    }
+  })();
+
+  // Muat preferensi font dari localStorage
+  (function initFontDisplay() {
+    const savedFont = localStorage.getItem('selectedFont') || 'default';
+    DOM.textDisplay.style.fontFamily = savedFont === 'default' ? '' : savedFont;
+    
+    // Tambahkan class untuk penanganan sans-serif
+    DOM.textDisplay.classList.toggle("font-sans-serif", savedFont === "sans-serif");
+    
+    // Set tombol font aktif di modal pengaturan
+    document.querySelectorAll('.font-choice-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-font') === savedFont);
+    });
+  })();
+
+  // Muat preferensi cursor mode dari localStorage
+  (function initCursorModeDisplay() {
+    const savedCursorMode = localStorage.getItem('cursorMode') || 'highlight';
+    
+    // Set radio button cursor mode aktif di modal pengaturan
+    const cursorRadio = document.querySelector(`input[name="cursorMode"][value="${savedCursorMode}"]`);
+    if (cursorRadio) {
+      cursorRadio.checked = true;
+    }
+  })();
+
+  // Muat preferensi cursor blink dari localStorage
+  (function initCursorBlinkDisplay() {
+    const savedBlink = localStorage.getItem('cursorBlink') !== 'false';
+    const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
+    
+    if (cursorBlinkToggle) {
+      cursorBlinkToggle.checked = savedBlink;
+    }
+    
+    // Apply kelas no-blink jika disabled
+    if (!savedBlink) {
+      DOM.textDisplay.classList.add("cursor-no-blink");
+    }
+  })();
+
+  // Muat preferensi word set dari localStorage
+  (function initWordSetDisplay() {
+    const savedWordSet = localStorage.getItem('wordSet') || '200';
+    
+    // Set radio button word set aktif di modal pengaturan
+    const wordSetRadio = document.querySelector(`input[name="wordSet"][value="${savedWordSet}"]`);
+    if (wordSetRadio) {
+      wordSetRadio.checked = true;
+    }
+    
+    // Setel kata-kata yang sesuai
+    if (savedWordSet === '1000') {
+      window.defaultKataKata = top1000Words;
+    } else if (savedWordSet === '10000') {
+      window.defaultKataKata = top10000Words;
+    } else {
+      window.defaultKataKata = top200Words;
+    }
+  })();
+
+  // Muat preferensi tampilan keyboard dari localStorage
+  (function initKeyboardVisibilityDisplay() {
+    const savedKeyboardVisibility = loadKeyboardVisibility();
+    const keyboardToggle = document.getElementById('keyboardToggle');
+    
+    if (keyboardToggle) {
+      keyboardToggle.checked = savedKeyboardVisibility;
+    }
+    
+    // Update global state
+    setKeyboardVisibility(savedKeyboardVisibility);
+    console.log('DEBUG: main.js - updateKeyboardVisibilityUI called from initKeyboardVisibilityDisplay');
+    updateKeyboardVisibilityUI({
+      hideStats: hideStatsContainer,
+      showStats: showStatsContainer,
+      statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+    });
+
+  })();
+
+
+
+  // -- letakkan di luar DOMContentLoaded (bagian bawah file) --
+  function setupLogoPop() {
+    const container = document.querySelector(".text-display-container");
+    if (!container) return;
+
+    // Hapus logo lama
+    const old = document.getElementById("logoPop");
+    if (old) old.remove();
+
+    // Ambil src logo (ikut dark mode)
+    const navbarLogo = document.getElementById("logoWebsite");
+    const src = navbarLogo
+      ? navbarLogo.getAttribute("src")
+      : "img/TypingCore.svg";
+
+    const wrap = document.createElement("div");
+    wrap.id = "logoPop";
+    wrap.className = "logo-pop";
+    const img = document.createElement("img");
+    img.alt = "TypingCore";
+    img.src = src;
+    wrap.appendChild(img);
+    container.appendChild(wrap);
+
+    // Mirror kalau dark mode ubah src
+    const observer = new MutationObserver(() => {
+      const newSrc = navbarLogo?.getAttribute("src");
+      if (newSrc) img.src = newSrc;
+    });
+    if (navbarLogo)
+      observer.observe(navbarLogo, {
+        attributes: true,
+        attributeFilter: ["src"],
+      });
+
+    // Expose global
+    window.triggerLogoPop = () => {
+      const el = document.getElementById("logoPop");
+      if (el) el.classList.add("pop");
+    };
+
+    window.resetLogoPop = () => {
+      const el = document.getElementById("logoPop");
+      if (el) el.classList.remove("pop");
+    };
+
+    // Hilangkan logo kalau pointer gerak
+    container.addEventListener("mousemove", () => {
+      if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+    });
+  }
+  window.resetLogoPop = resetLogoPop;
+
+  function resetLogoPop() {
+    const el = document.getElementById("logoPop");
+    if (el) el.classList.remove("pop");
+  }
+
+  // --- Handle fokus global ---
+  document.addEventListener("click", (e) => {
+    // Pastikan klik di luar input tidak ganggu modal
+    if (
+      DOM.hiddenInput &&
+      e.target !== DOM.hiddenInput &&
+      !e.target.closest("#settingsModal")
+    ) {
+      DOM.hiddenInput.focus();
+    }
+  });
+
+  // --- Preview update saat ganti cursor mode ---
+  const cursorPreviewText = document.getElementById("cursorPreviewText");
+  document.querySelectorAll('input[name="cursorMode"]').forEach((input) => {
+    input.addEventListener("change", () => {
+      if (input.checked) {
+        switch (input.value) {
+          case "caret":
+            cursorPreviewText.textContent = "|";
+            break;
+          case "underline":
+            cursorPreviewText.textContent = "_";
+            break;
+          case "box":
+            cursorPreviewText.textContent = "█";
+            break;
+          case "hidden":
+            cursorPreviewText.textContent = "";
+            break;
+          default:
+            cursorPreviewText.textContent = "█";
+        }
+      }
+    });
+  });
+
+  // --- Tampilkan word set saat pilih bahasa ---
+  document.querySelectorAll('input[name="language"]').forEach((langInput) => {
+    langInput.addEventListener("change", () => {
+      const wordSetContainer = document.getElementById("wordSetContainer");
+      wordSetContainer.style.display = "block";
+    });
+  });
+
+  // --- Event untuk font choice button ---
+  document.querySelectorAll(".font-choice-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selectedFont = btn.getAttribute("data-font");
+      const textDisplay = document.querySelector(".text-display-container");
+
+      document
+        .querySelectorAll(".font-choice-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      textDisplay.style.fontFamily =
+        selectedFont === "default" ? "" : selectedFont;
+      
+      // Tambahkan class untuk penanganan sans-serif
+      DOM.textDisplay.classList.toggle("font-sans-serif", selectedFont === "sans-serif");
+
+      saveBtn.disabled = false; // Enable save
+    });
+  });
+
+  // --- Event untuk stats mode button ---
+  document.querySelectorAll(".stats-mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selectedMode = btn.getAttribute("data-mode");
+
+      document
+        .querySelectorAll(".stats-mode-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Preview langsung update tampilan
+      const speedometerContainer = document.querySelector(
+        ".speedometer-container"
+      );
+      const textStatsContainer = document.querySelector(
+        ".text-stats-container"
+      );
+
+      if (selectedMode === "speedometer") {
+        speedometerContainer.style.display = "flex";
+        textStatsContainer.style.display = "none";
+      } else {
+        speedometerContainer.style.display = "none";
+        textStatsContainer.style.display = "flex";
+      }
+
+      saveBtn.disabled = false; // Enable save
+    });
+  });
+
+  // --- Simpan pengaturan ---
+  const saveBtn = document.getElementById("saveSettings");
+
+  // Aktifkan logika enable save jika ada perubahan
+  const settingsInputs = document.querySelectorAll(
+    "#settingsModal input, #settingsModal select, #settingsModal .font-choice-btn, #settingsModal .stats-mode-btn"
+  );
+  settingsInputs.forEach((el) => {
+    el.addEventListener("change", () => (saveBtn.disabled = false));
+    el.addEventListener("click", () => (saveBtn.disabled = false));
+  });
+
+  // Event listener untuk keyboard toggle
+  const keyboardToggle = document.getElementById('keyboardToggle');
+  if (keyboardToggle) {
+    keyboardToggle.addEventListener('change', () => {
+      saveBtn.disabled = false;
+    });
+  }
+
+
+  saveBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Cursor mode
+    const selectedCursor = document.querySelector(
+      'input[name="cursorMode"]:checked'
+    ).value;
+    gameState.cursorMode = selectedCursor;
+    // persist pilihan agar halaman mengetik lain dapat menggunakannya
+    try { localStorage.setItem('cursorMode', selectedCursor); } catch (e) {}
+
+    // Normalisasi kelas mode kursor pada elemen textDisplay
+    DOM.textDisplay.classList.remove(
+      "caret-mode-active",
+      "underline-mode-active",
+      "box-mode-active",
+      "hidden-mode-active"
+    );
+    switch (selectedCursor) {
+      case "caret":
+        DOM.textDisplay.classList.add("caret-mode-active");
+        break;
+      case "underline":
+        DOM.textDisplay.classList.add("underline-mode-active");
+        break;
+      case "box":
+        DOM.textDisplay.classList.add("box-mode-active");
+        break;
+      case "hidden":
+        DOM.textDisplay.classList.add("hidden-mode-active");
+        break;
+      default:
+        break;
+    }
+
+    // Word set
+    const selectedWordSet = document.querySelector(
+      'input[name="wordSet"]:checked'
+    ).value;
+    if (selectedWordSet === "200") {
+      window.defaultKataKata = top200Words;
+    } else if (selectedWordSet === "1000") {
+      window.defaultKataKata = top1000Words;
+    } else if (selectedWordSet === "10000") {
+      window.defaultKataKata = top10000Words;
+    }
+    // Simpan pilihan word set ke localStorage
+    try {
+      localStorage.setItem('wordSet', selectedWordSet);
+    } catch (e) {}
+
+    // Font
+    const activeFontBtn = document.querySelector(".font-choice-btn.active");
+    const selectedFont = activeFontBtn
+      ? activeFontBtn.getAttribute("data-font")
+      : "default";
+    DOM.textDisplay.style.fontFamily =
+      selectedFont === "default" ? "" : selectedFont;
+    
+    // Tambahkan class untuk penanganan sans-serif
+    DOM.textDisplay.classList.toggle("font-sans-serif", selectedFont === "sans-serif");
+    
+    // Simpan pilihan font ke localStorage
+    try {
+      localStorage.setItem('selectedFont', selectedFont);
+    } catch (e) {}
+
+    // Statistik tampilan
+    const activeStatsBtn = document.querySelector(".stats-mode-btn.active");
+    const selectedStatsMode = activeStatsBtn
+      ? activeStatsBtn.getAttribute("data-mode")
+      : "speedometer";
+    gameState.statsMode = selectedStatsMode;
+    // Simpan preferensi agar bertahan antar sesi
+    try {
+      localStorage.setItem('statsMode', selectedStatsMode);
+    } catch (e) {}
+
+    // Cursor Blink Toggle
+    const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
+    const shouldBlink = cursorBlinkToggle ? cursorBlinkToggle.checked : true;
+    if (shouldBlink) {
+      DOM.textDisplay.classList.remove("cursor-no-blink");
+    } else {
+      DOM.textDisplay.classList.add("cursor-no-blink");
+    }
+    // Simpan preferensi blink ke localStorage
+    try {
+      localStorage.setItem('cursorBlink', shouldBlink ? 'true' : 'false');
+    } catch (e) {}
+
+    // Keyboard Visibility Toggle
+    const keyboardToggleBtn = document.getElementById('keyboardToggle');
+    if (keyboardToggleBtn) {
+      const shouldShowKeyboard = keyboardToggleBtn.checked;
+      console.log('DEBUG: main.js - saveKeyboardSettings called');
+      saveKeyboardSettings(shouldShowKeyboard, {
+        hideStats: hideStatsContainer,
+        showStats: showStatsContainer,
+        statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+      });
+    }
+
+
+
+    // Reset tes supaya perubahan langsung berlaku
+
+    if (typeof window.resetTest === "function") {
+      window.resetTest();
+    }
+
+    // Pastikan tampilan statistik mengikuti pilihan baru setelah simpan
+    try {
+      showStatsContainer();
+    } catch (e) {}
+
+    // Update highlight dan pastikan fokus kembali kalau modal ditutup nanti
+    setTimeout(() => {
+      if (typeof window.updateWordHighlighting === "function") {
+        window.updateWordHighlighting();
+      }
+    }, 100);
+
+    // Disable tombol simpan sampai ada perubahan lagi
+    saveBtn.disabled = true;
+
+    // Baris di bawah ini yang harus dihapus agar modal tidak tertutup otomatis.
+    // settingsModal.hide();
+
+  });
+
+  // Fokus kembali ke input setelah modal ditutup
+  document
+    .getElementById("settingsModal")
+    .addEventListener("hidden.bs.modal", () => {
+      setTimeout(() => {
+        if (DOM.hiddenInput) DOM.hiddenInput.focus();
+      }, 100);
+    });
+});
+
+// Page Visibility API
+document.addEventListener("visibilitychange", () => {
+  const DOM = getGameDOMReferences();
+  if (
+    DOM &&
+    document.hidden &&
+    gameState.startTime &&
+    !gameState.isTestInvalid &&
+    gameState.inactivityTimer
+  ) {
+    invalidateTest("Tab diganti saat tes berlangsung.");
+
+    // Tambahan sesuai requirement - jangan tampilkan menu jika test sudah selesai
+    if (window.isTestCompleted) return;
+    
+    if (DOM.header) DOM.header.classList.remove("hidden");
+    if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+    if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
+
+    // Speedometer & logo tetap sembunyi
+    hideStatsContainer();
+    if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+  }
+});
+
+
+// Blur window
+window.addEventListener("blur", () => {
+  const DOM = getGameDOMReferences();
+  if (gameState.startTime && !gameState.isTestInvalid) {
+    invalidateTest("Jendela browser tidak aktif.");
+    // Jangan tampilkan menu jika test sudah selesai
+    if (window.isTestCompleted) return;
+    
+    if (DOM.header) DOM.header.classList.remove("hidden");
+    if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+    if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
+  }
+});
+
+
+// Gerak mouse: munculkan header/menu, sembunyikan speedometer dan logo
+document.addEventListener("mousemove", () => {
+  const DOM = getGameDOMReferences();
+  // Jangan tampilkan menu jika test sudah selesai
+  if (window.isTestCompleted) return;
+  
+  if (DOM.header) DOM.header.classList.remove("hidden");
+  if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
+  if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
+  hideStatsContainer();
+  // Pointer gerak = fokus hilang, tandai lagi
+  gameState.isTypingActive = false;
+
+  // Sembunyikan logo saat pointer bergerak
+  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+});
+</file>
+
+<file path="js/learn-typing-state.js">
+// js/learn-typing-state.js
+
+import { getLessonDOMReferences } from './utils/dom-elements.js';
+
+let appState = {
+    hiddenInput: null,
+    currentLessonIndex: 0,
+    waitingForAnim: false,
+    lessonStates: {},
+    isTransitioning: false,
+};
+
+
+
+export function initDOMAndState() {
+    const domReferences = getLessonDOMReferences(); // Ganti fungsi ini
+    if (domReferences) {
+        appState.hiddenInput = domReferences.hiddenInput;
+        return domReferences;
+    }
+    return null;
+}
+
+export function updateState(key, value) {
+    if (appState.hasOwnProperty(key)) {
+        appState[key] = value;
+    } else if (key.startsWith('lesson')) {
+        const currentState = appState.lessonStates[key] || {};
+        appState.lessonStates[key] = { ...currentState, ...value };
+    } else {
+        const currentLessonId = `lesson${appState.currentLessonIndex + 1}`;
+        if (!appState.lessonStates[currentLessonId]) {
+            appState.lessonStates[currentLessonId] = {};
+        }
+        appState.lessonStates[currentLessonId][key] = value;
+    }
+}
+
+export function getState(key) {
+    if (appState.hasOwnProperty(key)) {
+        return appState[key];
+    }
+    if (key.startsWith('lesson')) {
+        return appState.lessonStates[key];
+    }
+
+    const currentLessonId = `lesson${appState.currentLessonIndex + 1}`;
+    const currentLessonState = appState.lessonStates[currentLessonId];
+    if (currentLessonState && currentLessonState.hasOwnProperty(key)) {
+        return currentLessonState[key];
+    }
+
+    console.warn(`Attempted to get unknown state key: ${key}`);
+    return undefined;
+}
+
+// ✅ Perbaikan: Inisialisasi state dengan properti isHoldKeyActive dari awal
+export function initializeLessonState(lessonId, initialState) {
+    if (!appState.lessonStates[lessonId]) {
+        appState.lessonStates[lessonId] = { ...initialState, isHoldKeyActive: false };
+    }
+}
+
+export function getHiddenInput() {
+    return appState.hiddenInput;
+}
+</file>
+
+<file path="js/learn-typing-ui.js">
+// js/learn-typing-ui.js
+// ============================================
+// FILE KHUSUS UNTUK LEARN-TYPING.HTML
+// ============================================
+// File ini berisi logika UI keyboard virtual khusus untuk halaman learn-typing.html.
+// Untuk halaman index.html, gunakan js/index-keyboard.js yang terpisah.
+// 
+// Tujuan pemisahan:
+// - Agar perubahan keyboard di index.html tidak mempengaruhi learn-typing.html
+// - learn-typing.html membutuhkan hand visualizer dan animasi khusus pelajaran
+// - index.html membutuhkan keyboard yang lebih sederhana dengan toggle visibility
+// ============================================
+
+import { getState } from './learn-typing-state.js';
+
+import { lessons } from './learn-typing-lessons.js';
+import { renderHandVisualizer, resetHandVisualizer } from './hand-visualizer.js';
+// Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+import { getLessonDOMReferences } from './utils/dom-elements.js';
+import { cleanupSimpleDrillElements } from './lesson-simple-drill.js';
+import { resetCharacterDrillState } from './lesson-character-drill.js';
+
+let animatedKeyElement = null;
+let rotation = 0;
+const defaultAnimationSpeed = 3;
+let animationSpeed = defaultAnimationSpeed;
+let lessonSpeedTimeout = null;
+export let isCorrectInputAnimationActive = false;
+// PERUBAHAN: Tambahkan variabel untuk mengontrol opacity border
+let borderOpacity = 0;
+
+export function setAnimationSpeed(speed) {
+    if (speed === 15) {
+        animationSpeed = speed;
+        if (lessonSpeedTimeout) {
+            clearTimeout(lessonSpeedTimeout);
+        }
+        lessonSpeedTimeout = setTimeout(() => {
+            animationSpeed = defaultAnimationSpeed;
+        }, 50);
+    } else {
+        animationSpeed = speed;
+    }
+}
+
+export function setAnimatingKey(keyElement) {
+    clearAnimation();
+    if (keyElement) {
+        animatedKeyElement = keyElement;
+        animatedKeyElement.classList.add('is-animating');
+        // PERUBAHAN: Reset opacity saat tombol baru diatur
+        borderOpacity = 0;
+    } else {
+        animatedKeyElement = null;
+    }
+}
+
+export function clearAnimation() {
+    if (animatedKeyElement) {
+        animatedKeyElement.classList.remove('is-animating');
+        animatedKeyElement.style.borderImageSource = '';
+    }
+    animatedKeyElement = null;
+    // PERUBAHAN: Reset opacity
+    borderOpacity = 0;
+}
+
+export function animateBorder() {
+    if (animatedKeyElement) {
+        // PERUBAHAN: Dapatkan tipe pelajaran saat ini
+        const currentLessonIndex = getState('currentLessonIndex');
+        const currentLesson = lessons[currentLessonIndex];
+        const isFreeTyping = currentLesson && currentLesson.type === 'free-typing';
+        // PERUBAHAN: Cek apakah ini render awal dengan fade-in
+        const isInitialFadeIn = document.body.classList.contains('initial-fade-in');
+
+        // PERUBAHAN: Tingkatkan opacity secara bertahap hanya untuk free-typing pada render awal
+        if (isFreeTyping && isInitialFadeIn) {
+            if (borderOpacity < 1) {
+                borderOpacity = Math.min(1, borderOpacity + 0.05); // Kecepatan fade-in
+            }
+        } else {
+            // Untuk pelajaran lain atau interaksi berikutnya, atur opacity ke 1 secara langsung
+            borderOpacity = 1;
+        }
+
+        rotation += animationSpeed;
+        let startColor = `rgba(0, 123, 255, ${0.8 * borderOpacity})`;
+        let endColor = `rgba(255, 255, 255, ${1 * borderOpacity})`;
+        if (isCorrectInputAnimationActive) {
+            startColor = `rgba(253, 216, 53, ${1 * borderOpacity})`;
+            endColor = `rgba(200, 255, 0, ${1 * borderOpacity})`;
+        }
+        const gradient = `conic-gradient(from ${rotation}deg, ${startColor} 0%, ${endColor} 25%, ${startColor} 50%, ${endColor} 75%, ${startColor} 100%)`;
+        animatedKeyElement.style.borderImageSource = gradient;
+    }
+    window.requestAnimationFrame(animateBorder);
+}
+
+export function setIsCorrectInputAnimationActive(value) {
+    isCorrectInputAnimationActive = value;
+}
+
+export function createHandVisualizerElement() {
+    const visualizerContainer = document.createElement('div');
+    visualizerContainer.id = 'hand-visualizer';
+    const handImages = [
+        { id: 'hand-f', src: 'img/hand_f.svg', alt: 'Tangan untuk tombol F' },
+        { id: 'hand-j', src: 'img/hand_j.svg', alt: 'Tangan untuk tombol J' },
+        { id: 'hand-space', src: 'img/hand_space.svg', alt: 'Tangan untuk tombol spasi' },
+        { id: 'hand-d', src: 'img/hand_d.svg', alt: 'Tangan untuk tombol D' },
+        { id: 'hand-k', src: 'img/hand_k.svg', alt: 'Tangan untuk tombol K' },
+        { id: 'hand-s', src: 'img/hand_s.svg', alt: 'Tangan untuk tombol S' },
+        { id: 'hand-l', src: 'img/hand_l.svg', alt: 'Tangan untuk tombol L' },
+        { id: 'hand-a', src: 'img/hand_a.svg', alt: 'Tangan untuk tombol A' },
+        { id: 'hand-;', src: 'img/hand_;png', alt: 'Tangan untuk tombol ;' },
+        { id: 'hand-h', src: 'img/hand_h.svg', alt: 'Tangan untuk tombol H' },
+        { id: 'hand-g', src: 'img/hand_g.svg', alt: 'Tangan untuk tombol G' }
+    ];
+    handImages.forEach(hand => {
+        const img = document.createElement('img');
+        img.id = hand.id;
+        img.classList.add('hand-image');
+        img.src = hand.src;
+        img.alt = hand.alt;
+        visualizerContainer.appendChild(img);
+    });
+    return visualizerContainer;
+}
+
+export function createKeyboard(keyboardContainer, keyLayout) {
+    if (!keyboardContainer) {
+        console.error("keyboardContainer tidak ditemukan. Tidak dapat membuat keyboard.");
+        return;
+    }
+    const handVisualizer = keyboardContainer.querySelector('#hand-visualizer') || createHandVisualizerElement();
+    keyboardContainer.innerHTML = '';
+    keyboardContainer.appendChild(handVisualizer);
+    const keyWidthClasses = {
+        'ShiftLeft': 'key-wide', 'ShiftRight': 'key-wide', 'Tab': 'key-tab',
+        'CapsLock': 'key-medium', 'Backspace': 'key-medium', 'Enter': 'key-medium',
+        'Space': 'key-space', 'ControlLeft': 'key-small', 'ControlRight': 'key-small',
+        'AltLeft': 'key-small', 'AltRight': 'key-small', 'MetaLeft': 'key-small',
+        'MetaRight': 'key-small', 'ContextMenu': 'key-small',
+    };
+    const keyDisplayNames = {
+        'ShiftLeft': 'Shift', 'ShiftRight': 'Shift', 'ControlLeft': 'Ctrl', 'ControlRight': 'Ctrl',
+        'AltLeft': 'Alt', 'AltRight': 'Alt', 'MetaLeft': 'Win', 'MetaRight': 'Win',
+        'ContextMenu': 'Menu', 'Space': '',
+    };
+    keyLayout.forEach(row => {
+        const rowElement = document.createElement('div');
+        rowElement.classList.add('keyboard-row');
+        row.forEach(key => {
+            if (key === '') return;
+            const keyElement = document.createElement('div');
+            keyElement.classList.add('key');
+            const displayKey = keyDisplayNames[key] !== undefined ? keyDisplayNames[key] : key;
+            const lowerKey = key === 'Space' ? ' ' : key.toLowerCase();
+            keyElement.textContent = displayKey;
+            keyElement.setAttribute('data-key', lowerKey);
+            const widthClass = keyWidthClasses[key];
+            if (widthClass) {
+                keyElement.classList.add(widthClass);
+            }
+            rowElement.appendChild(keyElement);
+        });
+        keyboardContainer.appendChild(rowElement);
+    });
+}
+
+export function clearKeyboardHighlights(keyboardContainer) {
+    if (!keyboardContainer) {
+        // Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+        const domElements = getLessonDOMReferences();
+        if (domElements.keyboardContainer) {
+            keyboardContainer = domElements.keyboardContainer;
+        } else {
+            return;
+        }
+    }
+    keyboardContainer.querySelectorAll('.key').forEach(el => {
+        el.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash', 'active');
+        if (!el.classList.contains('is-animating')) {
+            el.style.borderImageSource = '';
+            el.style.border = '';
+        }
+    });
+}
+
+export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
+    if (!keyboardContainer) {
+        console.error("ERROR: keyboardContainer tidak ditemukan.");
+        return;
+    }
+    // Hapus highlight dari tombol sebelumnya sebelum menambahkan yang baru
+    const previousHighlightedKey = keyboardContainer.querySelector('.next-key');
+    if (previousHighlightedKey) {
+        previousHighlightedKey.classList.remove('next-key');
+    }
+    if (typeof keyChar === 'string' && keyChar.length > 0) {
+        const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
+        if (targetKeyElement) {
+            targetKeyElement.classList.add('next-key');
+        }
+    }
+}
+
+export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer) {
+    if (!lessonTextDisplay || !lessonInstruction) return;
+    lessonTextDisplay.style.display = '';
+    lessonInstruction.textContent = lesson.instruction || '';
+    lessonTextDisplay.innerHTML = '';
+
+    const currentLessonIndex = getState('currentLessonIndex');
+
+    if (lesson.sequences && (currentLessonIndex === 0 || currentLessonIndex === 4)) {
+        lesson.sequences.forEach(sequence => {
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('instruction-sequence');
+
+            sequence.forEach(step => {
+                const span = document.createElement('span');
+                span.textContent = step.char;
+                wrapper.appendChild(span);
+
+                if (step.hand) {
+                    const inlineKey = document.createElement('div');
+                    inlineKey.classList.add('keyboard-inline-key');
+                    inlineKey.innerHTML = `<span class="inline-key-char">${step.key}</span><span class="inline-key-hand">${step.hand}</span>`;
+                    wrapper.appendChild(inlineKey);
+                }
+            });
+            lessonTextDisplay.appendChild(wrapper);
+        });
+    } else if (lesson.sequence && lesson.sequence.length > 0) {
+        lessonTextDisplay.innerHTML = lesson.sequence.map((char, idx) => {
+            const displayChar = char === ' ' ? '\u00A0' : char;
+            let className = 'typing-char';
+
+            if (idx < currentCharIndex) {
+                className += ' correct';
+            } else if (idx === currentCharIndex) {
+                className += ' cursor';
+            }
+            return `<span class="${className}">${displayChar}</span>`;
+        }).join('');
+    }
+
+    if (lesson.sequence && currentCharIndex < lesson.sequence.length) {
+        const nextChar = lesson.sequence[currentCharIndex];
+        const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
+        if (keyElement) {
+            highlightKeyOnKeyboard(keyboardContainer, nextChar);
+            if (setAnimatingKey) setAnimatingKey(keyElement);
+        }
+    } else {
+        if (setAnimatingKey) setAnimatingKey(null);
+        clearKeyboardHighlights(keyboardContainer);
+    }
+}
+
+function cleanupCharacterDrillElements() {
+    // Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+    const domElements = getLessonDOMReferences();
+    if (domElements.lessonInstruction) {
+        domElements.lessonInstruction.innerHTML = '';
+    }
+}
+
+export function cleanupAllLessonUI() {
+    const domElements = getLessonDOMReferences();
+    if (!domElements || !domElements.keyboardContainer) {
+        console.error("Gagal mendapatkan referensi DOM di cleanupAllLessonUI.");
+        return;
+    }
+    const keyboardContainer = domElements.keyboardContainer;
+
+    // --- reset semua key ---
+    if (keyboardContainer) {
+        const keys = keyboardContainer.querySelectorAll('.key');
+        keys.forEach(key => {
+            key.style.animation = 'none';
+            key.classList.remove('next-key', 'correct-key', 'wrong-key', 'wrong-key-flash', 'is-animating', 'active');
+            key.style.borderImageSource = 'none';
+            key.style.border = '1px solid #444';
+        });
+    }
+    
+    if (domElements.lessonTextDisplay) {
+        domElements.lessonTextDisplay.innerHTML = '';
+        domElements.lessonTextDisplay.style.display = ''; // pastikan tetap terlihat
+    }
+    if (domElements.lessonInstruction) {
+        domElements.lessonInstruction.style.display = ''; // pastikan tetap terlihat
+    }
+
+    clearKeyboardHighlights(domElements.keyboardContainer);
+    resetHandVisualizer();
+
+    // ✅ pastikan overlay free-typing selalu disembunyikan
+    const overlay = document.getElementById("hold-key-overlay");
+    if (overlay) {
+        overlay.style.display = "none";
+    }
+}
+
+
+export function showLessonCompleteNotification(lessons, currentLessonIdx, domElements) {
+    const {
+        lessonHeader, lessonCompleteNotification, continueBtn, keyboardContainer,
+        successAnimationSvg, prevLessonBtn, nextLessonBtn,
+        lessonTextDisplay, progressContainerWrapper, retryLessonBtn, lessonListBtn
+    } = domElements;
+
+    cleanupAllLessonUI();
+
+    [lessonHeader, keyboardContainer, prevLessonBtn, nextLessonBtn, lessonTextDisplay, progressContainerWrapper].forEach(el => {
+        if (el) el.style.display = 'none';
+    });
+
+    if (lessonCompleteNotification) {
+        lessonCompleteNotification.classList.remove('active');
+        lessonCompleteNotification.style.display = 'none';
+    }
+
+    if (successAnimationSvg) {
+        successAnimationSvg.classList.remove('animate');
+        void successAnimationSvg.offsetWidth;
+    }
+    
+    const completionProgressBar = document.getElementById('completion-progress-bar');
+    const completionProgressText = document.getElementById('completion-progress-text');
+    // PERBAIKAN: Reset progress bar di sini, tapi jangan mulai animasi.
+    if (completionProgressBar && completionProgressText) {
+        completionProgressBar.style.transition = 'none'; // Hentikan transisi sementara
+        completionProgressBar.style.width = '0%';
+        completionProgressText.textContent = '0%';
+    }
+    
+    if (lessonCompleteNotification) {
+        const h3 = lessonCompleteNotification.querySelector('h3');
+        if (h3) h3.textContent = `Pelajaran ${currentLessonIdx + 1} selesai!`;
+        
+        // Hapus semua logika yang berhubungan dengan nextLessonPreview
+        
+        lessonCompleteNotification.style.display = 'flex';
+        
+        // Hapus kelas animasi sebelum menambahkannya lagi
+        // START - PERBAIKAN BUG
+        [retryLessonBtn, continueBtn, lessonListBtn].forEach(btn => {
+            if (btn) btn.classList.remove('pop-in');
+        });
+        // END - PERBAIKAN BUG
+
+        setTimeout(() => {
+            lessonCompleteNotification.classList.add('active');
+            if (successAnimationSvg) {
+                successAnimationSvg.classList.add('animate');
+            }
+
+            // PERBAIKAN: Pindahkan logika animasi progress bar ke sini.
+            if (completionProgressBar && completionProgressText) {
+                // Paksa reflow agar reset width diterapkan sebelum transisi dimulai
+                void completionProgressBar.offsetWidth; 
+                completionProgressBar.style.transition = 'width 1.5s ease-out';
+                completionProgressBar.style.width = '100%';
+                
+                let currentPercentage = 0;
+                const interval = setInterval(() => {
+                    if (currentPercentage < 100) {
+                        currentPercentage += 1;
+                        completionProgressText.textContent = `${currentPercentage}%`;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 15);
+            }
+
+            // Tambahkan kelas untuk memicu animasi tombol
+            if (retryLessonBtn) retryLessonBtn.classList.add('pop-in');
+            if (continueBtn) {
+                continueBtn.classList.add('pop-in');
+                continueBtn.focus();
+            }
+            // START - PERBAIKAN BUG
+            if (lessonListBtn) {
+                lessonListBtn.classList.add('pop-in');
+            }
+            // END - PERBAIKAN BUG
+        }, 50);
+    } else {
+        console.error('ERROR: Elemen notifikasi (#lesson-complete-notification) tidak ditemukan!');
+    }
+}
+
+export function highlightWrongKeyOnKeyboard(keyboardContainer, keyChar) {
+    if (!keyboardContainer || !keyChar) return;
+    const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
+    if (targetKeyElement) {
+        // Hanya tambahkan kelas kilat tanpa menghapus highlight yang sudah ada
+        targetKeyElement.classList.add('wrong-key-flash');
+        setTimeout(() => {
+            targetKeyElement.classList.remove('wrong-key-flash');
+        }, 200);
+    }
+}
+
+export function animateAllBordersOnCorrectInput(lessonTextDisplay) {
+    if (!lessonTextDisplay) return;
+    const allTypingChars = lessonTextDisplay.querySelectorAll('.lesson-keyboard-key');
+    allTypingChars.forEach(charEl => {
+        charEl.classList.add('correct-input-border');
+    });
+    setTimeout(() => {
+        allTypingChars.forEach(charEl => {
+            charEl.classList.remove('correct-input-border');
+        });
+    }, 300);
+}
+
+export function animateJellyEffect(keyElement) {
+    if (keyElement) {
+        keyElement.classList.remove('jelly-effect');
+        void keyElement.offsetWidth;
+        keyElement.classList.add('jelly-effect');
+    }
+}
+</file>
+
+<file path="js/learn-typing-lessons.js">
+export const lessons = [
+    {
+        title: "Pelajaran 1: Pengenalan Tombol F dan J",
+        type: "character-drill",
+        steps: [
+            {
+                key: 'f',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">f</span> menggunakan jari telunjuk kiri Anda.`
+            },
+            {
+                key: 'j',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">j</span> menggunakan jari telunjuk kanan Anda.`
+            }
+        ],
+        preview: ['f', 'j'],
+        isCompleted: true //Menambahkan tanda di kartu untuk pelajaran selesai.
+    },
+    {
+        title: "Pelajaran 2: Tombol F dan J",
+        type: "simple-drill",
+        image: 'target-fj.svg',
+        sequences: [
+            ['f', 'f', 'f', 'f', 'j', 'j'],
+            ['j', 'j', 'f', 'f', 'f', 'f'],
+            ['j', 'j', 'j', 'j', 'f', 'f'],
+            ['j', 'j', 'f', 'f', 'j', 'j'],
+            ['f', 'j', 'f', 'j', 'j', 'f'],
+            ['j', 'f', 'f', 'j', 'f', 'j'],
+        ],
+        keys: ['f', 'j'],
+        preview: ['f', 'j']
+    },
+    {
+        title: "Pelajaran 3: Latihan Tombol Spasi",
+        type: "simple-drill",
+        image: 'spacebar.svg',
+        sequences: [
+            ['f', ' ', 'f', ' ', 'j', ' ', 'j'],
+            [' ', 'f', 'f', ' ', ' ', 'f', 'f'],
+            ['j', 'j', ' ', 'j', 'j', ' ', 'f'],
+            ['j', ' ', 'j', 'f', ' ', 'f', 'f'],
+            [' ', 'j', 'j', ' ', ' ', 'j', 'j'],
+            ['f', 'f', ' ', ' ', 'f', 'f', ' '],
+        ],
+        keys: ['f', 'j', ' '],
+        preview: ['f', 'j']
+    },
+    {
+        title: "Pelajaran 4: Test Mengetik F dan J",
+        type: "free-typing",
+        image: 'test-fj.svg',
+        sequence: ['f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j', ' ', 'f', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'j', ' ', 'f', 'j',
+            'j', 'f', ' ', 'j', 'j', 'f', 'f', ' ', 'j', 'f', 'f', 'j', ' ', 'j', 'f', 'f', 'f', ' ', 'j', 'f', 'j', 'f', ' ', 'f', 'j', 'f', 'j', ' ', 'f', 'f', 'f', 'f', ' ', 'j', 'j', 'j', 'j',
+            ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'f', 'j', ' ', 'f', 'j', ' ', 'j', 'f', ' ', 'j', 'f'],
+        preview: ['f', 'j']
+    },
+    {
+        title: "Pelajaran 5: Pengenalan Tombol D dan K",
+        type: "character-drill",
+        steps: [
+            {
+                key: 'd',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">d</span> menggunakan jari tengah kiri Anda.`
+            },
+            {
+                key: 'k',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">k</span> menggunakan jari tengah kanan Anda.`
+            }
+        ],
+        preview: ['d', 'k']
+    },
+    {
+        title: "Pelajaran 6: Latihan Tombol D dan K",
+        type: "simple-drill",
+        image: "target-dk.svg",
+        sequences: [
+            ['d', 'd', 'd', 'd', 'k', 'k'],
+            ['k', 'k', 'd', 'd', 'd', 'd'],
+            ['k', 'k', 'k', 'k', 'd', 'd'],
+            ['k', 'k', 'd', 'd', 'k', 'k'],
+            ['d', 'k', 'd', 'k', 'k', 'd'],
+            ['k', 'd', 'd', 'k', 'd', 'k'],
+        ],
+        keys: ['d', 'k'],
+        preview: ['d', 'k']
+    },
+    {
+        title: "Pelajaran 7: Test Mengetik D dan K",
+        type: "free-typing",
+        image: 'test-dk.svg',
+        sequence: ['d', 'd', 'd', 'd', ' ', 'k', 'k', 'k', 'k', ' ', 'd', 'd', 'k', 'k', ' ', 'k', 'k', 'd', 'd', ' ', 'k', 'd',
+            ' ', 'd', 'k', ' ', 'k', 'd', 'd', 'k', ' ', 'd', 'k', 'k', 'd', ' ', 'k', 'k', 'd', 'd', ' ', 'k', 'd',
+            'd', 'k', ' ', 'k', 'd', 'd', 'd', ' ', 'k', 'd', 'k', 'd', ' ', 'd', 'k', 'd', 'k', ' ', 'd', 'd', 'd', 'd', ' ', 'k', 'k', 'k', 'k',
+            ' ', 'd', 'k', ' ', 'd', 'k', ' ', 'k', 'd', ' ', 'k', 'd'],
+        preview: ['d', 'k']
+    },
+    {
+        title: "Pelajaran 8: Test Mengetik D dan K",
+        type: "free-typing",
+        image: 'test-dk.svg',
+        sequence: ['f', 'f', 'f', 'f', ' ', 'd', 'd', 'd', ' ', 'j', 'j', 'j', ' ', 'k', 'k', 'k', 'k', ' ', 'd', 'f', 'd', 'f', ' ', 'j', 'k', ' ', 'j', 'k', ' ', 'j', 'j', 'j', ' ', 'f', 'f', 'f', ' ',
+            'j', 'j', 'j', ' ', 'f', 'f', 'f', ' ', 'd', 'd', 'f', 'f', ' ', 'j', 'j', 'k', 'k', ' ', 'k', 'k', 'd', 'd', ' ', 'f', 'd', 'f', 'd', ' ', 'j', 'k', 'j', 'k', ' ', 'd', 'f', 'j', 'k', ' ', 'k', 'k', 'd', 'd', ' ',
+            'j', 'k', ' ', 'd', 'f', 'd', 'f', ' ', 'd', 'f', 'j', 'j', ' ', 'j', 'j', 'f', 'd', ' ', 'k', 'k', 'j', 'j', ' ', 'd', 'f', 'j', 'k', ' ', 'd', 'd', 'k', 'd', ' ', 'k', 'k', 'd', 'k'],
+        preview: ['f', 'j', 'd', 'k']
+    },
+    {
+        title: "Pelajaran 9: Pengenalan Tombol S dan L",
+        type: "character-drill",
+        steps: [
+            {
+                key: 's',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">s</span> menggunakan jari manis kiri Anda.`
+            },
+            {
+                key: 'l',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">l</span> menggunakan jari manis kanan Anda.`
+            }
+        ],
+        preview: ['s', 'l']
+    },
+    {
+        title: "Pelajaran 10: Latihan Tombol S dan L",
+        type: "simple-drill",
+        image: "target-sl.svg",
+        sequences: [
+            ['s', 's', 's', 's', 'l', 'l'],
+            ['l', 'l', 's', 's', 's', 's'],
+            ['l', 'l', 'l', 'l', 's', 's'],
+            ['l', 'l', 's', 's', 'l', 'l'],
+            ['s', 'l', 's', 'l', 'l', 's'],
+            ['l', 's', 's', 'l', 's', 'l'],
+        ],
+        keys: ['s', 'l'],
+        preview: ['s', 'l']
+    },
+    {
+        title: "Pelajaran 11: Test Mengetik S dan L",
+        type: "free-typing",
+        image: "test-sl.svg",
+        sequence: ['j', 'j', ' ', 'f', 'f', ' ', 'd', 'd', ' ', 'l', 'l', ' ', 's', 's', 's', 's', 'd', ' ', 'd', 'f', ' ', 'f', 'j', ' ', 'j', 'k', ' ', 'k', 'l', ' ', 's', 'd', 'f', 's', 'k',
+            ' ', 'd', 'l', ' ', 'k', 's', ' ', 'j', 'f', ' ', 'k', 'd', ' ', 'l', 's', 'l', 'f', 'l', ' ', 'k', 'l', ' ', 'j', 's', ' ', 'k', 'd', ' ', 'j', 'f', ' ', 's', 'd', 'f', 'l', 'l', 'k',
+            ' ', 'k', 'k', 'j', ' ', 'j', 'j', 'f'
+        ],
+        preview: ['s', 'l']
+    },
+    {
+        title: "Pelajaran 12: Pengenalan Tombol A dan ;",
+        type: "character-drill",
+        steps: [
+            {
+                key: 'a',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">a</span> menggunakan jari kelingking kiri Anda.`
+            },
+            {
+                key: ';',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">;</span> menggunakan jari kelingking kanan Anda.`
+            }
+        ],
+        preview: ['a', ';']
+    },
+    {
+        title: "Pelajaran 13: Latihan Tombol A dan ;",
+        type: "simple-drill",
+        image: "target-a;.svg",
+        sequences: [
+            ['a', 'a', 'a', 'a', ';', ';'],
+            [';', ';', 'a', 'a', 'a', 'a'],
+            [';', ';', ';', ';', 'a', 'a'],
+            [';', ';', 'a', 'a', ';', ';'],
+            ['a', ';', 'a', ';', ';', 'a'],
+            [';', 'a', 'a', ';', 'a', ';'],
+        ],
+        keys: ['a', ';'],
+        preview: ['a', ';']
+    },
+    {
+        title: "Pelajaran 14: Test Mengetik A dan ;",
+        type: "free-typing",
+        image: "test-a;.svg",
+        sequence: ['a', 'a', 'a', 'a', ' ', ';', ';', ';', ';', ' ', 'a', 'a', ';', ';', ' ', ';', ';', 'a', 'a', ' ', 'a', ';',
+            ' ', ';', 'a', 'a', ';', ' ', 'a', ';', ';', 'a', ' ', ';', ';', 'a', 'a', ' ', 'a', ';',
+            'a', ';', ' ', ';', 'a', 'a', 'a', ' ', ';', 'a', ';', 'a', ' ', 'a', ';', 'a', ';', ' ', 'a', 'a', 'a', 'a', ' ', ';', ';', ';', ';',
+            ' ', 'a', ';', ' ', 'a', ';', ' ', ';', 'a', ' ', ';', 'a'],
+        preview: ['a', ';']
+    },
+    {
+        title: "Pelajaran 15: Home Row: Tangan Kiri",
+        type: "free-typing",
+        requiredHoldKey: "j",
+        image: "homerow-left.svg",
+        instruction: `Tekan dan tahan tombol <span class="keyboard-inline-key">j</span> dengan jari telunjuk kananmu sambil mengetik kombinasi Tombol A, S, D, dan F.`,
+        sequence: ['a', 'd', 'a', ' ', 's', 'a', 'd', 'a', ' ', 'f', 'a', 's', ' ', 'a', 's', 'a', ' ', 'd', 'a', 'f', ' ', 'd', 'a', 's', ' ', 'f', 'a', 'd', 'a', ' ', 'a', 's', 'a', 'd', ' ', 's', 'a', 'd', 'a', 'f', ' ', 'a', 's', 'd', ' ', 'd', 'f', 's', ' ', 's', 'a', 'f', ' ', 'f', 'd', 'a', 's', ' ', 'a', 'd', 's', ' ', 'f', 'a', 'd', ' ', 's', 'a', 'd', ' ', 'd', 'a', 's', 'f', ' ', 'f', 'a', 's', 'a', 'd', ' ', 'd', 's', 'a', 'd', 'f', ' ', 'a', 'd', 'a', 's'],
+        preview: ['a', 's', 'd', 'f']
+    },
+    {
+        title: "Pelajaran 16: Home Row: Tangan Kanan",
+        type: "free-typing",
+        requiredHoldKey: "f", // Tangan kiri menahan 'f'
+        image: "homerow-right.svg",
+        instruction: `Tekan dan tahan tombol <span class="keyboard-inline-key">f</span> dengan jari telunjuk kirimu sambil mengetik kombinasi Tombol J, K, L, dan ;.`,
+        sequence: [
+            // String 1
+            'j', 'k', 'l', ' ', 'l', 'k', 'j', ' ', ';', ';', ';', ';', ' ', 'j', 'l', 'k', ' ',
+            'k', 'j', 'l', ' ', 'j', ';', 'k', ' ', 'l', 'j', 'k', ' ',
+
+            // String 2
+            'j', 'k', 'l', ' ', 'k', 'l', 'j', ' ', 'j', ';', 'l', ' ', 'k', 'l', ';', 'j', ' ',
+            'j', 'k', 'l', ' ', ';', ';', ';', ';', ' ', 'l', 'k', 'j', ' ',
+
+            // String 3
+            'j', 'k', 'l', 'j', ' ', 'k', 'l', ';', ' ', 'l', 'j', 'k', ' ', 'j', ';', 'l', 'k', ' ',
+            'k', 'j', 'l', ' ', 'j', 'k', ';', ' ', ';', ';', ';', ';', ' ', 'j', 'l', 'k', ' ',
+
+            // String 4
+            'j', 'k', 'l', ' ', 'l', 'k', 'j', ' ', 'j', ';', 'l', ' ', 'k', 'j', 'l', ' ', 'j', 'k', 'l', ' ',
+            'k', 'l', ';', 'j', ' ', 'j', 'k', ';', 'l', ' ', ';', ';', ';', ';', ' ', 'l', 'j', 'k'
+        ],
+        preview: ['j', 'k', 'l', ';'] // Ganti preview jadi tombol kanan
+    },
+    {
+        title: "Pelajaran 17: Pengenalan Tombol G dan H",
+        type: "character-drill",
+        steps: [
+            {
+                key: 'g',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">g</span> menggunakan jari telunjuk kiri Anda.`
+            },
+            {
+                key: 'h',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">h</span> menggunakan jari telunjuk kanan Anda.`
+            }
+        ],
+        preview: ['g', 'h'],
+    },
+    {
+        title: "Pelajaran 18: Tombol G dan H",
+        type: "simple-drill",
+        image: 'target-gh.svg',
+        sequences: [
+            ['g', 'g', 'g', 'g', 'h', 'h'],
+            ['h', 'h', 'g', 'g', 'g', 'g'],
+            ['h', 'h', 'h', 'h', 'g', 'g'],
+            ['h', 'h', 'g', 'g', 'h', 'h'],
+            ['g', 'h', 'g', 'h', 'h', 'g'],
+            ['h', 'g', 'g', 'h', 'g', 'h'],
+        ],
+        keys: ['g', 'h'],
+        preview: ['g', 'h']
+    },
+    {
+        title: "Pelajaran 19: Test Mengetik G dan H",
+        type: "free-typing",
+        image: 'test-gh.svg',
+        sequence: [
+            // String 1
+            'f', 'g', 'h', 'j', ' ', 'j', 'h', 'g', 'f', ' ', 'f', 'h', 'g', ' ', 'g', 'j', 'h', ' ',
+
+            // String 2
+            'f', 'j', ' ', 'g', 'h', ' ', 'f', 'g', ' ', 'h', 'j', ' ', 'f', 'g', 'h', 'j', ' ',
+
+            // String 3
+            'h', 'g', 'f', ' ', 'j', 'h', 'g', ' ', 'f', 'g', 'h', ' ', 'j', 'f', 'h', ' ',
+
+            // String 4
+            'f', 'h', 'j', ' ', 'g', 'f', 'h', ' ', 'j', 'g', 'f', ' ', 'h', 'j', 'g', ' ',
+
+            // String 5 (pola berulang)
+            'f', 'g', 'h', 'j', ' ', 'f', 'g', 'h', 'j', ' ', 'j', 'h', 'g', 'f', ' ', 'h', 'g', 'f', 'j'
+        ],
+        preview: ['g', 'h']
+    },
+    {
+        title: "Pelajaran 20: Test Mengetik G dan H",
+        type: "free-typing",
+        image: 'test-gh.svg',
+        sequence: [
+            'g', 'a', ' ', 'h', 'a', 'l', ' ', 'g', 'a', 'l', 'a', ' ', 'h', 'a', ' ',
+            'j', 'a', 'g', ' ', 'l', 'a', 'g', ' ', 's', 'a', 'g', 'a', ' ', 'g', 'a', ' ',
+
+            'h', 'a', 's', ' ', 'j', 'a', 'g', 'a', ' ', 'h', 'a', 'l', 'a', ' ', 'l', 'a', 'g', 'a', ' ',
+            'g', 'a', 's', ' ', 'h', 'a', ' ', 'l', 'a', 's', 'a', ' ', 'g', 'a', ' ',
+
+            'h', 'a', ' ', 's', 'a', 'g', 'a', ' ', 'g', 'a', 'l', ' ', 'h', 'a', 's', 'a', ' ',
+            'j', 'a', 'g', ' ', 'g', 'a', 'l', 'a', ' ', 'h', 'a', ' ', 'l', 'a', 'g', 'a'
+        ],
+        preview: ['g', 'h']
+    },
+    {
+        title: "Pelajaran 21: Home Row",
+        type: "free-typing",
+        image: 'homerow.svg',
+        sequence: [
+            'j', 'a', 's', 'a', ' ', 's', 'a', ' ', 'l', ';', ' ', 'h', 'a', 's', ' ',
+            'g', 'a', 'l', 'a', ' ', 'j', 'a', 'l', ' ', 'a', 's', 'a', ' ', 'k', 'a', 's', ' ',
+
+            'j', ';', 'a', ' ', 'h', 'a', 'l', 'a', ' ', 's', 'a', 'd', ' ', 'j', 'a', 's', ' ',
+            'l', 'a', ' ', 'g', 'a', 's', ' ', 'f', 'a', 'l', ' ', 'j', 'a', ';', 'a', ' ',
+
+            'h', 'a', 's', ' ', 'k', 'a', ' ', 'j', 'a', 's', 'a', ' ', 'l', 'a', ';', ' ',
+            'g', 'a', 'l', ' ', 's', 'a', ' ', 'j', 'a', 'l', 'a', ' ', 'h', 'a', ' ',
+
+            'j', ';', 'l', ' ', 's', 'a', 'l', 'a', ' ', 'f', 'a', 's', ' ', 'j', 'a', ' ',
+            'h', 'a', 'l', ' ', 'k', 'a', 's', ' ', 'l', 'a', ';', 'a', ' ',
+
+            'j', 'a', 's', ' ', 'g', 'a', 's', ' ', 'h', 'a', ' ', 'j', ';', 'a', ' ',
+            's', 'a', ' ', 'l', 'a', 's', 'a', ' ', 'j', 'a', 's', 'a', ' '
+        ],
+        preview: ['g', 'h']
+    },
+
+];
+</file>
+
+<file path="js/learn-typing.js">
+// js/learn-typing.js
+
+import { initDOMAndState, getHiddenInput } from './learn-typing-state.js';
+import { createKeyboard, animateBorder } from './learn-typing-ui.js';
+import { renderLesson, setupEventListeners } from './learn-typing-logic.js';
+import { keyLayout } from './keyboard-layout.js';
+
+function initApp() {
+    const domElements = initDOMAndState();
+    createKeyboard(domElements.keyboardContainer, keyLayout);
+
+
+    // Panggil renderLesson() tanpa parameter, karena semua yang dibutuhkan sudah ada di learn-typing-logic
+    renderLesson();
+    setupEventListeners();
+    const input = getHiddenInput();
+    if (input) {
+        input.focus();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+    window.requestAnimationFrame(animateBorder);
+    document.body.addEventListener('click', () => {
+        const input = getHiddenInput();
+        if (input && document.activeElement !== input) {
+            input.focus();
+        }
+    });
+});
+</file>
+
+<file path="js/learn-typing-logic.js">
+// js/learn-typing-logic.js
+// Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
+import { getLessonDOMReferences } from './utils/dom-elements.js';
+import { lessons } from './learn-typing-lessons.js';
+import { getState, updateState, getHiddenInput } from './learn-typing-state.js';
+import { calculateLessonProgress, updateProgressBar } from './progress-bar.js';
+import {
+    renderOtherLessons,
+    showLessonCompleteNotification,
+    setAnimatingKey,
+    setIsCorrectInputAnimationActive,
+    setAnimationSpeed,
+    animateJellyEffect,
+    animateAllBordersOnCorrectInput,
+    cleanupAllLessonUI,
+    createKeyboard,
+    highlightWrongKeyOnKeyboard,
+} from './learn-typing-ui.js';
+import { renderHandVisualizer } from './hand-visualizer.js';
+import { renderFreeTypingLesson, resetFreeTypingState, cleanupFreeTypingOverlay, cleanupTypingStats, hideTypingStats  } from './lesson-free-typing.js';
+import { renderSimpleDrillLesson } from './lesson-simple-drill.js';
+import { renderCharacterDrillLesson, resetCharacterDrillState } from './lesson-character-drill.js';
+import { attachInputHandlers } from './input-handler.js';
+import { keyLayout } from './keyboard-layout.js';
+import { initDarkMode } from './utils/dark-mode.js'; // Impor modul dark mode
+
+function showLessonElements() {
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    domElements.lessonHeader.style.display = '';
+    domElements.keyboardContainer.style.display = '';
+    domElements.prevLessonBtn.style.display = '';
+    domElements.nextLessonBtn.style.display = '';
+    domElements.progressContainerWrapper.style.display = '';
+}
+
+export function resetLessonState() {
+    const domElements = getLessonDOMReferences();
+    const currentLessonIndex = getState('currentLessonIndex');
+    const lessonId = `lesson${currentLessonIndex + 1}`;
+    const lesson = lessons[currentLessonIndex];
+    updateState('waitingForAnim', false);
+
+    // ✅ Selalu reset overlay hold-key sebelum masuk ke lesson baru
+    const holdOverlay = document.getElementById("hold-key-overlay");
+    if (holdOverlay) {
+        holdOverlay.style.display = "none";
+    }
+    updateState("isHoldKeyActive", false); // pastikan state-nya ikut mati
+
+    if (!lesson) return;
+
+    switch (lesson.type) {
+        case 'simple-drill':
+            updateState(lessonId, { sequenceIndex: 0, nextCharIndex: 0, finished: false });
+            break;
+        case 'character-drill':
+            resetCharacterDrillState();
+            break;
+        case 'free-typing':
+            resetFreeTypingState();
+            break;
+        default:
+            updateState(lessonId, { currentCharIndex: 0, sequenceIndex: 0, isFinished: false });
+            break;
+    }
+}
+
+export function renderLesson() {
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    const currentLessonIndex = getState('currentLessonIndex');
+
+    if (!lessons || !lessons[currentLessonIndex]) {
+        console.error("Pelajaran tidak ditemukan atau indeks tidak valid.");
+        return;
+    }
+
+    const lesson = lessons[currentLessonIndex];
+
+    if (lesson.type === 'free-typing') {
+        domElements.lessonTextDisplay.style.display = '';
+        const stats = document.getElementById("typing-stats");
+        if (stats) stats.style.display = "block"; // ✅ tampilkan kalau free typing
+    } else {
+        domElements.lessonTextDisplay.style.display = 'none';
+        const stats = document.getElementById("typing-stats");
+        if (stats) stats.style.display = "none"; // ✅ sembunyikan kalau bukan free typing
+    }
+
+    document.body.className = document.body.className.replace(/\blesson-type-\S+/g, '');
+    if (lesson.type) {
+        document.body.classList.add(`lesson-type-${lesson.type}`);
+    }
+
+    // Tambahkan pengecekan null sebelum mengakses properti
+    if (!domElements) {
+        console.error("Gagal mendapatkan referensi DOM untuk pelajaran.");
+        return;
+    }
+
+    if (domElements.prevLessonBtn) {
+        domElements.prevLessonBtn.style.visibility = (currentLessonIndex === 0) ? 'hidden' : 'visible';
+    }
+    if (domElements.lessonTitle) domElements.lessonTitle.textContent = lesson.title;
+
+    domElements.lessonTextDisplay.classList.remove('lesson-4-display');
+
+    switch (lesson.type) {
+        case 'simple-drill':
+            renderSimpleDrillLesson(
+                currentLessonIndex,
+                domElements.lessonInstruction,
+                domElements.keyboardContainer
+            );
+            break;
+
+        case 'character-drill':
+            if (domElements.lessonTextDisplay) {
+                domElements.lessonTextDisplay.innerHTML = '';
+            }
+            renderCharacterDrillLesson({
+                lesson,
+                lessonInstruction: domElements.lessonInstruction,
+                keyboardContainer: domElements.keyboardContainer,
+                lessonTextDisplay: domElements.lessonTextDisplay,
+            });
+            break;
+
+        case 'free-typing':
+            domElements.lessonTextDisplay.classList.add('lesson-4-display');
+            renderFreeTypingLesson({
+                lesson,
+                lessonInstruction: domElements.lessonInstruction,
+                keyboardContainer: domElements.keyboardContainer,
+                lessonTextDisplay: domElements.lessonTextDisplay,
+            });
+            break;
+        default:
+            const lessonId = `lesson${currentLessonIndex + 1}`;
+            const lessonState = getState(lessonId) || { currentCharIndex: 0, sequenceIndex: 0 };
+            renderOtherLessons(lesson, lessonState.currentCharIndex, domElements.lessonTextDisplay, domElements.lessonInstruction, domElements.keyboardContainer, setAnimatingKey, renderHandVisualizer);
+            break;
+    }
+
+    const progress = calculateLessonProgress(lesson);
+    updateProgressBar(progress, domElements.progressText, domElements.progressBar);
+}
+
+function loadLesson() {
+    cleanupAllLessonUI();
+    cleanupFreeTypingOverlay();
+    resetLessonState();
+    renderLesson();
+    showLessonElements();
+
+}
+
+export function goToNextLesson() {
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    const currentLessonIndex = getState('currentLessonIndex');
+    if (currentLessonIndex < lessons.length - 1) {
+        updateState('currentLessonIndex', currentLessonIndex + 1);
+        domElements.lessonCompleteNotification.classList.remove('active');
+        loadLesson();
+    } else {
+        console.log("Semua pelajaran selesai.");
+    }
+}
+
+export function goToPreviousLesson() {
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    const currentLessonIndex = getState('currentLessonIndex');
+    if (currentLessonIndex > 0) {
+        updateState('currentLessonIndex', currentLessonIndex - 1);
+        domElements.lessonCompleteNotification.classList.remove('active');
+        loadLesson();
+    }
+}
+
+export function retryLesson() {
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    const { lessonCompleteNotification } = domElements;
+    if (lessonCompleteNotification) {
+        lessonCompleteNotification.classList.remove('active');
+        setTimeout(() => {
+            loadLesson();
+        }, 50);
+    }
+}
+
+export function dispatchFinishedEvent(lessonIndex) {
+    // 🚀 Sembunyikan stats biar ga ikut tampil di notifikasi
+    const stats = document.getElementById("typing-stats");
+    if (stats) stats.style.display = "none";
+
+    // Tetap trigger event selesai
+    document.dispatchEvent(new Event(`lesson${lessonIndex + 1}-finished`));
+}
+
+
+export function setupEventListeners() {
+    // Perbaikan: Gunakan getLessonDOMReferences()
+    const domElements = getLessonDOMReferences();
+    if (!domElements) {
+        console.error("Gagal mendapatkan referensi DOM di setupEventListeners.");
+        return;
+    }
+
+    const { nextLessonBtn, prevLessonBtn, retryLessonBtn, continueBtn, lessonListBtn } = domElements;
+
+    createKeyboard(domElements.keyboardContainer, keyLayout);
+
+    if (nextLessonBtn) {
+        nextLessonBtn.addEventListener('click', goToNextLesson);
+    }
+    if (prevLessonBtn) {
+        prevLessonBtn.addEventListener('click', goToPreviousLesson);
+    }
+    if (retryLessonBtn) {
+        retryLessonBtn.addEventListener('click', retryLesson);
+    }
+    if (continueBtn) {
+        continueBtn.addEventListener('click', goToNextLesson);
+    }
+
+    // Panggil modul dark mode yang baru
+    initDarkMode(domElements.darkModeToggle);
+
+    lessons.forEach((lesson, index) => {
+        document.addEventListener(`lesson${index + 1}-finished`, () => {
+            setTimeout(() => {
+                showLessonCompleteNotification(lessons, getState('currentLessonIndex'), domElements);
+            }, 500);
+        });
+    });
+
+    attachInputHandlers(loadLesson);
+
+    // START - PERBAIKAN BUG
+    if (lessonListBtn) {
+        lessonListBtn.addEventListener('click', () => {
+            window.location.href = 'lessons.html';
+        });
+    }
+    // END - PERBAIKAN BUG
+
+    // PERBAIKAN: Baca lesson index dari URL saat halaman dimuat
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonIndexFromUrl = urlParams.get('lessonIndex');
+
+    if (lessonIndexFromUrl !== null) {
+        // Set state dengan lesson index dari URL
+        const parsedIndex = parseInt(lessonIndexFromUrl, 10);
+        if (!isNaN(parsedIndex) && parsedIndex >= 0 && parsedIndex < lessons.length) {
+            updateState('currentLessonIndex', parsedIndex);
+        } else {
+            console.error('Invalid lesson index from URL. Loading default lesson.');
+            updateState('currentLessonIndex', 0); // Default ke pelajaran pertama jika index tidak valid
+        }
+    } else {
+        updateState('currentLessonIndex', 0); // Default ke pelajaran pertama jika tidak ada parameter
+    }
+
+    // Initial load
+    loadLesson();
+}
+</file>
+
+</files>

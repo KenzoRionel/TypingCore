@@ -6,19 +6,19 @@ let replayState = {
     currentIndex: 0,
     replayData: null,
     text: '',
-    intervalId: null,
     container: null,
     playButton: null,
     scoreId: null,
     renderToken: 0,
     totalDuration: 60,
-    lastRenderTime: 0,
-    renderInterval: 16, // ~60fps for smoother animation
-    firstTimestamp: 0 // Timestamp pertama untuk sinkronisasi waktu
+    // Timeline virtual (ms) per keystroke, jeda antar-keystroke sudah di-cap max 2 detik.
+    // Dihitung sekali per replayData saat playReplay() pertama kali dipanggil.
+    playbackTimestamps: [],
+    playStartWallTime: 0,   // performance.now() saat play/resume terakhir dimulai
+    playStartVirtualTime: 0, // posisi di playbackTimestamps saat play/resume terakhir dimulai
+    firstTimestamp: 0 // Timestamp asli keystroke pertama, untuk hitung "waktu tersisa"
 };
 
-
-let pendingRender = false;
 let rafId = null;
 
 
@@ -118,8 +118,10 @@ export function loadReplay(scoreId) {
     replayState.scoreId = scoreId;
     replayState.replayData = score.replayData;
     replayState.currentIndex = 0;
-    // Gunakan durasi asli dari score, default ke 60
-    replayState.totalDuration = score.duration || 60;
+    replayState.playbackTimestamps = []; // dihitung ulang saat play berikutnya
+    replayState.firstTimestamp = score.replayData.keystrokes?.[0]?.timestamp || 0;
+    // Gunakan durasi asli dari score (field-nya "time", bukan "duration"), default ke 60
+    replayState.totalDuration = score.time || 60;
 
     updateReplayInfo(score);
     renderReplayText();
@@ -129,126 +131,101 @@ export function loadReplay(scoreId) {
     if (replayState.playButton) replayState.playButton.disabled = false;
 }
 
+// Hitung timeline virtual (ms) tiap keystroke, dengan jeda antar-keystroke
+// di-cap maksimum 2 detik supaya jeda panjang (mis. mikir lama) tidak bikin
+// replay ikut nunggu lama juga.
+function computePlaybackTimestamps(keystrokes) {
+    const arr = new Array(keystrokes.length);
+    arr[0] = 0;
+    for (let i = 1; i < keystrokes.length; i++) {
+        const rawDelay = keystrokes[i].timestamp - keystrokes[i - 1].timestamp;
+        const delay = Math.min(Math.max(0, rawDelay), 2000);
+        arr[i] = arr[i - 1] + delay;
+    }
+    return arr;
+}
+
 function playReplay() {
     if (!replayState.replayData?.keystrokes.length) return;
 
-    pauseReplay();
-    const currentToken = ++replayState.renderToken;
     const keystrokes = replayState.replayData.keystrokes;
 
     if (replayState.currentIndex >= keystrokes.length) {
         replayState.currentIndex = 0;
     }
 
+    if (!replayState.playbackTimestamps.length) {
+        replayState.playbackTimestamps = computePlaybackTimestamps(keystrokes);
+    }
+
+    if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+    }
+
+    const currentToken = ++replayState.renderToken;
     replayState.isPlaying = true;
     updatePlayButton();
-    replayState.lastRenderTime = 0;
-    
-    // Simpan timestamp pertama untuk perhitungan waktu relatif
-    replayState.firstTimestamp = keystrokes[0]?.timestamp || 0;
+
+    // Titik acuan: jam dinding saat ini vs posisi di timeline virtual saat ini.
+    // Semua keystroke berikutnya dibandingkan terhadap titik acuan ini, bukan
+    // dijadwalkan satu-satu lewat setTimeout - jadi tidak ada rantai delay
+    // yang bisa drift/numpuk kalau ada keystroke yang jaraknya rapat.
+    replayState.playStartWallTime = performance.now();
+    replayState.playStartVirtualTime = replayState.playbackTimestamps[replayState.currentIndex] || 0;
+
     console.log('[Replay] Starting replay with', keystrokes.length, 'keystrokes');
 
-    console.log('[Replay] First keystroke timestamp:', keystrokes[0]?.timestamp);
-    console.log('[Replay] Last keystroke timestamp:', keystrokes[keystrokes.length - 1]?.timestamp);
-
-    const run = () => {
+    const frame = () => {
         if (currentToken !== replayState.renderToken || !replayState.isPlaying) return;
+
+        const elapsedWall = performance.now() - replayState.playStartWallTime;
+        const targetVirtualTime = replayState.playStartVirtualTime + elapsedWall;
+
+        // Majukan currentIndex sebanyak yang "sudah waktunya" tampil di frame ini.
+        // Kalau beberapa keystroke jaraknya sangat rapat (< 1 frame), semuanya
+        // digabung jadi satu render saja - bukan dipaksa render satu-satu.
+        let advanced = false;
+        while (
+            replayState.currentIndex < keystrokes.length &&
+            replayState.playbackTimestamps[replayState.currentIndex] <= targetVirtualTime
+        ) {
+            replayState.currentIndex++;
+            advanced = true;
+        }
+
+        if (advanced) {
+            updateLiveStats();
+            updateProgressBar();
+            renderReplayText();
+        }
 
         if (replayState.currentIndex >= keystrokes.length) {
             console.log('[Replay] Reached end of keystrokes');
-            // Selesai replay - jangan reset, biarkan user melihat hasil akhir
             replayState.isPlaying = false;
             updatePlayButton();
-            if (rafId) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            }
-            if (replayState.intervalId) {
-                clearTimeout(replayState.intervalId);
-                replayState.intervalId = null;
-            }
+            showFinalTime();
+            rafId = null;
             return;
         }
 
-
-
-        const current = keystrokes[replayState.currentIndex];
-        
-        // Render UI dengan requestAnimationFrame untuk smoothness maksimal
-        scheduleRender();
-
-        replayState.currentIndex++;
-        const next = keystrokes[replayState.currentIndex];
-
-        if (next) {
-            // Selisih waktu asli antar tekanan tombol
-            const rawDelay = next.timestamp - current.timestamp;
-            // Cap delay maksimum 2 detik untuk menghindari jeda terlalu lama
-            const delay = Math.min(Math.max(0, rawDelay), 2000);
-            
-            if (rawDelay > 2000) {
-                console.log('[Replay] Large delay detected:', rawDelay, 'ms, capped to 2000ms');
-            }
-            if (rawDelay < 0) {
-                console.log('[Replay] Negative delay detected:', rawDelay, 'ms, set to 0');
-            }
-            
-            replayState.intervalId = setTimeout(run, delay);
-        } else {
-            console.log('[Replay] No more keystrokes, finished - keeping final state visible');
-            // Selesai replay - jangan reset, biarkan user melihat hasil akhir
-            replayState.isPlaying = false;
-            updatePlayButton();
-            if (rafId) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            }
-            if (replayState.intervalId) {
-                clearTimeout(replayState.intervalId);
-                replayState.intervalId = null;
-            }
-        }
-
+        rafId = requestAnimationFrame(frame);
     };
-    run();
-}
 
-// Schedule render menggunakan requestAnimationFrame untuk smoothness
-function scheduleRender() {
-    // Selalu update stats (ringan) setiap keystroke
-    updateLiveStats();
-    updateProgressBar();
-    
-    // Cancel pending RAF jika ada
-    if (rafId) {
-        cancelAnimationFrame(rafId);
-    }
-    
-    const now = performance.now();
-    const timeSinceLastRender = now - replayState.lastRenderTime;
-    
-    if (timeSinceLastRender >= replayState.renderInterval) {
-        // Render langsung dengan RAF untuk sync dengan refresh rate monitor
-        rafId = requestAnimationFrame(() => {
-            renderReplayText();
-            replayState.lastRenderTime = performance.now();
-        });
-    } else {
-        // Delay render untuk mencapai target frame rate
-        const waitTime = replayState.renderInterval - timeSinceLastRender;
-        setTimeout(() => {
-            if (replayState.isPlaying) {
-                rafId = requestAnimationFrame(() => {
-                    renderReplayText();
-                    replayState.lastRenderTime = performance.now();
-                });
-            }
-        }, waitTime);
-    }
+    rafId = requestAnimationFrame(frame);
 }
 
 
 
+
+// Dipanggil saat replay benar-benar mencapai keystroke terakhir.
+// Perhitungan "waktu tersisa" per-keystroke dibulatkan ke bawah (flooring detik),
+// jadi keystroke terakhir kadang masih menunjukkan sisa 1s padahal tesnya sudah
+// selesai. Paksa ke 0s di titik akhir supaya tidak membingungkan.
+function showFinalTime() {
+    const timeEl = document.getElementById('replay-time');
+    if (timeEl) timeEl.textContent = '0s';
+}
 
 function updateLiveStats() {
     const keystrokes = replayState.replayData?.keystrokes || [];
@@ -291,7 +268,8 @@ let replayTextCache = {
     lastInput: null,
     lastTargetWords: null,
     container: null,
-    wordElements: []
+    wordElements: [],
+    lastScrolledWordIdx: -1
 };
 
 function renderReplayText() {
@@ -402,15 +380,44 @@ function renderReplayText() {
         }
 
         // 3. AUTO-SCROLL LOGIC
-        if (isCurrentWord) {
-            wordEl.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center' // Scroll agar kata aktif ada di tengah container
-            });
+        // Sebelumnya pakai wordEl.scrollIntoView({behavior:'smooth', block:'center'})
+        // yang mencoba me-recenter kata PERSIS di tengah setiap kali kata berganti,
+        // termasuk kata-kata yang masih di baris yang sama. Animasi smooth yang
+        // terus-menerus dipicu ulang itulah yang terlihat tersendat.
+        // Diganti ke pendekatan yang sama seperti scroll di halaman tes utama
+        // (utils/text-display.js -> ensureScrollSync): snap langsung tanpa animasi,
+        // dan hanya geser saat kata aktif benar-benar pindah ke baris berikutnya.
+        if (isCurrentWord && replayTextCache.lastScrolledWordIdx !== wordIdx) {
+            ensureReplayScrollSync(wordEl, container);
+            replayTextCache.lastScrolledWordIdx = wordIdx;
         }
     }
     
     replayTextCache.lastInput = currentInput;
+}
+
+// Snap-scroll instan berbasis baris, meniru ensureScrollSync() di
+// utils/text-display.js supaya perilakunya konsisten dengan halaman tes utama
+// yang sudah terbukti mulus (tidak pakai animasi smooth yang bisa saling
+// menumpuk/menyendat saat kata berganti cepat).
+function ensureReplayScrollSync(wordEl, container) {
+    if (!wordEl || !container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const wordRect = wordEl.getBoundingClientRect();
+    // Posisi kata relatif terhadap konten container (ikut memperhitungkan scroll saat ini)
+    const wordTop = (wordRect.top - containerRect.top) + container.scrollTop;
+    const lineHeight = wordRect.height || parseFloat(getComputedStyle(container).lineHeight) || 20;
+
+    const topWithinView = wordTop - container.scrollTop;
+
+    if (topWithinView >= lineHeight) {
+        // Kata sudah masuk baris ke-2 dari area yang terlihat -> geser satu baris
+        container.scrollTop = wordTop - lineHeight;
+    } else if (topWithinView < 0) {
+        // Render mundur (reset/scrub) -> pastikan kata tetap kelihatan
+        container.scrollTop = Math.max(0, wordTop);
+    }
 }
 
 
@@ -426,10 +433,6 @@ function appendChars(parent, text, className) {
 function pauseReplay() {
     replayState.isPlaying = false;
     updatePlayButton();
-    if (replayState.intervalId) {
-        clearTimeout(replayState.intervalId);
-        replayState.intervalId = null;
-    }
     if (rafId) {
         cancelAnimationFrame(rafId);
         rafId = null;
@@ -447,6 +450,7 @@ function stopReplay() {
     replayTextCache.lastTargetWords = null;
     replayTextCache.container = null;
     replayTextCache.wordElements = [];
+    replayTextCache.lastScrolledWordIdx = -1;
     
     renderReplayText();
     updateProgressBar();

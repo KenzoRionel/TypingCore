@@ -52,27 +52,33 @@ export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords,
     scores.push(scoreEntry);
     
     // Cleanup old scores to prevent localStorage quota exceeded
-    const trimmedScores = cleanupOldScores(scores);
+    let workingScores = cleanupOldScores(scores);
     
-    try {
-        localStorage.setItem('typingScores', JSON.stringify(trimmedScores));
-        console.log('Score saved, total scores:', trimmedScores.length);
-    } catch (e) {
-        // Handle QuotaExceededError - localStorage is full
-        if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-            console.error('localStorage quota exceeded! Removing oldest scores and retrying...');
-            
-            // Remove half of the oldest scores and try again
-            const reducedScores = trimmedScores.slice(-Math.floor(MAX_SCORES / 2));
-            try {
-                localStorage.setItem('typingScores', JSON.stringify(reducedScores));
-                console.log('Score saved after cleanup, total scores:', reducedScores.length);
-            } catch (e2) {
-                console.error('Failed to save score even after cleanup:', e2);
-                alert('Penyimpanan penuh! Riwayat skor tidak dapat disimpan. Silakan hapus riwayat lama di halaman Score History.');
+    // Coba simpan. Kalau penyimpanan penuh, buang riwayat yang PALING LAMA
+    // (index 0, karena entry terbaru selalu di-push ke akhir) satu per satu
+    // dan coba lagi, sampai muat. Ini menjamin tes yang baru saja selesai
+    // beserta replay-nya selalu berhasil disimpan, selama entry itu sendiri
+    // (sendirian) tidak melebihi kapasitas localStorage.
+    let saved = false;
+    while (!saved) {
+        try {
+            localStorage.setItem('typingScores', JSON.stringify(workingScores));
+            saved = true;
+            console.log('Score saved, total scores:', workingScores.length);
+        } catch (e) {
+            const isQuotaError = e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014;
+            if (!isQuotaError) {
+                console.error('Error saving score:', e);
+                break;
             }
-        } else {
-            console.error('Error saving score:', e);
+            if (workingScores.length <= 1) {
+                // Entry terbaru sendirian saja sudah tidak muat - tidak ada lagi yang bisa dibuang.
+                console.error('Skor terbaru terlalu besar untuk disimpan sendirian.');
+                alert('Penyimpanan penuh! Riwayat skor tidak dapat disimpan. Silakan hapus riwayat lama di halaman Score History.');
+                break;
+            }
+            const removed = workingScores.shift(); // buang riwayat paling lama
+            console.warn('localStorage penuh, membuang riwayat paling lama (', removed?.date, ') untuk memberi ruang. Sisa:', workingScores.length);
         }
     }
     
