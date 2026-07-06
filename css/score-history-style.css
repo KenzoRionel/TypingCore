@@ -162,10 +162,7 @@
 }
 
 .replay-text-display {
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    padding: 15px;
+    padding: 0;
     min-height: 60px;
     margin-bottom: 15px;
     /* Smaller font for replay text - make it even smaller so all text is visible */
@@ -260,17 +257,38 @@
 
 .replay-progress {
     width: 100%;
-    height: 8px;
+    height: 16px;
     background-color: #eee;
-    border-radius: 4px;
-    overflow: hidden;
+    border-radius: 8px;
+    overflow: visible;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .replay-progress-bar {
-    height: 100%;
+    height: 8px;
     background-color: #0068bd;
     width: 0%;
     transition: width 0.1s linear;
+    border-radius: 0 4px 4px 0;
+    pointer-events: none;
+}
+
+.replay-progress-handle {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    background-color: #005bb5;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    pointer-events: none;
+    transition: left 0.1s linear;
 }
 
 .no-replay {
@@ -409,8 +427,6 @@ body.dark-mode .replay-stat-value {
 
 /* Replay text display */
 body.dark-mode .replay-text-display {
-    background-color: #1a1a1a;
-    border-color: #444;
     color: #e0e0e0;
 }
 
@@ -448,6 +464,12 @@ body.dark-mode .replay-progress {
 
 body.dark-mode .replay-progress-bar {
     background-color: #0068bd;
+}
+
+body.dark-mode .replay-progress-handle {
+    background-color: #449be0;
+    border-color: #666;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 /* No replay message */
