@@ -801,7 +801,7 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 /* ==================== XP BAR STYLES ==================== */
 .xp-bar-container {
     position: absolute;
-    top: -60px;
+    top: -80px;
     right: 60px;
     display: flex;
     flex-direction: column;
