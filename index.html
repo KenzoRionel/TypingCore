@@ -161,6 +161,11 @@
               >
                 <!-- XP Bar Container - Positioned at top right -->
                 <div class="xp-bar-container">
+                  <!-- Mini WPM & Akurasi - Positioned above XP indicator -->
+                  <div class="mini-result-stats" id="miniResultStats">
+                    <span class="mini-stat"><span id="finalWPM">--</span> wpm</span>
+                    <span class="mini-stat"><span id="finalAccuracy">--%</span> acc</span>
+                  </div>
                   <div class="xp-bar-text" id="xpBarText">+0 XP</div>
                   <div class="xp-bar-wrapper">
                     <div class="xp-bar-progress" id="xpBarProgress"></div>
@@ -170,16 +175,6 @@
                   <canvas id="resultChart"></canvas>
                 </div>
                 <div class="results-summary">
-                  <div class="summary-main">
-                    <div class="summary-item">
-                      <span class="summary-label">WPM</span>
-                      <span id="finalWPM" class="summary-value">--</span>
-                    </div>
-                    <div class="summary-item">
-                      <span class="summary-label">Akurasi</span>
-                      <span id="finalAccuracy" class="summary-value">--%</span>
-                    </div>
-                  </div>
                   <div class="summary-details">
                     <div class="details-item">
                       <span class="details-label">Waktu Test</span>

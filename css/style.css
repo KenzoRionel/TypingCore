@@ -239,7 +239,8 @@ body {
 
 #resultsDisplayArea span {
     font-weight: bold;
-    color: #007bff;
+    font-family: monospace;
+    color: #d3d8dd;
 }
 
 #resultsDisplayArea .button {
@@ -800,12 +801,27 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 /* ==================== XP BAR STYLES ==================== */
 .xp-bar-container {
     position: absolute;
-    top: -40px;
+    top: -60px;
     right: 60px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     z-index: 10;
+}
+
+.mini-result-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.mini-stat {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.2;
 }
 
 .xp-bar-text {
@@ -850,6 +866,10 @@ body.dark-mode .xp-bar-wrapper {
 
 body.dark-mode .xp-bar-text {
     color: #81C784;
+}
+
+body.dark-mode .mini-stat {
+    color: #fff;
 }
 
 body.dark-mode .xp-bar-progress {

@@ -27,6 +27,20 @@ const SPEED_MAX = 4;
 const RENDER_BATCH_LIMIT_WORDS = 64; // batas kata yang boleh di-render per frame untuk mencegah frame drop
 
 /**
+ * Satu sumber kebenaran untuk mengubah ikon tombol play/pause.
+ * Dipakai baik oleh TypingPlayer (saat play/pause/finish) maupun
+ * TypingReplayApp (saat load replay awal), supaya tidak ada dua
+ * implementasi terpisah yang berpotensi tidak sinkron.
+ * @param {HTMLElement|null} btn
+ * @param {boolean} isPlaying
+ */
+function setPlayButtonIcon(btn, isPlaying) {
+  if (!btn) return;
+  const icon = btn.querySelector('i');
+  if (icon) icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+}
+
+/**
  * @typedef {Object} Keystroke
  * @property {number} timestamp - timestamp milidetik (ms) dari awal rekaman
  * @property {string} inputState - state input sampai sebelum/ketika timestamp ini tercapai
@@ -134,6 +148,8 @@ class TypingRenderer {
       targetText: '',
       targetWords: [],
       wordElements: [],
+      wordCharSpans: [], // cache referensi <span> per karakter tiap kata (hindari querySelectorAll per frame)
+      wordSpaceSpans: [], // cache referensi <span> spasi setelah tiap kata
       wordTops: [],
       lineHeight: 0,
       lastRenderedWordIdx: -1,
@@ -158,6 +174,8 @@ class TypingRenderer {
       targetText: '',
       targetWords: [],
       wordElements: [],
+      wordCharSpans: [],
+      wordSpaceSpans: [],
       wordTops: [],
       lineHeight: 0,
       lastRenderedWordIdx: -1,
@@ -256,21 +274,28 @@ class TypingRenderer {
       wordSpan.className = 'replay-word';
       wordSpan.id = `replay-word-${wordIdx}`;
 
+      const charSpansForWord = new Array(targetWord.length);
       for (let i = 0; i < targetWord.length; i++) {
         const charSpan = document.createElement('span');
         charSpan.className = 'replay-char untyped';
         charSpan.textContent = targetWord[i];
         wordSpan.appendChild(charSpan);
+        charSpansForWord[i] = charSpan;
       }
 
       frag.appendChild(wordSpan);
       this.cache.wordElements[wordIdx] = wordSpan;
+      // Simpan referensi langsung supaya render() tidak perlu querySelectorAll per frame.
+      this.cache.wordCharSpans[wordIdx] = charSpansForWord;
 
       if (wordIdx < targetWords.length - 1) {
         const spaceSpan = document.createElement('span');
         spaceSpan.className = 'replay-char space-char untyped';
         spaceSpan.textContent = ' ';
         frag.appendChild(spaceSpan);
+        this.cache.wordSpaceSpans[wordIdx] = spaceSpan;
+      } else {
+        this.cache.wordSpaceSpans[wordIdx] = null;
       }
     });
 
@@ -317,18 +342,20 @@ class TypingRenderer {
 
       wordEl.classList.remove('active-word');
 
+      // wrong-extra adalah span dinamis (kelebihan ketik) yang tidak di-cache
+      // karena jumlahnya tidak tetap, jadi tetap perlu di-query saat dihapus.
       const wrongExtras = wordEl.querySelectorAll('.wrong-extra');
       for (const el of wrongExtras) el.remove();
 
-      const charSpans = wordEl.querySelectorAll('.replay-char');
-      for (const charSpan of charSpans) {
-        charSpan.className = 'replay-char untyped';
+      const charSpans = this.cache.wordCharSpans[wordIdx];
+      if (charSpans) {
+        for (const charSpan of charSpans) {
+          charSpan.className = 'replay-char untyped';
+        }
       }
 
-      const nextEl = wordEl.nextElementSibling;
-      if (nextEl && nextEl.classList?.contains('space-char')) {
-        nextEl.className = 'replay-char space-char untyped';
-      }
+      const spaceSpan = this.cache.wordSpaceSpans[wordIdx];
+      if (spaceSpan) spaceSpan.className = 'replay-char space-char untyped';
     }
   }
 
@@ -353,7 +380,8 @@ class TypingRenderer {
    *  totalDurationSec: number
    * }} params
    */
-  render({ keystrokes, currentIndex, targetText }) {
+  render(params) {
+    const { keystrokes, currentIndex, targetText } = params;
     if (!this.containerEl) return;
     if (!Array.isArray(keystrokes)) return;
 
@@ -384,12 +412,23 @@ class TypingRenderer {
     const endIndex = Math.min(targetWords.length - 1, currentWordIdx);
 
     let renderedWords = 0;
+    // Menandai sejauh mana kata BENAR-BENAR selesai diproses pada pemanggilan ini.
+    // PENTING: sebelumnya lastRenderedWordIdx selalu di-set ke currentWordIdx tanpa
+    // syarat, walau loop berhenti lebih awal karena RENDER_BATCH_LIMIT_WORDS tercapai.
+    // Itu membuat kata-kata di antara titik berhenti dan currentWordIdx dianggap
+    // "sudah dirender" padahal DOM-nya masih untyped, dan tidak akan pernah
+    // diperbaiki lagi (kecuali ada seek mundur). Sekarang kita hanya menandai
+    // sejauh mana benar-benar diproses, lalu menjadwalkan lanjutan bila belum selesai.
+    let lastProcessedIdx = startIndex - 1;
 
     for (let wordIdx = startIndex; wordIdx <= endIndex; wordIdx++) {
       if (renderedWords >= RENDER_BATCH_LIMIT_WORDS) break;
 
       const wordEl = this.cache.wordElements[wordIdx];
-      if (!wordEl) continue;
+      if (!wordEl) {
+        lastProcessedIdx = wordIdx;
+        continue;
+      }
 
       const targetWord = targetWords[wordIdx] ?? '';
       const typedWord = currentWords[wordIdx] ?? '';
@@ -397,25 +436,28 @@ class TypingRenderer {
 
       wordEl.classList.toggle('active-word', isCurrentWord);
 
-      // Hapus extra wrong spans secara aman.
-      // (Ini masih DOM op; tapi dibatasi dan dilakukan per word yang berubah.)
-      // Hindari querySelectorAll untuk semua frame dengan mengikat ke wordEl saja.
+      // wrong-extra adalah span dinamis (kelebihan ketik), tidak di-cache karena
+      // jumlahnya tidak tetap. Query ini hanya kena pada kata yang benar-benar berubah.
       const wrongExtras = wordEl.querySelectorAll('.wrong-extra');
       for (const el of wrongExtras) el.remove();
 
-      const charSpans = wordEl.querySelectorAll('.replay-char');
+      // Pakai referensi char-span yang sudah di-cache saat build(), bukan
+      // querySelectorAll ulang tiap frame -- lebih ringan untuk teks panjang (>15k karakter).
+      const charSpans = this.cache.wordCharSpans[wordIdx];
 
-      for (let i = 0; i < targetWord.length; i++) {
-        const charSpan = charSpans[i];
-        if (!charSpan) continue;
-        if (i < typedWord.length) {
-          const isCorrect = typedWord[i] === targetWord[i];
-          charSpan.className = `replay-char ${isCorrect ? 'correct' : 'wrong'}`;
-        } else {
-          charSpan.className = 'replay-char untyped';
+      if (charSpans) {
+        for (let i = 0; i < targetWord.length; i++) {
+          const charSpan = charSpans[i];
+          if (!charSpan) continue;
+          if (i < typedWord.length) {
+            const isCorrect = typedWord[i] === targetWord[i];
+            charSpan.className = `replay-char ${isCorrect ? 'correct' : 'wrong'}`;
+          } else {
+            charSpan.className = 'replay-char untyped';
+          }
+
+          charSpan.classList.toggle('cursor', isCurrentWord && i === typedWord.length);
         }
-
-        charSpan.classList.toggle('cursor', isCurrentWord && i === typedWord.length);
       }
 
       if (typedWord.length > targetWord.length) {
@@ -429,11 +471,11 @@ class TypingRenderer {
         }
       }
 
-      // Spasi setelah kata di DOM: elemen berikutnya biasanya space-char
-      const nextEl = wordEl.nextElementSibling;
-      if (nextEl && nextEl.classList?.contains('space-char')) {
+      // Spasi setelah kata: pakai referensi yang sudah di-cache.
+      const spaceSpan = this.cache.wordSpaceSpans[wordIdx];
+      if (spaceSpan) {
         const isPassed = wordIdx < currentWordIdx;
-        nextEl.className = `replay-char space-char ${isPassed ? 'correct' : 'untyped'}`;
+        spaceSpan.className = `replay-char space-char ${isPassed ? 'correct' : 'untyped'}`;
       }
 
       // Auto-scroll (tanpa DOM read)
@@ -444,9 +486,17 @@ class TypingRenderer {
       }
 
       renderedWords++;
+      lastProcessedIdx = wordIdx;
     }
 
-    this.cache.lastRenderedWordIdx = currentWordIdx;
+    this.cache.lastRenderedWordIdx = lastProcessedIdx;
+
+    // Kalau masih ada sisa kata yang belum sempat diproses karena limit batch,
+    // lanjutkan secepatnya di frame berikutnya alih-alih menunggu keystroke berikutnya
+    // (yang bisa saja tidak datang lagi kalau ini adalah kata terakhir dari sebuah seek besar).
+    if (lastProcessedIdx < endIndex) {
+      requestAnimationFrame(() => this.render(params));
+    }
   }
 
   ensureScrollSync(wordIdx) {
@@ -528,9 +578,7 @@ class TypingPlayer {
 
     this._renderToken = 0;
     this._rafId = null;
-    this._seeking = false;
-
-    this._lastUpdateReportedMs = -1;
+    this._wasPlayingBeforeHidden = false;
   }
 
   loadTimeline(playbackTimestamps, { startIndex = 0 } = {}) {
@@ -652,17 +700,12 @@ class TypingPlayer {
     const keystrokes = this.getKeystrokes();
     if (!keystrokes?.length || !this.playbackTimestamps?.length) return;
 
-    this._seeking = true;
-
     // cari currentIndex via upper bound linear (aman untuk jumlah keystrokes biasanya < 15k)
     // optimasi bisa binary search, tapi linear cukup aman karena seek jarang.
     let idx = 0;
     while (idx < this.playbackTimestamps.length && this.playbackTimestamps[idx] <= targetVirtualTimeMs) idx++;
 
     this.currentIndex = Math.min(idx, keystrokes.length);
-
-    // update currentVirtualTimeMs
-    const actualVirtual = this.playbackTimestamps[this.currentIndex] ?? targetVirtualTimeMs;
     this.currentVirtualTimeMs = targetVirtualTimeMs;
 
     // update renderer agar langsung sinkron
@@ -674,8 +717,6 @@ class TypingPlayer {
     // set referensi waktu untuk lanjutan playback
     this.playStartWallTime = performance.now();
     this.playStartVirtualTime = this.currentVirtualTimeMs;
-
-    this._seeking = false;
 
     if (keepPlaying) {
       // restart loop dengan token baru agar tidak ada 2 loop berjalan
@@ -699,9 +740,6 @@ class TypingPlayer {
     while (this.currentIndex < keystrokes.length && (ts[this.currentIndex] ?? 0) <= target) {
       this.currentIndex++;
       advanced = true;
-      if (advanced && this.currentIndex % 2000 === 0) {
-        // nothing, just keep loop safe
-      }
     }
 
     if (this.currentIndex > keystrokes.length) this.currentIndex = keystrokes.length;
@@ -793,24 +831,23 @@ class TypingPlayer {
   }
 
   _updatePlayButton(isPlaying) {
-    if (!this.ui?.playButton) return;
-    const btn = this.ui.playButton;
-    const icon = btn.querySelector('i');
-    if (icon) icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+    setPlayButtonIcon(this.ui?.playButton, isPlaying);
   }
 
   _handleVisibilityChange() {
-    // Akurasi: jika tab disembunyikan, pause supaya wall clock tidak membuat targetVirtualTime lompat saat kembali.
+    // Akurasi: jika tab disembunyikan, pause supaya wall clock tidak membuat
+    // targetVirtualTime melompat jauh saat tab kembali aktif (mis. laptop di-sleep).
     if (document.visibilityState === 'hidden') {
-      // simpan currentVirtualTime dengan pause() formula
+      if (this.isPlaying) this._wasPlayingBeforeHidden = true;
       this.pause();
       return;
     }
-    // Jika kembali visible dan tadinya paused karena hidden, kita resume? (pilih behavior aman: resume otomatis)
-    // Namun requirement hanya mencegah loncatan: aman melakukan resume.
-    // Untuk menghindari race, hanya resume jika sempat playing sebelumnya.
-    // Kita deteksi dengan flag: jika isPlaying sudah false karena pause, kita resume.
-    if (this.ui?.autoResumeOnVisible) {
+
+    // Tab kembali terlihat: hanya lanjutkan otomatis jika memang sedang
+    // playing sebelum disembunyikan, supaya tidak diam-diam mulai memutar
+    // replay yang memang sengaja di-pause oleh user.
+    if (this._wasPlayingBeforeHidden) {
+      this._wasPlayingBeforeHidden = false;
       this.play();
     }
   }
@@ -962,8 +999,18 @@ class TypingReplayApp {
   }
 
   loadReplay(scoreId) {
-    const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
-    const score = scores?.[scoreId];
+    let scores = [];
+    try {
+      scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
+    } catch (err) {
+      console.error('Gagal membaca typingScores dari localStorage:', err);
+    }
+
+    // Dukung kedua kemungkinan: skor punya field id unik sendiri (paling aman),
+    // atau scoreId memang dimaksudkan sebagai index posisi array (perilaku lama).
+    const score = Array.isArray(scores)
+      ? scores.find((s) => s?.id === scoreId) ?? scores[scoreId]
+      : undefined;
 
     if (!score || !score.replayData) {
       this._showNoReplayMessage('Replay tidak tersedia.');
@@ -1127,10 +1174,7 @@ class TypingReplayApp {
   }
 
   _setPlayButtonIcon(isPlaying) {
-    const btn = document.getElementById('replay-play-btn');
-    if (!btn) return;
-    const icon = btn.querySelector('i');
-    if (icon) icon.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+    setPlayButtonIcon(document.getElementById('replay-play-btn'), isPlaying);
   }
 }
 
