@@ -56,53 +56,53 @@ export function renderAllLines(
   DOM.textDisplay.innerHTML = "";
 
   wordsToRender.forEach((word, i) => {
-    const wordContainer = document.createElement("span");
-    wordContainer.classList.add("word-container");
-    wordContainer.id = `word-${startIndex + i}`;
-
-    // Render hanya kata, TANPA spasi
-    word.split("").forEach((char) => {
-      const charSpan = document.createElement("span");
-      charSpan.textContent = char;
-      wordContainer.appendChild(charSpan);
-    });
-
-    DOM.textDisplay.appendChild(wordContainer);
-
-    // Spasi sebagai elemen TERPISAH (bukan bagian dari word container)
-    const spaceSpan = document.createElement("span");
-    spaceSpan.textContent = " ";
-    spaceSpan.classList.add("space-char");
-    spaceSpan.id = `space-${startIndex + i}`;
-    DOM.textDisplay.appendChild(spaceSpan);
+    DOM.textDisplay.appendChild(createWordGroup(word, startIndex + i));
   });
   updateWordHighlighting();
   ensureScrollSync();
+}
+
+// Bungkus word-container + space-char dalam satu unit yang tidak bisa
+// terpecah antar baris (white-space: nowrap), supaya jika sebuah kata
+// melebar (mis. karena karakter overtyped), yang turun ke baris baru
+// adalah kata itu SENDIRI beserta spasinya — bukan spasinya saja.
+function createWordGroup(word, index) {
+  const wordGroup = document.createElement("span");
+  wordGroup.classList.add("word-group");
+  wordGroup.id = `word-group-${index}`;
+  wordGroup.style.whiteSpace = "nowrap";
+  wordGroup.style.display = "inline-block";
+
+  const wordContainer = document.createElement("span");
+  wordContainer.classList.add("word-container");
+  wordContainer.id = `word-${index}`;
+
+  // Render hanya kata, TANPA spasi
+  word.split("").forEach((char) => {
+    const charSpan = document.createElement("span");
+    charSpan.textContent = char;
+    wordContainer.appendChild(charSpan);
+  });
+
+  wordGroup.appendChild(wordContainer);
+
+  // Spasi tetap elemen TERPISAH dari word-container (untuk keperluan
+  // styling/highlighting yang sudah ada), tapi sekarang berada dalam
+  // wordGroup yang sama sehingga selalu ikut turun bersama katanya.
+  const spaceSpan = document.createElement("span");
+  spaceSpan.textContent = " ";
+  spaceSpan.classList.add("space-char");
+  spaceSpan.id = `space-${index}`;
+  wordGroup.appendChild(spaceSpan);
+
+  return wordGroup;
 }
 
 function appendLines(wordsToRender, startIndex) {
   const DOM = getGameDOMReferences();
 
   wordsToRender.forEach((word, i) => {
-    const wordContainer = document.createElement("span");
-    wordContainer.classList.add("word-container");
-    wordContainer.id = `word-${startIndex + i}`;
-
-    // Render hanya kata, TANPA spasi
-    word.split("").forEach((char) => {
-      const charSpan = document.createElement("span");
-      charSpan.textContent = char;
-      wordContainer.appendChild(charSpan);
-    });
-
-    DOM.textDisplay.appendChild(wordContainer);
-
-    // Spasi sebagai elemen TERPISAH (bukan bagian dari word container)
-    const spaceSpan = document.createElement("span");
-    spaceSpan.textContent = " ";
-    spaceSpan.classList.add("space-char");
-    spaceSpan.id = `space-${startIndex + i}`;
-    DOM.textDisplay.appendChild(spaceSpan);
+    DOM.textDisplay.appendChild(createWordGroup(word, startIndex + i));
   });
 
   updateWordHighlighting();

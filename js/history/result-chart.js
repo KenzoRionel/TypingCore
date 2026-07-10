@@ -3,6 +3,58 @@
 let resultChartInstance = null;
 let pbLineVisible = true; // toggle state untuk garis PB (persist antar render)
 
+// ✅ BARU: state untuk animasi "reveal" (garis bergerak dari kiri ke kanan)
+let revealProgress = 0; // 0 -> 1
+let revealAnimationId = null;
+const REVEAL_DURATION_MS = 2400; // durasi total animasi reveal
+const REVEAL_EASING = (t) => 1 - Math.pow(1 - t, 3); // ease-out cubic, biar di akhir agak melambat
+
+// ✅ BARU: plugin yang meng-clip area chart secara horizontal sesuai progress animasi,
+// sehingga garis & titik "muncul" dari kiri ke kanan mengikuti bentuknya sendiri.
+const revealClipPlugin = {
+  id: "revealClip",
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+    const revealWidth = chartArea.width * revealProgress;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(chartArea.left, chartArea.top - 20, revealWidth, chartArea.height + 40);
+    ctx.clip();
+  },
+  afterDatasetsDraw(chart) {
+    chart.ctx.restore();
+  },
+};
+
+// ✅ BARU: jalankan loop rAF yang menaikkan revealProgress dari 0 -> 1,
+// lalu redraw chart tiap frame (tanpa animasi bawaan Chart.js, biar kita yang kontrol).
+function startRevealAnimation(chart) {
+  if (revealAnimationId) cancelAnimationFrame(revealAnimationId);
+  revealProgress = 0;
+
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / REVEAL_DURATION_MS);
+    revealProgress = REVEAL_EASING(t);
+
+    // 'none' = update tanpa memicu animasi bawaan Chart.js, cukup redraw
+    chart.update("none");
+
+    if (t < 1) {
+      revealAnimationId = requestAnimationFrame(step);
+    } else {
+      revealProgress = 1;
+      chart.update("none");
+      revealAnimationId = null;
+    }
+  }
+
+  revealAnimationId = requestAnimationFrame(step);
+}
+
 // ✅ PERUBAHAN: Sekarang fungsi menerima `rawWpmPerSecond` DAN `correctCharsPerSecond`
 export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSecond, correctCharsPerSecond) {
   const canvas = document.getElementById("resultChart");
@@ -13,6 +65,11 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
     resultChartInstance.destroy();
     resultChartInstance = null;
   }
+  if (revealAnimationId) {
+    cancelAnimationFrame(revealAnimationId);
+    revealAnimationId = null;
+  }
+  revealProgress = 0; // mulai dari 0 lagi tiap render baru
 
   const netWpmData = [];
   const rawCumulativeData = []; // ✅ BARU: "raw" versi kumulatif (mengikuti bentuk "wpm", hanya berbeda saat ada error)
@@ -203,10 +260,13 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
         },
       },
     },
-    plugins: [pbLine],
+    plugins: [revealClipPlugin, pbLine],
   });
 
   setupCustomLegend(resultChartInstance);
+
+  // ✅ BARU: mulai animasi garis bergerak dari kiri ke kanan
+  startRevealAnimation(resultChartInstance);
 }
 
 // ✅ BARU: legend ikon interaktif (scale, pb, raw, burst, errors) mengikuti konsep pada gambar acuan
