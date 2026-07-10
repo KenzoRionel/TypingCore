@@ -21,6 +21,24 @@ import {
 } from "../index-keyboard.js";
 
 
+// ✅ BARU: helper untuk menghitung karakter benar/salah pada kata yang SEDANG diketik
+// (belum di-submit lewat processTypedWord). Sumber datanya adalah gameState.currentWordCharLog,
+// yang mencatat status tiap karakter (benar/salah, apakah spasi, dan "detik ke berapa" saat
+// karakter itu dihitung) sehingga bisa dibatalkan dengan presisi saat user menekan Backspace.
+function getInProgressCharCounts() {
+  const log = gameState.currentWordCharLog || [];
+  let correct = 0;
+  let incorrect = 0;
+  for (const entry of log) {
+    if (entry.correct) {
+      if (!entry.isSpace) correct++; // spasi benar tidak dihitung sebagai karakter WPM
+    } else {
+      incorrect++;
+    }
+  }
+  return { correct, incorrect };
+}
+
 export function generateAndAppendWords(numWords) {
   if (!window.defaultKataKata || window.defaultKataKata.length === 0) {
     console.error(
@@ -53,6 +71,9 @@ export function processTypedWord() {
   if (!targetWord) {
     gameState.typedWordCorrectness[gameState.typedWordIndex] = false;
     gameState.totalIncorrectWords++;
+    // ✅ PERBAIKAN: reset log karakter kata berjalan meski targetWord kosong,
+    // supaya kata berikutnya tidak mewarisi log dari kata ini.
+    gameState.currentWordCharLog = [];
     return;
   }
 
@@ -99,6 +120,10 @@ export function processTypedWord() {
   });
 
   gameState.wordStartTime = now;
+
+  // ✅ PERBAIKAN (poin 3): reset log karakter kata berjalan setelah kata selesai diproses,
+  // supaya kata berikutnya mulai dari log kosong (tidak mewarisi jejak karakter kata lama).
+  gameState.currentWordCharLog = [];
 }
 
 // ✅ KODE YANG DIUBAH
@@ -119,9 +144,15 @@ export function updateRealtimeStats() {
   const now = Date.now();
   const elapsedMs = now - gameState.startTime;
   const elapsedMinutes = elapsedMs / 60000;
-  const totalCorrectChars =
-    gameState.correctChars + (DOM.hiddenInput?.value?.length || 0);
-  const totalIncorrectChars = gameState.incorrectChars;
+
+  // ✅ PERBAIKAN UTAMA (poin 1): sebelumnya SEMUA karakter yang sedang diketik pada kata
+  // berjalan (DOM.hiddenInput.value.length) diasumsikan benar. Sekarang kita pakai
+  // currentWordCharLog yang mencatat status benar/salah per karakter secara real-time,
+  // supaya WPM & akurasi live tidak lagi selalu "sempurna" untuk kata yang belum selesai.
+  const { correct: inProgressCorrect, incorrect: inProgressIncorrect } =
+    getInProgressCharCounts();
+  const totalCorrectChars = gameState.correctChars + inProgressCorrect;
+  const totalIncorrectChars = gameState.incorrectChars + inProgressIncorrect;
   const totalTypedChars = totalCorrectChars + totalIncorrectChars;
 
   // ✅ PERBAIKAN UTAMA: Tambah batas minimum waktu atau karakter.
@@ -483,6 +514,7 @@ export function resetTestState() {
   gameState.correctCharsPerSecond = [];
   gameState.keystrokeDetails = [];
   gameState.inputHistory = [];
+  gameState.currentWordCharLog = []; // ✅ BARU: log karakter kata yang sedang berjalan
 
   // ✅ TAMBAHAN: Reset smootherWPM saat state direset
   gameState.smootherWPM = undefined;
@@ -609,13 +641,18 @@ export function initGameListeners() {
         startTimer();
       }
       if (!gameState.keystrokeLog) gameState.keystrokeLog = [];
-      gameState.keystrokeLog.push(now);
 
       const currentSecond = Math.floor((now - gameState.startTime) / 1000);
       const typedChar = event.key;
       const currentInputLength = DOM.hiddenInput.value.length;
 
       if (typedChar.length === 1 && typedChar !== "Backspace") {
+        // ✅ PERBAIKAN (poin 2): hanya keystroke karakter "nyata" (huruf, angka, simbol, spasi)
+        // yang dicatat ke keystrokeLog untuk metrik burst. Backspace, Shift, Enter, Tab,
+        // Arrow keys, dsb. tidak lagi ikut masuk (sebelumnya SEMUA tombol dicatat di sini,
+        // sehingga burst bisa naik palsu saat user hanya menghapus/menekan tombol kontrol).
+        gameState.keystrokeLog.push(now);
+
         let targetChar;
         let isCorrect;
         
@@ -637,7 +674,17 @@ export function initGameListeners() {
           // Don't count space as correct character for WPM calculation
           gameState.correctCharsPerSecond[currentSecond]++;
         }
-        
+
+        // ✅ BARU: catat status karakter ini di currentWordCharLog (dipakai oleh
+        // updateRealtimeStats untuk stats live yang akurat, dan oleh handler Backspace
+        // di bawah untuk membatalkan hitungan correctCharsPerSecond dengan tepat).
+        if (!gameState.currentWordCharLog) gameState.currentWordCharLog = [];
+        gameState.currentWordCharLog.push({
+          correct: isCorrect,
+          isSpace: typedChar === ' ',
+          second: currentSecond,
+        });
+
         // Store detailed keystroke info for replay
         if (!gameState.keystrokeDetails) gameState.keystrokeDetails = [];
         if (!gameState.inputHistory) gameState.inputHistory = [];
@@ -656,10 +703,14 @@ export function initGameListeners() {
         gameState.inputHistory.push(fullInputState);
         
         // Calculate real-time stats for this keystroke
+        // ✅ PERBAIKAN: pakai currentWordCharLog (seluruh kata berjalan), bukan hanya
+        // karakter yang baru saja diketik, supaya konsisten dengan updateRealtimeStats().
         const currentElapsedMs = now - gameState.startTime;
         const currentElapsedMinutes = currentElapsedMs / 60000;
-        const currentTotalCorrectChars = gameState.correctChars + (isCorrect && typedChar !== ' ' ? 1 : 0);
-        const currentTotalIncorrectChars = gameState.incorrectChars + (isCorrect ? 0 : 1);
+        const { correct: inProgCorrectNow, incorrect: inProgIncorrectNow } =
+          getInProgressCharCounts();
+        const currentTotalCorrectChars = gameState.correctChars + inProgCorrectNow;
+        const currentTotalIncorrectChars = gameState.incorrectChars + inProgIncorrectNow;
         const currentTotalTypedChars = currentTotalCorrectChars + currentTotalIncorrectChars;
         
         // Calculate WPM (minimum 0.5 seconds to avoid division by zero)
@@ -694,7 +745,22 @@ export function initGameListeners() {
       if (typedChar === 'Backspace') {
         if (!gameState.keystrokeDetails) gameState.keystrokeDetails = [];
         if (!gameState.inputHistory) gameState.inputHistory = [];
-        
+
+        // ✅ PERBAIKAN UTAMA (poin 4): sebelumnya Backspace tidak pernah mengurangi
+        // correctCharsPerSecond, jadi grafik "wpm" bisa lebih tinggi dari WPM final
+        // (karakter yang sudah dihapus tetap ikut terhitung selamanya). Sekarang kita
+        // pop karakter terakhir dari currentWordCharLog dan batalkan hitungannya di
+        // detik tempat ia awalnya dicatat.
+        if (gameState.currentWordCharLog && gameState.currentWordCharLog.length > 0) {
+          const removedEntry = gameState.currentWordCharLog.pop();
+          if (removedEntry.correct && !removedEntry.isSpace) {
+            const sec = removedEntry.second;
+            if (gameState.correctCharsPerSecond[sec] > 0) {
+              gameState.correctCharsPerSecond[sec]--;
+            }
+          }
+        }
+
         // Get the text state after backspace (current hidden input value)
         // Build inputState from scratch each time to avoid duplication issues
         const completedWords = gameState.userTypedWords.slice(0, gameState.typedWordIndex).filter(w => w && w.length > 0);
@@ -709,10 +775,15 @@ export function initGameListeners() {
         gameState.inputHistory.push(fullInputState);
         
         // Calculate real-time stats for backspace keystroke
+        // ✅ Ikut pakai currentWordCharLog (setelah karakter yang dihapus di-pop di atas)
+        // supaya wpm/accuracy yang disimpan untuk replay juga konsisten & tidak lagi
+        // membeku pada nilai lama saat user menghapus.
         const currentElapsedMs = now - gameState.startTime;
         const currentElapsedMinutes = currentElapsedMs / 60000;
-        const currentTotalCorrectChars = gameState.correctChars;
-        const currentTotalIncorrectChars = gameState.incorrectChars;
+        const { correct: inProgCorrectAfterDel, incorrect: inProgIncorrectAfterDel } =
+          getInProgressCharCounts();
+        const currentTotalCorrectChars = gameState.correctChars + inProgCorrectAfterDel;
+        const currentTotalIncorrectChars = gameState.incorrectChars + inProgIncorrectAfterDel;
         const currentTotalTypedChars = currentTotalCorrectChars + currentTotalIncorrectChars;
         
         // Calculate WPM (minimum 0.5 seconds to avoid division by zero)
