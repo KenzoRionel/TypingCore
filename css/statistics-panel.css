@@ -1,0 +1,236 @@
+/* css/statistics-panel.css
+   Panel statistik hasil typing test.
+   Warna disamakan dengan tema gelap yang sudah dipakai di aplikasi ini
+   (background gelap, teks abu terang, aksen merah/hijau untuk delta).
+*/
+
+:root {
+  --stats-bg: #1e1e1e;
+  --stats-card-bg: #2a2a2a;
+  --stats-card-border: #444;
+  --stats-text: #e0e0e0;
+  --stats-text-muted: #9a9a9a;
+  --stats-accent: #4dabf7;
+  --stats-good: #51cf66;
+  --stats-bad: #ff6b6b;
+  --stats-flat: #adb5bd;
+}
+
+/* ============ CONTAINER / EXPAND-COLLAPSE ANIMATION ============ */
+
+.statistics-panel {
+  width: 100%;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  border-radius: 12px;
+  background: var(--stats-bg);
+  transition:
+    max-height 0.35s ease,
+    opacity 0.3s ease,
+    margin-top 0.35s ease;
+}
+
+.statistics-panel.expand {
+  max-height: 4000px; /* cukup besar untuk menampung seluruh konten panel */
+  margin-top: 16px;
+}
+
+.statistics-panel.expand.visible {
+  opacity: 1;
+}
+
+.statistics-content {
+  padding: 20px;
+  color: var(--stats-text);
+}
+
+.stats-section-title {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--stats-text);
+}
+
+.stats-section {
+  margin-bottom: 24px;
+}
+
+.stats-section:last-child {
+  margin-bottom: 0;
+}
+
+.stats-section-header {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--stats-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--stats-card-border);
+  padding-bottom: 6px;
+}
+
+/* ============ CARD GRID ============ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.stat-card {
+  background: var(--stats-card-bg);
+  border: 1px solid var(--stats-card-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.stat-card-wide {
+  grid-column: 1 / -1;
+}
+
+.stat-card h5 {
+  margin: 0 0 10px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--stats-text-muted);
+}
+
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  gap: 10px;
+}
+
+.stat-label {
+  color: var(--stats-text-muted);
+}
+
+.stat-value {
+  font-weight: 600;
+  color: var(--stats-text);
+  text-align: right;
+}
+
+.stat-value code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.stat-empty {
+  color: var(--stats-text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.stat-delta {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-delta-up {
+  color: var(--stats-good);
+}
+
+.stat-delta-down {
+  color: var(--stats-bad);
+}
+
+.stat-delta-flat {
+  color: var(--stats-flat);
+}
+
+/* ============ KEYBOARD HEATMAP (di-scope ke .keyboard-heatmap
+   supaya TIDAK bentrok dengan class .keyboard-row / .key milik
+   virtual keyboard asli di index-keyboard.js) ============ */
+
+.keyboard-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.keyboard-heatmap .keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.keyboard-heatmap .keyboard-key {
+  position: relative;
+  min-width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--stats-card-border);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--stats-text);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.keyboard-heatmap .error-count {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  font-size: 0.55rem;
+  background: var(--stats-bad);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 2px;
+  line-height: 1.2;
+}
+
+/* ============ MINI LINE CHART ============ */
+
+.mini-line-chart {
+  width: 100%;
+  height: 70px;
+  display: block;
+}
+
+.mini-chart-line {
+  stroke: var(--stats-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.mini-chart-point {
+  fill: var(--stats-accent);
+}
+
+/* ============ STATISTICS BUTTON ACTIVE STATE ============ */
+
+#statisticsButton.active {
+  box-shadow: 0 0 0 2px var(--stats-accent);
+}
+
+/* ============ RESPONSIVE (MOBILE) ============ */
+
+@media (max-width: 600px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .statistics-content {
+    padding: 14px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+}

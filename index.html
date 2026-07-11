@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/custom-button.css" />
     <link rel="stylesheet" href="css/speedometer-style.css" />
     <link rel="stylesheet" href="css/dark-mode.css" />
+    <link rel="stylesheet" href="css/statistics-panel.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
@@ -207,7 +208,19 @@
                   aria-label="Mulai Ulang"
                 >
                   <i class="fas fa-redo-alt fa-lg"></i>
-                </button>
+               </button>
+               <button
+                  id="statisticsButton"
+                  class="btn restart-btn d-flex align-items-center justify-content-center flex-shrink-0"
+                  aria-label="Tampilkan Statistik"
+                  style="display: none;"
+                >
+                  <i class="fas fa-chart-bar fa-lg"></i>
+               </button>
+              </div>
+              <!-- Statistics Panel: tepat setelah tombol Restart/Statistik, di bawah area grafik -->
+              <div id="statisticsPanel" class="statistics-panel" style="display: none;">
+                <!-- Panel content will be injected here by statistics-panel.js -->
               </div>
               <div id="stats-container">
                 <div class="text-stats-container" style="display: none; gap: 30px; justify-content: center; align-items: center; width: 100%; font-family: inherit;">

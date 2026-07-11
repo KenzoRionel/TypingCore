@@ -13,6 +13,7 @@ import {
   triggerShakeAnimation,
 } from "../utils/text-display.js";
 import { renderResultChart } from "../history/result-chart.js";
+import { renderStatisticsPanel, initStatisticsPanel, resetStatisticsPanel } from "../history/statistics-panel.js";
 import { gameState } from "./game-state.js";
 import { lockTextDisplayHeightTo3Lines } from "../utils/text-display.js";
 import {
@@ -312,6 +313,44 @@ export function calculateAndDisplayFinalResults() {
     gameState.correctCharsPerSecond
   );
 
+  // Render statistics panel with test context
+  // Data diambil dari elemen/state yang sesungguhnya dipakai saat test berjalan,
+  // bukan nilai hardcoded, supaya "Konteks Test" menampilkan kondisi test yang nyata.
+  const selectedLangInput = document.querySelector('input[name="language"]:checked');
+  const languageLabel = selectedLangInput
+    ? (selectedLangInput.value === 'en' ? 'English' : 'Bahasa Indonesia')
+    : '-';
+
+  const targetWordsUsed = historyData.map((h) => h.word || '').filter(Boolean);
+  const avgWordLength = targetWordsUsed.length > 0
+    ? targetWordsUsed.reduce((sum, w) => sum + w.length, 0) / targetWordsUsed.length
+    : 0;
+  // Heuristik sederhana: kata dianggap "langka/sulit" jika panjangnya >= 7 karakter,
+  // karena tidak ada data frekuensi kata di kode ini untuk dijadikan acuan yang lebih akurat.
+  const rareWordCount = targetWordsUsed.filter((w) => w.length >= 7).length;
+  const rareWordPercent = targetWordsUsed.length > 0
+    ? Math.round((rareWordCount / targetWordsUsed.length) * 100)
+    : 0;
+
+  const hasNumbers = targetWordsUsed.some((w) => /[0-9]/.test(w));
+  const hasPunctuation = targetWordsUsed.some((w) => /[.,!?;:'"()\-]/.test(w));
+
+  const testContext = {
+    mode: `${languageLabel} · Time Mode (${gameState.TIMED_TEST_DURATION}s)`,
+    difficulty: avgWordLength > 0
+      ? `Avg ${avgWordLength.toFixed(1)} karakter/kata, ${rareWordPercent}% kata langka`
+      : '-',
+    includeNumbers: hasNumbers,
+    includePunctuation: hasPunctuation,
+    charCount: finalCorrectChars + finalIncorrectChars
+  };
+  renderStatisticsPanel(
+    historyData,
+    finalWPM,
+    gameState.TIMED_TEST_DURATION,
+    testContext
+  );
+
   // Prepare replay data - save text that was actually typed (not target words)
   // Using join(' ') to include spaces between words
   const typedText = gameState.userTypedWords.filter(w => w && w.length > 0).join(' ');
@@ -537,6 +576,10 @@ export function resetTestState() {
   if (resultsArea) {
     resultsArea.style.display = "none";
   }
+
+  // Reset statistics panel
+  resetStatisticsPanel();
+
   const textDisplayContainer = document.querySelector(
     ".text-display-container"
   );
@@ -817,6 +860,9 @@ export function initGameListeners() {
       startInactivityTimer();
     });
   }
+
+  // Initialize statistics panel button listener
+  initStatisticsPanel();
 }
 
 export function showStatsContainer() {
