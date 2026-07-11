@@ -903,6 +903,9 @@ export function hideStatsContainer() {
   const speedContainers = document.querySelectorAll('.speedometer-container');
   if (textStats) textStats.style.display = 'none';
   speedContainers.forEach((el) => (el.style.display = 'none'));
+
+  // Juga sembunyikan tombol statistik dan reset panel jika stats container disembunyikan.
+  resetStatisticsPanel();
 }
 
 /**
