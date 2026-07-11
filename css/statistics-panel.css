@@ -134,6 +134,37 @@
   font-style: italic;
 }
 
+/* Baris "Error Breakdown" versi detail: label+jumlah tebal di kiri,
+   persentase & contoh huruf/transisi di kanan */
+.stat-row-detailed {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stat-label-bold {
+  font-weight: 700;
+  color: var(--stats-text);
+  white-space: nowrap;
+}
+
+.stat-detail {
+  color: var(--stats-text-muted);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+@media (max-width: 600px) {
+  .stat-row-detailed {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .stat-detail {
+    text-align: left;
+  }
+}
+
 .stat-delta {
   font-size: 0.8rem;
   font-weight: 600;

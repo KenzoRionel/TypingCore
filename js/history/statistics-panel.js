@@ -89,6 +89,11 @@ export function renderStatisticsPanel(historyData, finalWPM, totalTime, testCont
 function calculateErrorStats(historyData) {
   const charErrors = {};
   const wordSpeeds = [];
+  // Detail per kategori: transisi huruf (typo/wrongCase) atau huruf itu sendiri (extra/missed)
+  const typoDetail = {};      // key: "target→typed" -> count
+  const wrongCaseDetail = {}; // key: "target→typed" -> count
+  const extraDetail = {};     // key: typedChar -> count
+  const missedDetail = {};    // key: targetChar -> count
   let totalTypo = 0, totalExtra = 0, totalMissed = 0, totalWrongCase = 0;
 
   historyData.forEach(data => {
@@ -115,14 +120,20 @@ function calculateErrorStats(historyData) {
         totalMissed++;
         const key = targetChar || '?';
         charErrors[key] = (charErrors[key] || 0) + 1;
+        missedDetail[key] = (missedDetail[key] || 0) + 1;
       } else if (!targetChar) {
         totalExtra++;
+        extraDetail[typedChar] = (extraDetail[typedChar] || 0) + 1;
       } else if (typedChar.toLowerCase() === targetChar.toLowerCase()) {
         totalWrongCase++;
         charErrors[targetChar] = (charErrors[targetChar] || 0) + 1;
+        const key = `${targetChar}→${typedChar}`;
+        wrongCaseDetail[key] = (wrongCaseDetail[key] || 0) + 1;
       } else {
         totalTypo++;
         charErrors[targetChar] = (charErrors[targetChar] || 0) + 1;
+        const key = `${targetChar}→${typedChar}`;
+        typoDetail[key] = (typoDetail[key] || 0) + 1;
       }
     }
   });
@@ -142,17 +153,43 @@ function calculateErrorStats(historyData) {
   // Build keyboard heatmap
   const keyboardHeatmap = buildKeyboardHeatmap(charErrors);
 
+  const totalErrors = totalTypo + totalExtra + totalMissed + totalWrongCase;
+
   return {
     topErrorChars,
     topSlowWords,
     errorBreakdown: {
-      typo: totalTypo,
-      extra: totalExtra,
-      missed: totalMissed,
-      wrongCase: totalWrongCase
+      typo: buildErrorCategory(totalTypo, totalErrors, typoDetail, 'transition'),
+      extra: buildErrorCategory(totalExtra, totalErrors, extraDetail, 'char'),
+      missed: buildErrorCategory(totalMissed, totalErrors, missedDetail, 'char'),
+      wrongCase: buildErrorCategory(totalWrongCase, totalErrors, wrongCaseDetail, 'transition')
     },
     keyboardHeatmap
   };
+}
+
+// Bangun ringkasan satu kategori error: total, persentase dari seluruh error,
+// dan contoh huruf/pasangan huruf yang paling sering muncul di kategori itu.
+function buildErrorCategory(count, totalErrors, detailMap, kind) {
+  const percentage = totalErrors > 0 ? Math.round((count / totalErrors) * 100) : 0;
+
+  const topEntries = Object.entries(detailMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2);
+
+  const examples = topEntries.map(([key, entryCount]) => {
+    if (kind === 'transition') {
+      // key sudah berformat "target→typed", tinggal ganti spasi jadi label "spasi"
+      return key.replace(/ /g, 'spasi');
+    }
+    // kind === 'char': tampilkan huruf, diulang sesuai jumlah kemunculannya
+    // (dibatasi maksimal 4x supaya tidak terlalu panjang), mis. 'k' x2 -> "kk"
+    const label = key === ' ' ? 'spasi' : key;
+    if (label === 'spasi') return label;
+    return label.repeat(Math.min(entryCount, 4));
+  });
+
+  return { count, percentage, examples };
 }
 
 // =============== PERFORMANCE STATISTICS ===============
@@ -461,22 +498,10 @@ function createErrorAnalysisCards(errorStats) {
     <div class="stat-card">
       <h5>Error Breakdown</h5>
       <div class="stat-list">
-        <div class="stat-row">
-          <span class="stat-label">Typo</span>
-          <span class="stat-value">${errorBreakdown.typo}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Extra</span>
-          <span class="stat-value">${errorBreakdown.extra}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Missed</span>
-          <span class="stat-value">${errorBreakdown.missed}</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Wrong Case</span>
-          <span class="stat-value">${errorBreakdown.wrongCase}</span>
-        </div>
+        ${createErrorBreakdownRow('Typo', errorBreakdown.typo)}
+        ${createErrorBreakdownRow('Extra', errorBreakdown.extra)}
+        ${createErrorBreakdownRow('Missed', errorBreakdown.missed)}
+        ${createErrorBreakdownRow('Wrong Case', errorBreakdown.wrongCase)}
       </div>
     </div>
 
@@ -485,6 +510,20 @@ function createErrorAnalysisCards(errorStats) {
       <div class="keyboard-heatmap">
         ${createKeyboardHeatmapHTML(keyboardHeatmap)}
       </div>
+    </div>
+  `;
+}
+
+function createErrorBreakdownRow(label, category) {
+  const { count, percentage, examples } = category;
+  const detailText = count > 0
+    ? `${percentage}% — ${examples.map(escapeHtml).join(', ')}`
+    : '-';
+
+  return `
+    <div class="stat-row stat-row-detailed">
+      <span class="stat-label-bold">${escapeHtml(label)}: ${count}</span>
+      <span class="stat-detail">${detailText}</span>
     </div>
   `;
 }
