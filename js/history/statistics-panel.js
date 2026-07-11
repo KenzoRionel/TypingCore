@@ -23,7 +23,11 @@ export function toggleStatisticsPanel() {
     panel.classList.add('expand');
     panel.style.display = 'block';
     button.setAttribute('aria-label', 'Sembunyikan Statistik');
-    setTimeout(() => panel.classList.add('visible'), 10);
+    setTimeout(() => {
+      panel.classList.add('visible');
+      // Autoscroll ke area panel statistik setelah panel terbuka
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 10);
   } else {
     panel.classList.remove('visible');
     button.setAttribute('aria-label', 'Tampilkan Statistik');

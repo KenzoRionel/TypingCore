@@ -511,6 +511,10 @@ export function invalidateTest(reason) {
     resultsArea.style.display = "none";
   }
 
+  // Tombol/panel statistik hanya relevan untuk hasil tes yang valid & selesai,
+  // jadi selalu sembunyikan & reset saat tes dibatalkan.
+  resetStatisticsPanel();
+
   // Tampilkan menu & tombol restart lagi - jangan tampilkan jika test sudah selesai
   if (window.isTestCompleted) return;
   
@@ -904,8 +908,13 @@ export function hideStatsContainer() {
   if (textStats) textStats.style.display = 'none';
   speedContainers.forEach((el) => (el.style.display = 'none'));
 
-  // Juga sembunyikan tombol statistik dan reset panel jika stats container disembunyikan.
-  resetStatisticsPanel();
+  // CATATAN: hideStatsContainer() ini khusus untuk live-stats (speedometer/text stats
+  // saat mengetik), BUKAN untuk tombol/panel statistik hasil akhir tes.
+  // Jangan panggil resetStatisticsPanel() di sini, karena fungsi ini juga dipanggil
+  // di endTest() tepat setelah tombol statistik dimunculkan (calculateAndDisplayFinalResults),
+  // sehingga tombol yang baru saja tampil langsung ikut tersembunyi lagi.
+  // Reset tombol/panel statistik dilakukan secara eksplisit di resetTestState() dan
+  // invalidateTest() saat tes benar-benar direset/dibatalkan.
 }
 
 /**
