@@ -387,6 +387,11 @@ export function calculateAndDisplayFinalResults() {
 
 
   if (typeof window.saveScore === "function") {
+    // 'en' untuk English, selain itu dianggap 'id' (Bahasa Indonesia) —
+    // konsisten dengan logic languageLabel di atas. Dipakai oleh PB Cards
+    // di halaman profil untuk membedakan mode per bahasa.
+    const languageCode = selectedLangInput && selectedLangInput.value === 'en' ? 'en' : 'id';
+
     window.saveScore(
       finalWPM,
       finalAccuracy,
@@ -396,7 +401,8 @@ export function calculateAndDisplayFinalResults() {
       "default",
       gameState.totalCorrectWords,
       gameState.totalIncorrectWords,
-      replayData
+      replayData,
+      languageCode
     );
   }
 

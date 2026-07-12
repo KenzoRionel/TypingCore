@@ -12,6 +12,12 @@
     />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/dark-mode.css" />
+    <link rel="stylesheet" href="css/profile-style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Manrope:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
       .profile-container {
         max-width: 900px;
@@ -19,74 +25,374 @@
         padding: 20px;
       }
 
-      .profile-header {
+      /* ---- Keycap Header (Step 1) ---- */
+
+      @keyframes tc-fade-up {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .tc-fade {
+        opacity: 0;
+        animation: tc-fade-up 0.5s ease both;
+      }
+
+      .tc-card {
+        background: var(--tc-card-bg);
+        border: 1px solid var(--tc-key-border);
+        border-radius: 24px;
+        padding: 24px;
+      }
+
+      .tc-header-row {
         display: flex;
-        gap: 30px;
-        margin-bottom: 20px;
         align-items: center;
+        gap: 24px;
       }
 
-      .profile-image {
+      .tc-avatar {
+        --tier-color: var(--tc-tier-rookie);
+        width: 88px;
+        height: 88px;
         flex-shrink: 0;
-      }
-
-      .profile-image img {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-      }
-
-      .profile-info {
-        flex-grow: 1;
-      }
-
-        .level-badge {
-        font-size: 1.2rem;
-        color: #dddddd;
-        margin-bottom: 5px;
-        background-color: #e2e2e24d;
-        font-weight: 800;
-        
-        /* Membuat ukuran background sama sisi (kotak/lingkaran) */
-        display: inline-flex;
+        border-radius: 20px;
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 1.5rem; /* Sesuaikan sedikit lebih besar dari font-size */
-        aspect-ratio: 1 / 1; 
-        
-        /* Opsional: Biar bentuknya bulat sempurna */
-        border-radius: 10%; 
-        
-        /* Hapus padding manual karena sudah diatur width & aspect-ratio */
-        padding: 0; 
+        background: var(--tc-key-bg);
+        border: 1px solid var(--tc-key-border);
+        box-shadow:
+          0 0 0 2px color-mix(in srgb, var(--tier-color) 45%, transparent),
+          inset 0 1px 0 var(--tc-shadow-inset),
+          0 4px 0 var(--tc-shadow-edge),
+          0 9px 16px var(--tc-shadow-blur);
+        font-size: 2rem;
+        color: var(--text-secondary);
       }
 
-      .level-name {
-        font-size: 1.8rem;
-        font-weight: 600;
-        margin-bottom: 8px;
+      .tc-info {
+        flex: 1;
+        min-width: 0;
       }
 
-      .xp-text {
+      .tc-info-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .tc-username {
+        font-family: "Manrope", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0;
+      }
+
+      .tc-meta {
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+      }
+
+      .tc-level {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        color: var(--tc-amber);
+      }
+
+      .tc-dot {
+        color: var(--text-light);
+      }
+
+      .tc-tier {
+        font-weight: 700;
+      }
+
+      .tc-tier.is-god {
+        background-image: linear-gradient(90deg, var(--tc-tier-god-start), var(--tc-tier-god-end));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .tc-streak-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      .tc-streak-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 700;
         font-size: 0.95rem;
-        color: #888;
+        background: var(--tc-flame-bg);
+        border: 1px solid var(--tc-flame-border);
+        color: var(--tc-flame);
+      }
+
+      .tc-streak-pill span:nth-child(2) {
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .tc-streak-best {
+        margin-top: 4px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+
+      .tc-xp {
+        margin-top: 16px;
       }
 
       .xp-bar {
         width: 100%;
-        max-width: 300px;
-        height: 8px;
-        background: #e0e0e0;
-        border-radius: 4px;
-        margin: 15px 0 50px 0;
+        max-width: none;
+        height: 10px;
+        background: var(--tc-key-light-bg);
+        border-radius: 999px;
+        margin: 0;
         overflow: hidden;
       }
 
       .xp-bar-fill {
         height: 100%;
-        background: #333;
-        border-radius: 4px;
-        transition: width 0.3s ease;
+        width: 0%;
+        background: var(--tc-amber);
+        border-radius: 999px;
+        transition: width 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .tc-xp-text {
+        margin-top: 6px;
+        display: flex;
+        justify-content: space-between;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+
+      .tc-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .tc-keycap {
+        background: var(--tc-key-light-bg);
+        border: 1px solid var(--tc-key-border);
+        border-radius: 16px;
+        padding: 20px 12px;
+        text-align: center;
+        box-shadow:
+          inset 0 1px 0 var(--tc-shadow-inset),
+          0 4px 0 var(--tc-shadow-edge),
+          0 9px 16px var(--tc-shadow-blur);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      .tc-keycap:hover {
+        transform: translateY(3px);
+        box-shadow:
+          inset 0 1px 0 var(--tc-shadow-inset),
+          0 1px 0 var(--tc-shadow-edge),
+          0 3px 8px var(--tc-shadow-blur);
+      }
+
+      .tc-stat-value {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        font-size: 2rem;
+        color: var(--text-primary);
+        line-height: 1;
+      }
+
+      .tc-stat-label {
+        margin-top: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+      }
+
+      @media (max-width: 640px) {
+        .tc-header-row {
+          flex-direction: column;
+          text-align: center;
+        }
+        .tc-info-top {
+          flex-direction: column;
+          align-items: center;
+        }
+        .tc-streak-wrap {
+          align-items: center;
+        }
+        .tc-meta {
+          justify-content: center;
+        }
+        .tc-stats-grid {
+          gap: 10px;
+        }
+        .tc-stat-value {
+          font-size: 1.5rem;
+        }
+        .tc-card {
+          padding: 20px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .tc-fade {
+          animation: none;
+          opacity: 1;
+        }
+        .tc-keycap {
+          transition: none;
+        }
+        .xp-bar-fill {
+          transition: none;
+        }
+      }
+
+      /* ---- Personal Best Cards ---- */
+      .pb-section {
+        margin-top: 28px;
+      }
+
+      .pb-section-title {
+        font-family: "Manrope", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 0 0 14px;
+      }
+
+      .pb-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+
+      .pb-card {
+        background: var(--tc-card-bg);
+        border: 1px solid var(--tc-key-border);
+        border-radius: 18px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow:
+          inset 0 1px 0 var(--tc-shadow-inset),
+          0 4px 0 var(--tc-shadow-edge),
+          0 9px 16px var(--tc-shadow-blur);
+      }
+
+      .pb-card:hover {
+        transform: translateY(-4px);
+        box-shadow:
+          inset 0 1px 0 var(--tc-shadow-inset),
+          0 8px 0 var(--tc-shadow-edge),
+          0 14px 22px var(--tc-shadow-blur);
+      }
+
+      .pb-card-mode {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-secondary);
+      }
+
+      .pb-card-wpm {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .pb-card-wpm-unit {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-light);
+      }
+
+      .pb-card-meta {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+      }
+
+      .pb-card--empty {
+        align-items: flex-start;
+        justify-content: center;
+        min-height: 112px;
+      }
+
+      .pb-card-empty-text {
+        font-size: 0.88rem;
+        color: var(--text-light);
+        margin: 4px 0 10px;
+      }
+
+      .pb-card-cta {
+        border: 1px solid var(--tc-key-border);
+        background: var(--tc-key-light-bg);
+        color: var(--tc-amber);
+        font-weight: 700;
+        font-size: 0.82rem;
+        padding: 8px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.15s ease;
+      }
+
+      .pb-card-cta:hover {
+        transform: translateY(-2px);
+        background: var(--tc-flame-bg);
+      }
+
+      @media (max-width: 900px) and (min-width: 641px) {
+        .pb-cards-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .pb-cards-grid {
+          display: flex;
+          overflow-x: auto;
+          gap: 12px;
+          padding-bottom: 6px;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+        }
+        .pb-card {
+          min-width: 68%;
+          flex: 0 0 auto;
+          scroll-snap-align: start;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pb-card,
+        .pb-card-cta {
+          transition: none;
+        }
       }
 
       .history-section h3 {
@@ -126,11 +432,6 @@
         .profile-container {
           margin: 30px;
           padding: 20px;
-        }
-        
-        .profile-header {
-          flex-direction: column;
-          gap: 20px;
         }
       }
     </style>
@@ -239,19 +540,80 @@
         </header>
 
         <div class="profile-container">
-          <div class="profile-header">
-            <div class="profile-image">
-              <img src="img/TypingCoreIcon.svg" alt="Profile" id="profileImage" />
-            </div>
-            <div class="profile-info">
-              <div class="level-badge" id="levelBadge">1</div>
-              <div class="level-name" id="levelName">Sight Seeker</div>
-              <div class="xp-text" id="xpText">0 XP</div>
-              <div class="xp-bar">
-                <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+          <div class="tc-card tc-fade">
+            <div class="tc-header-row">
+              <div class="tc-avatar" id="avatarKey">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="tc-info">
+                <div class="tc-info-top">
+                  <div>
+                    <h1 class="tc-username" id="username">Dapa</h1>
+                    <div class="tc-meta">
+                      <span class="tc-level" id="levelText">Level 4</span>
+                      <span class="tc-dot">&middot;</span>
+                      <span class="tc-tier" id="tierText">Speedster</span>
+                    </div>
+                  </div>
+                  <div class="tc-streak-wrap">
+                    <div class="tc-streak-pill">
+                      <span aria-hidden="true">🔥</span>
+                      <span id="streakCount">0</span>
+                      <span>Hari Beruntun</span>
+                    </div>
+                    <div class="tc-streak-best" id="streakBest">Rekor: 0 hari</div>
+                  </div>
+                </div>
+
+                <div class="tc-xp">
+                  <div class="xp-bar">
+                    <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+                  </div>
+                  <div class="tc-xp-text">
+                    <span id="xpText">0 / 0 XP</span>
+                    <span id="xpRemainingText"></span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+
+          <div class="tc-stats-grid">
+            <div class="tc-keycap tc-fade" style="animation-delay: 80ms">
+              <div class="tc-stat-value" id="statWpm">0</div>
+              <div class="tc-stat-label">WPM Terbaik</div>
+            </div>
+            <div class="tc-keycap tc-fade" style="animation-delay: 160ms">
+              <div class="tc-stat-value" id="statAcc">0</div>
+              <div class="tc-stat-label">Akurasi Rata-rata</div>
+            </div>
+            <div class="tc-keycap tc-fade" style="animation-delay: 240ms">
+              <div class="tc-stat-value" id="statTests">0</div>
+              <div class="tc-stat-label">Total Test</div>
+            </div>
+          </div>
+
+          <div class="pb-section tc-fade" style="animation-delay: 320ms">
+            <h3 class="pb-section-title">Personal Best</h3>
+            <div class="pb-cards-grid" id="pbCardsGrid">
+              <!-- diisi oleh js/history/pb-manager.js -->
+            </div>
+          </div>
+
+          <!-- diisi oleh js/history/ProgressCharts.js (React + Recharts) -->
+          <div id="progressChartsRoot" class="tc-fade" style="animation-delay: 360ms"></div>
+
+          <!-- diisi oleh js/history/AchievementGrid.js (React) -->
+          <div id="achievementGridRoot" class="tc-fade" style="animation-delay: 400ms"></div>
+
+          <!-- diisi oleh js/history/SkillAnalysis.js (React) -->
+          <div id="skillAnalysisRoot" class="tc-fade" style="animation-delay: 440ms"></div>
+
+          <!-- diisi oleh js/history/AllTimeStats.js (React) -->
+          <div id="allTimeStatsRoot" class="tc-fade" style="animation-delay: 480ms"></div>
+
+          <!-- diisi oleh js/history/FunStats.js (React) -->
+          <div id="funStatsRoot" class="tc-fade" style="animation-delay: 520ms"></div>
 
           <div class="history-section">
             <h3>Last 10 Tests</h3>
@@ -277,60 +639,104 @@
 
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="module">
-      // Profile logic
-      const levels = [
-        { level: 1, name: "Sight Seeker", xp: 0 },
-        { level: 2, name: "Key Finder", xp: 500 },
-        { level: 3, name: "Muscle Memory", xp: 1500 },
-        { level: 4, name: "Rhythm Rider", xp: 3500 },
-        { level: 5, name: "Tactile Pro", xp: 7000 },
-        { level: 6, name: "Silent Swift", xp: 12000 },
-        { level: 7, name: "Flow State", xp: 20000 },
-        { level: 8, name: "Mind-to-Key", xp: 35000 },
-        { level: 9, name: "Sonic Stroke", xp: 60000 },
-        { level: 10, name: "Ascended Typist", xp: 100000 },
+      import { getTypingScores } from './js/history/score-manager.js';
+      import { buildUserData as buildProfileUserData } from './js/history/profile-stats.js';
+
+      // ==================== Profile Header logic (Step 1) ====================
+      // Data asli, dibangun dari localStorage (lihat js/history/profile-stats.js):
+      //  - level & xp: dihitung dari 'userXP' (kunci yang SAMA dipakai oleh
+      //    animateXPBar() di game-logic.js), memakai tabel level yang identik,
+      //    supaya Level di sini selalu sinkron dengan yang tampil saat selesai tes.
+      //  - streak: dihitung dari tanggal-tanggal di 'typingScores' (hari-hari
+      //    berturut-turut yang punya minimal 1 tes).
+      //  - stats: agregasi WPM/akurasi/jumlah tes dari 'typingScores'.
+      // Username belum punya sistem akun/login di kode yang ada, jadi untuk
+      // sementara diambil dari localStorage 'typingUsername' (bisa diisi lewat
+      // console: localStorage.setItem('typingUsername', 'NamaKamu')), dengan
+      // fallback "Guest" alih-alih nama hardcoded "Dapa".
+      function buildUserData() {
+        const scores = getTypingScores();
+        const username = localStorage.getItem('typingUsername') || 'Guest';
+        return buildProfileUserData(scores, username);
+      }
+
+      const TIERS = [
+        { name: "Rookie", min: 0, cssVar: "--tc-tier-rookie" },
+        { name: "Speedster", min: 50, cssVar: "--tc-tier-speedster" },
+        { name: "Speed Demon", min: 80, cssVar: "--tc-tier-demon" },
+        { name: "Typing God", min: 100, cssVar: null },
       ];
 
-      let currentXP = parseInt(localStorage.getItem("userXP")) || 0;
-
-      function getCurrentLevel(xp) {
-        for (let i = levels.length - 1; i >= 0; i--) {
-          if (xp >= levels[i].xp) return levels[i];
+      function getTier(wpm) {
+        let tier = TIERS[0];
+        for (const t of TIERS) {
+          if (wpm >= t.min) tier = t;
         }
-        return levels[0];
+        return tier;
       }
 
-      function getNextLevel(xp) {
-        for (let i = 0; i < levels.length; i++) {
-          if (xp < levels[i].xp) return levels[i];
+      // Count-up sederhana, menghormati prefers-reduced-motion
+      function animateCount(el, target, { suffix = "", duration = 1300 } = {}) {
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduced) {
+          el.textContent = `${target}${suffix}`;
+          return;
         }
-        return null;
+        let start = null;
+        function step(ts) {
+          if (start === null) start = ts;
+          const progress = Math.min((ts - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          el.textContent = `${Math.round(target * eased)}${suffix}`;
+          if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
       }
 
-      function updateProfile() {
-        const currentLevel = getCurrentLevel(currentXP);
-        const nextLevel = getNextLevel(currentXP);
+      function renderProfileHeader(userData) {
+        const tier = getTier(userData.stats.bestWpm);
 
-        document.getElementById("levelBadge").textContent = ` ${currentLevel.level}`;
-        document.getElementById("levelName").textContent = currentLevel.name;
+        document.getElementById("username").textContent = userData.username;
+        document.getElementById("levelText").textContent = `Level ${userData.level}`;
 
-        if (nextLevel) {
-          const xpNeeded = nextLevel.xp - currentXP;
-          document.getElementById("xpText").textContent = `${currentXP} XP · ${xpNeeded} to Level ${nextLevel.level}`;
-          
-          const prevLevelXP = currentLevel.xp;
-          const xpInLevel = currentXP - prevLevelXP;
-          const xpRequiredForLevel = nextLevel.xp - prevLevelXP;
-          const progressPercent = (xpInLevel / xpRequiredForLevel) * 100;
-          document.getElementById("xpBarFill").style.width = `${progressPercent}%`;
-        } else {
-          document.getElementById("xpText").textContent = `${currentXP} XP · Max Level`;
-          document.getElementById("xpBarFill").style.width = "100%";
-        }
+        const tierEl = document.getElementById("tierText");
+        tierEl.textContent = tier.name;
+        tierEl.classList.toggle("is-god", tier.name === "Typing God");
+        tierEl.style.color = tier.cssVar ? `var(${tier.cssVar})` : "";
+
+        const avatar = document.getElementById("avatarKey");
+        avatar.style.setProperty(
+          "--tier-color",
+          tier.cssVar ? `var(${tier.cssVar})` : "var(--tc-tier-god-start)"
+        );
+
+        document.getElementById("streakBest").textContent = `Rekor: ${userData.streak.best} hari`;
+        animateCount(document.getElementById("streakCount"), userData.streak.current);
+
+        const isMaxLevel = userData.xpToNext === 0;
+        const xpPercent = isMaxLevel
+          ? 100
+          : Math.min(100, Math.round((userData.xp / userData.xpToNext) * 100));
+        const xpRemaining = isMaxLevel ? 0 : Math.max(0, userData.xpToNext - userData.xp);
+        document.getElementById("xpText").textContent = isMaxLevel
+          ? `${userData.xp} XP (Max Level)`
+          : `${userData.xp} / ${userData.xpToNext} XP`;
+        document.getElementById("xpRemainingText").textContent = isMaxLevel
+          ? ""
+          : `${xpRemaining} XP menuju Level ${userData.level + 1}`;
+
+        requestAnimationFrame(() => {
+          document.getElementById("xpBarFill").style.width = `${xpPercent}%`;
+        });
+
+        animateCount(document.getElementById("statWpm"), userData.stats.bestWpm);
+        animateCount(document.getElementById("statAcc"), userData.stats.avgAcc, { suffix: "%" });
+        animateCount(document.getElementById("statTests"), userData.stats.totalTests);
       }
+      // ==================== end Profile Header logic ====================
 
       function loadHistory() {
-        const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
+        const scores = getTypingScores();
         const tbody = document.getElementById('historyTableBody');
         
         if (scores.length === 0) {
@@ -366,13 +772,79 @@
 
       // Init profile features setelah DOM ready
       document.addEventListener('DOMContentLoaded', () => {
-        updateProfile();
+        renderProfileHeader(buildUserData());
         loadHistory();
+
+        import('./js/history/pb-manager.js').then(({ renderPBCards }) => {
+          renderPBCards(getTypingScores());
+        });
       });
 
       // Dark mode integration
       import('./js/utils/dark-mode.js').then(darkMode => {
         darkMode.initDarkMode(document.getElementById('darkModeToggle'));
+      });
+    </script>
+
+    <!-- ==================== Grafik Progress (React + Recharts) ====================
+         Proyek ini tidak memakai bundler/npm, jadi React, ReactDOM, dan Recharts
+         dimuat sebagai modul ES langsung dari CDN (esm.sh). ProgressCharts.js
+         ditulis tanpa sintaks JSX (pakai React.createElement) supaya bisa
+         dijalankan langsung oleh browser tanpa proses build/Babel. -->
+    <script type="module">
+      import React from 'https://esm.sh/react@18.3.1';
+      import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
+      import ProgressCharts from './js/history/ProgressCharts.js';
+      import AchievementGrid from './js/history/AchievementGrid.js';
+      import SkillAnalysis from './js/history/SkillAnalysis.js';
+      import AllTimeStats from './js/history/AllTimeStats.js';
+      import FunStats from './js/history/FunStats.js';
+      import { getTypingScores } from './js/history/score-manager.js';
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const scores = getTypingScores();
+
+        const progressRootEl = document.getElementById('progressChartsRoot');
+        if (progressRootEl) {
+          createRoot(progressRootEl).render(React.createElement(ProgressCharts, { scores }));
+        }
+
+        // ==================== Achievement & Goals ====================
+        // Grid 9 badge + kotak "Next Goal" (WPM) + "Milestone Terdekat"
+        // (total kata). Logic murni ada di js/history/achievement-logic.js,
+        // dihitung dari skor ASLI (typingScores) — bukan data dummy.
+        const achievementRootEl = document.getElementById('achievementGridRoot');
+        if (achievementRootEl) {
+          createRoot(achievementRootEl).render(React.createElement(AchievementGrid, { scores }));
+        }
+
+        // ==================== Analisis Skill ====================
+        // Keyboard heatmap error-rate per huruf + kalimat kekuatan/
+        // kelemahan/saran. Logic murni ada di
+        // js/history/skill-analysis-logic.js, dihitung dari
+        // `replayData.keystrokes` tiap skor (lihat catatan keterbatasan
+        // data di file tsb — hanya skor yang masih menyimpan replay yang
+        // ikut dihitung).
+        const skillAnalysisRootEl = document.getElementById('skillAnalysisRoot');
+        if (skillAnalysisRootEl) {
+          createRoot(skillAnalysisRootEl).render(React.createElement(SkillAnalysis, { scores }));
+        }
+
+        // ==================== All-Time Stats ====================
+        // Grid 2x3 ringkasan seumur hidup. Logic murni ada di
+        // js/history/all-time-stats-logic.js.
+        const allTimeStatsRootEl = document.getElementById('allTimeStatsRoot');
+        if (allTimeStatsRootEl) {
+          createRoot(allTimeStatsRootEl).render(React.createElement(AllTimeStats, { scores }));
+        }
+
+        // ==================== Fun Stats ====================
+        // 3 kotak fakta ringan. Logic murni ada di
+        // js/history/fun-stats-logic.js.
+        const funStatsRootEl = document.getElementById('funStatsRoot');
+        if (funStatsRootEl) {
+          createRoot(funStatsRootEl).render(React.createElement(FunStats, { scores }));
+        }
       });
     </script>
   </body>

@@ -1,1 +1,693 @@
-/* ==================== PROFILE PAGE STYLES ==================== */&#10;&#10;:root {&#10;  --bg-primary: #f4f7f6;&#10;  --bg-secondary: #ececec;&#10;  --bg-card: #ffffff;&#10;  --text-primary: #333;&#10;  --text-secondary: #666;&#10;  --text-muted: #888;&#10;  --text-light: #999;&#10;  --text-white: #e0e0e0;&#10;  --border-light: #e0e0e0;&#10;  --border-medium: #575757;&#10;  --border-dark: #444;&#10;  --bg-level-badge: #e2e2e24d;&#10;  --bg-xp-bar: #e0e0e0;&#10;  --bg-xp-fill: #333;&#10;  --success: #28a745;&#10;  --warning: #f0ad4e;&#10;  --danger: #dc3545;&#10;}&#10;&#10;body.dark-mode {&#10;  --bg-primary: #181a1b;&#10;  --bg-secondary: #23272a;&#10;  --bg-card: #2c2c2c;&#10;  --text-primary: #e0e0e0;&#10;  --text-secondary: #aaa;&#10;  --text-muted: #888;&#10;  --text-light: #666;&#10;  --text-white: #f0f0f0;&#10;  --border-light: #444;&#10;  --border-medium: #555;&#10;  --border-dark: #666;&#10;  --bg-level-badge: #4444;&#10;  --bg-xp-bar: #444;&#10;  --bg-xp-fill: #81C784;&#10;  --success: #71b12b;&#10;  --warning: #e6c82d;&#10;  --danger: #e04422;&#10;}
+/* ==================== PROFILE PAGE STYLES ==================== */
+
+:root {
+  --bg-primary: #f4f7f6;
+  --bg-secondary: #ececec;
+  --bg-card: #ffffff;
+  --text-primary: #333;
+  --text-secondary: #666;
+  --text-muted: #888;
+  --text-light: #999;
+  --text-white: #e0e0e0;
+  --border-light: #e0e0e0;
+  --border-medium: #575757;
+  --border-dark: #444;
+  --bg-level-badge: #e2e2e24d;
+  --bg-xp-bar: #e0e0e0;
+  --bg-xp-fill: #333;
+  --success: #28a745;
+  --warning: #f0ad4e;
+  --danger: #dc3545;
+}
+
+body.dark-mode {
+  --bg-primary: #181a1b;
+  --bg-secondary: #23272a;
+  --bg-card: #2c2c2c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #aaa;
+  --text-muted: #888;
+  --text-light: #666;
+  --text-white: #f0f0f0;
+  --border-light: #444;
+  --border-medium: #555;
+  --border-dark: #666;
+  --bg-level-badge: #4444;
+  --bg-xp-bar: #444;
+  --bg-xp-fill: #81C784;
+  --success: #71b12b;
+  --warning: #e6c82d;
+  --danger: #e04422;
+}
+
+/* ==================== KEYCAP HEADER TOKENS (Step 1) ====================
+   Dipakai oleh .tc-* classes di profile.html (Header Section: avatar,
+   level/XP bar, streak, 3 stat utama). Warna tier ("Rookie", "Speedster",
+   dst) sengaja sama di kedua tema karena itu warna brand/rank, bukan
+   warna tema. ======================================================== */
+
+:root {
+  --tc-card-bg: var(--bg-card);
+  --tc-key-bg: #eef1f2;
+  --tc-key-light-bg: #e7eaec;
+  --tc-key-border: var(--border-light);
+  --tc-shadow-edge: rgba(0, 0, 0, 0.14);
+  --tc-shadow-blur: rgba(0, 0, 0, 0.10);
+  --tc-shadow-inset: rgba(255, 255, 255, 0.6);
+
+  --tc-amber: #c9791b;
+  --tc-flame: #d9552a;
+  --tc-flame-bg: rgba(217, 85, 42, 0.10);
+  --tc-flame-border: rgba(217, 85, 42, 0.28);
+
+  --tc-tier-rookie: #7d8590;
+  --tc-tier-speedster: #3a7bd5;
+  --tc-tier-demon: #c9791b;
+  --tc-tier-god-start: #c9791b;
+  --tc-tier-god-end: #d9376a;
+
+  /* Heatmap Aktivitas — hijau makin terang/pekat seiring jumlah tes naik */
+  --heatmap-0: var(--tc-key-bg);
+  --heatmap-1: rgba(40, 167, 69, 0.35);
+  --heatmap-2: rgba(40, 167, 69, 0.65);
+  --heatmap-3: rgba(40, 167, 69, 1);
+}
+
+body.dark-mode {
+  --tc-card-bg: #1a1d24;
+  --tc-key-bg: #262b34;
+  --tc-key-light-bg: #2c313b;
+  --tc-key-border: #333944;
+  --tc-shadow-edge: rgba(0, 0, 0, 0.5);
+  --tc-shadow-blur: rgba(0, 0, 0, 0.35);
+  --tc-shadow-inset: rgba(255, 255, 255, 0.06);
+
+  --tc-amber: #ffb454;
+  --tc-flame: #ff7a45;
+  --tc-flame-bg: rgba(255, 122, 69, 0.12);
+  --tc-flame-border: rgba(255, 122, 69, 0.35);
+
+  --tc-tier-rookie: #9aa2ad;
+  --tc-tier-speedster: #5b9dff;
+  --tc-tier-demon: #ffb454;
+  --tc-tier-god-start: #ffb454;
+  --tc-tier-god-end: #ff5f9e;
+
+  --heatmap-0: var(--tc-key-bg);
+  --heatmap-1: rgba(113, 177, 43, 0.35);
+  --heatmap-2: rgba(113, 177, 43, 0.65);
+  --heatmap-3: rgba(113, 177, 43, 1);
+}
+
+/* ==================== GRAFIK PROGRESS (Section di bawah PBCards) ====================
+   Dipakai oleh ProgressCharts.jsx: line chart WPM 30 hari + heatmap
+   aktivitas. Mengikuti pola visual .pb-section/.pb-card yang sudah ada,
+   supaya kedua section terasa satu keluarga desain. ==================== */
+
+.progress-section {
+  margin-top: 32px;
+}
+
+.progress-section-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.progress-charts-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+}
+
+.progress-chart-card {
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 4px 0 var(--tc-shadow-edge),
+    0 9px 16px var(--tc-shadow-blur);
+}
+
+.progress-chart-card-title {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.wpm-chart-container {
+  width: 100%;
+}
+
+.progress-chart-tooltip {
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px var(--tc-shadow-blur);
+}
+
+.progress-chart-tooltip-date {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.progress-chart-tooltip-wpm {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ---- Empty state (< 5 test) ---- */
+
+.progress-locked {
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 20px;
+  padding: 32px 20px;
+  text-align: center;
+}
+
+.progress-locked-text {
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.progress-locked-bar {
+  max-width: 240px;
+  height: 8px;
+  margin: 0 auto;
+  background: var(--tc-key-light-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-locked-bar-fill {
+  height: 100%;
+  background: var(--tc-amber);
+  border-radius: 999px;
+  transition: width 0.6s ease-out;
+}
+
+.progress-locked-count {
+  display: block;
+  margin-top: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+/* ---- Heatmap Aktivitas ---- */
+
+.heatmap-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.heatmap-body {
+  display: flex;
+  gap: 6px;
+}
+
+.heatmap-row-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  padding-top: 0;
+}
+
+.heatmap-row-label {
+  height: 14px;
+  line-height: 14px;
+  font-size: 0.65rem;
+  color: var(--text-light);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.heatmap-grid {
+  display: flex;
+  gap: 3px;
+  width: max-content;
+}
+
+.heatmap-column {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--heatmap-0);
+  border: 1px solid var(--tc-key-border);
+  cursor: default;
+}
+
+.heatmap-cell[data-level="1"] { background: var(--heatmap-1); border-color: transparent; }
+.heatmap-cell[data-level="2"] { background: var(--heatmap-2); border-color: transparent; }
+.heatmap-cell[data-level="3"] { background: var(--heatmap-3); border-color: transparent; }
+.heatmap-cell[data-level="none"] { background: transparent; border-color: transparent; }
+
+.heatmap-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.heatmap-hint {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  transition: color 0.15s ease;
+}
+
+.heatmap-hint.is-active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-light);
+}
+
+.heatmap-legend-cell {
+  cursor: default;
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 720px) {
+  .progress-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wpm-chart-container {
+    width: 100%;
+  }
+}
+
+/* ==================== ACHIEVEMENT & GOALS (Section di bawah Grafik Progress) ====================
+   Dipakai oleh AchievementGrid.js: grid 3x3 badge achievement + kotak
+   "Next Goal" & "Milestone Terdekat". Mengikuti pola visual .tc-keycap /
+   .progress-chart-card yang sudah ada supaya terasa satu keluarga desain. */
+
+.achievement-section {
+  margin-top: 32px;
+}
+
+.achievement-section-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.achievement-card {
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 16px;
+  padding: 18px 12px;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 4px 0 var(--tc-shadow-edge),
+    0 9px 16px var(--tc-shadow-blur);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+  cursor: default;
+}
+
+.achievement-card:hover {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 1px 0 var(--tc-shadow-edge),
+    0 3px 8px var(--tc-shadow-blur);
+}
+
+/* Locked: grayscale + agak transparan, dibedakan tegas dari yang unlocked */
+.achievement-card--locked {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
+.achievement-card--locked:hover {
+  opacity: 0.9;
+}
+
+.achievement-icon {
+  font-size: 1.7rem;
+  color: var(--tc-amber);
+  margin-bottom: 10px;
+}
+
+.achievement-card--locked .achievement-icon {
+  color: var(--text-light);
+}
+
+.achievement-name {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+
+.achievement-status {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.achievement-status i {
+  margin-right: 3px;
+}
+
+.achievement-progress-wrap {
+  margin-top: 2px;
+}
+
+.achievement-progress-bar {
+  height: 6px;
+  width: 100%;
+  background: var(--tc-key-light-bg);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.achievement-progress-fill {
+  height: 100%;
+  background: var(--tc-amber);
+  border-radius: 999px;
+  transition: width 0.6s ease-out;
+}
+
+.achievement-progress-text {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  color: var(--text-light);
+}
+
+/* ---- Next Goal & Milestone boxes ---- */
+
+.goal-boxes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.goal-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 4px 0 var(--tc-shadow-edge),
+    0 9px 16px var(--tc-shadow-blur);
+}
+
+.goal-box-icon {
+  font-size: 1.4rem;
+  color: var(--tc-amber);
+  flex-shrink: 0;
+}
+
+.goal-box-body {
+  min-width: 0;
+}
+
+.goal-box-title {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.goal-box-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  .achievement-grid {
+    gap: 8px;
+  }
+
+  .achievement-card {
+    padding: 14px 8px;
+  }
+
+  .goal-boxes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .achievement-name {
+    font-size: 0.72rem;
+  }
+
+  .achievement-icon {
+    font-size: 1.4rem;
+  }
+}
+
+/* ==================== ANALISIS SKILL (Section di bawah Achievement & Goals) ====================
+   Dipakai oleh SkillAnalysis.js: SVG keyboard QWERTY yang diwarnai per huruf
+   (hijau/kuning/merah) berdasarkan error rate + 1 kalimat analisis
+   kekuatan/kelemahan/saran. Warna heatmap memakai token semantik yang sudah
+   ada (--success/--warning/--danger) supaya konsisten di kedua tema. */
+
+.skill-analysis-section {
+  margin-top: 32px;
+}
+
+.skill-analysis-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.skill-analysis-card {
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 20px;
+  padding: 24px 20px;
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 4px 0 var(--tc-shadow-edge),
+    0 9px 16px var(--tc-shadow-blur);
+}
+
+.skill-heatmap-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.skill-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.skill-analysis-text {
+  margin: 16px 0 0 0;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .skill-analysis-card {
+    padding: 20px 12px;
+  }
+}
+
+/* ==================== ALL-TIME STATS (Section di bawah Analisis Skill) ====================
+   Dipakai oleh AllTimeStats.jsx: grid 2x3 ringkasan seumur hidup, mengikuti
+   pola visual .achievement-card / .progress-chart-card yang sudah ada. */
+
+.ats-section {
+  margin-top: 32px;
+}
+
+.ats-section-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.ats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.ats-cell {
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 4px 0 var(--tc-shadow-edge),
+    0 9px 16px var(--tc-shadow-blur);
+}
+
+.ats-cell-label {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.ats-cell-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+@media (max-width: 720px) {
+  .ats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .ats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== FUN STATS (Section di bawah All-Time Stats) ====================
+   Dipakai oleh FunStats.jsx: 3 kotak kecil horizontal, mengikuti pola
+   visual .goal-box yang sudah ada di section Achievement & Goals. */
+
+.fun-stats-section {
+  margin-top: 32px;
+}
+
+.fun-stats-section-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.fun-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.fun-stat-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--tc-card-bg);
+  border: 1px solid var(--tc-key-border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow:
+    inset 0 1px 0 var(--tc-shadow-inset),
+    0 4px 0 var(--tc-shadow-edge),
+    0 9px 16px var(--tc-shadow-blur);
+}
+
+.fun-stat-icon {
+  font-size: 1.3rem;
+  color: var(--tc-amber);
+  flex-shrink: 0;
+}
+
+.fun-stat-body {
+  min-width: 0;
+}
+
+.fun-stat-title {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.fun-stat-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  .fun-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

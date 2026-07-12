@@ -30,14 +30,14 @@ function cleanupOldScores(scores) {
     return scores;
 }
 
-export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null) {
+export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null, language = 'id') {
     console.log('saveScore called with replayData:', replayData ? 'YES' : 'NO');
     
     const scores = getTypingScores();
     const scoreEntry = {
         date: new Date().toISOString(),
         wpm, accuracy, time, errors,
-        type, mode,
+        type, mode, language,
         correctWords, incorrectWords
     };
     
