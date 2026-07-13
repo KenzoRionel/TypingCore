@@ -16,17 +16,10 @@
 // tampil di sini selalu sama dengan yang tampil di Profile Header.
 
 import { getStreakInfo, getAggregateStats } from './profile-stats.js';
+import { ensureAccumulatorInitialized } from './all-time-accumulator.js';
+import { isNightOwlScore, isMarathonScore, isPerfectScore } from './all-time-stats-logic.js';
 
-const NIGHT_OWL_START_HOUR = 0; // 00:00
-const NIGHT_OWL_END_HOUR = 3; // sampai sebelum 03:00 ("jam 12-3 pagi")
-const MARATHON_SECONDS = 10 * 60; // tes berdurasi 10 menit
 const POLYGLOT_LANGUAGE_COUNT = 3;
-
-function isNightOwlScore(score) {
-  if (!score || !score.date) return false;
-  const hour = new Date(score.date).getHours();
-  return hour >= NIGHT_OWL_START_HOUR && hour < NIGHT_OWL_END_HOUR;
-}
 
 function countDistinctLanguages(scores) {
   // Skor lama (sebelum field `language` ada) dianggap 'id', konsisten
@@ -111,37 +104,46 @@ const ACHIEVEMENT_DEFS = [
     name: 'Perfectionist',
     icon: 'fa-crosshairs',
     desc: '100% acc',
-    compute: (scores) => ({ unlocked: scores.some((s) => s.accuracy === 100) }),
+    // ✅ FIX: sebelumnya `scores.some(s => s.accuracy === 100)` — dua masalah:
+    // (1) field `accuracy` sudah DIBULATKAN (lihat finalAccuracy di
+    //     game-logic.js), jadi tes 99,6% akurasi bisa ikut ke-round jadi 100
+    //     dan salah keunlock;
+    // (2) `scores` terpotong MAX_SCORES, jadi begitu tes sempurna itu
+    //     terdorong keluar dari histori, badge bisa balik terkunci.
+    // ctx.perfectAccuracyEver dari accumulator persisten memperbaiki keduanya.
+    compute: (scores, ctx) => ({ unlocked: ctx.perfectAccuracyEver }),
   },
   {
     id: 'nightowl',
     name: 'Night Owl',
     icon: 'fa-moon',
     desc: 'Test di jam 12-3 pagi',
-    compute: (scores) => ({ unlocked: scores.some(isNightOwlScore) }),
+    // ✅ FIX: sama seperti Perfectionist — pakai status persisten supaya
+    // tidak hilang begitu skor buktinya terbuang dari `scores`.
+    compute: (scores, ctx) => ({ unlocked: ctx.nightOwlEver }),
   },
   {
     id: 'marathoner',
     name: 'Marathoner',
     icon: 'fa-person-running',
     desc: 'Test 10 menit',
-    compute: (scores) => ({
-      unlocked: scores.some((s) => Number(s.time) >= MARATHON_SECONDS),
-    }),
+    // ✅ FIX: sama seperti Perfectionist — pakai status persisten.
+    compute: (scores, ctx) => ({ unlocked: ctx.marathonEver }),
   },
   {
     id: 'polyglot',
     name: 'Polyglot',
     icon: 'fa-earth-asia',
     desc: 'Test 3 bahasa',
-    compute: (scores) => {
-      const langCount = countDistinctLanguages(scores);
-      return {
-        unlocked: langCount >= POLYGLOT_LANGUAGE_COUNT,
-        progress: langCount,
-        target: POLYGLOT_LANGUAGE_COUNT,
-      };
-    },
+    // ✅ FIX: sebelumnya dihitung dari daftar bahasa pada `scores` (terpotong
+    // MAX_SCORES) — kalau bahasa ke-3 pernah dites tapi buktinya sudah
+    // terbuang, progress/unlock bisa turun lagi. ctx.languagesCount dari
+    // accumulator.languagesEverUsed tidak pernah berkurang.
+    compute: (scores, ctx) => ({
+      unlocked: ctx.languagesCount >= POLYGLOT_LANGUAGE_COUNT,
+      progress: ctx.languagesCount,
+      target: POLYGLOT_LANGUAGE_COUNT,
+    }),
   },
 ];
 
@@ -155,10 +157,31 @@ const ACHIEVEMENT_DEFS = [
  *   biner, jadi tidak punya progress bar).
  */
 export function getAchievements(scores = []) {
+  // ✅ FIX: sumber untuk totalTests & status achievement biner sekarang
+  // accumulator persisten (all-time-accumulator.js) — bukan `scores` yang
+  // dipotong ke MAX_SCORES entry oleh cleanupOldScores() di score-manager.js.
+  // Kalau gagal dibaca (mis. localStorage error), fallback ke cara lama
+  // (tetap berfungsi, hanya kembali punya keterbatasan lama) daripada
+  // melempar error dan menggagalkan seluruh Achievement & Goals.
+  let accumulator = null;
+  try {
+    accumulator = ensureAccumulatorInitialized(scores);
+  } catch (e) {
+    console.error('Gagal membaca all-time accumulator untuk achievement:', e);
+  }
+
   const ctx = {
     bestWpm: getAggregateStats(scores).bestWpm,
-    totalTests: scores.length,
+    totalTests: accumulator ? accumulator.testCount : scores.length,
     streakBest: getStreakInfo(scores).best,
+    perfectAccuracyEver: accumulator
+      ? accumulator.perfectAccuracyEver
+      : scores.some(isPerfectScore),
+    nightOwlEver: accumulator ? accumulator.nightOwlEver : scores.some(isNightOwlScore),
+    marathonEver: accumulator ? accumulator.marathonEver : scores.some(isMarathonScore),
+    languagesCount: accumulator
+      ? accumulator.languagesEverUsed.length
+      : countDistinctLanguages(scores),
   };
 
   return ACHIEVEMENT_DEFS.map((def) => {
@@ -208,11 +231,24 @@ const WORD_MILESTONE_STEP = 100000;
  * tiap skor, yaitu seluruh kata yang benar-benar diketik user (bukan
  * hanya yang benar).
  *
+ * ✅ FIX: sebelumnya total kata dihitung ulang dari `scores` (terpotong
+ * MAX_SCORES oleh cleanupOldScores), sehingga begitu histori > MAX_SCORES
+ * tes, angka "Milestone Terdekat" di sini TIDAK SINKRON dengan "Total Kata"
+ * di All-Time Stats (yang sudah benar memakai accumulator persisten sejak
+ * awal — lihat all-time-accumulator.js). Sekarang keduanya pakai sumber
+ * yang sama.
+ *
  * @param {Array} scores
  * @returns {{totalWords:number, nextMilestone:number, remaining:number}}
  */
 export function getWordMilestone(scores = []) {
-  const totalWords = totalWordsTyped(scores);
+  let totalWords;
+  try {
+    totalWords = ensureAccumulatorInitialized(scores).totalWords;
+  } catch (e) {
+    console.error('Gagal membaca all-time accumulator untuk milestone:', e);
+    totalWords = totalWordsTyped(scores);
+  }
   const nextMilestone =
     (Math.floor(totalWords / WORD_MILESTONE_STEP) + 1) * WORD_MILESTONE_STEP;
   const remaining = nextMilestone - totalWords;

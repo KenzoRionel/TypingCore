@@ -20,6 +20,11 @@ import {
   setKeyboardVisibility,
   updateKeyboardVisibilityUI,
 } from "../index-keyboard.js";
+import {
+  getLevelInfo,
+  getLevelName,
+} from "../utils/level-system.js";
+import { showLevelUpToast } from "../utils/toast.js";
 
 
 // ✅ BARU: helper untuk menghitung karakter benar/salah pada kata yang SEDANG diketik
@@ -936,78 +941,44 @@ function animateXPBar(earnedXP) {
   // Get current total XP
   const currentTotalXP = parseInt(localStorage.getItem("userXP")) || 0;
   const previousTotalXP = currentTotalXP - earnedXP;
-  
-  // Level thresholds (same as profile.html)
-  const levels = [
-    { level: 1, name: "Sight Seeker", xp: 0 },
-    { level: 2, name: "Key Finder", xp: 500 },
-    { level: 3, name: "Muscle Memory", xp: 1500 },
-    { level: 4, name: "Rhythm Rider", xp: 3500 },
-    { level: 5, name: "Tactile Pro", xp: 7000 },
-    { level: 6, name: "Silent Swift", xp: 12000 },
-    { level: 7, name: "Flow State", xp: 20000 },
-    { level: 8, name: "Mind-to-Key", xp: 35000 },
-    { level: 9, name: "Sonic Stroke", xp: 60000 },
-    { level: 10, name: "Ascended Typist", xp: 100000 },
-  ];
-  
-  // Find current and next level
-  function getCurrentLevel(xp) {
-    for (let i = levels.length - 1; i >= 0; i--) {
-      if (xp >= levels[i].xp) return levels[i];
-    }
-    return levels[0];
-  }
-  
-  function getNextLevel(xp) {
-    for (let i = 0; i < levels.length; i++) {
-      if (xp < levels[i].xp) return levels[i];
-    }
-    return null;
-  }
-  
-  const currentLevel = getCurrentLevel(currentTotalXP);
-  const nextLevel = getNextLevel(currentTotalXP);
-  const previousLevel = getCurrentLevel(previousTotalXP);
-  const previousNextLevel = getNextLevel(previousTotalXP);
-  
+
+  // ✅ Level & nama level ("Typing Journey") dihitung lewat modul BERSAMA
+  // js/utils/level-system.js — SATU sumber logic yang sama dipakai profile.html
+  // (lihat js/history/profile-stats.js), supaya keduanya selalu sinkron.
+  // Cara XP itu sendiri dihitung/didapat (di atas) TIDAK berubah.
+  const currentInfo = getLevelInfo(currentTotalXP);
+  const previousInfo = getLevelInfo(previousTotalXP);
+
   // Calculate progress percentages
-  let previousProgressPercent = 0;
-  let currentProgressPercent = 100;
-  
-  if (previousNextLevel) {
-    const prevLevelXP = previousLevel.xp;
-    const prevNextLevelXP = previousNextLevel.xp;
-    const xpInPreviousLevel = previousTotalXP - prevLevelXP;
-    const xpRequiredForPrevLevel = prevNextLevelXP - prevLevelXP;
-    previousProgressPercent = (xpInPreviousLevel / xpRequiredForPrevLevel) * 100;
-  }
-  
-  if (nextLevel) {
-    const currLevelXP = currentLevel.xp;
-    const nextLevelXP = nextLevel.xp;
-    const xpInCurrentLevel = currentTotalXP - currLevelXP;
-    const xpRequiredForCurrentLevel = nextLevelXP - currLevelXP;
-    currentProgressPercent = (xpInCurrentLevel / xpRequiredForCurrentLevel) * 100;
-  }
-  
+  const previousProgressPercent = previousInfo.xpToNext
+    ? (previousInfo.xp / previousInfo.xpToNext) * 100
+    : 0;
+  const currentProgressPercent = currentInfo.xpToNext
+    ? (currentInfo.xp / currentInfo.xpToNext) * 100
+    : 100;
+
   // Reset state
   xpBarText.classList.remove("show");
   xpBarProgress.style.width = `${previousProgressPercent}%`;
-  
+
   // Update text with earned XP and level info
-  const levelText = nextLevel ? `Level ${currentLevel.level}` : "Max Level";
-  xpBarText.textContent = `+${earnedXP} XP (${levelText})`;
-  
+  xpBarText.textContent = `+${earnedXP} XP (Level ${currentInfo.level})`;
+
   // Check if leveled up
-  const didLevelUp = currentLevel.level > previousLevel.level;
-  
+  const didLevelUp = currentInfo.level > previousInfo.level;
+
   // Small delay before animation starts
   setTimeout(() => {
     // Show text with animation
     xpBarText.classList.add("show");
-    
+
     if (didLevelUp) {
+      // ✅ Toast "Level Up!" saat naik level, menampilkan nama level baru
+      // dari sistem "Typing Journey".
+      showLevelUpToast(
+        `Level Up! Kamu sekarang ${getLevelName(currentInfo.level)}`
+      );
+
       // Animate to 100% first, then reset to new progress
       setTimeout(() => {
         xpBarProgress.style.width = "100%";

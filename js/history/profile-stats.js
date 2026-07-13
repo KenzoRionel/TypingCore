@@ -6,40 +6,14 @@
 // ulang, supaya profile.html tidak lagi punya angka rekaan sendiri.
 //
 // PENTING — konsistensi level/XP:
-// Tabel LEVELS di bawah ini SENGAJA disalin persis dari `levels` di dalam
-// animateXPBar() (js/game/game-logic.js), yang membaca localStorage key
-// 'userXP'. Sebelum perubahan ini, profile.html punya angka level/xp SENDIRI
-// yang hardcoded dan tidak nyambung sama sekali dengan 'userXP' yang
-// sebenarnya sudah ditulis oleh game-logic.js setiap tes selesai. Kalau nanti
-// tabel level di game-logic.js diubah, tabel di sini WAJIB diikutkan berubah
-// juga (atau, lebih baik, pindahkan tabel ini ke satu modul bersama yang
-// diimport oleh kedua file).
-export const LEVELS = [
-  { level: 1, name: 'Sight Seeker', xp: 0 },
-  { level: 2, name: 'Key Finder', xp: 500 },
-  { level: 3, name: 'Muscle Memory', xp: 1500 },
-  { level: 4, name: 'Rhythm Rider', xp: 3500 },
-  { level: 5, name: 'Tactile Pro', xp: 7000 },
-  { level: 6, name: 'Silent Swift', xp: 12000 },
-  { level: 7, name: 'Flow State', xp: 20000 },
-  { level: 8, name: 'Mind-to-Key', xp: 35000 },
-  { level: 9, name: 'Sonic Stroke', xp: 60000 },
-  { level: 10, name: 'Ascended Typist', xp: 100000 },
-];
+// Level & nama level ("Typing Journey") sekarang dihitung lewat modul
+// BERSAMA js/utils/level-system.js, yang juga dipakai oleh animateXPBar()
+// (js/game/game-logic.js). Dulu ada 2 tabel level yang disalin manual di
+// dua file (gampang out-of-sync) — sekarang cuma ada SATU sumber logic.
+// Jangan tambahkan tabel level baru di file ini; ubah level-system.js saja.
+import { getLevelInfo as getLevelInfoFromXP, getLevelName } from '../utils/level-system.js';
 
-function getCurrentLevel(xp) {
-  for (let i = LEVELS.length - 1; i >= 0; i--) {
-    if (xp >= LEVELS[i].xp) return LEVELS[i];
-  }
-  return LEVELS[0];
-}
-
-function getNextLevel(xp) {
-  for (let i = 0; i < LEVELS.length; i++) {
-    if (xp < LEVELS[i].xp) return LEVELS[i];
-  }
-  return null; // sudah di level maksimum
-}
+export { getLevelName };
 
 /**
  * Ambil total XP asli dari localStorage (ditulis oleh
@@ -54,19 +28,10 @@ export function getTotalXP() {
  * @returns {{level:number, levelName:string, xp:number, xpToNext:number}}
  *   `xp`       = XP yang sudah terkumpul DI DALAM level saat ini (bukan total)
  *   `xpToNext` = XP yang dibutuhkan untuk naik dari level saat ini ke level
- *                berikutnya (0 jika sudah di level maksimum)
+ *                berikutnya (level * 100 — lihat level-system.js)
  */
 export function getLevelInfo(totalXP = 0) {
-  const current = getCurrentLevel(totalXP);
-  const next = getNextLevel(totalXP);
-  const xpIntoLevel = totalXP - current.xp;
-  const xpRequired = next ? next.xp - current.xp : 0;
-  return {
-    level: current.level,
-    levelName: current.name,
-    xp: xpIntoLevel,
-    xpToNext: xpRequired,
-  };
+  return getLevelInfoFromXP(totalXP);
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -155,6 +120,7 @@ export function buildUserData(scores = [], username = 'Guest') {
   return {
     username,
     level: levelInfo.level,
+    levelName: levelInfo.levelName,
     xp: levelInfo.xp,
     xpToNext: levelInfo.xpToNext,
     streak,

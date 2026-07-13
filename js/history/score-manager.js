@@ -2,6 +2,11 @@
 import { getHistoryDOMReferences } from '../utils/dom-elements.js';
 import { renderScoreTable } from './history-dom.js';
 import { renderProgressCharts, destroyCharts } from './history-chart.js';
+import {
+    ensureAccumulatorInitialized,
+    addScoreToAccumulator,
+    saveAllTimeAccumulator,
+} from './all-time-accumulator.js';
 
 // Maximum number of scores to store in localStorage to prevent QuotaExceededError
 const MAX_SCORES = 50;
@@ -49,8 +54,31 @@ export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords,
         console.log('WARNING: No replayData provided!');
     }
     
+    // ✅ Pastikan accumulator All-Time sudah terinisialisasi (baseline migrasi,
+    // kalau ini pertama kali fitur ini aktif) memakai `scores` SEBELUM entry
+    // baru ditambahkan — supaya entry baru ini tidak ikut terhitung di
+    // baseline DAN di addScoreToAccumulator di bawah sekaligus (dobel).
+    let acc;
+    try {
+        acc = ensureAccumulatorInitialized(scores);
+    } catch (e) {
+        console.error('Gagal inisialisasi all-time accumulator:', e);
+    }
+
     scores.push(scoreEntry);
-    
+
+    // ✅ Update accumulator All-Time PERSISTEN sebelum entry lama berpotensi
+    // dibuang oleh cleanupOldScores di bawah. Dilakukan tanpa syarat (tidak
+    // bergantung pada apakah penyimpanan array `scores` di localStorage nanti
+    // berhasil) karena tes ini SUDAH benar-benar terjadi — lihat catatan di
+    // all-time-accumulator.js untuk alasan lengkapnya.
+    try {
+        const updatedAcc = addScoreToAccumulator(acc, scoreEntry);
+        saveAllTimeAccumulator(updatedAcc);
+    } catch (e) {
+        console.error('Gagal update all-time accumulator:', e);
+    }
+
     // Cleanup old scores to prevent localStorage quota exceeded
     let workingScores = cleanupOldScores(scores);
     

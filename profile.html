@@ -91,29 +91,104 @@
         margin: 0;
       }
 
-      .tc-meta {
+      /* ---- Baris 1: Level (dari total XP) ---- */
+      .tc-level-row {
         margin-top: 4px;
         display: flex;
-        align-items: center;
-        gap: 8px;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 6px;
         font-size: 1rem;
+        width: fit-content;
+        cursor: default;
+        border-radius: 6px;
+        position: relative;
+      }
+
+      .tc-level-row:focus-visible {
+        outline: 2px solid var(--tc-amber);
+        outline-offset: 3px;
       }
 
       .tc-level {
         font-family: "JetBrains Mono", monospace;
         font-weight: 700;
-        color: var(--tc-amber);
+        color: var(--text-primary);
+        white-space: nowrap;
       }
 
-      .tc-dot {
+      .tc-level-sep {
         color: var(--text-light);
       }
 
-      .tc-tier {
+      .tc-level-name {
         font-weight: 700;
+        color: var(--tc-amber);
+        white-space: nowrap;
       }
 
-      .tc-tier.is-god {
+      /* Tooltip kustom untuk baris Level, dipicu via data-tooltip.
+         `title` bawaan browser tetap ada sebagai fallback aksesibilitas. */
+      .tc-level-row[data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 0;
+        width: max-content;
+        max-width: 240px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: var(--tc-key-bg, #222);
+        color: var(--text-primary);
+        border: 1px solid var(--tc-key-border);
+        font-size: 0.78rem;
+        font-weight: 500;
+        line-height: 1.35;
+        white-space: normal;
+        box-shadow: 0 8px 20px var(--tc-shadow-blur);
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        pointer-events: none;
+        z-index: 20;
+      }
+
+      .tc-level-row[data-tooltip]:hover::after,
+      .tc-level-row[data-tooltip]:focus-visible::after {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ---- Baris 2: Title (dari skill WPM) ---- */
+      .tc-title-row {
+        margin-top: 6px;
+      }
+
+      .tc-title-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 12px 3px 10px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        background: var(--tc-key-light-bg);
+        border: 1px solid var(--tc-key-border);
+        color: var(--text-secondary);
+      }
+
+      .tc-title-badge i {
+        font-size: 0.8em;
+        color: var(--tc-amber);
+      }
+
+      .tc-title-badge.is-god {
+        border-color: transparent;
+        background-image: linear-gradient(90deg, var(--tc-tier-god-start), var(--tc-tier-god-end));
+      }
+
+      .tc-title-badge.is-god span,
+      .tc-title-badge.is-god i {
         background-image: linear-gradient(90deg, var(--tc-tier-god-start), var(--tc-tier-god-end));
         -webkit-background-clip: text;
         background-clip: text;
@@ -237,7 +312,20 @@
         .tc-streak-wrap {
           align-items: center;
         }
-        .tc-meta {
+        .tc-level-row {
+          justify-content: center;
+          width: 100%;
+        }
+        .tc-level-row[data-tooltip]::after {
+          left: 50%;
+          transform: translate(-50%, 4px);
+        }
+        .tc-level-row[data-tooltip]:hover::after,
+        .tc-level-row[data-tooltip]:focus-visible::after {
+          transform: translate(-50%, 0);
+        }
+        .tc-title-row {
+          display: flex;
           justify-content: center;
         }
         .tc-stats-grid {
@@ -549,10 +637,22 @@
                 <div class="tc-info-top">
                   <div>
                     <h1 class="tc-username" id="username">Dapa</h1>
-                    <div class="tc-meta">
+                    <div
+                      class="tc-level-row"
+                      id="levelRow"
+                      tabindex="0"
+                      data-tooltip="Level dari total XP. Lanjut latihan buat naik level"
+                      title="Level dari total XP. Lanjut latihan buat naik level"
+                    >
                       <span class="tc-level" id="levelText">Level 4</span>
-                      <span class="tc-dot">&middot;</span>
-                      <span class="tc-tier" id="tierText">Speedster</span>
+                      <span class="tc-level-sep" aria-hidden="true">-</span>
+                      <span class="tc-level-name" id="levelNameText">Newbie Typer</span>
+                    </div>
+                    <div class="tc-title-row">
+                      <span class="tc-title-badge" id="titleBadge">
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                        <span id="tierText">Speedster</span>
+                      </span>
                     </div>
                   </div>
                   <div class="tc-streak-wrap">
@@ -641,6 +741,8 @@
     <script type="module">
       import { getTypingScores } from './js/history/score-manager.js';
       import { buildUserData as buildProfileUserData } from './js/history/profile-stats.js';
+      // Rumus format ribuan untuk teks XP, mis. 3400 -> "3,400".
+      const xpNumberFormat = new Intl.NumberFormat('en-US');
 
       // ==================== Profile Header logic (Step 1) ====================
       // Data asli, dibangun dari localStorage (lihat js/history/profile-stats.js):
@@ -694,15 +796,21 @@
       }
 
       function renderProfileHeader(userData) {
+        // Title (baris ke-2) tetap dari skill WPM — TERPISAH dari Level (baris
+        // ke-1, dari total XP/grind). Dua status ini sengaja tidak digabung.
         const tier = getTier(userData.stats.bestWpm);
 
         document.getElementById("username").textContent = userData.username;
-        document.getElementById("levelText").textContent = `Level ${userData.level}`;
 
+        // ---- Baris 1: "Level {level} - {namaLevel}" (dari XP, tema Typing Journey) ----
+        document.getElementById("levelText").textContent = `Level ${userData.level}`;
+        document.getElementById("levelNameText").textContent = userData.levelName;
+
+        // ---- Baris 2: Title dari skill WPM (mis. "Speed Demon") ----
+        const titleBadge = document.getElementById("titleBadge");
         const tierEl = document.getElementById("tierText");
         tierEl.textContent = tier.name;
-        tierEl.classList.toggle("is-god", tier.name === "Typing God");
-        tierEl.style.color = tier.cssVar ? `var(${tier.cssVar})` : "";
+        titleBadge.classList.toggle("is-god", tier.name === "Typing God");
 
         const avatar = document.getElementById("avatarKey");
         avatar.style.setProperty(
@@ -719,11 +827,11 @@
           : Math.min(100, Math.round((userData.xp / userData.xpToNext) * 100));
         const xpRemaining = isMaxLevel ? 0 : Math.max(0, userData.xpToNext - userData.xp);
         document.getElementById("xpText").textContent = isMaxLevel
-          ? `${userData.xp} XP (Max Level)`
-          : `${userData.xp} / ${userData.xpToNext} XP`;
+          ? `${xpNumberFormat.format(userData.xp)} XP (Max Level)`
+          : `${xpNumberFormat.format(userData.xp)} / ${xpNumberFormat.format(userData.xpToNext)} XP`;
         document.getElementById("xpRemainingText").textContent = isMaxLevel
           ? ""
-          : `${xpRemaining} XP menuju Level ${userData.level + 1}`;
+          : `${xpNumberFormat.format(xpRemaining)} XP menuju Level ${userData.level + 1}`;
 
         requestAnimationFrame(() => {
           document.getElementById("xpBarFill").style.width = `${xpPercent}%`;

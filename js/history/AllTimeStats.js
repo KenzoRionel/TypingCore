@@ -5,6 +5,7 @@
 
 import React, { useMemo } from 'https://esm.sh/react@18.3.1';
 import { getAllTimeStats } from './all-time-stats-logic.js';
+import { ensureAccumulatorInitialized } from './all-time-accumulator.js';
 
 const h = React.createElement;
 
@@ -18,7 +19,13 @@ function StatCell({ label, value }) {
 }
 
 export default function AllTimeStats({ scores = [] }) {
-  const stats = useMemo(() => getAllTimeStats(scores), [scores]);
+  const stats = useMemo(() => {
+    // ensureAccumulatorInitialized aman dipanggil berulang kali: kalau
+    // accumulator sudah ada, ia hanya membaca (tidak menulis ulang) —
+    // hanya melakukan migrasi/baseline sekali di percobaan pertama.
+    const accumulator = ensureAccumulatorInitialized(scores);
+    return getAllTimeStats(scores, accumulator);
+  }, [scores]);
 
   const diffLabel =
     stats.vsAllTimeDiff === 0
