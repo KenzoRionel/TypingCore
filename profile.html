@@ -52,6 +52,8 @@
 
       .tc-avatar {
         --tier-color: var(--tc-tier-rookie);
+        position: relative;
+        overflow: visible;
         width: 88px;
         height: 88px;
         flex-shrink: 0;
@@ -68,6 +70,40 @@
           0 9px 16px var(--tc-shadow-blur);
         font-size: 2rem;
         color: var(--text-secondary);
+      }
+
+      /* ---- Badge tier level (gambar bronze/silver/gold/... di pojok
+         kanan-bawah avatar), lihat LEVEL_BADGE_IMAGES di script bawah.
+         Sengaja tanpa border/background/shadow tambahan — gambar badge-nya
+         sendiri sudah final, jadi ditampilkan apa adanya. Disembunyikan by
+         default (opacity 0 + scale kecil) supaya tidak kelihatan sebagai
+         kotak icon rusak sebelum JS selesai set src / kalau nama level
+         tidak ada di peta / gambar gagal dimuat. ---- */
+      .tc-avatar-badge {
+        position: absolute;
+        bottom: -45px;
+        right: -45px;
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        opacity: 0;
+        transform: scale(0.6);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        pointer-events: none;
+      }
+
+      .tc-avatar-badge.is-visible {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      @media (max-width: 640px) {
+        .tc-avatar-badge {
+          width: 72px;
+          height: 72px;
+          bottom: -8px;
+          right: -8px;
+        }
       }
 
       .tc-info {
@@ -632,11 +668,18 @@
             <div class="tc-header-row">
               <div class="tc-avatar" id="avatarKey">
                 <i class="fas fa-user"></i>
+                <img
+                  class="tc-avatar-badge"
+                  id="avatarLevelBadge"
+                  src=""
+                  alt=""
+                  aria-hidden="true"
+                />
               </div>
               <div class="tc-info">
                 <div class="tc-info-top">
                   <div>
-                    <h1 class="tc-username" id="username">Dapa</h1>
+                    <h1 class="tc-username" id="username">Guest</h1>
                     <div
                       class="tc-level-row"
                       id="levelRow"
@@ -769,6 +812,49 @@
         { name: "Typing God", min: 100, cssVar: null },
       ];
 
+      // ==================== Badge Tier per Level ====================
+      // Peta nama level -> gambar badge. Key HARUS persis sama dengan
+      // `name` di LEVEL_NAME_RANGES (js/utils/level-system.js), karena
+      // `userData.levelName` yang dipakai di renderProfileHeader() datang
+      // dari getLevelName() di file itu (lewat profile-stats.js).
+      //
+      // CATATAN: LEVEL_NAME_RANGES saat ini punya 9 tier, tapi baru 8
+      // gambar badge yang disediakan — tier "Keyboard Legend" (level 71-99)
+      // belum ada asetnya, jadi untuk sementara di-fallback ke gambar
+      // "Manuscript Master" (img/inferno.png) supaya tidak muncul badge
+      // kosong/ikon rusak. Ganti baris di bawah begitu asetnya tersedia,
+      // misalnya: "Keyboard Legend": "img/diamond.png",
+      const LEVEL_BADGE_IMAGES = {
+        "Newbie Typer": "img/bronze.png",
+        "Key Toucher": "img/silver.png",
+        "Word Crafter": "img/rgbhologram.png",
+        "Sentence Slinger": "img/platinum.png",
+        "Paragraph Pro": "img/platinumice.png",
+        "Essay Elite": "img/diamond.png",
+        "Manuscript Master": "img/plasma.png",
+        "Keyboard Legend": "img/inferno.png", // TODO: ganti kalau ada aset sendiri
+        "Typing God": "img/rgbhologram.png",
+      };
+
+      function updateAvatarBadge(levelName) {
+        const badge = document.getElementById("avatarLevelBadge");
+        const src = LEVEL_BADGE_IMAGES[levelName];
+
+        if (!src) {
+          // Nama level tidak ada di peta (mis. tier baru ditambah di
+          // level-system.js tapi belum dipetakan di sini) -> sembunyikan
+          // badge daripada nampilin ikon rusak.
+          badge.classList.remove("is-visible");
+          badge.removeAttribute("src");
+          return;
+        }
+
+        badge.alt = `Badge tier: ${levelName}`;
+        badge.onerror = () => badge.classList.remove("is-visible");
+        badge.onload = () => badge.classList.add("is-visible");
+        badge.src = src;
+      }
+
       function getTier(wpm) {
         let tier = TIERS[0];
         for (const t of TIERS) {
@@ -805,6 +891,9 @@
         // ---- Baris 1: "Level {level} - {namaLevel}" (dari XP, tema Typing Journey) ----
         document.getElementById("levelText").textContent = `Level ${userData.level}`;
         document.getElementById("levelNameText").textContent = userData.levelName;
+
+        // ---- Badge tier di pojok kanan-bawah avatar, sinkron dgn levelName ----
+        updateAvatarBadge(userData.levelName);
 
         // ---- Baris 2: Title dari skill WPM (mis. "Speed Demon") ----
         const titleBadge = document.getElementById("titleBadge");
