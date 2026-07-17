@@ -72,40 +72,6 @@
         color: var(--text-secondary);
       }
 
-      /* ---- Badge tier level (gambar bronze/silver/gold/... di pojok
-         kanan-bawah avatar), lihat LEVEL_BADGE_IMAGES di script bawah.
-         Sengaja tanpa border/background/shadow tambahan — gambar badge-nya
-         sendiri sudah final, jadi ditampilkan apa adanya. Disembunyikan by
-         default (opacity 0 + scale kecil) supaya tidak kelihatan sebagai
-         kotak icon rusak sebelum JS selesai set src / kalau nama level
-         tidak ada di peta / gambar gagal dimuat. ---- */
-      .tc-avatar-badge {
-        position: absolute;
-        bottom: -45px;
-        right: -45px;
-        width: 96px;
-        height: 96px;
-        object-fit: contain;
-        opacity: 0;
-        transform: scale(0.6);
-        transition: opacity 0.2s ease, transform 0.2s ease;
-        pointer-events: none;
-      }
-
-      .tc-avatar-badge.is-visible {
-        opacity: 1;
-        transform: scale(1);
-      }
-
-      @media (max-width: 640px) {
-        .tc-avatar-badge {
-          width: 72px;
-          height: 72px;
-          bottom: -8px;
-          right: -8px;
-        }
-      }
-
       .tc-info {
         flex: 1;
         min-width: 0;
@@ -127,21 +93,76 @@
         margin: 0;
       }
 
-      /* ---- Baris 1: Level (dari total XP) ---- */
-      .tc-level-row {
-        margin-top: 4px;
+      /* ---- Nama block: username + level name (kanan nama) ---- */
+      .tc-name-block {
         display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 6px;
-        font-size: 1rem;
-        width: fit-content;
-        cursor: default;
-        border-radius: 6px;
-        position: relative;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
       }
 
-      .tc-level-row:focus-visible {
+      .tc-username-row {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      /* Nama level, sekarang di sebelah kanan nama user (baris yang sama) */
+      .tc-level-name {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--tc-amber);
+        white-space: nowrap;
+      }
+
+      /* ---- Badge tier besar, tepat di bawah nama user (128x128) ----
+         Artwork badge (wings + shield) tidak memenuhi penuh kanvas
+         128x128 - ada padding transparan cukup besar terutama di
+         bagian bawah gambar. Margin negatif di bawah dipakai untuk
+         "memotong" ruang kosong itu secara visual, supaya badge
+         terasa lebih dekat ke nama user & bar XP tanpa harus
+         mengedit file gambar aslinya. */
+      .tc-avatar-badge {
+        width: auto;
+        height: 82px;
+        object-fit: contain;
+        opacity: 0;
+        transform: scale(0.85);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        pointer-events: none;
+        margin: -6px 0 -30px;
+      }
+
+      .tc-avatar-badge.is-visible {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      @media (max-width: 640px) {
+        .tc-avatar-badge {
+          width: 96px;
+          height: 96px;
+          margin: -4px 0 -22px;
+        }
+        .tc-name-block {
+          align-items: center;
+        }
+      }
+
+      /* ---- Teks "Level N", dipindah ke ujung kanan, di atas bar XP ---- */
+      .tc-level-topright {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 6px;
+        cursor: default;
+        position: relative;
+        width: fit-content;
+        margin-left: auto;
+        border-radius: 6px;
+      }
+
+      .tc-level-topright:focus-visible {
         outline: 2px solid var(--tc-amber);
         outline-offset: 3px;
       }
@@ -149,27 +170,18 @@
       .tc-level {
         font-family: "JetBrains Mono", monospace;
         font-weight: 700;
+        font-size: 0.95rem;
         color: var(--text-primary);
         white-space: nowrap;
       }
 
-      .tc-level-sep {
-        color: var(--text-light);
-      }
-
-      .tc-level-name {
-        font-weight: 700;
-        color: var(--tc-amber);
-        white-space: nowrap;
-      }
-
-      /* Tooltip kustom untuk baris Level, dipicu via data-tooltip.
+      /* Tooltip kustom untuk teks Level, dipicu via data-tooltip.
          `title` bawaan browser tetap ada sebagai fallback aksesibilitas. */
-      .tc-level-row[data-tooltip]::after {
+      .tc-level-topright[data-tooltip]::after {
         content: attr(data-tooltip);
         position: absolute;
         bottom: calc(100% + 8px);
-        left: 0;
+        right: 0;
         width: max-content;
         max-width: 240px;
         padding: 8px 12px;
@@ -189,25 +201,23 @@
         z-index: 20;
       }
 
-      .tc-level-row[data-tooltip]:hover::after,
-      .tc-level-row[data-tooltip]:focus-visible::after {
+      .tc-level-topright[data-tooltip]:hover::after,
+      .tc-level-topright[data-tooltip]:focus-visible::after {
         opacity: 1;
         transform: translateY(0);
       }
 
-      /* ---- Baris 2: Title (dari skill WPM) ---- */
-      .tc-title-row {
-        margin-top: 6px;
-      }
-
+      /* ---- Title badge (WPM / Akurasi / Total Test), sekarang di dalam
+         tiap kartu stat, tepat di bawah angkanya ---- */
       .tc-title-badge {
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        margin-top: 10px;
         padding: 3px 12px 3px 10px;
         border-radius: 999px;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         background: var(--tc-key-light-bg);
         border: 1px solid var(--tc-key-border);
         color: var(--text-secondary);
@@ -261,7 +271,7 @@
       }
 
       .tc-xp {
-        margin-top: 16px;
+        margin-top: 6px;
       }
 
       .xp-bar {
@@ -299,6 +309,7 @@
       }
 
       .tc-keycap {
+        position: relative;
         background: var(--tc-key-light-bg);
         border: 1px solid var(--tc-key-border);
         border-radius: 16px;
@@ -309,6 +320,16 @@
           0 4px 0 var(--tc-shadow-edge),
           0 9px 16px var(--tc-shadow-blur);
         transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+
+      /* Icon mahkota di pojok kiri atas tiap kartu stat (WPM Terbaik,
+         Akurasi Rata-rata, Total Test) */
+      .tc-keycap-crown {
+        position: absolute;
+        top: 10px;
+        left: 12px;
+        font-size: 0.85rem;
+        color: var(--tc-amber);
       }
 
       .tc-keycap:hover {
@@ -348,21 +369,21 @@
         .tc-streak-wrap {
           align-items: center;
         }
-        .tc-level-row {
+        .tc-username-row {
           justify-content: center;
-          width: 100%;
         }
-        .tc-level-row[data-tooltip]::after {
+        .tc-level-topright {
+          justify-content: center;
+          margin-left: 0;
+        }
+        .tc-level-topright[data-tooltip]::after {
           left: 50%;
+          right: auto;
           transform: translate(-50%, 4px);
         }
-        .tc-level-row[data-tooltip]:hover::after,
-        .tc-level-row[data-tooltip]:focus-visible::after {
+        .tc-level-topright[data-tooltip]:hover::after,
+        .tc-level-topright[data-tooltip]:focus-visible::after {
           transform: translate(-50%, 0);
-        }
-        .tc-title-row {
-          display: flex;
-          justify-content: center;
         }
         .tc-stats-grid {
           gap: 10px;
@@ -668,35 +689,21 @@
             <div class="tc-header-row">
               <div class="tc-avatar" id="avatarKey">
                 <i class="fas fa-user"></i>
-                <img
-                  class="tc-avatar-badge"
-                  id="avatarLevelBadge"
-                  src=""
-                  alt=""
-                  aria-hidden="true"
-                />
               </div>
               <div class="tc-info">
                 <div class="tc-info-top">
-                  <div>
-                    <h1 class="tc-username" id="username">Guest</h1>
-                    <div
-                      class="tc-level-row"
-                      id="levelRow"
-                      tabindex="0"
-                      data-tooltip="Level dari total XP. Lanjut latihan buat naik level"
-                      title="Level dari total XP. Lanjut latihan buat naik level"
-                    >
-                      <span class="tc-level" id="levelText">Level 4</span>
-                      <span class="tc-level-sep" aria-hidden="true">-</span>
+                  <div class="tc-name-block">
+                    <div class="tc-username-row">
+                      <h1 class="tc-username" id="username">Guest</h1>
                       <span class="tc-level-name" id="levelNameText">Newbie Typer</span>
                     </div>
-                    <div class="tc-title-row">
-                      <span class="tc-title-badge" id="titleBadge">
-                        <i class="fas fa-bolt" aria-hidden="true"></i>
-                        <span id="tierText">Speedster</span>
-                      </span>
-                    </div>
+                    <img
+                      class="tc-avatar-badge"
+                      id="avatarLevelBadge"
+                      src=""
+                      alt=""
+                      aria-hidden="true"
+                    />
                   </div>
                   <div class="tc-streak-wrap">
                     <div class="tc-streak-pill">
@@ -709,6 +716,15 @@
                 </div>
 
                 <div class="tc-xp">
+                  <div
+                    class="tc-level-topright"
+                    id="levelRow"
+                    tabindex="0"
+                    data-tooltip="Level dari total XP. Lanjut latihan buat naik level"
+                    title="Level dari total XP. Lanjut latihan buat naik level"
+                  >
+                    <span class="tc-level" id="levelText">Level 4</span>
+                  </div>
                   <div class="xp-bar">
                     <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
                   </div>
@@ -723,16 +739,31 @@
 
           <div class="tc-stats-grid">
             <div class="tc-keycap tc-fade" style="animation-delay: 80ms">
+              <i class="fas fa-crown tc-keycap-crown" aria-hidden="true"></i>
               <div class="tc-stat-value" id="statWpm">0</div>
               <div class="tc-stat-label">WPM Terbaik</div>
+              <span class="tc-title-badge" id="titleBadgeWpm">
+                <i class="fas fa-bolt" aria-hidden="true"></i>
+                <span id="tierTextWpm">-</span>
+              </span>
             </div>
             <div class="tc-keycap tc-fade" style="animation-delay: 160ms">
+              <i class="fas fa-crown tc-keycap-crown" aria-hidden="true"></i>
               <div class="tc-stat-value" id="statAcc">0</div>
               <div class="tc-stat-label">Akurasi Rata-rata</div>
+              <span class="tc-title-badge" id="titleBadgeAcc">
+                <i class="fas fa-bullseye" aria-hidden="true"></i>
+                <span id="tierTextAcc">-</span>
+              </span>
             </div>
             <div class="tc-keycap tc-fade" style="animation-delay: 240ms">
+              <i class="fas fa-crown tc-keycap-crown" aria-hidden="true"></i>
               <div class="tc-stat-value" id="statTests">0</div>
               <div class="tc-stat-label">Total Test</div>
+              <span class="tc-title-badge" id="titleBadgeTests">
+                <i class="fas fa-flag-checkered" aria-hidden="true"></i>
+                <span id="tierTextTests">-</span>
+              </span>
             </div>
           </div>
 
@@ -805,12 +836,56 @@
         return buildProfileUserData(scores, username);
       }
 
+      // ==================== Title WPM (Baris "WPM Terbaik") ====================
+      // Dipakai juga untuk warna keycap avatar (--tier-color), tetap
+      // memakai 4 rentang cssVar lama supaya avatar tidak berubah terlalu
+      // drastis, tapi nama title-nya sekarang mengikuti 10 tier di bawah.
       const TIERS = [
-        { name: "Rookie", min: 0, cssVar: "--tc-tier-rookie" },
-        { name: "Speedster", min: 50, cssVar: "--tc-tier-speedster" },
-        { name: "Speed Demon", min: 80, cssVar: "--tc-tier-demon" },
-        { name: "Typing God", min: 100, cssVar: null },
+        { name: "Novice", min: 0, cssVar: "--tc-tier-rookie" },
+        { name: "Novice", min: 30, cssVar: "--tc-tier-rookie" },
+        { name: "Casual Typer", min: 50, cssVar: "--tc-tier-speedster" },
+        { name: "Intermediate", min: 60, cssVar: "--tc-tier-speedster" },
+        { name: "Proficient", min: 80, cssVar: "--tc-tier-demon" },
+        { name: "Fast Typer", min: 100, cssVar: "--tc-tier-demon" },
+        { name: "Advanced", min: 130, cssVar: null },
+        { name: "Expert", min: 160, cssVar: null },
+        { name: "Master", min: 200, cssVar: null },
+        { name: "Grandmaster", min: 250, cssVar: null },
+        { name: "Apex", min: 300, cssVar: null },
       ];
+
+      // ==================== Title Akurasi (Baris "Akurasi Rata-rata") ====================
+      const ACCURACY_TIERS = [
+        { name: "Inconsistent", min: 0 },
+        { name: "Inconsistent", min: 60 },
+        { name: "Improving", min: 70 },
+        { name: "Accurate", min: 80 },
+        { name: "Precise", min: 90 },
+        { name: "Flawless", min: 100 },
+      ];
+
+      // ==================== Title Total Test (Baris "Total Test") ====================
+      const TEST_TIERS = [
+        { name: "Starter", min: 0 },
+        { name: "Starter", min: 10 },
+        { name: "Regular", min: 50 },
+        { name: "Dedicated", min: 100 },
+        { name: "Committed", min: 300 },
+        { name: "Veteran", min: 500 },
+        { name: "Seasoned", min: 1000 },
+        { name: "Marathon Typer", min: 3000 },
+        { name: "Hardcore", min: 5000 },
+        { name: "Legend", min: 10000 },
+        { name: "Eternal", min: 50000 },
+      ];
+
+      function getRankFromTiers(tiers, value) {
+        let rank = tiers[0];
+        for (const t of tiers) {
+          if (value >= t.min) rank = t;
+        }
+        return rank;
+      }
 
       // ==================== Badge Tier per Level ====================
       // Peta nama level -> gambar badge. Key HARUS persis sama dengan
@@ -825,15 +900,15 @@
       // kosong/ikon rusak. Ganti baris di bawah begitu asetnya tersedia,
       // misalnya: "Keyboard Legend": "img/diamond.png",
       const LEVEL_BADGE_IMAGES = {
-        "Newbie Typer": "img/bronze.png",
-        "Key Toucher": "img/silver.png",
-        "Word Crafter": "img/rgbhologram.png",
-        "Sentence Slinger": "img/platinum.png",
-        "Paragraph Pro": "img/platinumice.png",
-        "Essay Elite": "img/diamond.png",
-        "Manuscript Master": "img/plasma.png",
-        "Keyboard Legend": "img/inferno.png", // TODO: ganti kalau ada aset sendiri
-        "Typing God": "img/rgbhologram.png",
+        "Newbie Typer": "img/level1_rookie.png",
+        "Key Toucher": "img/level2_iron.png",
+        "Word Crafter": "img/level3_bronze.png",
+        "Sentence Slinger": "img/level4_silver.png",
+        "Paragraph Pro": "img/level5_gold.png",
+        "Essay Elite": "img/level6_emerald.png",
+        "Manuscript Master": "img/level7_diamond.png",
+        "Keyboard Legend": "img/level8_ruby_god.png", // TODO: ganti kalau ada aset sendiri
+        "Typing God": "img/level9_mythic_prismatic.png",
       };
 
       function updateAvatarBadge(levelName) {
@@ -863,6 +938,11 @@
         return tier;
       }
 
+      /** true kalau `rank` adalah tier PALING TINGGI di `tiers` (dipakai buat efek "is-god"). */
+      function isMaxRank(tiers, rank) {
+        return rank.name === tiers[tiers.length - 1].name;
+      }
+
       // Count-up sederhana, menghormati prefers-reduced-motion
       function animateCount(el, target, { suffix = "", duration = 1300 } = {}) {
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -882,29 +962,45 @@
       }
 
       function renderProfileHeader(userData) {
-        // Title (baris ke-2) tetap dari skill WPM — TERPISAH dari Level (baris
-        // ke-1, dari total XP/grind). Dua status ini sengaja tidak digabung.
-        const tier = getTier(userData.stats.bestWpm);
+        // Title WPM/Akurasi/Total Test — TERPISAH dari Level (dari total
+        // XP/grind). Status-status ini sengaja tidak digabung dengan Level.
+        const wpmRank = getTier(userData.stats.bestWpm);
+        const accRank = getRankFromTiers(ACCURACY_TIERS, userData.stats.avgAcc);
+        const testsRank = getRankFromTiers(TEST_TIERS, userData.stats.totalTests);
 
         document.getElementById("username").textContent = userData.username;
 
-        // ---- Baris 1: "Level {level} - {namaLevel}" (dari XP, tema Typing Journey) ----
-        document.getElementById("levelText").textContent = `Level ${userData.level}`;
+        // ---- Nama level, di sebelah kanan nama user ----
         document.getElementById("levelNameText").textContent = userData.levelName;
 
-        // ---- Badge tier di pojok kanan-bawah avatar, sinkron dgn levelName ----
+        // ---- Teks "Level {level}", di ujung kanan atas bar XP ----
+        document.getElementById("levelText").textContent = `Level ${userData.level}`;
+
+        // ---- Badge tier besar, tepat di bawah nama user, sinkron dgn levelName ----
         updateAvatarBadge(userData.levelName);
 
-        // ---- Baris 2: Title dari skill WPM (mis. "Speed Demon") ----
-        const titleBadge = document.getElementById("titleBadge");
-        const tierEl = document.getElementById("tierText");
-        tierEl.textContent = tier.name;
-        titleBadge.classList.toggle("is-god", tier.name === "Typing God");
+        // ---- Title WPM Terbaik, di bawah angka WPM Terbaik ----
+        document.getElementById("tierTextWpm").textContent = wpmRank.name;
+        document
+          .getElementById("titleBadgeWpm")
+          .classList.toggle("is-god", isMaxRank(TIERS, wpmRank));
+
+        // ---- Title Akurasi Rata-rata, di bawah angka Akurasi Rata-rata ----
+        document.getElementById("tierTextAcc").textContent = accRank.name;
+        document
+          .getElementById("titleBadgeAcc")
+          .classList.toggle("is-god", isMaxRank(ACCURACY_TIERS, accRank));
+
+        // ---- Title Total Test, di bawah angka Total Test ----
+        document.getElementById("tierTextTests").textContent = testsRank.name;
+        document
+          .getElementById("titleBadgeTests")
+          .classList.toggle("is-god", isMaxRank(TEST_TIERS, testsRank));
 
         const avatar = document.getElementById("avatarKey");
         avatar.style.setProperty(
           "--tier-color",
-          tier.cssVar ? `var(${tier.cssVar})` : "var(--tc-tier-god-start)"
+          wpmRank.cssVar ? `var(${wpmRank.cssVar})` : "var(--tc-tier-god-start)"
         );
 
         document.getElementById("streakBest").textContent = `Rekor: ${userData.streak.best} hari`;
