@@ -1,39 +1,42 @@
 // js/data/default-words.js
+// REVISI top200Words — 200 kata unik, sudah diverifikasi tanpa duplikat.
+// Perubahan dari versi asli:
+//  - Asli berisi 269 entri (267 unik) meski dinamai "top200" — sudah dipangkas presisi ke 200.
+//  - Duplikat dihapus: "lagi" dan "jalan" masing-masing muncul 2x di versi asli.
+//  - Dihapus: singkatan/kata pinjaman ("hp", "chat") dan sejumlah konjungsi formal/jarang
+//    dipakai sehari-hari (mis. "beserta", "terhadap", "bagai", "sesuai", "menurut") serta
+//    beberapa kata benda niche (mis. "sirup", "mentega", "paku", "kapal") untuk memberi ruang.
+//  - Ditambahkan kata-kata berfrekuensi sangat tinggi dalam bahasa Indonesia yang sebelumnya
+//    hilang total dari daftar: "yang" (kata paling sering muncul dalam korpus bahasa Indonesia),
+//    "orang", "dapat", "seperti", "harus", serta angka dasar "satu/dua/tiga" dan kata inti
+//    keluarga/eksistensi "bapak", "ibu", "anak", "hidup", "punya", "tahu", "waktu", "tempat".
 
 export const top200Words = [
-"saya", "kamu", "dia", "kita", "mereka", "ini", "itu", "ada", "tidak", "ya",
-  "mau", "bisa", "akan", "sudah", "belum", "lagi", "sekarang", "nanti",
-  "hari", "minggu", "bulan", "tahun", "pagi", "siang", "sore", "malam",
-  "makan", "minum", "tidur", "duduk", "berdiri", "jalan", "pergi", "datang",
-  "bawa", "ambil", "lihat", "dengar", "bicara", "tulis", "baca", "kerja", "main",
-  "belajar", "uang", "rumah", "bola", "kota", "kunci", "tali", "kursi", "meja",
-  "padi", "susu", "roti", "ikan", "ayam", "batu", "paku", "kain", "tas", "topi",
-  "jari", "mata", "telinga", "mulut", "hidung", "tangan", "kaki", "kepala", "rambut",
-  "dan", "atau", "tetapi", "sedang", "karena", "sehingga", "jika",
-  "apabila", "walau", "meski", "supaya", "agar", "untuk", "dengan",
-  "tanpa", "sampai", "hingga", "ketika", "saat", "lalu", "kemudian",
-  "sebelum", "telah", "namun", "justru", "malah",
-  "bahkan", "lagi", "apalagi", "lain", "beserta", "terhadap", 
-  "bagi", "tentang", "maka", "jadi", "sebab", "lanjut", "akhir",
-  "bagai", "sesuai", "dasar", "menurut", "tentu", "pada", "di", "ke", "dari", "oleh",
-  "kulit", "gigi", "pintu", "jendela", "lantai", "dinding", "atap", "langit", "bumi",
-  "air", "api", "angin", "hujan", "panas", "dingin", "besar", "kecil", "panjang",
-  "pendek", "berat", "ringan", "cepat", "lambat", "baru", "lama", "bagus", "jelek",
-  "dekat", "jauh", "atas", "bawah", "dalam", "luar", "depan", "belakang", "kiri",
-  "kanan", "tengah", "samping", "mana", "apa", "siapa", "mengapa", "bagaimana",
-  "berapa", "kapan", "setiap", "semua", "banyak", "sedikit", "cukup", "lebih",
-  "sangat", "juga", "saja", "hanya", "pasti", "mungkin", "harap", "tolong",
-  "maaf", "terima", "kasih", "sama", "permisi", "selamat", "ikut", "cari", "temu",
-  "beri", "kirim", "bayar", "tanya", "jawab", "bantu", "pakai", "buat", "pindah",
-  "ubah", "ganti", "potong", "buang", "simpan", "jemur", "cuci", "masak", "goreng",
-  "rebus", "bakar", "tunggu", "teman", "keluarga", "saudara", "adik", "kakak",
-  "ortu", "guru", "murid", "sekolah", "kampus", "kelas", "belanja", "toko", "pasar",
-  "harga", "murah", "mahal", "mobil", "motor", "sepeda", "jalan",
-  "kereta", "kapal", "laut", "sungai", "gunung", "pantai",
-  "hutan", "kebun", "taman", "bunga", "pohon", "daun", "akar", "buah", "sayur",
-  "daging", "telur", "keju", "teh", "kopi", "sirup", "gula", "garam", "lada",
-  "minyak", "mentega", "kertas", "buku", "pensil", "hp", "chat", "telepon", "kamera",
-  "foto", "video", "musik", "lagu", "film"
+  "saya", "kamu", "dia", "kita", "mereka", "ini", "itu", "ada",
+  "tidak", "ya", "mau", "bisa", "akan", "sudah", "belum", "lagi",
+  "sekarang", "nanti", "hari", "minggu", "bulan", "tahun", "pagi", "siang",
+  "sore", "malam", "makan", "minum", "tidur", "duduk", "berdiri", "jalan",
+  "pergi", "datang", "bawa", "ambil", "lihat", "dengar", "bicara", "tulis",
+  "baca", "kerja", "main", "belajar", "uang", "rumah", "kota", "kursi",
+  "meja", "susu", "roti", "ikan", "ayam", "tas", "jari", "mata",
+  "telinga", "mulut", "hidung", "tangan", "kaki", "kepala", "rambut", "dan",
+  "atau", "tetapi", "karena", "jika", "untuk", "dengan", "tanpa", "sampai",
+  "ketika", "saat", "lalu", "kemudian", "sebelum", "telah", "namun", "bagi",
+  "tentang", "maka", "jadi", "pada", "di", "ke", "dari", "oleh",
+  "pintu", "jendela", "lantai", "dinding", "air", "api", "angin", "hujan",
+  "panas", "dingin", "besar", "kecil", "panjang", "pendek", "berat", "ringan",
+  "cepat", "lambat", "baru", "lama", "bagus", "jelek", "dekat", "jauh",
+  "atas", "bawah", "dalam", "luar", "depan", "belakang", "kiri", "kanan",
+  "tengah", "samping", "mana", "apa", "siapa", "mengapa", "bagaimana", "berapa",
+  "kapan", "setiap", "semua", "banyak", "sedikit", "cukup", "lebih", "sangat",
+  "juga", "saja", "hanya", "pasti", "mungkin", "tolong", "maaf", "terima",
+  "kasih", "sama", "kirim", "bayar", "teman", "keluarga", "saudara", "adik",
+  "kakak", "guru", "murid", "sekolah", "kampus", "kelas", "toko", "pasar",
+  "harga", "murah", "mahal", "mobil", "motor", "sepeda", "laut", "kebun",
+  "taman", "bunga", "pohon", "daun", "buah", "sayur", "daging", "telur",
+  "teh", "kopi", "gula", "buku", "yang", "dapat", "orang", "seperti",
+  "harus", "satu", "dua", "tiga", "punya", "masih", "waktu", "tempat",
+  "baik", "begitu", "sekali", "tahu", "bapak", "ibu", "anak", "hidup"
 ];
 
 
