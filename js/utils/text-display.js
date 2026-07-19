@@ -5,6 +5,133 @@ import { gameState } from "../game/game-state.js";
 
 const MAX_OVERTYPED_CHARS_HIGHLIGHT = 5;
 
+/* ==========================================================================
+   Smooth Caret
+   ==========================================================================
+   Kursor "lama" digambar lewat pseudo-element ::after yang ditempel ke
+   karakter yang berbeda-beda setiap kali posisi kursor berubah. Karena
+   setiap perpindahan = elemen ::after baru, transisinya tidak pernah
+   benar-benar "meluncur" antar karakter.
+
+   Untuk membuat perpindahan kursor benar-benar mulus, kita pakai SATU
+   elemen <div class="smooth-caret"> yang tetap sama sepanjang waktu; posisi
+   (left/top/width/height) elemen ini di-update lewat JS setiap kali kursor
+   berpindah, dan CSS transition yang membuatnya "meluncur" ke posisi baru.
+
+   Fitur ini opsional (default nonaktif) dan dikendalikan lewat Modal
+   Pengaturan -> setCaretSmoothness().
+*/
+const CARET_SMOOTH_DURATIONS = {
+  off: 0,
+  low: 90,
+  medium: 160,
+  high: 280,
+};
+
+let smoothCaretDuration = 0; // 0 = nonaktif, pakai kursor lama (::after)
+let smoothCaretEl = null;
+
+function getOrCreateSmoothCaret(container) {
+  if (smoothCaretEl && smoothCaretEl.parentElement === container) {
+    return smoothCaretEl;
+  }
+  // Container lama sudah di-clear (mis. saat renderAllLines melakukan
+  // innerHTML = ""), jadi buat ulang elemennya di container yang baru.
+  smoothCaretEl = document.createElement("div");
+  smoothCaretEl.className = "smooth-caret";
+  container.appendChild(smoothCaretEl);
+  return smoothCaretEl;
+}
+
+function hideSmoothCaret() {
+  if (smoothCaretEl) smoothCaretEl.classList.remove("is-visible");
+}
+
+function computeSmoothCaretRect(container, targetEl, isBefore, mode) {
+  const containerRect = container.getBoundingClientRect();
+  const elRect = targetEl.getBoundingClientRect();
+  // Ubah koordinat viewport (dipengaruhi scroll) menjadi koordinat lokal
+  // #textDisplay yang tidak terpengaruh scroll, karena scrollTop-nya sudah
+  // ditambahkan kembali -> ini yang membuat caret ikut ter-scroll dengan
+  // benar bersama teks saat baris baru muncul.
+  const baseLeft = elRect.left - containerRect.left + container.scrollLeft;
+  const baseTop = elRect.top - containerRect.top + container.scrollTop;
+
+  if (mode === "underline") {
+    return {
+      left: baseLeft,
+      top: baseTop + elRect.height - 3,
+      width: elRect.width,
+      height: 3,
+    };
+  }
+
+  if (mode === "box") {
+    return { left: baseLeft, top: baseTop, width: elRect.width, height: elRect.height };
+  }
+
+  // Mode "caret": garis tegak tipis, di kiri (before) atau kanan (after) karakter.
+  const barWidth = 2;
+  const left = isBefore ? baseLeft - 1 : baseLeft + elRect.width - 1;
+  return { left, top: baseTop, width: barWidth, height: elRect.height };
+}
+
+function positionSmoothCaret(targetEl, isBefore, mode) {
+  const DOM = getGameDOMReferences();
+  if (!DOM || !DOM.textDisplay) return;
+
+  if (smoothCaretDuration <= 0 || mode === "highlight" || mode === "hidden" || !targetEl) {
+    hideSmoothCaret();
+    return;
+  }
+
+  const el = getOrCreateSmoothCaret(DOM.textDisplay);
+  const rect = computeSmoothCaretRect(DOM.textDisplay, targetEl, isBefore, mode);
+  el.classList.toggle("mode-box", mode === "box");
+  el.style.left = `${rect.left}px`;
+  el.style.top = `${rect.top}px`;
+  el.style.width = `${rect.width}px`;
+  el.style.height = `${rect.height}px`;
+  el.classList.add("is-visible");
+}
+
+/**
+ * Mengatur tingkat kehalusan perpindahan caret.
+ * @param {"off"|"low"|"medium"|"high"} level
+ */
+export function setCaretSmoothness(level) {
+  const ms = CARET_SMOOTH_DURATIONS.hasOwnProperty(level)
+    ? CARET_SMOOTH_DURATIONS[level]
+    : 0;
+  smoothCaretDuration = ms;
+
+  const DOM = getGameDOMReferences();
+  if (!DOM || !DOM.textDisplay) return;
+
+  DOM.textDisplay.classList.toggle("smooth-caret-active", ms > 0);
+  DOM.textDisplay.style.setProperty("--caret-smooth-duration", `${ms}ms`);
+
+  if (ms <= 0) {
+    hideSmoothCaret();
+    return;
+  }
+
+  // Saat baru diaktifkan / level baru saja diganti, lompat dulu ke posisi
+  // yang benar TANPA animasi (biar tidak "meluncur" dari pojok kiri-atas),
+  // baru transisi dinyalakan lagi untuk perpindahan berikutnya.
+  if (smoothCaretEl) {
+    smoothCaretEl.style.transition = "none";
+    requestAnimationFrame(() => {
+      if (smoothCaretEl) smoothCaretEl.style.transition = "";
+    });
+  }
+
+  if (typeof window.updateWordHighlighting === "function") {
+    window.updateWordHighlighting();
+  }
+}
+window.setCaretSmoothness = setCaretSmoothness;
+
 export function prepareAndRenderText() {
   const DOM = getGameDOMReferences();
   if (!DOM.textDisplay || !gameState.fullTextWords.length) return;
@@ -114,8 +241,11 @@ export function lockTextDisplayHeightTo3Lines() {
   const words = DOM.textDisplay.querySelectorAll(".word-container");
   if (words.length === 0) return;
 
-  // Mendapatkan tinggi satu baris dari kata pertama
-  const lineHeight = words[0].offsetHeight;
+  // Mendapatkan tinggi satu baris dari kata pertama.
+  // Pakai getBoundingClientRect() (nilai sub-pixel/desimal) alih-alih
+  // offsetHeight (dibulatkan ke integer terdekat) supaya tidak ada sisa
+  // pembulatan yang menumpuk saat dikalikan 3 baris.
+  const lineHeight = words[0].getBoundingClientRect().height;
 
   // Menetapkan tinggi maksimum 3 baris secara dinamis
   DOM.textDisplay.style.maxHeight = `${lineHeight * 3}px`;
@@ -165,7 +295,10 @@ function calculateLines() {
 
 export function updateWordHighlighting() {
   const DOM = getGameDOMReferences();
-  if (gameState.isTestInvalid) return;
+  if (gameState.isTestInvalid) {
+    hideSmoothCaret();
+    return;
+  }
 
   // 1. Reset & Bersihkan SEMUA Class Kursor, dan terapkan underline untuk kata yang salah
   const allElements = DOM.textDisplay.querySelectorAll(".word-container, .space-char, .word-container span");
@@ -225,7 +358,10 @@ export function updateWordHighlighting() {
   }
 
   const currentWordEl = document.getElementById(`word-${gameState.typedWordIndex}`);
-  if (!currentWordEl) return;
+  if (!currentWordEl) {
+    hideSmoothCaret();
+    return;
+  }
   
   currentWordEl.classList.add("current-word-target");
 
@@ -279,10 +415,17 @@ export function updateWordHighlighting() {
   const nextSpace = currentWordEl.nextElementSibling; // Spasi yang terpisah
   const mode = gameState.cursorMode || 'caret';
 
+  // Info target kursor saat ini, dipakai untuk menggerakkan smooth caret
+  // (elemen tunggal) di akhir blok ini, sejajar dengan logika ::after di atas.
+  let smoothCaretTarget = null;
+  let smoothCaretBefore = true;
+
   // PENTING: Check kondisi dalam urutan yang tepat dengan else-if
   if (typedValue.length === 0 && allChars.length > 0) {
     // Belum ada input: kursor di depan karakter pertama
     allChars[0].classList.add("has-cursor", "cursor-before");
+    smoothCaretTarget = allChars[0];
+    smoothCaretBefore = true;
   } 
   else if (typedValue.length > 0 && typedValue.length < targetWord.length) {
     // Sedang mengetik (belum selesai): kursor di dalam word container
@@ -291,12 +434,16 @@ export function updateWordHighlighting() {
       const caretIndex = typedValue.length - 1;
       if (allChars[caretIndex]) {
         allChars[caretIndex].classList.add("has-cursor", "cursor-after");
+        smoothCaretTarget = allChars[caretIndex];
+        smoothCaretBefore = false;
       }
     } else {
       // Mode Underline/Box: Kursor di SEBELUM karakter yang akan diketik
       const nextIndex = typedValue.length;
       if (allChars[nextIndex]) {
         allChars[nextIndex].classList.add("has-cursor", "cursor-before");
+        smoothCaretTarget = allChars[nextIndex];
+        smoothCaretBefore = true;
       }
     }
   } 
@@ -304,6 +451,8 @@ export function updateWordHighlighting() {
      // Kata selesai, kursor pindah ke spasi (elemen terpisah)
      // Tandai juga spasi sebagai target agar mendapat highlight latar belakang
      nextSpace.classList.add("has-cursor", "cursor-before", "current-space-target");
+     smoothCaretTarget = nextSpace;
+     smoothCaretBefore = true;
   } 
   else if (typedValue.length > targetWord.length && allChars.length > 0) {
     // Kelebihan ketik: Kursor di karakter extra terakhir
@@ -311,13 +460,17 @@ export function updateWordHighlighting() {
     if (lastExtra) {
       if (mode === "caret") {
         lastExtra.classList.add("has-cursor", "cursor-after");
+        smoothCaretBefore = false;
       } else {
         lastExtra.classList.add("has-cursor", "cursor-before");
+        smoothCaretBefore = true;
       }
+      smoothCaretTarget = lastExtra;
     }
   }
 
   DOM.textDisplay.dataset.cursorMode = mode;
+  positionSmoothCaret(smoothCaretTarget, smoothCaretBefore, mode);
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
 }
@@ -342,13 +495,22 @@ export function ensureScrollSync() {
   if (!currentWordEl) return;
   const container = DOM.textDisplay;
 
-  // Dapatkan posisi top dari kata saat ini relatif terhadap kontainer
-  const currentWordTop = currentWordEl.offsetTop - container.offsetTop;
+  // Dapatkan posisi top dari kata saat ini relatif terhadap kontainer.
+  // PENTING: #textDisplay diberi `position: relative` di CSS, sehingga ia
+  // otomatis menjadi offsetParent untuk semua word-container/word-group di
+  // dalamnya (karena elemen-elemen itu tidak punya `position` sendiri).
+  // Artinya currentWordEl.offsetTop SUDAH relatif terhadap #textDisplay -
+  // TIDAK boleh dikurangi container.offsetTop lagi (itu posisi #textDisplay
+  // relatif terhadap offsetParent-nya SENDIRI, angka yang sama sekali tidak
+  // relevan di sini). Mengurangkannya menghasilkan offset "liar" yang bukan
+  // kelipatan lineHeight, sehingga scrollTop yang dihasilkan tidak pernah
+  // pas di batas baris -> baris atas & baris ke-4 sama-sama terlihat terpotong.
+  const currentWordTop = currentWordEl.offsetTop;
 
   // Dapatkan tinggi satu baris dari elemen kata pertama sebagai referensi
   const firstWord = document.getElementById("word-0");
   if (!firstWord) return;
-  const lineHeight = firstWord.offsetHeight;
+  const lineHeight = firstWord.getBoundingClientRect().height;
 
   // Jika kata saat ini berada di baris ke-2 atau lebih
   if (currentWordTop >= lineHeight) {

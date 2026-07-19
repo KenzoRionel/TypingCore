@@ -1,15 +1,4 @@
 // js/data/default-words.js
-// REVISI top200Words — 200 kata unik, sudah diverifikasi tanpa duplikat.
-// Perubahan dari versi asli:
-//  - Asli berisi 269 entri (267 unik) meski dinamai "top200" — sudah dipangkas presisi ke 200.
-//  - Duplikat dihapus: "lagi" dan "jalan" masing-masing muncul 2x di versi asli.
-//  - Dihapus: singkatan/kata pinjaman ("hp", "chat") dan sejumlah konjungsi formal/jarang
-//    dipakai sehari-hari (mis. "beserta", "terhadap", "bagai", "sesuai", "menurut") serta
-//    beberapa kata benda niche (mis. "sirup", "mentega", "paku", "kapal") untuk memberi ruang.
-//  - Ditambahkan kata-kata berfrekuensi sangat tinggi dalam bahasa Indonesia yang sebelumnya
-//    hilang total dari daftar: "yang" (kata paling sering muncul dalam korpus bahasa Indonesia),
-//    "orang", "dapat", "seperti", "harus", serta angka dasar "satu/dua/tiga" dan kata inti
-//    keluarga/eksistensi "bapak", "ibu", "anak", "hidup", "punya", "tahu", "waktu", "tempat".
 
 export const top200Words = [
   "saya", "kamu", "dia", "kita", "mereka", "ini", "itu", "ada",

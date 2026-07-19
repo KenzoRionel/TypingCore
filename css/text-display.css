@@ -11,6 +11,9 @@
   overflow-y: hidden;
   line-height: 1.5em;
   max-height: none;
+  /* diperlukan supaya .smooth-caret (position: absolute) menempatkan diri
+     relatif terhadap #textDisplay, bukan ancestor lain di atasnya */
+  position: relative;
   /* Biarkan tinggi otomatis */
   font-family: monospace;
   font-size: 2.0em;
@@ -21,23 +24,43 @@
   font-feature-settings: "kern" 0;
 }
 
-/* Fix untuk font sans-serif - mengatasi jarak antar huruf yang terlihat lebih besar */
+/* Fix untuk font sans-serif - font proporsional tidak butuh koreksi letter-spacing/kerning manual */
 #textDisplay.font-sans-serif {
-  letter-spacing: -0.03em;
-  word-spacing: 0;
-  font-feature-settings: "kern" 0;
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
-/* Adjust space character width untuk sans-serif agar lebih sesuai */
+/* Space character pada font proporsional: 'ch' (lebar digit '0') tidak mewakili
+   lebar spasi asli, jadi pakai nilai em yang mendekati lebar spasi font sans-serif
+   pada umumnya, bukan satuan 'ch' yang hanya akurat untuk monospace. */
 #textDisplay.font-sans-serif .space-char {
-  width: 0.75ch;
+  width: 0.28em;
 }
 
-/* Reset margins dan padding pada span elements untuk sans-serif */
+/* Reset margins dan padding pada span elements untuk sans-serif.
+   PENTING: tidak ada min-width di sini - huruf sempit (i, l, t, f, j) harus boleh
+   selebar glyph aslinya, kalau dipaksa min-width akan muncul jarak kosong ekstra
+   di huruf-huruf sempit dan terlihat "berjarak" tidak rata seperti sebelumnya. */
 #textDisplay.font-sans-serif .word-container span {
   margin: 0;
   padding: 0;
-  min-width: 0.35em;
+}
+
+/* Fix yang sama untuk font Serif: font proporsional, jadi 'ch' (lebar digit '0')
+   tidak mewakili lebar spasi aslinya. Serif tidak butuh reset min-width karena
+   rule dasar .word-container span sudah tanpa min-width (lihat di bawah). */
+#textDisplay.font-serif {
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+#textDisplay.font-serif .space-char {
+  width: 0.28em;
+}
+
+#textDisplay.font-serif .word-container span {
+  margin: 0;
+  padding: 0;
 }
 
 .text-line {
@@ -443,4 +466,53 @@
 @keyframes cursorBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+/* ==========================================================================
+   Smooth Caret (opsional, diatur dari Modal Pengaturan)
+   ==========================================================================
+   Alih-alih menempelkan pseudo-element ::after pada karakter yang berbeda
+   setiap kali kursor berpindah (yang tidak bisa dianimasikan mulus karena
+   selalu jadi elemen baru), kita pakai SATU elemen tunggal yang posisinya
+   (left/top/width/height) diperbarui lewat JS lalu di-transition oleh CSS.
+   Elemen ini hanya aktif kalau user memilih tingkat kehalusan > Nonaktif. */
+.smooth-caret {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  background-color: #555;
+  border-radius: 1px;
+  animation: cursorBlink 1s infinite;
+  transition:
+    left var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
+    top var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
+    width var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
+    height var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.13s ease,
+    opacity 0.15s ease;
+}
+.smooth-caret.is-visible {
+  opacity: 1;
+}
+.smooth-caret.mode-box {
+  background-color: #ffffff50;
+  border: 1px solid #555;
+  box-sizing: border-box;
+}
+
+/* Kursor tidak boleh berkedip saat opsi "Kursor Berkedip" dimatikan */
+#textDisplay.cursor-no-blink .smooth-caret {
+  animation: noBlinkCursor 1s infinite;
+}
+
+/* Saat smooth caret aktif, matikan kursor lama (per-karakter, via ::after)
+   supaya tidak tampil dobel dengan si smooth caret */
+#textDisplay.smooth-caret-active .has-cursor::after {
+  display: none !important;
+}
+
+/* Mode Hidden tetap tidak menampilkan kursor sama sekali */
+#textDisplay[data-cursor-mode="hidden"] .smooth-caret {
+  display: none;
 }

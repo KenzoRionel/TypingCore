@@ -37,6 +37,7 @@ import {
   setKeyboardVisibility,
   updateKeyboardVisibilityUI
 } from "./index-keyboard.js";
+import { initSettingsPanel } from "./utils/settings-panel.js";
 
 
 // Set default kata-kata saat aplikasi pertama kali dijalankan
@@ -164,112 +165,24 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.gameState) {
     window.gameState.TIMED_TEST_DURATION = 60;
     window.gameState.timeRemaining = 60;
-    // Load saved cursor mode jika ada, fallback ke highlight
-    const savedCursor = localStorage.getItem('cursorMode') || 'highlight';
-    window.gameState.cursorMode = savedCursor;
   }
 
-  // Muat preferensi statistik dari localStorage (jika ada) dan inisialisasi tampilan
-  (function initStatsModeDisplay() {
-    const stored = localStorage.getItem('statsMode');
-    const modeToUse = stored || (window.gameState ? window.gameState.statsMode : 'speedometer');
-    if (window.gameState) window.gameState.statsMode = modeToUse;
+  // Inisialisasi Modal Pengaturan (redesign minimalis, auto-save).
+  // Menggantikan seluruh IIFE inisialisasi + handler tombol "Simpan" lama:
+  // sekarang setiap perubahan di modal langsung diterapkan & disimpan.
+  initSettingsPanel({
+    hideStats: hideStatsContainer,
+    showStats: showStatsContainer,
+  });
 
-    // Set tombol aktif di modal pengaturan sesuai mode
-    document.querySelectorAll('.stats-mode-btn').forEach((b) => {
-      b.classList.toggle('active', b.getAttribute('data-mode') === modeToUse);
-    });
-
-    const textStats = document.querySelector('.text-stats-container');
-    const speedContainers = document.querySelectorAll('.speedometer-container');
-    if (modeToUse === 'text') {
-      if (textStats) textStats.style.display = 'flex';
-      speedContainers.forEach((el) => (el.style.display = 'none'));
-    } else {
-      if (textStats) textStats.style.display = 'none';
-      speedContainers.forEach((el) => (el.style.display = 'flex'));
-    }
-  })();
-
-  // Muat preferensi font dari localStorage
-  (function initFontDisplay() {
-    const savedFont = localStorage.getItem('selectedFont') || 'default';
-    DOM.textDisplay.style.fontFamily = savedFont === 'default' ? '' : savedFont;
-    
-    // Tambahkan class untuk penanganan sans-serif
-    DOM.textDisplay.classList.toggle("font-sans-serif", savedFont === "sans-serif");
-    
-    // Set tombol font aktif di modal pengaturan
-    document.querySelectorAll('.font-choice-btn').forEach((b) => {
-      b.classList.toggle('active', b.getAttribute('data-font') === savedFont);
-    });
-  })();
-
-  // Muat preferensi cursor mode dari localStorage
-  (function initCursorModeDisplay() {
-    const savedCursorMode = localStorage.getItem('cursorMode') || 'highlight';
-    
-    // Set radio button cursor mode aktif di modal pengaturan
-    const cursorRadio = document.querySelector(`input[name="cursorMode"][value="${savedCursorMode}"]`);
-    if (cursorRadio) {
-      cursorRadio.checked = true;
-    }
-  })();
-
-  // Muat preferensi cursor blink dari localStorage
-  (function initCursorBlinkDisplay() {
-    const savedBlink = localStorage.getItem('cursorBlink') !== 'false';
-    const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
-    
-    if (cursorBlinkToggle) {
-      cursorBlinkToggle.checked = savedBlink;
-    }
-    
-    // Apply kelas no-blink jika disabled
-    if (!savedBlink) {
-      DOM.textDisplay.classList.add("cursor-no-blink");
-    }
-  })();
-
-  // Muat preferensi word set dari localStorage
-  (function initWordSetDisplay() {
-    const savedWordSet = localStorage.getItem('wordSet') || '200';
-    
-    // Set radio button word set aktif di modal pengaturan
-    const wordSetRadio = document.querySelector(`input[name="wordSet"][value="${savedWordSet}"]`);
-    if (wordSetRadio) {
-      wordSetRadio.checked = true;
-    }
-    
-    // Setel kata-kata yang sesuai
-    if (savedWordSet === '1000') {
-      window.defaultKataKata = top1000Words;
-    } else if (savedWordSet === '10000') {
-      window.defaultKataKata = top10000Words;
-    } else {
-      window.defaultKataKata = top200Words;
-    }
-  })();
-
-  // Muat preferensi tampilan keyboard dari localStorage
-  (function initKeyboardVisibilityDisplay() {
-    const savedKeyboardVisibility = loadKeyboardVisibility();
-    const keyboardToggle = document.getElementById('keyboardToggle');
-    
-    if (keyboardToggle) {
-      keyboardToggle.checked = savedKeyboardVisibility;
-    }
-    
-    // Update global state
-    setKeyboardVisibility(savedKeyboardVisibility);
-    console.log('DEBUG: main.js - updateKeyboardVisibilityUI called from initKeyboardVisibilityDisplay');
-    updateKeyboardVisibilityUI({
-      hideStats: hideStatsContainer,
-      showStats: showStatsContainer,
-      statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
-    });
-
-  })();
+  // updateKeyboardVisibilityUI tetap dipanggil di sini agar status keyboard
+  // (dan visibilitas panel statistik terkait) langsung sinkron saat halaman dimuat.
+  setKeyboardVisibility(loadKeyboardVisibility());
+  updateKeyboardVisibilityUI({
+    hideStats: hideStatsContainer,
+    showStats: showStatsContainer,
+    statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
+  });
 
 
 
@@ -343,251 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Preview update saat ganti cursor mode ---
-  const cursorPreviewText = document.getElementById("cursorPreviewText");
-  document.querySelectorAll('input[name="cursorMode"]').forEach((input) => {
-    input.addEventListener("change", () => {
-      if (input.checked) {
-        switch (input.value) {
-          case "caret":
-            cursorPreviewText.textContent = "|";
-            break;
-          case "underline":
-            cursorPreviewText.textContent = "_";
-            break;
-          case "box":
-            cursorPreviewText.textContent = "█";
-            break;
-          case "hidden":
-            cursorPreviewText.textContent = "";
-            break;
-          default:
-            cursorPreviewText.textContent = "█";
-        }
-      }
-    });
-  });
 
-  // --- Tampilkan word set saat pilih bahasa ---
-  document.querySelectorAll('input[name="language"]').forEach((langInput) => {
-    langInput.addEventListener("change", () => {
-      const wordSetContainer = document.getElementById("wordSetContainer");
-      wordSetContainer.style.display = "block";
-    });
-  });
-
-  // --- Event untuk font choice button ---
-  document.querySelectorAll(".font-choice-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const selectedFont = btn.getAttribute("data-font");
-      const textDisplay = document.querySelector(".text-display-container");
-
-      document
-        .querySelectorAll(".font-choice-btn")
-        .forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      textDisplay.style.fontFamily =
-        selectedFont === "default" ? "" : selectedFont;
-      
-      // Tambahkan class untuk penanganan sans-serif
-      DOM.textDisplay.classList.toggle("font-sans-serif", selectedFont === "sans-serif");
-
-      saveBtn.disabled = false; // Enable save
-    });
-  });
-
-  // --- Event untuk stats mode button ---
-  document.querySelectorAll(".stats-mode-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const selectedMode = btn.getAttribute("data-mode");
-
-      document
-        .querySelectorAll(".stats-mode-btn")
-        .forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      // Preview langsung update tampilan
-      const speedometerContainer = document.querySelector(
-        ".speedometer-container"
-      );
-      const textStatsContainer = document.querySelector(
-        ".text-stats-container"
-      );
-
-      if (selectedMode === "speedometer") {
-        speedometerContainer.style.display = "flex";
-        textStatsContainer.style.display = "none";
-      } else {
-        speedometerContainer.style.display = "none";
-        textStatsContainer.style.display = "flex";
-      }
-
-      saveBtn.disabled = false; // Enable save
-    });
-  });
-
-  // --- Simpan pengaturan ---
-  const saveBtn = document.getElementById("saveSettings");
-
-  // Aktifkan logika enable save jika ada perubahan
-  const settingsInputs = document.querySelectorAll(
-    "#settingsModal input, #settingsModal select, #settingsModal .font-choice-btn, #settingsModal .stats-mode-btn"
-  );
-  settingsInputs.forEach((el) => {
-    el.addEventListener("change", () => (saveBtn.disabled = false));
-    el.addEventListener("click", () => (saveBtn.disabled = false));
-  });
-
-  // Event listener untuk keyboard toggle
-  const keyboardToggle = document.getElementById('keyboardToggle');
-  if (keyboardToggle) {
-    keyboardToggle.addEventListener('change', () => {
-      saveBtn.disabled = false;
-    });
-  }
-
-
-  saveBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Cursor mode
-    const selectedCursor = document.querySelector(
-      'input[name="cursorMode"]:checked'
-    ).value;
-    gameState.cursorMode = selectedCursor;
-    // persist pilihan agar halaman mengetik lain dapat menggunakannya
-    try { localStorage.setItem('cursorMode', selectedCursor); } catch (e) {}
-
-    // Normalisasi kelas mode kursor pada elemen textDisplay
-    DOM.textDisplay.classList.remove(
-      "caret-mode-active",
-      "underline-mode-active",
-      "box-mode-active",
-      "hidden-mode-active"
-    );
-    switch (selectedCursor) {
-      case "caret":
-        DOM.textDisplay.classList.add("caret-mode-active");
-        break;
-      case "underline":
-        DOM.textDisplay.classList.add("underline-mode-active");
-        break;
-      case "box":
-        DOM.textDisplay.classList.add("box-mode-active");
-        break;
-      case "hidden":
-        DOM.textDisplay.classList.add("hidden-mode-active");
-        break;
-      default:
-        break;
-    }
-
-    // Word set
-    const selectedWordSet = document.querySelector(
-      'input[name="wordSet"]:checked'
-    ).value;
-    if (selectedWordSet === "200") {
-      window.defaultKataKata = top200Words;
-    } else if (selectedWordSet === "1000") {
-      window.defaultKataKata = top1000Words;
-    } else if (selectedWordSet === "10000") {
-      window.defaultKataKata = top10000Words;
-    }
-    // Simpan pilihan word set ke localStorage
-    try {
-      localStorage.setItem('wordSet', selectedWordSet);
-    } catch (e) {}
-
-    // Font
-    const activeFontBtn = document.querySelector(".font-choice-btn.active");
-    const selectedFont = activeFontBtn
-      ? activeFontBtn.getAttribute("data-font")
-      : "default";
-    DOM.textDisplay.style.fontFamily =
-      selectedFont === "default" ? "" : selectedFont;
-    
-    // Tambahkan class untuk penanganan sans-serif
-    DOM.textDisplay.classList.toggle("font-sans-serif", selectedFont === "sans-serif");
-    
-    // Simpan pilihan font ke localStorage
-    try {
-      localStorage.setItem('selectedFont', selectedFont);
-    } catch (e) {}
-
-    // Statistik tampilan
-    const activeStatsBtn = document.querySelector(".stats-mode-btn.active");
-    const selectedStatsMode = activeStatsBtn
-      ? activeStatsBtn.getAttribute("data-mode")
-      : "speedometer";
-    gameState.statsMode = selectedStatsMode;
-    // Simpan preferensi agar bertahan antar sesi
-    try {
-      localStorage.setItem('statsMode', selectedStatsMode);
-    } catch (e) {}
-
-    // Cursor Blink Toggle
-    const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
-    const shouldBlink = cursorBlinkToggle ? cursorBlinkToggle.checked : true;
-    if (shouldBlink) {
-      DOM.textDisplay.classList.remove("cursor-no-blink");
-    } else {
-      DOM.textDisplay.classList.add("cursor-no-blink");
-    }
-    // Simpan preferensi blink ke localStorage
-    try {
-      localStorage.setItem('cursorBlink', shouldBlink ? 'true' : 'false');
-    } catch (e) {}
-
-    // Keyboard Visibility Toggle
-    const keyboardToggleBtn = document.getElementById('keyboardToggle');
-    if (keyboardToggleBtn) {
-      const shouldShowKeyboard = keyboardToggleBtn.checked;
-      console.log('DEBUG: main.js - saveKeyboardSettings called');
-      saveKeyboardSettings(shouldShowKeyboard, {
-        hideStats: hideStatsContainer,
-        showStats: showStatsContainer,
-        statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
-      });
-    }
-
-
-
-    // Reset tes supaya perubahan langsung berlaku
-
-    if (typeof window.resetTest === "function") {
-      window.resetTest();
-    }
-
-    // Pastikan tampilan statistik mengikuti pilihan baru setelah simpan
-    try {
-      showStatsContainer();
-    } catch (e) {}
-
-    // Update highlight dan pastikan fokus kembali kalau modal ditutup nanti
-    setTimeout(() => {
-      if (typeof window.updateWordHighlighting === "function") {
-        window.updateWordHighlighting();
-      }
-    }, 100);
-
-    // Disable tombol simpan sampai ada perubahan lagi
-    saveBtn.disabled = true;
-
-    // Baris di bawah ini yang harus dihapus agar modal tidak tertutup otomatis.
-    // settingsModal.hide();
-
-  });
-
-  // Fokus kembali ke input setelah modal ditutup
-  document
-    .getElementById("settingsModal")
-    .addEventListener("hidden.bs.modal", () => {
-      setTimeout(() => {
-        if (DOM.hiddenInput) DOM.hiddenInput.focus();
-      }, 100);
-    });
 });
 
 // Page Visibility API
