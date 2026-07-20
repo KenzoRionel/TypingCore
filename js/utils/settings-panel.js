@@ -119,6 +119,45 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   autosaveText = document.getElementById("autosaveText");
 
   /* ---------------------------------------------------------------- */
+  /* Navigasi Grup Pengaturan                                          */
+  /* ---------------------------------------------------------------- */
+  // Setiap tombol nav (icon + judul) menampilkan satu grup pengaturan
+  // yang saling berhubungan (mis. "Caret & Kursor") dan menyembunyikan
+  // grup lainnya. Struktur ini dibuat agar mudah menambah grup baru
+  // di masa depan tanpa mengubah logika switching-nya.
+  const navItems = document.querySelectorAll(
+    "#settingsModal .settings-nav-item"
+  );
+  const groupPanels = document.querySelectorAll(
+    "#settingsModal .settings-group"
+  );
+
+  function activateGroup(target) {
+    navItems.forEach((btn) => {
+      const isActive = btn.getAttribute("data-group-target") === target;
+      btn.classList.toggle("active", isActive);
+      btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+    groupPanels.forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `group-${target}`);
+    });
+  }
+
+  navItems.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      activateGroup(btn.getAttribute("data-group-target"));
+    });
+  });
+
+  // Reset ke grup pertama setiap kali modal dibuka.
+  const settingsModalNavEl = document.getElementById("settingsModal");
+  if (settingsModalNavEl && navItems.length) {
+    settingsModalNavEl.addEventListener("show.bs.modal", () => {
+      activateGroup(navItems[0].getAttribute("data-group-target"));
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
   /* Pilihan Kursor                                                    */
   /* ---------------------------------------------------------------- */
   const savedCursorMode = localStorage.getItem("cursorMode") || "highlight";
