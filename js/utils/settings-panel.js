@@ -1,17 +1,15 @@
 // js/utils/settings-panel.js
 //
-// Modul untuk redesign Modal Pengaturan (minimalis, auto-save).
-// Menggantikan logika lama yang sebelumnya menempel di main.js dan
-// baru diterapkan saat tombol "Simpan" diklik. Sekarang setiap perubahan
-// langsung diterapkan ke halaman, disimpan ke localStorage, dan memicu
-// indikator "Tersimpan otomatis" di footer modal.
+// Modul untuk Panel Pengaturan (minimalis, auto-save).
+// Bekerja di halaman standalone settings.html maupun modal (legacy).
+// Setiap perubahan langsung diterapkan ke halaman, disimpan ke localStorage, dan memicu
+// indikator "Tersimpan otomatis" di footer panel.
 //
 // Markup terkait tetap memakai pola native <input> (radio/checkbox)
 // yang di-styling ulang secara visual lewat css/settings-modal.css
 // (mengikuti pola Bootstrap .btn-check), jadi selector seperti
 // `input[name="cursorMode"]:checked` tetap bekerja seperti sebelumnya.
 
-import { getGameDOMReferences } from "./dom-elements.js";
 import {
   top200Words,
   top1000Words,
@@ -106,14 +104,57 @@ function applyStatsModeDisplay(mode) {
 }
 
 /**
- * Inisialisasi seluruh interaksi Modal Pengaturan.
+ * Menerapkan seluruh preferensi yang tersimpan di localStorage ke halaman
+ * saat ini. Fungsi ini SENGAJA dipisah dari pengikatan UI (nav/segmented
+ * control) di bawah, dan selalu dijalankan terlepas dari apakah markup
+ * panel pengaturan (.settings-page / #settingsModal) ada di halaman ini
+ * atau tidak. Ini penting supaya preferensi yang diubah user di
+ * settings.html (standalone) benar-benar diterapkan saat mereka kembali
+ * ke index.html, yang tidak memiliki markup panel pengaturan sama sekali.
+ */
+function applyStoredPreferences(textDisplay, { hideStats, showStats } = {}) {
+  const savedCursorMode = localStorage.getItem("cursorMode") || "highlight";
+  if (window.gameState) window.gameState.cursorMode = savedCursorMode;
+  applyCursorModeClass(textDisplay, savedCursorMode);
+
+  const savedWordSet = localStorage.getItem("wordSet") || "200";
+  applyWordSet(savedWordSet);
+
+  const savedFont = localStorage.getItem("selectedFont") || "default";
+  applyFont(textDisplay, savedFont);
+
+  const storedStatsMode = localStorage.getItem("statsMode");
+  const initialStatsMode =
+    storedStatsMode || (window.gameState ? window.gameState.statsMode : "speedometer");
+  if (window.gameState) window.gameState.statsMode = initialStatsMode;
+  applyStatsModeDisplay(initialStatsMode);
+
+  const savedBlink = localStorage.getItem("cursorBlink") !== "false";
+  if (textDisplay) textDisplay.classList.toggle("cursor-no-blink", !savedBlink);
+
+  const savedCaretSmoothness = localStorage.getItem("caretSmoothness") || "off";
+  setCaretSmoothness(savedCaretSmoothness);
+
+  return { savedCursorMode, savedWordSet, savedFont, initialStatsMode, savedBlink, savedCaretSmoothness };
+}
+
+/**
+ * Inisialisasi Panel Pengaturan: menerapkan preferensi tersimpan (selalu),
+ * dan mengikat UI (nav/segmented control/toggle) bila markup-nya ada di
+ * halaman ini (settings.html).
  * @param {Object} options
  * @param {Function} options.hideStats - fungsi untuk menyembunyikan panel statistik
  * @param {Function} options.showStats - fungsi untuk menampilkan panel statistik
  */
 export function initSettingsPanel({ hideStats, showStats } = {}) {
-  const DOM = getGameDOMReferences();
-  if (!DOM) return;
+  // Ambil #textDisplay langsung (boleh null, mis. di settings.html yang
+  // tidak punya area tes). Jangan pakai getGameDOMReferences() di sini —
+  // fungsi itu mewajibkan elemen-elemen khusus halaman tes (textDisplay,
+  // restartButton, speedometer, dst) dan akan return null di halaman yang
+  // tidak memilikinya, sehingga seluruh panel pengaturan gagal ter-init.
+  const textDisplay = document.getElementById("textDisplay");
+
+  const saved = applyStoredPreferences(textDisplay, { hideStats, showStats });
 
   autosaveDot = document.getElementById("autosaveDot");
   autosaveText = document.getElementById("autosaveText");
@@ -125,11 +166,20 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   // yang saling berhubungan (mis. "Caret & Kursor") dan menyembunyikan
   // grup lainnya. Struktur ini dibuat agar mudah menambah grup baru
   // di masa depan tanpa mengubah logika switching-nya.
-  const navItems = document.querySelectorAll(
-    "#settingsModal .settings-nav-item"
+  const settingsContainer = document.querySelector(
+    ".settings-page, #settingsModal"
   );
-  const groupPanels = document.querySelectorAll(
-    "#settingsModal .settings-group"
+  // Halaman ini (mis. index.html) tidak memiliki UI panel pengaturan —
+  // preferensi sudah diterapkan di atas, jadi cukup berhenti di sini.
+  if (!settingsContainer) return;
+
+  const DOM = { textDisplay, hiddenInput: document.getElementById("hiddenTextInput") };
+
+  const navItems = settingsContainer.querySelectorAll(
+    ".settings-nav-item"
+  );
+  const groupPanels = settingsContainer.querySelectorAll(
+    ".settings-group"
   );
 
   function activateGroup(target) {
@@ -149,24 +199,20 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
     });
   });
 
-  // Reset ke grup pertama setiap kali modal dibuka.
-  const settingsModalNavEl = document.getElementById("settingsModal");
-  if (settingsModalNavEl && navItems.length) {
-    settingsModalNavEl.addEventListener("show.bs.modal", () => {
-      activateGroup(navItems[0].getAttribute("data-group-target"));
-    });
+  // Aktivasi grup pertama saat halaman dimuat (standalone page).
+  if (navItems.length) {
+    activateGroup(navItems[0].getAttribute("data-group-target"));
   }
 
   /* ---------------------------------------------------------------- */
   /* Pilihan Kursor                                                    */
   /* ---------------------------------------------------------------- */
-  const savedCursorMode = localStorage.getItem("cursorMode") || "highlight";
-  if (window.gameState) window.gameState.cursorMode = savedCursorMode;
+  // Sudah diterapkan ke halaman oleh applyStoredPreferences(); di sini
+  // tinggal sinkronkan status "checked" pada radio input-nya.
   const cursorRadio = document.querySelector(
-    `input[name="cursorMode"][value="${savedCursorMode}"]`
+    `input[name="cursorMode"][value="${saved.savedCursorMode}"]`
   );
   if (cursorRadio) cursorRadio.checked = true;
-  applyCursorModeClass(DOM.textDisplay, savedCursorMode);
 
   document.querySelectorAll('input[name="cursorMode"]').forEach((input) => {
     input.addEventListener("change", () => {
@@ -194,12 +240,10 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
     });
   });
 
-  const savedWordSet = localStorage.getItem("wordSet") || "200";
   const wordSetRadio = document.querySelector(
-    `input[name="wordSet"][value="${savedWordSet}"]`
+    `input[name="wordSet"][value="${saved.savedWordSet}"]`
   );
   if (wordSetRadio) wordSetRadio.checked = true;
-  applyWordSet(savedWordSet);
 
   document.querySelectorAll('input[name="wordSet"]').forEach((input) => {
     input.addEventListener("change", () => {
@@ -216,10 +260,8 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   /* ---------------------------------------------------------------- */
   /* Pilih Font                                                        */
   /* ---------------------------------------------------------------- */
-  const savedFont = localStorage.getItem("selectedFont") || "default";
-  applyFont(DOM.textDisplay, savedFont);
   document.querySelectorAll(".font-choice-btn").forEach((btn) => {
-    const isActive = btn.getAttribute("data-font") === savedFont;
+    const isActive = btn.getAttribute("data-font") === saved.savedFont;
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-checked", isActive ? "true" : "false");
 
@@ -243,15 +285,9 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   /* ---------------------------------------------------------------- */
   /* Tampilan Statistik (Speedometer / Teks)                           */
   /* ---------------------------------------------------------------- */
-  const storedStatsMode = localStorage.getItem("statsMode");
-  const initialStatsMode =
-    storedStatsMode || (window.gameState ? window.gameState.statsMode : "speedometer");
-  if (window.gameState) window.gameState.statsMode = initialStatsMode;
-  applyStatsModeDisplay(initialStatsMode);
-
   document.querySelectorAll(".stats-mode-btn").forEach((btn) => {
     const mode = btn.getAttribute("data-mode");
-    const isActive = mode === initialStatsMode;
+    const isActive = mode === saved.initialStatsMode;
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-checked", isActive ? "true" : "false");
 
@@ -278,15 +314,13 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   /* ---------------------------------------------------------------- */
   /* Efek Kursor: Kursor Berkedip                                      */
   /* ---------------------------------------------------------------- */
-  const savedBlink = localStorage.getItem("cursorBlink") !== "false";
   const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
   if (cursorBlinkToggle) {
-    cursorBlinkToggle.checked = savedBlink;
-    if (!savedBlink) DOM.textDisplay.classList.add("cursor-no-blink");
+    cursorBlinkToggle.checked = saved.savedBlink;
 
     cursorBlinkToggle.addEventListener("change", () => {
       const shouldBlink = cursorBlinkToggle.checked;
-      DOM.textDisplay.classList.toggle("cursor-no-blink", !shouldBlink);
+      if (DOM.textDisplay) DOM.textDisplay.classList.toggle("cursor-no-blink", !shouldBlink);
       try {
         localStorage.setItem("cursorBlink", shouldBlink ? "true" : "false");
       } catch (e) {}
@@ -299,12 +333,10 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   /* ---------------------------------------------------------------- */
   // Preferensi murni visual, tidak me-restart tes (sama seperti Kursor
   // Berkedip) supaya user bisa langsung merasakan efeknya saat mengetik.
-  const savedCaretSmoothness = localStorage.getItem("caretSmoothness") || "off";
   const caretSmoothnessRadio = document.querySelector(
-    `input[name="caretSmoothness"][value="${savedCaretSmoothness}"]`
+    `input[name="caretSmoothness"][value="${saved.savedCaretSmoothness}"]`
   );
   if (caretSmoothnessRadio) caretSmoothnessRadio.checked = true;
-  setCaretSmoothness(savedCaretSmoothness);
 
   document.querySelectorAll('input[name="caretSmoothness"]').forEach((input) => {
     input.addEventListener("change", () => {

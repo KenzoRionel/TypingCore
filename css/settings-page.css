@@ -1,0 +1,622 @@
+/* ==========================================================================
+   settings-page.css
+   Halaman Pengaturan Typing Core — standalone page (bukan modal).
+   Sepenuhnya mengikuti tema siang/malam (body.dark-mode).
+   ========================================================================== */
+
+/* ---- CSS Variables (Siang) ---- */
+.settings-page {
+  --sp-bg: #f4f7f6;
+  --sp-surface: #ffffff;
+  --sp-surface-secondary: #f0f2f5;
+  --sp-border: #e0e0e0;
+  --sp-border-soft: rgba(0, 0, 0, 0.08);
+  --sp-text: #333333;
+  --sp-text-strong: #111111;
+  --sp-text-muted: #71717a;
+  --sp-text-faint: #a1a1aa;
+  --sp-track-off: #d4d4d8;
+  --sp-focus-ring: #3b82f6;
+  --sp-radius-lg: 20px;
+  --sp-radius-md: 14px;
+  --sp-radius-full: 999px;
+  --sp-font: "Inter", "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- CSS Variables (Malam) ---- */
+body.dark-mode .settings-page {
+  --sp-bg: #181a1b;
+  --sp-surface: #23272a;
+  --sp-surface-secondary: #2c2c2c;
+  --sp-border: #444444;
+  --sp-border-soft: rgba(255, 255, 255, 0.06);
+  --sp-text: #e4e4e7;
+  --sp-text-strong: #fafafa;
+  --sp-text-muted: #71717a;
+  --sp-text-faint: #52525b;
+  --sp-track-off: #3f3f46;
+  --sp-focus-ring: #a1a1aa;
+}
+
+/* ---- Layout Halaman ---- */
+.settings-page {
+  font-family: var(--sp-font);
+  color: var(--sp-text);
+  background: var(--sp-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-page .settings-page-wrapper {
+  max-width: 1040px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  flex: 1;
+}
+
+/* ---- Panel Kartu Utama ---- */
+.settings-page .settings-card {
+  background: var(--sp-surface);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius-lg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body.dark-mode .settings-page .settings-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ---- Header ---- */
+.settings-page .settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.5rem 1rem;
+  flex-shrink: 0;
+}
+
+.settings-page .settings-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--sp-text-strong);
+  margin: 0;
+}
+
+.settings-page .settings-subtitle {
+  font-size: 0.82rem;
+  color: var(--sp-text-muted);
+  margin: 0.35rem 0 0;
+}
+
+/* ---- Tombol Kembali (Close Icon) ---- */
+.settings-page .settings-close-icon {
+  background: transparent;
+  border: none;
+  color: var(--sp-text-muted);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--sp-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.settings-page .settings-close-icon:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--sp-text-strong);
+}
+
+body.dark-mode .settings-page .settings-close-icon:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.settings-page .settings-close-icon:focus-visible {
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Tombol Kembali (Footer) ---- */
+.settings-page .settings-close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--sp-border);
+  color: var(--sp-text-muted);
+  font-size: 0.76rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+}
+
+.settings-page .settings-close-btn:hover {
+  background: var(--sp-surface-secondary);
+  color: var(--sp-text);
+}
+
+.settings-page .settings-close-btn kbd {
+  border: 1px solid var(--sp-border);
+  background: var(--sp-surface-secondary);
+  color: var(--sp-text-muted);
+  font-size: 0.62rem;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: inherit;
+}
+
+.settings-page .settings-close-btn:focus-visible {
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Navigasi Grup (horizontal) ---- */
+.settings-page .settings-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 1.5rem 1rem;
+  border-bottom: 1px solid var(--sp-border-soft);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.settings-page .settings-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-page .settings-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--sp-text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: var(--sp-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.settings-page .settings-nav-item i {
+  font-size: 0.85rem;
+  width: 16px;
+  text-align: center;
+}
+
+.settings-page .settings-nav-item:hover {
+  color: var(--sp-text);
+  background: var(--sp-border-soft);
+}
+
+.settings-page .settings-nav-item.active {
+  color: #18181b;
+  background: #fff;
+  border-color: var(--sp-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .settings-page .settings-nav-item.active {
+  color: #fafafa;
+  background: #3f3f46;
+  border-color: #52525b;
+}
+
+.settings-page .settings-nav-item:focus-visible {
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Body / Grup Konten ---- */
+.settings-page .settings-body {
+  padding: 1.5rem;
+  flex: 1 1 auto;
+}
+
+.settings-page .settings-group {
+  display: none;
+  max-width: 640px;
+}
+
+.settings-page .settings-group.active {
+  display: block;
+  animation: sp-group-in 0.18s ease-out;
+}
+
+@keyframes sp-group-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settings-page .settings-section-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--sp-text-faint);
+  margin: 0 0 1.2rem;
+}
+
+.settings-page .settings-block {
+  margin-bottom: 1.4rem;
+}
+
+.settings-page .settings-block:last-child {
+  margin-bottom: 0;
+}
+
+.settings-page .settings-row-label {
+  font-size: 0.84rem;
+  color: var(--sp-text);
+  margin: 0 0 0.6rem;
+}
+
+.settings-page .settings-row-label.no-margin {
+  margin-bottom: 2px;
+}
+
+.settings-page .settings-row-desc {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+  margin: 0;
+}
+
+.settings-page .settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+}
+
+.settings-page .settings-row:not(:last-child) {
+  margin-bottom: 0.7rem;
+}
+
+/* ---- Segmented Control ---- */
+.settings-page .segmented-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--sp-surface-secondary);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius-full);
+  flex-wrap: wrap;
+}
+
+.settings-page .segmented-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--sp-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--sp-radius-full);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  margin: 0;
+  user-select: none;
+}
+
+.settings-page .segmented-option i {
+  font-size: 0.76rem;
+}
+
+.settings-page .segmented-option:hover {
+  color: var(--sp-text);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+body.dark-mode .settings-page .segmented-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-page .btn-check:checked + .segmented-option {
+  background: #fff;
+  color: #18181b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+body.dark-mode .settings-page .btn-check:checked + .segmented-option {
+  background: #3f3f46;
+  color: #fafafa;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.settings-page .btn-check:focus-visible + .segmented-option {
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+.settings-page .segmented-sm .segmented-option {
+  font-size: 0.74rem;
+  padding: 6px 12px;
+}
+
+/* ---- Chip Group ---- */
+.settings-page .chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-page .chip-option {
+  background: transparent;
+  border: 1px solid var(--sp-border);
+  color: var(--sp-text-muted);
+  font-size: 0.82rem;
+  padding: 7px 15px;
+  border-radius: var(--sp-radius-full);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  margin: 0;
+  user-select: none;
+}
+
+.settings-page .chip-option:hover {
+  border-color: var(--sp-text-muted);
+  color: var(--sp-text);
+}
+
+.settings-page button.chip-option.active {
+  background: #f4f4f5;
+  color: #18181b;
+  border-color: #f4f4f5;
+}
+
+body.dark-mode .settings-page button.chip-option.active {
+  background: #3f3f46;
+  color: #fafafa;
+  border-color: #3f3f46;
+}
+
+.settings-page .btn-check:checked + .chip-option {
+  background: #f4f4f5;
+  color: #18181b;
+  border-color: #f4f4f5;
+}
+
+body.dark-mode .settings-page .btn-check:checked + .chip-option {
+  background: #3f3f46;
+  color: #fafafa;
+  border-color: #3f3f46;
+}
+
+.settings-page .chip-option:focus-visible,
+.settings-page .btn-check:focus-visible + .chip-option {
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- iOS-style Toggle ---- */
+.settings-page .settings-switch {
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+}
+
+.settings-page .form-check-input {
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  background-color: var(--sp-track-off);
+  border: none;
+  background-image: none;
+  border-radius: var(--sp-radius-full);
+  cursor: pointer;
+  transition: background-color 0.2s ease-out;
+  position: relative;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+  flex-shrink: 0;
+}
+
+.settings-page .form-check-input::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d4d4d8;
+  transition: transform 0.2s ease-out, background-color 0.2s ease-out;
+}
+
+body.dark-mode .settings-page .form-check-input::before {
+  background: #52525b;
+}
+
+.settings-page .form-check-input:checked {
+  background-color: #3b82f6;
+}
+
+body.dark-mode .settings-page .form-check-input:checked {
+  background-color: #60a5fa;
+}
+
+.settings-page .form-check-input:checked::before {
+  transform: translateX(18px);
+  background-color: #ffffff;
+}
+
+.settings-page .form-check-input:focus {
+  box-shadow: none;
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Stat Toggle Cards ---- */
+.settings-page .stat-toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 1.1rem;
+}
+
+@media (min-width: 460px) {
+  .settings-page .stat-toggle-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.settings-page .stat-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sp-surface-secondary);
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sp-radius-md);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  text-align: left;
+  color: var(--sp-text-muted);
+}
+
+.settings-page .stat-toggle:hover {
+  border-color: var(--sp-text-muted);
+}
+
+.settings-page .stat-toggle.active {
+  background: var(--sp-surface);
+  border-color: var(--sp-text-muted);
+  color: var(--sp-text-strong);
+}
+
+.settings-page .stat-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.settings-page .stat-toggle-left i {
+  width: 14px;
+  text-align: center;
+}
+
+.settings-page .stat-toggle:focus-visible {
+  outline: 2px solid var(--sp-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- Footer ---- */
+.settings-page .settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--sp-border-soft);
+  flex-shrink: 0;
+}
+
+.settings-page .settings-autosave {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-page .autosave-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.settings-page .autosave-dot.pulse {
+  opacity: 1;
+}
+
+.settings-page .autosave-text {
+  font-size: 0.72rem;
+  color: var(--sp-text-muted);
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.settings-page .autosave-text.pulse {
+  opacity: 1;
+}
+
+/* ---- Scrollbar ---- */
+.settings-page .settings-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-page .settings-body::-webkit-scrollbar-thumb {
+  background: var(--sp-border);
+  border-radius: var(--sp-radius-full);
+}
+
+.settings-page .settings-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- Responsif ---- */
+@media (max-width: 640px) {
+  .settings-page .settings-page-wrapper {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .settings-page .settings-header {
+    padding: 1rem 1rem 0.75rem;
+  }
+
+  .settings-page .settings-nav {
+    padding: 0 1rem 0.75rem;
+  }
+
+  .settings-page .settings-nav-item span {
+    display: none;
+  }
+
+  .settings-page .settings-nav-item {
+    padding: 10px 12px;
+  }
+
+  .settings-page .settings-nav-item i {
+    font-size: 1rem;
+  }
+
+  .settings-page .settings-body {
+    padding: 1rem;
+  }
+
+  .settings-page .settings-footer {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-page * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+

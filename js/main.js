@@ -58,14 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Baris ini diperlukan untuk menghindari error, tapi tidak digunakan untuk menutup modal
-  const settingsModalElement = document.getElementById("settingsModal");
-  if (!settingsModalElement) {
-    console.error("Elemen modal pengaturan tidak ditemukan.");
-    return;
-  }
-  const settingsModal = new bootstrap.Modal(settingsModalElement);
-
   initDarkMode(DOM.darkModeToggle);
   setupLogoPop();
 

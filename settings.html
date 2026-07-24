@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pengaturan - TypingCore</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/dark-mode.css" />
+    <link rel="stylesheet" href="css/settings-page.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <main class="main-content">
+        <header id="header" class="site-header d-flex align-items-center">
+          <nav class="navbar navbar-expand navbar-light flex-grow-1">
+            <div class="container-fluid">
+              <button
+                id="mainSidebarToggleBtn"
+                class="navbar-toggler d-lg-none me-2"
+                type="button"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
+
+              <a class="navbar-brand py-0 me-auto" id="Brand" href="index.html">
+                <img
+                  id="logoWebsite"
+                  src="img/TypingCore.svg"
+                  alt="Logo Website"
+                  style="height: 60px"
+                />
+              </a>
+              <div
+                class="navbar-collapse justify-content-between"
+                id="navbarSupportedContent"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <li class="nav-item">
+                    <a class="nav-link" href="index.html"
+                      ><i class="fas fa-keyboard"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="lessons.html"
+                      ><i class="fas fa-graduation-cap"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="add-text.html"
+                      ><i class="fas fa-plus-circle"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="score-history.html"
+                      ><i class="fas fa-history"></i
+                    ></a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="score-history.html"
+                      ><i class="fas fa-bars"></i
+                    ></a>
+                  </li>
+                </ul>
+              </div>
+              <div
+                class="navbar-collapse justify-content-end"
+                id="navbarSupportedContent2"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <!-- Tombol dark mode -->
+                  <li class="nav-item">
+                    <button
+                      id="darkModeToggle"
+                      class="dark-mode-slide-toggle nav-link"
+                      aria-label="Toggle Dark Mode"
+                    >
+                      <span class="slider">
+                        <span class="slider-icon sun">☀️</span>
+                        <span class="slider-icon moon">🌙</span>
+                      </span>
+                    </button>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdownLang"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-globe"></i> Bahasa
+                    </a>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="navbarDropdownLang"
+                    >
+                      <li>
+                        <a class="dropdown-item" href="#">Bahasa Indonesia</a>
+                      </li>
+                      <li><a class="dropdown-item" href="#">English</a></li>
+                    </ul>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="profile.html">
+                      <i class="fas fa-user-circle"></i> User
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
+        </header>
+
+        <!-- ============ HALAMAN PENGATURAN ============ -->
+        <div class="settings-page">
+          <div class="settings-page-wrapper">
+            <div class="settings-card">
+
+              <!-- Header -->
+              <div class="settings-header">
+                <div>
+                  <h1 class="settings-title" id="settingsPageTitle">Pengaturan</h1>
+                  <p class="settings-subtitle">Sesuaikan tampilan dan perilaku Typing Core</p>
+                </div>
+                <a href="index.html" class="settings-close-icon" aria-label="Kembali ke beranda">
+                  <i class="fas fa-times"></i>
+                </a>
+              </div>
+
+              <!-- ============ NAVIGASI GRUP PENGATURAN ============ -->
+              <div class="settings-nav" role="tablist" aria-label="Grup pengaturan">
+                <button type="button" class="settings-nav-item active" data-group-target="cursor" role="tab" aria-selected="true" aria-controls="group-cursor">
+                  <i class="fas fa-i-cursor"></i>
+                  <span>Caret &amp; Kursor</span>
+                </button>
+                <button type="button" class="settings-nav-item" data-group-target="font" role="tab" aria-selected="false" aria-controls="group-font">
+                  <i class="fas fa-font"></i>
+                  <span>Font &amp; Teks</span>
+                </button>
+                <button type="button" class="settings-nav-item" data-group-target="language" role="tab" aria-selected="false" aria-controls="group-language">
+                  <i class="fas fa-language"></i>
+                  <span>Bahasa &amp; Konten</span>
+                </button>
+                <button type="button" class="settings-nav-item" data-group-target="interface" role="tab" aria-selected="false" aria-controls="group-interface">
+                  <i class="fas fa-sliders-h"></i>
+                  <span>Statistik &amp; Interface</span>
+                </button>
+              </div>
+
+              <div class="settings-body">
+
+                <!-- ============ GRUP: CARET & KURSOR ============ -->
+                <div class="settings-group active" id="group-cursor" role="tabpanel" aria-labelledby="nav-cursor">
+                  <h2 class="settings-section-label">Caret &amp; Kursor</h2>
+
+                  <!-- Pilihan Kursor -->
+                  <div class="settings-block">
+                    <p class="settings-row-label">Pilihan Kursor</p>
+                    <div class="segmented-control" role="radiogroup" aria-label="Pilihan kursor">
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorHighlight" value="highlight" checked>
+                      <label class="segmented-option" for="cursorHighlight" title="Highlight Mode">
+                        <i class="fas fa-highlighter"></i><span>Highlight</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorCaret" value="caret">
+                      <label class="segmented-option" for="cursorCaret" title="Caret Mode">
+                        <i class="fas fa-i-cursor"></i><span>Caret</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorUnderline" value="underline">
+                      <label class="segmented-option" for="cursorUnderline" title="Underline Mode">
+                        <i class="fas fa-underline"></i><span>Underline</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorBox" value="box">
+                      <label class="segmented-option" for="cursorBox" title="Box Mode">
+                        <i class="fas fa-border-all"></i><span>Box</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorHidden" value="hidden">
+                      <label class="segmented-option" for="cursorHidden" title="Hidden Mode">
+                        <i class="fas fa-eye-slash"></i><span>Hidden</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Efek Kursor -->
+                  <div class="settings-row">
+                    <div>
+                      <p class="settings-row-label no-margin">Kursor Berkedip</p>
+                      <p class="settings-row-desc">Animasikan kursor saat mengetik</p>
+                    </div>
+                    <div class="form-check form-switch settings-switch">
+                      <input class="form-check-input" type="checkbox" id="cursorBlinkToggle" checked>
+                    </div>
+                  </div>
+
+                  <!-- Perpindahan Kursor Smooth -->
+                  <div class="settings-block">
+                    <p class="settings-row-label no-margin">Perpindahan Kursor Smooth</p>
+                    <p class="settings-row-desc" style="margin-bottom: 0.6rem;">Atur kehalusan animasi saat kursor berpindah antar karakter</p>
+                    <div class="segmented-control segmented-sm" role="radiogroup" aria-label="Tingkat kehalusan perpindahan kursor">
+                      <input type="radio" class="btn-check" name="caretSmoothness" id="caretSmoothOff" value="off" checked>
+                      <label class="segmented-option" for="caretSmoothOff" title="Instan, tanpa animasi (bawaan)">Nonaktif</label>
+
+                      <input type="radio" class="btn-check" name="caretSmoothness" id="caretSmoothLow" value="low">
+                      <label class="segmented-option" for="caretSmoothLow" title="Perpindahan cepat namun halus">Halus</label>
+
+                      <input type="radio" class="btn-check" name="caretSmoothness" id="caretSmoothMedium" value="medium">
+                      <label class="segmented-option" for="caretSmoothMedium" title="Perpindahan dengan kecepatan sedang">Sedang</label>
+
+                      <input type="radio" class="btn-check" name="caretSmoothness" id="caretSmoothHigh" value="high">
+                      <label class="segmented-option" for="caretSmoothHigh" title="Perpindahan paling lambat & mulus">Sangat Halus</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ============ GRUP: FONT & TEKS ============ -->
+                <div class="settings-group" id="group-font" role="tabpanel" aria-labelledby="nav-font">
+                  <h2 class="settings-section-label">Font &amp; Teks</h2>
+
+                  <!-- Pilih Font -->
+                  <div class="settings-block">
+                    <p class="settings-row-label">Pilih Font</p>
+                    <div class="chip-group" role="radiogroup" aria-label="Pilih font">
+                      <button type="button" class="chip-option font-choice-btn active" data-font="default" style="font-family: Arial" role="radio" aria-checked="true">Default</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="monospace" style="font-family: monospace" role="radio" aria-checked="false">Monospace</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="serif" style="font-family: serif" role="radio" aria-checked="false">Serif</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="sans-serif" style="font-family: sans-serif" role="radio" aria-checked="false">Sans</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ============ GRUP: BAHASA & KONTEN ============ -->
+                <div class="settings-group" id="group-language" role="tabpanel" aria-labelledby="nav-language">
+                  <h2 class="settings-section-label">Bahasa &amp; Konten</h2>
+
+                  <div class="settings-row">
+                    <p class="settings-row-label no-margin">Bahasa &amp; Word Set</p>
+                    <div class="segmented-control segmented-sm" role="radiogroup" aria-label="Bahasa dan word set">
+                      <input type="radio" class="btn-check" name="language" id="langInd" value="ind" checked>
+                      <label class="segmented-option" for="langInd">Bahasa Indonesia</label>
+
+                      <input type="radio" class="btn-check" name="language" id="langEng" value="en">
+                      <label class="segmented-option" for="langEng">English</label>
+                    </div>
+                  </div>
+
+                  <!-- Pilihan Word Set (Tersembunyi Awal) -->
+                  <div id="wordSetContainer" class="settings-block" style="display: none">
+                    <p class="settings-row-label">Pilih Word Set</p>
+                    <div class="chip-group" role="radiogroup" aria-label="Pilih word set">
+                      <input type="radio" class="btn-check" name="wordSet" id="wordSet200" value="200" checked>
+                      <label class="chip-option" for="wordSet200">Top 200</label>
+
+                      <input type="radio" class="btn-check" name="wordSet" id="wordSet1000" value="1000">
+                      <label class="chip-option" for="wordSet1000">Top 1K</label>
+
+                      <input type="radio" class="btn-check" name="wordSet" id="wordSet10000" value="10000">
+                      <label class="chip-option" for="wordSet10000">Top 10K</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ============ GRUP: STATISTIK & INTERFACE ============ -->
+                <div class="settings-group" id="group-interface" role="tabpanel" aria-labelledby="nav-interface">
+                  <h2 class="settings-section-label">Statistik &amp; Interface</h2>
+
+                  <p class="settings-row-label">Tampilan Statistik</p>
+                  <div class="stat-toggle-grid">
+                    <button type="button" class="stat-toggle stats-mode-btn active" data-mode="speedometer" role="radio" aria-checked="true">
+                      <span class="stat-toggle-left"><i class="fas fa-tachometer-alt"></i><span>Speedometer</span></span>
+                    </button>
+                    <button type="button" class="stat-toggle stats-mode-btn" data-mode="text" role="radio" aria-checked="false">
+                      <span class="stat-toggle-left"><i class="fas fa-font"></i><span>Teks (WPM/Akurasi)</span></span>
+                    </button>
+                  </div>
+
+                  <div class="settings-row">
+                    <div>
+                      <p class="settings-row-label no-margin">Tampilkan Keyboard Virtual</p>
+                      <p class="settings-row-desc">Menampilkan tombol aktif dan salah ketik</p>
+                    </div>
+                    <div class="form-check form-switch settings-switch">
+                      <input class="form-check-input" type="checkbox" id="keyboardToggle">
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="settings-footer">
+                <div class="settings-autosave">
+                  <span class="autosave-dot" id="autosaveDot"></span>
+                  <span class="autosave-text" id="autosaveText">Tersimpan otomatis</span>
+                </div>
+                <a href="index.html" class="settings-close-btn">
+                  Kembali <kbd>ESC</kbd>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
+    <script type="module">
+      import { initSettingsPanel } from './js/utils/settings-panel.js';
+      import { initDarkMode } from './js/utils/dark-mode.js';
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Inisialisasi dark mode
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+          initDarkMode(darkModeToggle);
+        }
+
+        // Inisialisasi panel pengaturan (tanpa hideStats/showStats karena
+        // tidak ada tes yang berjalan di halaman ini)
+        initSettingsPanel();
+
+        // Tangani tombol ESC untuk kembali
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            window.location.href = 'index.html';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+
