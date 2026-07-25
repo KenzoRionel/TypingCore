@@ -1,88 +1,100 @@
 /* ==========================================================================
    settings-page.css
    Halaman Pengaturan Typing Core — standalone page (bukan modal).
-   Sepenuhnya mengikuti tema siang/malam (body.dark-mode).
+   Menyatu langsung dengan .main-content (transparan, tanpa kartu
+   mengambang), mengikuti tema siang/malam situs (body.dark-mode) dengan
+   token warna yang sama persis dengan style.css & dark-mode.css.
    ========================================================================== */
 
-/* ---- CSS Variables (Siang) ---- */
+/* ---- CSS Variables (Siang) — diselaraskan dgn style.css ---- */
 .settings-page {
-  --sp-bg: #f4f7f6;
-  --sp-surface: #ffffff;
-  --sp-surface-secondary: #f0f2f5;
+  --sp-surface: #ffffff;              /* dipakai utk elemen kecil: box teks preview, dsb */
+  --sp-surface-secondary: #ececec;    /* sama dgn .main-content light */
+  --sp-surface-tertiary: #f4f7f6;     /* sama dgn body light */
   --sp-border: #e0e0e0;
   --sp-border-soft: rgba(0, 0, 0, 0.08);
   --sp-text: #333333;
   --sp-text-strong: #111111;
   --sp-text-muted: #71717a;
-  --sp-text-faint: #a1a1aa;
+  --sp-text-faint: #9a9aa0;
   --sp-track-off: #d4d4d8;
+  --sp-accent: #126ed6;               /* sama dgn --primary-color situs */
+  --sp-accent-soft: rgba(18, 110, 214, 0.1);
   --sp-focus-ring: #3b82f6;
-  --sp-radius-lg: 20px;
-  --sp-radius-md: 14px;
+  --sp-radius-lg: 16px;
+  --sp-radius-md: 12px;
   --sp-radius-full: 999px;
   --sp-font: "Inter", "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --preview-transition: .15s;
 }
 
-/* ---- CSS Variables (Malam) ---- */
+/* ---- CSS Variables (Malam) — diselaraskan dgn dark-mode.css ---- */
 body.dark-mode .settings-page {
-  --sp-bg: #181a1b;
-  --sp-surface: #23272a;
-  --sp-surface-secondary: #2c2c2c;
+  --sp-surface: #2c2c2c;              /* sama dgn .lesson-card / .card-footer dark */
+  --sp-surface-secondary: #23272a;    /* sama dgn .main-content dark */
+  --sp-surface-tertiary: #181a1b;     /* sama dgn body.dark-mode */
   --sp-border: #444444;
-  --sp-border-soft: rgba(255, 255, 255, 0.06);
-  --sp-text: #e4e4e7;
-  --sp-text-strong: #fafafa;
-  --sp-text-muted: #71717a;
-  --sp-text-faint: #52525b;
+  --sp-border-soft: rgba(255, 255, 255, 0.08);
+  --sp-text: #e0e0e0;
+  --sp-text-strong: #ffffff;
+  --sp-text-muted: #a1a1aa;
+  --sp-text-faint: #71717a;
   --sp-track-off: #3f3f46;
+  --sp-accent: #60a5fa;
+  --sp-accent-soft: rgba(96, 165, 250, 0.16);
   --sp-focus-ring: #a1a1aa;
 }
 
-/* ---- Layout Halaman ---- */
+/* ---- Layout Halaman: transparan, menyatu dengan .main-content ---- */
 .settings-page {
   font-family: var(--sp-font);
+  font-size: 1.0625rem; /* skala dasar diperbesar dari bawaan 1rem browser */
   color: var(--sp-text);
-  background: var(--sp-bg);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background: transparent;
+  min-height: 0;
 }
 
 .settings-page .settings-page-wrapper {
-  max-width: 1040px;
   width: 100%;
-  margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
-  flex: 1;
+  padding: 0.5rem 0 2rem;
 }
 
-/* ---- Panel Kartu Utama ---- */
+/* ---- Panel Utama: rata dengan halaman, tanpa kartu/bayangan ---- */
 .settings-page .settings-card {
-  background: var(--sp-surface);
-  border: 1px solid var(--sp-border);
-  border-radius: var(--sp-radius-lg);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 220px 1fr 300px;
+  column-gap: 2rem;
+  grid-template-areas:
+    "header  header  header"
+    "nav     body    preview"
+    "footer  footer  footer";
 }
 
 body.dark-mode .settings-page .settings-card {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
 /* ---- Header ---- */
 .settings-page .settings-header {
+  grid-area: header;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.5rem 1.5rem 1rem;
-  flex-shrink: 0;
+  padding: 0.5rem 0 1.5rem;
+  border-bottom: 1px solid var(--sp-border-soft);
+  margin-bottom: 1.5rem;
 }
 
 .settings-page .settings-title {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--sp-text-strong);
@@ -90,9 +102,9 @@ body.dark-mode .settings-page .settings-card {
 }
 
 .settings-page .settings-subtitle {
-  font-size: 0.82rem;
+  font-size: 0.94rem;
   color: var(--sp-text-muted);
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
 }
 
 /* ---- Tombol Kembali (Close Icon) ---- */
@@ -100,8 +112,8 @@ body.dark-mode .settings-page .settings-card {
   background: transparent;
   border: none;
   color: var(--sp-text-muted);
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--sp-radius-full);
   display: flex;
   align-items: center;
@@ -110,15 +122,12 @@ body.dark-mode .settings-page .settings-card {
   cursor: pointer;
   flex-shrink: 0;
   text-decoration: none;
+  font-size: 1rem;
 }
 
 .settings-page .settings-close-icon:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--sp-surface-secondary);
   color: var(--sp-text-strong);
-}
-
-body.dark-mode .settings-page .settings-close-icon:hover {
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .settings-page .settings-close-icon:focus-visible {
@@ -134,8 +143,8 @@ body.dark-mode .settings-page .settings-close-icon:hover {
   background: transparent;
   border: 1px solid var(--sp-border);
   color: var(--sp-text-muted);
-  font-size: 0.76rem;
-  padding: 6px 12px;
+  font-size: 0.86rem;
+  padding: 6px 13px;
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
@@ -151,7 +160,7 @@ body.dark-mode .settings-page .settings-close-icon:hover {
   border: 1px solid var(--sp-border);
   background: var(--sp-surface-secondary);
   color: var(--sp-text-muted);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   padding: 2px 6px;
   border-radius: 5px;
   font-family: inherit;
@@ -162,43 +171,42 @@ body.dark-mode .settings-page .settings-close-icon:hover {
   outline-offset: 2px;
 }
 
-/* ---- Navigasi Grup (horizontal) ---- */
+/* ---- Navigasi Grup: sidebar vertikal, menyatu dengan halaman ---- */
 .settings-page .settings-nav {
+  grid-area: nav;
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0 1.5rem 1rem;
-  border-bottom: 1px solid var(--sp-border-soft);
-  flex-shrink: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.settings-page .settings-nav::-webkit-scrollbar {
-  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 0 0.5rem 0 0;
+  border-right: 1px solid var(--sp-border-soft);
+  background: transparent;
 }
 
 .settings-page .settings-nav-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 11px;
+  width: 100%;
   background: transparent;
   border: 1px solid transparent;
   color: var(--sp-text-muted);
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 500;
-  padding: 9px 16px;
+  padding: 9px 11px;
   border-radius: var(--sp-radius-md);
   cursor: pointer;
   white-space: nowrap;
+  text-align: left;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  flex-shrink: 0;
 }
 
 .settings-page .settings-nav-item i {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   width: 16px;
   text-align: center;
+  color: var(--sp-text-faint);
+  flex-shrink: 0;
 }
 
 .settings-page .settings-nav-item:hover {
@@ -207,16 +215,12 @@ body.dark-mode .settings-page .settings-close-icon:hover {
 }
 
 .settings-page .settings-nav-item.active {
-  color: #18181b;
-  background: #fff;
-  border-color: var(--sp-border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  color: var(--sp-accent);
+  background: var(--sp-accent-soft);
 }
 
-body.dark-mode .settings-page .settings-nav-item.active {
-  color: #fafafa;
-  background: #3f3f46;
-  border-color: #52525b;
+.settings-page .settings-nav-item.active i {
+  color: var(--sp-accent);
 }
 
 .settings-page .settings-nav-item:focus-visible {
@@ -226,13 +230,13 @@ body.dark-mode .settings-page .settings-nav-item.active {
 
 /* ---- Body / Grup Konten ---- */
 .settings-page .settings-body {
-  padding: 1.5rem;
-  flex: 1 1 auto;
+  grid-area: body;
+  padding: 0 0.5rem;
+  min-width: 0;
 }
 
 .settings-page .settings-group {
   display: none;
-  max-width: 640px;
 }
 
 .settings-page .settings-group.active {
@@ -246,16 +250,16 @@ body.dark-mode .settings-page .settings-nav-item.active {
 }
 
 .settings-page .settings-section-label {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--sp-text-faint);
-  margin: 0 0 1.2rem;
+  margin: 0 0 1rem;
 }
 
 .settings-page .settings-block {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.3rem;
 }
 
 .settings-page .settings-block:last-child {
@@ -263,9 +267,9 @@ body.dark-mode .settings-page .settings-nav-item.active {
 }
 
 .settings-page .settings-row-label {
-  font-size: 0.84rem;
+  font-size: 0.94rem;
   color: var(--sp-text);
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.55rem;
 }
 
 .settings-page .settings-row-label.no-margin {
@@ -273,7 +277,7 @@ body.dark-mode .settings-page .settings-nav-item.active {
 }
 
 .settings-page .settings-row-desc {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--sp-text-muted);
   margin: 0;
 }
@@ -283,11 +287,13 @@ body.dark-mode .settings-page .settings-nav-item.active {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.7rem 0;
+  padding: 0.6rem 0;
 }
 
 .settings-page .settings-row:not(:last-child) {
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--sp-border-soft);
+  padding-bottom: 1rem;
 }
 
 /* ---- Segmented Control ---- */
@@ -295,7 +301,7 @@ body.dark-mode .settings-page .settings-nav-item.active {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 4px;
+  padding: 3px;
   background: var(--sp-surface-secondary);
   border: 1px solid var(--sp-border);
   border-radius: var(--sp-radius-full);
@@ -309,7 +315,7 @@ body.dark-mode .settings-page .settings-nav-item.active {
   background: transparent;
   border: none;
   color: var(--sp-text-muted);
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   font-weight: 500;
   padding: 8px 14px;
   border-radius: var(--sp-radius-full);
@@ -321,7 +327,7 @@ body.dark-mode .settings-page .settings-nav-item.active {
 }
 
 .settings-page .segmented-option i {
-  font-size: 0.76rem;
+  font-size: 0.82rem;
 }
 
 .settings-page .segmented-option:hover {
@@ -334,15 +340,9 @@ body.dark-mode .settings-page .segmented-option:hover {
 }
 
 .settings-page .btn-check:checked + .segmented-option {
-  background: #fff;
-  color: #18181b;
+  background: var(--sp-surface);
+  color: var(--sp-accent);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-
-body.dark-mode .settings-page .btn-check:checked + .segmented-option {
-  background: #3f3f46;
-  color: #fafafa;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .settings-page .btn-check:focus-visible + .segmented-option {
@@ -351,8 +351,8 @@ body.dark-mode .settings-page .btn-check:checked + .segmented-option {
 }
 
 .settings-page .segmented-sm .segmented-option {
-  font-size: 0.74rem;
-  padding: 6px 12px;
+  font-size: 0.8rem;
+  padding: 7px 12px;
 }
 
 /* ---- Chip Group ---- */
@@ -363,10 +363,10 @@ body.dark-mode .settings-page .btn-check:checked + .segmented-option {
 }
 
 .settings-page .chip-option {
-  background: transparent;
+  background: var(--sp-surface-secondary);
   border: 1px solid var(--sp-border);
   color: var(--sp-text-muted);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   padding: 7px 15px;
   border-radius: var(--sp-radius-full);
   cursor: pointer;
@@ -376,32 +376,20 @@ body.dark-mode .settings-page .btn-check:checked + .segmented-option {
 }
 
 .settings-page .chip-option:hover {
-  border-color: var(--sp-text-muted);
+  border-color: var(--sp-accent);
   color: var(--sp-text);
 }
 
 .settings-page button.chip-option.active {
-  background: #f4f4f5;
-  color: #18181b;
-  border-color: #f4f4f5;
-}
-
-body.dark-mode .settings-page button.chip-option.active {
-  background: #3f3f46;
-  color: #fafafa;
-  border-color: #3f3f46;
+  background: var(--sp-accent-soft);
+  color: var(--sp-accent);
+  border-color: var(--sp-accent);
 }
 
 .settings-page .btn-check:checked + .chip-option {
-  background: #f4f4f5;
-  color: #18181b;
-  border-color: #f4f4f5;
-}
-
-body.dark-mode .settings-page .btn-check:checked + .chip-option {
-  background: #3f3f46;
-  color: #fafafa;
-  border-color: #3f3f46;
+  background: var(--sp-accent-soft);
+  color: var(--sp-accent);
+  border-color: var(--sp-accent);
 }
 
 .settings-page .chip-option:focus-visible,
@@ -447,15 +435,11 @@ body.dark-mode .settings-page .btn-check:checked + .chip-option {
 }
 
 body.dark-mode .settings-page .form-check-input::before {
-  background: #52525b;
+  background: #d4d4d8;
 }
 
 .settings-page .form-check-input:checked {
-  background-color: #3b82f6;
-}
-
-body.dark-mode .settings-page .form-check-input:checked {
-  background-color: #60a5fa;
+  background-color: var(--sp-accent);
 }
 
 .settings-page .form-check-input:checked::before {
@@ -477,7 +461,7 @@ body.dark-mode .settings-page .form-check-input:checked {
   margin-bottom: 1.1rem;
 }
 
-@media (min-width: 460px) {
+@media (min-width: 380px) {
   .settings-page .stat-toggle-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -490,32 +474,32 @@ body.dark-mode .settings-page .form-check-input:checked {
   background: var(--sp-surface-secondary);
   border: 1px solid var(--sp-border);
   border-radius: var(--sp-radius-md);
-  padding: 10px 14px;
+  padding: 10px 13px;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
   text-align: left;
   color: var(--sp-text-muted);
 }
 
 .settings-page .stat-toggle:hover {
-  border-color: var(--sp-text-muted);
+  border-color: var(--sp-accent);
 }
 
 .settings-page .stat-toggle.active {
-  background: var(--sp-surface);
-  border-color: var(--sp-text-muted);
-  color: var(--sp-text-strong);
+  background: var(--sp-accent-soft);
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
 }
 
 .settings-page .stat-toggle-left {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
 }
 
 .settings-page .stat-toggle-left i {
-  width: 14px;
+  width: 15px;
   text-align: center;
 }
 
@@ -526,12 +510,14 @@ body.dark-mode .settings-page .form-check-input:checked {
 
 /* ---- Footer ---- */
 .settings-page .settings-footer {
+  grid-area: footer;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 0 0;
   border-top: 1px solid var(--sp-border-soft);
-  flex-shrink: 0;
+  background: transparent;
+  margin-top: 1.5rem;
 }
 
 .settings-page .settings-autosave {
@@ -554,7 +540,7 @@ body.dark-mode .settings-page .form-check-input:checked {
 }
 
 .settings-page .autosave-text {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--sp-text-muted);
   opacity: 0.4;
   transition: opacity 0.3s ease;
@@ -578,38 +564,236 @@ body.dark-mode .settings-page .form-check-input:checked {
   background: transparent;
 }
 
+/* ==========================================================================
+   PANEL PRATINJAU (kanan) — live preview caret, font & statistik
+   ========================================================================== */
+
+.settings-page .settings-preview {
+  grid-area: preview;
+  padding-left: 2rem;
+  border-left: 1px solid var(--sp-border-soft);
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+}
+
+.settings-page .preview-block {
+  margin-bottom: 1.4rem;
+}
+
+.settings-page .preview-block:last-child {
+  margin-bottom: 0;
+}
+
+.settings-page .preview-block-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sp-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.6rem;
+}
+
+/* Kotak teks ketik contoh */
+.settings-page .preview-typing-box {
+  /* Sebelumnya memakai --sp-surface-tertiary (= warna body/latar halaman,
+     nyaris hitam di dark mode) sehingga kotak preview terlihat seperti
+     blok hitam polos. --sp-surface adalah variabel yang memang diperuntukkan
+     untuk elemen kecil seperti kotak preview ini (lihat definisinya di atas). */
+  background: var(--sp-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-md);
+  padding: 1.1rem 1.15rem;
+}
+
+/* Preview "Teks & Kursor" sekarang memakai elemen #textDisplay yang SAMA
+   dengan area tes mengetik sungguhan (lihat css/text-display.css), jadi
+   semua gaya kursor/font/blink/smooth-caret otomatis mengikuti tanpa
+   duplikasi. Di sini kita hanya mengecilkan ukurannya supaya pas di
+   sidebar preview yang sempit, tanpa mengubah perilaku aslinya. */
+.settings-page .preview-typing-box #textDisplay {
+  margin-top: 0;
+  padding: 0;
+  font-size: 1.15rem;
+  color: var(--sp-text-faint);
+  max-height: none;
+}
+
+.settings-page .preview-typing-box #textDisplay .word-container.current-word-target {
+  color: var(--sp-text-strong);
+}
+
+.settings-page .preview-typing-box #textDisplay .correct {
+  color: var(--sp-accent) !important;
+}
+
+/* Statistik: speedometer */
+.settings-page .preview-stats {
+  display: flex;
+  justify-content: center;
+  padding: 0.6rem 0 0.2rem;
+}
+
+.settings-page .preview-speedometer {
+  position: relative;
+  width: 108px;
+  height: 108px;
+}
+
+.settings-page .preview-speedo-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--sp-accent) 0deg 252deg, var(--sp-track-off) 252deg 360deg);
+  transition: background 0.3s ease;
+}
+
+.settings-page .preview-speedo-center {
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background: var(--sp-surface-tertiary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-page .preview-speedo-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--sp-text-strong);
+  line-height: 1;
+}
+
+.settings-page .preview-speedo-unit {
+  font-size: 0.62rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+}
+
+/* Statistik: teks */
+.settings-page .preview-stats-text {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.settings-page .preview-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.settings-page .preview-stat-num {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--sp-text-strong);
+}
+
+.settings-page .preview-stat-label {
+  font-size: 0.64rem;
+  color: var(--sp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Keyboard virtual mini */
+.settings-page .preview-keyboard {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  opacity: 0.4;
+  filter: grayscale(1);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.settings-page .preview-keyboard.enabled {
+  opacity: 1;
+  filter: none;
+}
+
+.settings-page .pk {
+  width: 27px;
+  height: 27px;
+  border-radius: 6px;
+  background: var(--sp-surface-secondary);
+  border: 1px solid var(--sp-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--sp-text-muted);
+}
+
+.settings-page .pk.active {
+  background: var(--sp-accent-soft);
+  border-color: var(--sp-accent);
+  color: var(--sp-accent);
+}
+
 /* ---- Responsif ---- */
-@media (max-width: 640px) {
-  .settings-page .settings-page-wrapper {
-    padding: 1rem 0.75rem 2rem;
+@media (max-width: 900px) {
+  .settings-page .settings-card {
+    grid-template-columns: 200px 1fr;
+    grid-template-areas:
+      "header  header"
+      "nav     body"
+      "preview preview"
+      "footer  footer";
+    row-gap: 1.5rem;
   }
 
-  .settings-page .settings-header {
-    padding: 1rem 1rem 0.75rem;
+  .settings-page .settings-preview {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--sp-border-soft);
+    padding-top: 1.5rem;
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .settings-page .settings-page-wrapper {
+    padding: 0 1.1rem 1.5rem;
+  }
+
+  .settings-page .settings-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "nav"
+      "body"
+      "preview"
+      "footer";
   }
 
   .settings-page .settings-nav {
-    padding: 0 1rem 0.75rem;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--sp-border-soft);
+    padding: 0 0 0.85rem;
+    scrollbar-width: none;
   }
 
-  .settings-page .settings-nav-item span {
+  .settings-page .settings-nav::-webkit-scrollbar {
     display: none;
   }
 
   .settings-page .settings-nav-item {
-    padding: 10px 12px;
-  }
-
-  .settings-page .settings-nav-item i {
-    font-size: 1rem;
+    width: auto;
+    flex-shrink: 0;
   }
 
   .settings-page .settings-body {
-    padding: 1rem;
+    padding: 0;
   }
 
   .settings-page .settings-footer {
-    padding: 0.75rem 1rem;
+    padding: 1rem 0 0;
   }
 }
 
@@ -619,4 +803,3 @@ body.dark-mode .settings-page .form-check-input:checked {
     animation-duration: 0.01ms !important;
   }
 }
-

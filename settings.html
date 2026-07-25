@@ -12,6 +12,7 @@
     />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/dark-mode.css" />
+    <link rel="stylesheet" href="css/text-display.css" />
     <link rel="stylesheet" href="css/settings-page.css" />
   </head>
   <body>
@@ -299,6 +300,56 @@
 
               </div>
 
+              <!-- ============ PANEL PRATINJAU ============ -->
+              <aside class="settings-preview" aria-label="Pratinjau tampilan latihan mengetik">
+
+                <div class="preview-block">
+                  <p class="preview-block-label">Teks &amp; Kursor</p>
+                  <div class="preview-typing-box">
+                    <div class="text-display-container">
+                      <!-- Elemen ini SENGAJA memakai id="textDisplay" (bukan class
+                           tiruan) supaya seluruh aturan di css/text-display.css
+                           (mode kursor, font, blink, smooth caret, dst) berlaku
+                           persis sama seperti pada area tes mengetik sungguhan,
+                           tanpa perlu duplikasi style. Halaman ini tidak punya
+                           #textDisplay lain sehingga aman dipakai di sini. -->
+                      <div id="textDisplay" class="text-display" data-cursor-mode="highlight"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="preview-block">
+                  <p class="preview-block-label">Statistik</p>
+                  <div class="preview-stats">
+                    <div class="preview-speedometer" id="previewSpeedometer">
+                      <div class="preview-speedo-ring"></div>
+                      <div class="preview-speedo-center">
+                        <span class="preview-speedo-value">78</span>
+                        <span class="preview-speedo-unit">WPM</span>
+                      </div>
+                    </div>
+                    <div class="preview-stats-text" id="previewStatsText" style="display: none">
+                      <div class="preview-stat-item">
+                        <span class="preview-stat-num">78</span>
+                        <span class="preview-stat-label">WPM</span>
+                      </div>
+                      <div class="preview-stat-item">
+                        <span class="preview-stat-num">97%</span>
+                        <span class="preview-stat-label">Akurasi</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="preview-block">
+                  <p class="preview-block-label">Keyboard Virtual</p>
+                  <div class="preview-keyboard" id="previewKeyboard">
+                    <span class="pk">A</span><span class="pk">S</span><span class="pk active">D</span><span class="pk">F</span><span class="pk">G</span>
+                  </div>
+                </div>
+
+              </aside>
+
               <div class="settings-footer">
                 <div class="settings-autosave">
                   <span class="autosave-dot" id="autosaveDot"></span>
@@ -338,6 +389,306 @@
         });
       });
     </script>
+
+    <!-- ============ SINKRONISASI PANEL PRATINJAU (Teks & Kursor) ============ -->
+    <!--
+      Preview ini memakai markup & class PERSIS SAMA dengan yang dibuat
+      text-display.js untuk area tes mengetik sungguhan (word-group >
+      word-container > span karakter, .space-char, .has-cursor,
+      .cursor-before/after, .smooth-caret, dst), dan elemen wadahnya
+      memakai id="textDisplay" yang sama supaya seluruh aturan di
+      css/text-display.css (mode kursor, blink, smooth caret) otomatis
+      berlaku tanpa duplikasi style. Teks preview SENGAJA tetap statis:
+      "Jadi pengetik sepuluh jari nomor 1". "Diketik"-nya disimulasikan
+      SATU KALI saja (bukan berulang-ulang tanpa henti) setiap preview
+      dimuat, dan dimainkan ulang hanya ketika opsi yang berhubungan
+      dengan tampilan teks/kursor (mode kursor, kehalusan kursor, font)
+      diganti — supaya efek visualnya (kursor pindah karakter/kata, warna
+      benar/salah, smooth caret) langsung terlihat tanpa membuat animasi
+      berputar terus-menerus (yang sebelumnya membuat animasi blink
+      kursor jadi restart tiap 150ms / terlihat berkedip terlalu cepat).
+    -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const textDisplay = document.getElementById('textDisplay');
+        if (!textDisplay) return;
+
+        const PREVIEW_WORDS = ['Jadi', 'pengetik', 'sepuluh', 'jari', 'nomor', '1'];
+        const SMOOTH_DURATIONS = { off: 0, low: 90, medium: 160, high: 280 };
+
+        // Dibaca langsung dari localStorage (bukan dari radio ":checked")
+        // supaya TIDAK bergantung pada urutan eksekusi antara skrip ini
+        // (classic script, jalan sinkron saat parsing) dan settings-panel.js
+        // (module, jalan setelah parsing selesai) yang baru menyinkronkan
+        // status "checked" pada radio setelahnya. Sebelumnya, karena skrip
+        // ini kadang jalan LEBIH DULU, preview selalu jatuh ke nilai default
+        // ("highlight" / "off") walau pengaturan tersimpan sudah berbeda,
+        // sampai user mengubah pilihan secara manual.
+        let cursorMode = localStorage.getItem('cursorMode') || 'highlight';
+        let smoothLevel = localStorage.getItem('caretSmoothness') || 'off';
+
+        // Kata mana yang sedang "diketik" & seberapa jauh.
+        let currentWordIndex = 0;
+        let typedLength = 0;
+        let smoothCaretEl = null;
+        // Menyimpan id timeout animasi "mengetik" yang sedang berjalan,
+        // supaya bisa dibatalkan bila pengaturan berganti lagi sebelum
+        // animasi sebelumnya selesai.
+        let typingAnimId = null;
+
+        // --- Render struktur kata (sekali saja) ---
+        function renderWords() {
+          textDisplay.innerHTML = '';
+          PREVIEW_WORDS.forEach((word, index) => {
+            const wordGroup = document.createElement('span');
+            wordGroup.className = 'word-group';
+            wordGroup.style.whiteSpace = 'nowrap';
+            wordGroup.style.display = 'inline-block';
+
+            const wordContainer = document.createElement('span');
+            wordContainer.className = 'word-container';
+            wordContainer.id = `preview-word-${index}`;
+            word.split('').forEach((char) => {
+              const charSpan = document.createElement('span');
+              charSpan.textContent = char;
+              wordContainer.appendChild(charSpan);
+            });
+            wordGroup.appendChild(wordContainer);
+
+            if (index < PREVIEW_WORDS.length - 1) {
+              const spaceSpan = document.createElement('span');
+              spaceSpan.className = 'space-char';
+              spaceSpan.textContent = ' ';
+              spaceSpan.id = `preview-space-${index}`;
+              wordGroup.appendChild(spaceSpan);
+            }
+            textDisplay.appendChild(wordGroup);
+          });
+        }
+
+        function getOrCreateSmoothCaret() {
+          if (smoothCaretEl && smoothCaretEl.parentElement === textDisplay) return smoothCaretEl;
+          smoothCaretEl = document.createElement('div');
+          smoothCaretEl.className = 'smooth-caret';
+          textDisplay.appendChild(smoothCaretEl);
+          return smoothCaretEl;
+        }
+
+        function hideSmoothCaret() {
+          if (smoothCaretEl) smoothCaretEl.classList.remove('is-visible');
+        }
+
+        function positionSmoothCaret(targetEl, isBefore) {
+          const duration = SMOOTH_DURATIONS[smoothLevel] || 0;
+          if (duration <= 0 || cursorMode === 'highlight' || cursorMode === 'hidden' || !targetEl) {
+            hideSmoothCaret();
+            return;
+          }
+          const el = getOrCreateSmoothCaret();
+          const containerRect = textDisplay.getBoundingClientRect();
+          const elRect = targetEl.getBoundingClientRect();
+          const baseLeft = elRect.left - containerRect.left + textDisplay.scrollLeft;
+          const baseTop = elRect.top - containerRect.top + textDisplay.scrollTop;
+          let rect;
+          if (cursorMode === 'underline') {
+            rect = { left: baseLeft, top: baseTop + elRect.height - 3, width: elRect.width, height: 3 };
+          } else if (cursorMode === 'box') {
+            rect = { left: baseLeft, top: baseTop, width: elRect.width, height: elRect.height };
+          } else {
+            const left = isBefore ? baseLeft - 1 : baseLeft + elRect.width - 1;
+            rect = { left, top: baseTop, width: 2, height: elRect.height };
+          }
+          el.classList.toggle('mode-box', cursorMode === 'box');
+          el.style.left = rect.left + 'px';
+          el.style.top = rect.top + 'px';
+          el.style.width = rect.width + 'px';
+          el.style.height = rect.height + 'px';
+          el.classList.add('is-visible');
+        }
+
+        // --- Terapkan status "diketik" saat ini ke DOM (dipanggil ulang
+        // setiap kali simulasi berjalan ATAU pengaturan berubah) ---
+        function render() {
+          textDisplay.querySelectorAll('.word-container, .space-char, .word-container span').forEach((el) => {
+            el.classList.remove('current-word-target', 'has-cursor', 'cursor-before', 'cursor-after', 'current-space-target');
+          });
+
+          PREVIEW_WORDS.forEach((word, index) => {
+            const wordEl = document.getElementById(`preview-word-${index}`);
+            if (!wordEl) return;
+            if (index < currentWordIndex) {
+              // Kata yang sudah "selesai" diketik dengan benar
+              wordEl.innerHTML = '';
+              word.split('').forEach((char) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.classList.add('correct');
+                wordEl.appendChild(span);
+              });
+            } else if (index === currentWordIndex) {
+              wordEl.classList.add('current-word-target');
+              wordEl.innerHTML = '';
+              const spans = word.split('').map((char) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                wordEl.appendChild(span);
+                return span;
+              });
+              for (let i = 0; i < typedLength && i < spans.length; i++) {
+                if (cursorMode !== 'hidden') spans[i].classList.add('correct');
+              }
+
+              let target = null;
+              let before = true;
+              if (typedLength === 0 && spans.length) {
+                spans[0].classList.add('has-cursor', 'cursor-before');
+                target = spans[0]; before = true;
+              } else if (typedLength > 0 && typedLength < spans.length) {
+                if (cursorMode === 'caret') {
+                  spans[typedLength - 1].classList.add('has-cursor', 'cursor-after');
+                  target = spans[typedLength - 1]; before = false;
+                } else {
+                  spans[typedLength].classList.add('has-cursor', 'cursor-before');
+                  target = spans[typedLength]; before = true;
+                }
+              } else if (typedLength >= spans.length) {
+                const nextSpace = document.getElementById(`preview-space-${index}`);
+                if (nextSpace) {
+                  nextSpace.classList.add('has-cursor', 'cursor-before', 'current-space-target');
+                  target = nextSpace; before = true;
+                }
+              }
+              textDisplay.dataset.cursorMode = cursorMode;
+              positionSmoothCaret(target, before);
+            } else {
+              // Kata yang belum diketik: tampilkan apa adanya (warna default)
+              wordEl.innerHTML = '';
+              word.split('').forEach((char) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                wordEl.appendChild(span);
+              });
+            }
+          });
+        }
+
+        // Frame "istirahat" tempat animasi berhenti (kata index 2, "sepuluh",
+        // baru terketik 2 huruf) — sama seperti kondisi awal statis yang
+        // dulu dipakai sebelum preview mengetik berulang-ulang tanpa henti.
+        const TYPING_REST_FRAME = { wordIndex: 2, length: 2 };
+
+        function stopTypingAnimation() {
+          if (typingAnimId) {
+            clearTimeout(typingAnimId);
+            typingAnimId = null;
+          }
+        }
+
+        // Menjalankan simulasi "mengetik" SATU KALI dari awal kalimat sampai
+        // ke frame istirahat, lalu berhenti (tidak berulang). Dipanggil saat
+        // preview pertama kali dimuat, dan dipanggil ulang hanya ketika
+        // pengaturan yang memengaruhi tampilan kursor/teks berubah.
+        function playTypingOnce() {
+          stopTypingAnimation();
+          currentWordIndex = 0;
+          typedLength = 0;
+          render();
+
+          function step() {
+            const atRestFrame =
+              currentWordIndex === TYPING_REST_FRAME.wordIndex &&
+              typedLength === TYPING_REST_FRAME.length;
+            if (atRestFrame) {
+              typingAnimId = null;
+              return;
+            }
+            const currentWordLen = PREVIEW_WORDS[currentWordIndex].length;
+            typedLength++;
+            if (typedLength > currentWordLen) {
+              typedLength = 0;
+              currentWordIndex++;
+            }
+            render();
+            typingAnimId = setTimeout(step, 150);
+          }
+
+          typingAnimId = setTimeout(step, 150);
+        }
+
+        renderWords();
+        playTypingOnce();
+
+        // --- Mode kursor (Highlight / Caret / Underline / Box / Hidden) ---
+        // Kelas visualnya (caret-mode-active, dst.) sudah diterapkan otomatis
+        // oleh settings-panel.js ke elemen #textDisplay ini; di sini kita
+        // hanya perlu memperbarui posisi kursor sesuai mode barunya.
+        document.querySelectorAll('input[name="cursorMode"]').forEach((radio) => {
+          radio.addEventListener('change', () => {
+            if (!radio.checked) return;
+            cursorMode = radio.value;
+            // Mainkan ulang animasi mengetik dari awal (bukan sekadar
+            // render() di posisi saat ini) supaya render() lama yang
+            // memakai mode kursor sebelumnya benar-benar dibersihkan,
+            // bukan meninggalkan kursor lama yang diam tak terpakai.
+            playTypingOnce();
+          });
+        });
+
+        // --- Kursor berkedip ---
+        // Kelas cursor-no-blink sudah diterapkan otomatis oleh
+        // settings-panel.js ke #textDisplay; tidak perlu kode tambahan.
+
+        // --- Kehalusan perpindahan kursor (Smooth Caret) ---
+        document.querySelectorAll('input[name="caretSmoothness"]').forEach((radio) => {
+          radio.addEventListener('change', () => {
+            if (!radio.checked) return;
+            smoothLevel = radio.value;
+            const ms = SMOOTH_DURATIONS[smoothLevel] || 0;
+            textDisplay.classList.toggle('smooth-caret-active', ms > 0);
+            textDisplay.style.setProperty('--caret-smooth-duration', `${ms}ms`);
+            if (smoothCaretEl) {
+              smoothCaretEl.style.transition = 'none';
+              requestAnimationFrame(() => { if (smoothCaretEl) smoothCaretEl.style.transition = ''; });
+            }
+            playTypingOnce();
+          });
+        });
+        textDisplay.classList.toggle('smooth-caret-active', (SMOOTH_DURATIONS[smoothLevel] || 0) > 0);
+        textDisplay.style.setProperty('--caret-smooth-duration', `${SMOOTH_DURATIONS[smoothLevel] || 0}ms`);
+
+        // --- Font ---
+        // Perubahan font (font-family + class font-sans-serif/font-serif)
+        // juga sudah diterapkan otomatis oleh settings-panel.js ke
+        // #textDisplay ini; kita mainkan ulang animasi mengetik supaya
+        // posisi kursor ikut diperbarui dengan bersih setelah lebar
+        // karakter berubah.
+        document.querySelectorAll('.font-choice-btn').forEach((btn) => {
+          btn.addEventListener('click', () => requestAnimationFrame(playTypingOnce));
+        });
+
+        // --- Mode statistik (Speedometer / Teks) ---
+        const speedoEl = document.getElementById('previewSpeedometer');
+        const statsTextEl = document.getElementById('previewStatsText');
+        document.querySelectorAll('.stats-mode-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const isText = btn.dataset.mode === 'text';
+            if (speedoEl) speedoEl.style.display = isText ? 'none' : '';
+            if (statsTextEl) statsTextEl.style.display = isText ? 'flex' : 'none';
+          });
+        });
+
+        // --- Keyboard virtual ---
+        const keyboardToggle = document.getElementById('keyboardToggle');
+        const previewKeyboard = document.getElementById('previewKeyboard');
+        function applyKeyboard() {
+          if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!(keyboardToggle && keyboardToggle.checked));
+        }
+        if (keyboardToggle) keyboardToggle.addEventListener('change', applyKeyboard);
+        applyKeyboard();
+
+        // Reposisikan smooth caret saat ukuran jendela berubah
+        window.addEventListener('resize', render);
+      });
+    </script>
   </body>
 </html>
-
