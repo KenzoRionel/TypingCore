@@ -453,7 +453,13 @@ function updateStatsVisibilityBasedOnKeyboard(options = {}) {
     const modeToUse = statsMode || stored || 'speedometer';
 
     const textStats = document.querySelector('.text-stats-container');
-    const speedContainers = document.querySelectorAll('.speedometer-container');
+    // Kecualikan gauge di panel pratinjau settings.html (markup preview
+    // sengaja memakai class "speedometer-container" yang sama dengan
+    // halaman tes sungguhan) - preview punya kontrol visibilitasnya sendiri
+    // yang tidak boleh ditimpa dari sini.
+    const speedContainers = Array.from(
+      document.querySelectorAll('.speedometer-container')
+    ).filter((el) => !el.closest('.settings-preview'));
 
     if (modeToUse === 'text') {
       if (textStats) textStats.style.display = 'flex';

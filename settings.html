@@ -13,6 +13,7 @@
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/dark-mode.css" />
     <link rel="stylesheet" href="css/text-display.css" />
+    <link rel="stylesheet" href="css/speedometer-style.css" />
     <link rel="stylesheet" href="css/settings-page.css" />
   </head>
   <body>
@@ -321,21 +322,57 @@
                 <div class="preview-block">
                   <p class="preview-block-label">Statistik</p>
                   <div class="preview-stats">
-                    <div class="preview-speedometer" id="previewSpeedometer">
-                      <div class="preview-speedo-ring"></div>
-                      <div class="preview-speedo-center">
-                        <span class="preview-speedo-value">78</span>
-                        <span class="preview-speedo-unit">WPM</span>
+                    <!-- Memakai markup & class ASLI dari css/speedometer-style.css
+                         (persis sama dengan 3 gauge WPM/Akurasi/Waktu di halaman
+                         tes sungguhan), hanya diperkecil lewat CSS transform di
+                         settings-page.css (lihat .preview-speedo-scale). -->
+                    <div class="preview-real-stats" id="previewRealStats">
+                      <div class="preview-speedo-scale">
+                        <div class="speedometer-container">
+                          <div class="speedometer-gauge-face">
+                            <div class="speedometer-ticks" id="previewWpmTicks"></div>
+                            <div class="speedometer-needle" id="previewWpmNeedle"></div>
+                            <div class="speedometer-center-pin"></div>
+                            <div class="speed-display" id="previewWpmValue">0</div>
+                            <div class="speed-unit">WPM</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="preview-speedo-scale">
+                        <div class="speedometer-container">
+                          <div class="speedometer-gauge-face">
+                            <div class="speedometer-ticks" id="previewAccuracyTicks"></div>
+                            <div class="speedometer-needle" id="previewAccuracyNeedle"></div>
+                            <div class="speedometer-center-pin"></div>
+                            <div class="speed-display" id="previewAccuracyValue">0%</div>
+                            <div class="speed-unit">AKURASI</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="preview-speedo-scale">
+                        <div class="speedometer-container">
+                          <div class="speedometer-gauge-face">
+                            <div class="speedometer-ticks" id="previewTimerTicks"></div>
+                            <div class="speedometer-needle" id="previewTimerNeedle"></div>
+                            <div class="speedometer-center-pin"></div>
+                            <div class="speed-display" id="previewTimerValue">0</div>
+                            <div class="speed-unit">DETIK</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div class="preview-stats-text" id="previewStatsText" style="display: none">
                       <div class="preview-stat-item">
-                        <span class="preview-stat-num">78</span>
+                        <span class="preview-stat-num" id="previewStatsTextWpm">0</span>
                         <span class="preview-stat-label">WPM</span>
                       </div>
                       <div class="preview-stat-item">
-                        <span class="preview-stat-num">97%</span>
+                        <span class="preview-stat-num" id="previewStatsTextAccuracy">100%</span>
                         <span class="preview-stat-label">Akurasi</span>
+                      </div>
+                      <div class="preview-stat-item">
+                        <span class="preview-stat-num" id="previewStatsTextTimer">0</span>
+                        <span class="preview-stat-label">Waktu</span>
                       </div>
                     </div>
                   </div>
@@ -343,9 +380,11 @@
 
                 <div class="preview-block">
                   <p class="preview-block-label">Keyboard Virtual</p>
-                  <div class="preview-keyboard" id="previewKeyboard">
-                    <span class="pk">A</span><span class="pk">S</span><span class="pk active">D</span><span class="pk">F</span><span class="pk">G</span>
-                  </div>
+                  <!-- Dikosongkan di markup; diisi via createKeyboard() (dari
+                       js/index-keyboard.js, layout sama dgn keyboard-layout.js)
+                       supaya tombol yang disorot mengikuti animasi mengetik
+                       persis seperti keyboard virtual sungguhan. -->
+                  <div class="preview-keyboard" id="previewKeyboard"></div>
                 </div>
 
               </aside>
@@ -369,6 +408,38 @@
     <script type="module">
       import { initSettingsPanel } from './js/utils/settings-panel.js';
       import { initDarkMode } from './js/utils/dark-mode.js';
+      import {
+        createSpeedometerTicks,
+        wpmTickColors,
+        accuracyTickColors,
+        getTimerTickColors,
+        wpmMax,
+        accuracyMax,
+        timerMax,
+      } from './js/utils/speedometer.js';
+      import {
+        createKeyboard,
+        highlightActiveKeyOnKeyboard,
+        clearKeyboardHighlights,
+        loadKeyboardVisibility,
+      } from './js/index-keyboard.js';
+
+      // Dipakai oleh script preview di bawah (sengaja tetap classic script,
+      // BUKAN type="module", supaya listener DOMContentLoaded-nya terpasang
+      // sebelum event itu ditembakkan — lihat komentar di script tersebut).
+      window.__previewHelpers = {
+        createSpeedometerTicks,
+        wpmTickColors,
+        accuracyTickColors,
+        getTimerTickColors,
+        wpmMax,
+        accuracyMax,
+        timerMax,
+        createKeyboard,
+        highlightActiveKeyOnKeyboard,
+        clearKeyboardHighlights,
+        loadKeyboardVisibility,
+      };
 
       document.addEventListener('DOMContentLoaded', () => {
         // Inisialisasi dark mode
@@ -413,8 +484,212 @@
         const textDisplay = document.getElementById('textDisplay');
         if (!textDisplay) return;
 
+        // Fungsi-fungsi dari js/utils/speedometer.js & js/index-keyboard.js
+        // yang diekspos oleh script module di atas (lihat window.__previewHelpers).
+        const helpers = window.__previewHelpers || {};
+
+        // Diambil & dibuat di awal (bukan di bawah dekat pemakaiannya) supaya
+        // sudah "ada" (bukan undeclared/TDZ) sebelum playTypingOnce() memanggil
+        // render() untuk pertama kali beberapa baris di bawah.
+        const previewKeyboard = document.getElementById('previewKeyboard');
+        if (previewKeyboard && helpers.createKeyboard) {
+          helpers.createKeyboard(previewKeyboard);
+        }
+
+        // --- Statistik: inisialisasi 3 gauge speedometer ASLI (WPM/Akurasi/Waktu) ---
+        // Nilai TARGET (bukan dari tes sungguhan) yang dituju secara BERTAHAP
+        // oleh updatePreviewSpeedometers() seiring progres animasi "mengetik"
+        // di bawah, supaya jarum gauge terlihat ikut bergerak mengikuti teks
+        // pratinjau alih-alih diam di satu nilai statis sepanjang waktu.
+        const PREVIEW_WPM_TARGET = 67;
+        const PREVIEW_ACCURACY_START = 100;
+        const PREVIEW_ACCURACY_TARGET = 83;
+        const PREVIEW_TIMER_TARGET = 58;
+
+        function initPreviewSpeedometers() {
+          const {
+            createSpeedometerTicks,
+            wpmTickColors,
+            accuracyTickColors,
+            getTimerTickColors,
+            wpmMax,
+            accuracyMax,
+            timerMax,
+          } = helpers;
+          if (!createSpeedometerTicks) return;
+
+          createSpeedometerTicks(document.getElementById('previewWpmTicks'), 0, wpmMax, 5, wpmTickColors);
+          createSpeedometerTicks(document.getElementById('previewAccuracyTicks'), 0, accuracyMax, 5, accuracyTickColors);
+          createSpeedometerTicks(document.getElementById('previewTimerTicks'), 0, timerMax, 5, getTimerTickColors(timerMax));
+
+          // Posisi awal jarum (progres 0%) sebelum animasi mengetik mulai berjalan.
+          updatePreviewSpeedometers(0);
+        }
+
+        // --- Tween sudut jarum lewat requestAnimationFrame ---
+        // Sebelumnya jarum di-set LANGSUNG ke sudut baru tiap kali
+        // updatePreviewSpeedometers() dipanggil (tiap ~150ms, mengikuti
+        // step animasi mengetik), lalu mengandalkan CSS transition di
+        // css/speedometer-style.css untuk menghaluskannya. Itu ternyata
+        // tidak cukup andal — kita tidak punya kendali atas rule CSS di
+        // file tersebut (bisa saja durasinya beda, ketimpa rule lain,
+        // atau memang tidak meng-transition custom property/transform-nya).
+        // Di sini jarum di-animasikan manual frame-demi-frame dari sudut
+        // SAAT INI menuju sudut TARGET dengan easing, jadi kehalusannya
+        // sepenuhnya dikontrol di sini, terlepas dari CSS eksternal apa pun.
+        const needleTweens = {}; // needleId -> { angle, raf }
+
+        function easeOutCubic(t) {
+          return 1 - Math.pow(1 - t, 3);
+        }
+
+        function tweenNeedleAngle(needleId, toAngle, duration = 220) {
+          const needle = document.getElementById(needleId);
+          if (!needle) return;
+          const state = needleTweens[needleId] || { angle: toAngle, raf: null };
+          if (state.raf) cancelAnimationFrame(state.raf);
+
+          const fromAngle = state.angle;
+          const startTime = performance.now();
+
+          function tick(now) {
+            const t = Math.min(1, (now - startTime) / duration);
+            const eased = easeOutCubic(t);
+            const angle = fromAngle + (toAngle - fromAngle) * eased;
+            needle.style.setProperty('--needle-angle', `${angle}deg`);
+            needleTweens[needleId].angle = angle;
+            if (t < 1) {
+              needleTweens[needleId].raf = requestAnimationFrame(tick);
+            } else {
+              needleTweens[needleId].raf = null;
+              needleTweens[needleId].angle = toAngle;
+            }
+          }
+
+          needleTweens[needleId] = { angle: fromAngle, raf: requestAnimationFrame(tick) };
+        }
+
+        function setPreviewGaugeNeedle(needleId, valueId, value, max, formatValue) {
+          const needle = document.getElementById(needleId);
+          const valueEl = document.getElementById(valueId);
+          if (!needle || !valueEl) return;
+          const clamped = Math.max(0, Math.min(max, value));
+          const angle = (clamped / max) * 240 - 120;
+          // Durasi tween sengaja lebih panjang dari interval update (150ms)
+          // supaya animasi antar-step saling menyambung mulus (overlap
+          // sedikit), bukan berhenti-lalu-jalan-lagi tiap step.
+          tweenNeedleAngle(needleId, angle, 220);
+          valueEl.textContent = formatValue(clamped);
+        }
+
+        // Dipanggil di setiap frame render() animasi mengetik dengan `progress`
+        // (0..1) = seberapa jauh kalimat pratinjau sudah "diketik". WPM naik
+        // dari 0 menuju target, akurasi turun sedikit demi sedikit (simulasi
+        // kesalahan ketik terkumpul), dan timer menghitung mundur dari nilai
+        // maksimum menuju sisa waktu target — supaya ketiga gauge terlihat
+        // hidup bergerak beriringan dengan teks yang sedang "diketik".
+        // FIX FINAL: 
+        // - Akurasi = correct/total real (100% normal, drop hanya saat typo, balik 100% setelah backspace)
+        // - WPM = naik seiring progres (0 -> TARGET), sedikit drop saat typo
+        // - Waktu: gauge = countdown (berkurang), text = elapsed (waktu yang digunakan)
+        function updatePreviewSpeedometers(progress, opts = {}) {
+          const { wpmMax, accuracyMax, timerMax } = helpers;
+          if (!wpmMax) return;
+          const p = Math.max(0, Math.min(1, progress));
+          const hasTypo = !!opts.hasTypo;
+          const correctOverall = opts.correctOverall ?? 0;
+          const totalOverall = opts.totalOverall ?? 0;
+
+          // WPM: linear 0 -> TARGET, minus 6 kalau lagi typo
+          let currentWpm = PREVIEW_WPM_TARGET * p;
+          if (hasTypo) currentWpm = Math.max(0, currentWpm - 6);
+
+          // Akurasi: real correct/total, bukan turun terus
+          let currentAccuracy;
+          if (totalOverall > 0) {
+            currentAccuracy = (correctOverall / totalOverall) * 100;
+          } else {
+            currentAccuracy = 100;
+          }
+
+          // Waktu: elapsed = waktu yang digunakan = TARGET * p
+          //         remaining = countdown untuk gauge = timerMax - elapsed (berkurang)
+          const elapsed = PREVIEW_TIMER_TARGET * p;
+          const remaining = Math.max(0, (timerMax || 60) - elapsed);
+
+          // Gauge: WPM naik, Akurasi real, Timer countdown berkurang
+          setPreviewGaugeNeedle('previewWpmNeedle', 'previewWpmValue', currentWpm, wpmMax, (v) => Math.round(v));
+          setPreviewGaugeNeedle('previewAccuracyNeedle', 'previewAccuracyValue', currentAccuracy, accuracyMax, (v) => `${Math.round(v)}%`);
+          setPreviewGaugeNeedle('previewTimerNeedle', 'previewTimerValue', remaining, timerMax, (v) => Math.round(v));
+
+          // Text stats: WPM & Akurasi sama, Timer tampilkan elapsed sebagai "waktu yang digunakan"
+          // tapi biar sinkron dengan gauge yang berkurang, kita kirim remaining juga ke text?
+          // Sesuai request: waktu berkurang + total waktu = total teks, jadi:
+          // - gauge = remaining (berkurang)
+          // - text timer = remaining juga (berkurang dari TARGET ke 0) + kita simpan elapsed untuk logika
+          // Untuk memenuhi "waktu yang digunakan = total teks", text timer kita tampilkan sebagai elapsed (0->TARGET) 
+          // tapi kita buat opsi: jika user mau lihat countdown, gauge sudah countdown.
+          // Di sini text timer kita tampilkan remainingCountdown dari TARGET (58 -> 0) biar jelas berkurang,
+          // sesuai kalimat "seharusnya waktu berkurang".
+          const textTimerValue = PREVIEW_TIMER_TARGET * (1 - p); // 58 -> 0 berkurang
+          updatePreviewStatsText(currentWpm, currentAccuracy, textTimerValue, elapsed);
+        }
+
+        function updatePreviewStatsText(wpm, accuracy, timerRemaining, elapsed) {
+          const wpmEl = document.getElementById('previewStatsTextWpm');
+          const accuracyEl = document.getElementById('previewStatsTextAccuracy');
+          const timerEl = document.getElementById('previewStatsTextTimer');
+          if (wpmEl) wpmEl.textContent = Math.round(wpm);
+          if (accuracyEl) accuracyEl.textContent = `${Math.round(accuracy)}%`;
+          // timerRemaining = countdown 58->0 (sesuai request "waktu berkurang")
+          // Jika ingin tampilkan elapsed (waktu digunakan), ganti ke elapsed
+          if (timerEl) timerEl.textContent = `${Math.round(timerRemaining)}s`;
+        }
+
+        initPreviewSpeedometers();
+
         const PREVIEW_WORDS = ['Jadi', 'pengetik', 'sepuluh', 'jari', 'nomor', '1'];
         const SMOOTH_DURATIONS = { off: 0, low: 90, medium: 160, high: 280 };
+
+        // --- Simulasi salah ketik (typo) & koreksi ---
+        // Supaya pratinjau terasa seperti pengetikan sungguhan (bukan cuma
+        // mengetik benar terus-menerus), satu huruf SENGAJA "diketik salah"
+        // di tengah simulasi, sempat tampil sebagai karakter salah (class
+        // "incorrect", sama seperti area tes sungguhan), lalu dihapus
+        // (backspace) dan diketik ulang dengan benar sebelum melanjutkan ke
+        // sisa kalimat. TYPO_WORD_INDEX/TYPO_CHAR_POS menentukan di kata &
+        // posisi huruf ke berapa typo ini terjadi; TYPO_WRONG_CHAR adalah
+        // huruf salah yang ditampilkan sesaat (juga dipakai untuk menyorot
+        // tombol yang "salah ditekan" di preview Keyboard Virtual).
+        const TYPO_WORD_INDEX = 1; // kata "pengetik"
+        const TYPO_CHAR_POS = 4; // typo terjadi menggantikan huruf ke-5 ("e")
+        const TYPO_WRONG_CHAR = 'x';
+
+        // Membangun urutan langkah ("skrip") animasi mengetik satu kalimat
+        // penuh, termasuk selipan typo+backspace di atas. Setiap langkah
+        // adalah satu aksi atomic: 'type' (huruf benar), 'typo' (huruf
+        // salah), 'backspace' (hapus satu huruf terakhir), atau 'space'
+        // (pindah ke kata berikutnya). Dibangun sekali saja di awal karena
+        // urutannya selalu sama setiap preview mengetik ulang.
+        function buildTypingScript() {
+          const steps = [];
+          PREVIEW_WORDS.forEach((word, wordIndex) => {
+            for (let charIndex = 0; charIndex < word.length; charIndex++) {
+              if (wordIndex === TYPO_WORD_INDEX && charIndex === TYPO_CHAR_POS) {
+                steps.push({ action: 'typo', wrongChar: TYPO_WRONG_CHAR });
+                steps.push({ action: 'backspace' });
+              }
+              steps.push({ action: 'type' });
+            }
+            if (wordIndex < PREVIEW_WORDS.length - 1) {
+              steps.push({ action: 'space' });
+            }
+          });
+          return steps;
+        }
+
+        const typingScript = buildTypingScript();
+        let scriptStepIndex = 0;
 
         // Dibaca langsung dari localStorage (bukan dari radio ":checked")
         // supaya TIDAK bergantung pada urutan eksekusi antara skrip ini
@@ -430,6 +705,11 @@
         // Kata mana yang sedang "diketik" & seberapa jauh.
         let currentWordIndex = 0;
         let typedLength = 0;
+        // Status tiap huruf yang sudah "diketik" pada kata berjalan saat ini
+        // (true = benar, false = salah/typo), sejajar indeksnya dengan
+        // typedLength - dipakai render() untuk mewarnai huruf yang sedang
+        // typo secara berbeda dari huruf yang benar.
+        let typedCharStatus = [];
         let smoothCaretEl = null;
         // Menyimpan id timeout animasi "mengetik" yang sedang berjalan,
         // supaya bisa dibatalkan bila pengaturan berganti lagi sebelum
@@ -509,6 +789,21 @@
         // --- Terapkan status "diketik" saat ini ke DOM (dipanggil ulang
         // setiap kali simulasi berjalan ATAU pengaturan berubah) ---
         function render() {
+          // FIX FINAL: hitung correct/total real untuk akurasi, progress dari scriptStepIndex
+          const totalSteps = typingScript.length;
+          const progress = totalSteps > 0 ? scriptStepIndex / totalSteps : 0;
+          const hasTypoNow = typedCharStatus.includes(false);
+
+          // Hitung total karakter benar vs total yang sudah diketik (untuk akurasi real)
+          const prevWordsLen = PREVIEW_WORDS.slice(0, currentWordIndex).reduce((sum, w) => sum + w.length, 0);
+          const prevSpaces = currentWordIndex; // spasi antar kata
+          const correctInCurrent = typedCharStatus.filter(Boolean).length;
+          const totalInCurrent = typedLength;
+          const correctOverall = prevWordsLen + prevSpaces + correctInCurrent;
+          const totalOverall = prevWordsLen + prevSpaces + totalInCurrent;
+
+          updatePreviewSpeedometers(progress, { hasTypo: hasTypoNow, correctOverall, totalOverall });
+
           textDisplay.querySelectorAll('.word-container, .space-char, .word-container span').forEach((el) => {
             el.classList.remove('current-word-target', 'has-cursor', 'cursor-before', 'cursor-after', 'current-space-target');
           });
@@ -535,7 +830,9 @@
                 return span;
               });
               for (let i = 0; i < typedLength && i < spans.length; i++) {
-                if (cursorMode !== 'hidden') spans[i].classList.add('correct');
+                if (cursorMode !== 'hidden') {
+                  spans[i].classList.add(typedCharStatus[i] ? 'correct' : 'incorrect');
+                }
               }
 
               let target = null;
@@ -570,12 +867,36 @@
               });
             }
           });
-        }
 
-        // Frame "istirahat" tempat animasi berhenti (kata index 2, "sepuluh",
-        // baru terketik 2 huruf) — sama seperti kondisi awal statis yang
-        // dulu dipakai sebelum preview mengetik berulang-ulang tanpa henti.
-        const TYPING_REST_FRAME = { wordIndex: 2, length: 2 };
+          // --- Keyboard Virtual: sorot tombol yang cocok dengan karakter
+          // yang sedang/akan diketik di preview teks di atasnya, supaya
+          // kedua preview ("Teks & Kursor" dan "Keyboard Virtual") terlihat
+          // seperti benar-benar mengetik kalimat yang sama secara bersamaan. ---
+          if (previewKeyboard && helpers.highlightActiveKeyOnKeyboard) {
+            // FIX: Backspace juga disorot
+            const nextStep = typingScript[scriptStepIndex];
+            let keyToPress = null;
+            if (nextStep) {
+              if (nextStep.action === 'type') {
+                const currentWord = PREVIEW_WORDS[currentWordIndex];
+                if (currentWord && typedLength < currentWord.length) {
+                  keyToPress = currentWord[typedLength];
+                }
+              } else if (nextStep.action === 'typo') {
+                keyToPress = nextStep.wrongChar;
+              } else if (nextStep.action === 'space') {
+                keyToPress = ' ';
+              } else if (nextStep.action === 'backspace') {
+                keyToPress = 'Backspace';
+              }
+            }
+            if (keyToPress) {
+              helpers.highlightActiveKeyOnKeyboard(previewKeyboard, keyToPress);
+            } else if (helpers.clearKeyboardHighlights) {
+              helpers.clearKeyboardHighlights(previewKeyboard);
+            }
+          }
+        }
 
         function stopTypingAnimation() {
           if (typingAnimId) {
@@ -592,24 +913,50 @@
           stopTypingAnimation();
           currentWordIndex = 0;
           typedLength = 0;
+          typedCharStatus = [];
+          scriptStepIndex = 0;
           render();
 
+          // Menjalankan tepat SATU langkah dari typingScript (lihat
+          // buildTypingScript() di atas) setiap kali dipanggil, lalu
+          // menjadwalkan langkah berikutnya. Jeda antar-langkah dibuat
+          // TIDAK seragam secara sengaja: langkah 'typo' diberi jeda lebih
+          // lama supaya huruf salahnya sempat terlihat jelas sebelum
+          // dihapus, dan langkah 'backspace' diberi jeda singkat sebelum
+          // lanjut mengetik ulang - meniru jeda alami saat orang sadar
+          // salah ketik lalu membetulkannya.
           function step() {
-            const atRestFrame =
-              currentWordIndex === TYPING_REST_FRAME.wordIndex &&
-              typedLength === TYPING_REST_FRAME.length;
-            if (atRestFrame) {
+            if (scriptStepIndex >= typingScript.length) {
               typingAnimId = null;
               return;
             }
-            const currentWordLen = PREVIEW_WORDS[currentWordIndex].length;
-            typedLength++;
-            if (typedLength > currentWordLen) {
-              typedLength = 0;
-              currentWordIndex++;
+            const { action } = typingScript[scriptStepIndex];
+            switch (action) {
+              case 'type':
+                typedCharStatus[typedLength] = true;
+                typedLength++;
+                break;
+              case 'typo':
+                typedCharStatus[typedLength] = false;
+                typedLength++;
+                break;
+              case 'backspace':
+                typedLength--;
+                typedCharStatus.length = typedLength;
+                break;
+              case 'space':
+                currentWordIndex++;
+                typedLength = 0;
+                typedCharStatus = [];
+                break;
             }
+            scriptStepIndex++;
             render();
-            typingAnimId = setTimeout(step, 150);
+
+            let delay = 150;
+            if (action === 'typo') delay = 500;
+            else if (action === 'backspace') delay = 250;
+            typingAnimId = setTimeout(step, delay);
           }
 
           typingAnimId = setTimeout(step, 150);
@@ -667,24 +1014,44 @@
         });
 
         // --- Mode statistik (Speedometer / Teks) ---
-        const speedoEl = document.getElementById('previewSpeedometer');
+        const realStatsEl = document.getElementById('previewRealStats');
         const statsTextEl = document.getElementById('previewStatsText');
+
+        function applyPreviewStatsMode(mode) {
+          const isText = mode === 'text';
+          if (realStatsEl) realStatsEl.style.display = isText ? 'none' : '';
+          if (statsTextEl) statsTextEl.style.display = isText ? 'flex' : 'none';
+        }
+
+        // Terapkan mode statistik yang TERSIMPAN begitu pratinjau dimuat.
+        // Sebelumnya blok ini hanya berjalan lewat listener "click" di bawah,
+        // jadi setiap kali halaman pengaturan dibuka ulang, panel pratinjau
+        // selalu jatuh ke tampilan default "speedometer" walau tombol nav-nya
+        // sendiri (disinkronkan oleh settings-panel.js) sudah menunjukkan
+        // status aktif yang benar sesuai pilihan sebelumnya.
+        applyPreviewStatsMode(localStorage.getItem('statsMode') || 'speedometer');
+
         document.querySelectorAll('.stats-mode-btn').forEach((btn) => {
           btn.addEventListener('click', () => {
-            const isText = btn.dataset.mode === 'text';
-            if (speedoEl) speedoEl.style.display = isText ? 'none' : '';
-            if (statsTextEl) statsTextEl.style.display = isText ? 'flex' : 'none';
+            applyPreviewStatsMode(btn.dataset.mode);
           });
         });
 
-        // --- Keyboard virtual ---
+        // --- Keyboard virtual (elemen & isinya sudah dibuat di awal script) ---
         const keyboardToggle = document.getElementById('keyboardToggle');
-        const previewKeyboard = document.getElementById('previewKeyboard');
         function applyKeyboard() {
           if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!(keyboardToggle && keyboardToggle.checked));
         }
         if (keyboardToggle) keyboardToggle.addEventListener('change', applyKeyboard);
-        applyKeyboard();
+        // Status AWAL sengaja dibaca langsung dari localStorage (bukan dari
+        // keyboardToggle.checked) - lihat komentar di atas cursorMode/
+        // smoothLevel untuk alasan yang sama persis: skrip classic ini
+        // berjalan SEBELUM settings-panel.js (module) sempat menyinkronkan
+        // status "checked" pada checkbox-nya.
+        const initialKeyboardOn = helpers.loadKeyboardVisibility
+          ? helpers.loadKeyboardVisibility()
+          : !!(keyboardToggle && keyboardToggle.checked);
+        if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!initialKeyboardOn);
 
         // Reposisikan smooth caret saat ukuran jendela berubah
         window.addEventListener('resize', render);

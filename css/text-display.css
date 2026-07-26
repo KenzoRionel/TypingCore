@@ -483,7 +483,13 @@
   opacity: 0;
   background-color: #555;
   border-radius: 1px;
-  animation: cursorBlink 1s infinite;
+  /* PENTING: animation TIDAK dipasang di sini (tanpa syarat), karena
+     keyframe cursorBlink juga mengatur opacity dan akan selalu menang atas
+     opacity:0 di atas maupun opacity:1 di .is-visible - membuat elemen ini
+     terus berkedip di posisi terakhirnya walau sudah "disembunyikan" lewat
+     hideSmoothCaret() (yang hanya melepas class is-visible, bukan
+     menghentikan animasi). Animasi baru dinyalakan lewat .is-visible di
+     bawah, supaya saat tidak aktif elemen benar2 diam & transparan. */
   transition:
     left var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
     top var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
@@ -494,6 +500,7 @@
 }
 .smooth-caret.is-visible {
   opacity: 1;
+  animation: cursorBlink 1s infinite;
 }
 .smooth-caret.mode-box {
   background-color: #ffffff50;
@@ -501,8 +508,11 @@
   box-sizing: border-box;
 }
 
-/* Kursor tidak boleh berkedip saat opsi "Kursor Berkedip" dimatikan */
-#textDisplay.cursor-no-blink .smooth-caret {
+/* Kursor tidak boleh berkedip saat opsi "Kursor Berkedip" dimatikan.
+   Diberi juga syarat .is-visible (spesifisitas lebih tinggi dari rule di
+   atas sehingga tetap menang saat aktif) supaya elemen yang sedang
+   disembunyikan tidak ikut dipaksa opacity:1 oleh keyframe noBlinkCursor. */
+#textDisplay.cursor-no-blink .smooth-caret.is-visible {
   animation: noBlinkCursor 1s infinite;
 }
 

@@ -93,7 +93,14 @@ function applyFont(textDisplay, font) {
 
 function applyStatsModeDisplay(mode) {
   const textStats = document.querySelector(".text-stats-container");
-  const speedContainers = document.querySelectorAll(".speedometer-container");
+  // Kecualikan gauge yang ada di dalam panel pratinjau settings.html:
+  // markup preview-nya sengaja memakai class "speedometer-container" yang
+  // sama persis dengan halaman tes sungguhan, dan preview punya kontrol
+  // visibilitasnya sendiri (lihat script preview di settings.html) yang
+  // tidak boleh ditimpa oleh fungsi ini.
+  const speedContainers = Array.from(
+    document.querySelectorAll(".speedometer-container")
+  ).filter((el) => !el.closest(".settings-preview"));
   if (mode === "text") {
     if (textStats) textStats.style.display = "flex";
     speedContainers.forEach((el) => (el.style.display = "none"));

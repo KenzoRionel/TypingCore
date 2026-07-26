@@ -596,12 +596,10 @@ body.dark-mode .settings-page .form-check-input::before {
 
 /* Kotak teks ketik contoh */
 .settings-page .preview-typing-box {
-  /* Sebelumnya memakai --sp-surface-tertiary (= warna body/latar halaman,
-     nyaris hitam di dark mode) sehingga kotak preview terlihat seperti
-     blok hitam polos. --sp-surface adalah variabel yang memang diperuntukkan
-     untuk elemen kecil seperti kotak preview ini (lihat definisinya di atas). */
-  background: var(--sp-surface);
-  border: 1px solid var(--sp-border-soft);
+  /* Latar belakang dibuat transparan supaya teks preview menyatu langsung
+     dengan latar panel pengaturan (bukan tampil sebagai kartu terpisah). */
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--sp-radius-md);
   padding: 1.1rem 1.15rem;
 }
@@ -634,50 +632,68 @@ body.dark-mode .settings-page .form-check-input::before {
   padding: 0.6rem 0 0.2rem;
 }
 
-.settings-page .preview-speedometer {
-  position: relative;
-  width: 108px;
-  height: 108px;
-}
-
-.settings-page .preview-speedo-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(var(--sp-accent) 0deg 252deg, var(--sp-track-off) 252deg 360deg);
-  transition: background 0.3s ease;
-}
-
-.settings-page .preview-speedo-center {
-  position: absolute;
-  inset: 11px;
-  border-radius: 50%;
-  background: var(--sp-surface-tertiary);
+/* Preview "Statistik" sekarang memakai markup & class ASLI dari
+   css/speedometer-style.css (speedometer-container, speedometer-gauge-face,
+   speedometer-ticks, speedometer-needle, speedometer-center-pin,
+   speed-display, speed-unit) — persis sama dengan 3 gauge (WPM, Akurasi,
+   Waktu) yang tampil di halaman tes mengetik sungguhan, bukan lagi
+   tiruan cincin conic-gradient. Supaya muat di sidebar preview yang
+   sempit, tiap gauge dibungkus dalam ".preview-speedo-scale" berukuran
+   tetap dan gauge aslinya (180x180) diperkecil lewat CSS transform:
+   scale() — jadi TIDAK ada duplikasi/penghitungan ulang posisi tick atau
+   sudut jarum, semuanya otomatis ikut mengecil bersama container-nya. */
+.settings-page .preview-real-stats {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+}
+
+.settings-page .preview-speedo-scale {
+  width: 98px;
+  height: 98px;
+  overflow: hidden;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.settings-page .preview-speedo-value {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--sp-text-strong);
-  line-height: 1;
+.settings-page .preview-speedo-scale .speedometer-container {
+  transform: scale(0.545);
+  margin: 0;
 }
 
-.settings-page .preview-speedo-unit {
-  font-size: 0.62rem;
+.settings-page .preview-speedo-scale .speed-display {
+  color: var(--sp-text-strong);
+}
+
+.settings-page .preview-speedo-scale .speed-unit {
   color: var(--sp-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-top: 3px;
+}
+
+.settings-page .preview-speedo-scale .speedometer-needle {
+  background-color: var(--sp-text-strong);
+  /* Sudut jarum preview ini sekarang di-animasikan penuh lewat JS
+     (requestAnimationFrame + easing, lihat tweenNeedleAngle() di
+     settings.html) supaya kehalusannya tidak bergantung pada rule
+     transition di css/speedometer-style.css yang tidak kita kontrol.
+     Transition CSS bawaan sengaja DIMATIKAN di sini (!important, agar
+     menang atas rule manapun) supaya tidak dobel-menganimasikan/
+     "mengejar" nilai yang tiap frame sudah berubah dari JS — kalau
+     dibiarkan aktif, hasilnya justru tersendat, bukan tambah mulus. */
+  transition: none !important;
+  will-change: transform;
+}
+
+.settings-page .preview-speedo-scale .speedometer-center-pin {
+  background-color: var(--sp-text-strong);
+  border-color: var(--sp-text-strong);
 }
 
 /* Statistik: teks */
 .settings-page .preview-stats-text {
   display: flex;
-  gap: 1.6rem;
+  gap: 1.4rem;
 }
 
 .settings-page .preview-stat-item {
@@ -700,11 +716,16 @@ body.dark-mode .settings-page .form-check-input::before {
   letter-spacing: 0.08em;
 }
 
-/* Keyboard virtual mini */
+/* Keyboard virtual — layout penuh (dibuat lewat createKeyboard() dari
+   js/utils/index-keyboard.js, memakai keyboard-layout.js yang sama dengan
+   keyboard sungguhan), diperkecil supaya muat di sidebar preview. Tombol
+   yang sedang/akan diketik pada animasi teks preview disorot otomatis
+   lewat class ".active" (dari highlightActiveKeyOnKeyboard()) sehingga
+   preview ini benar-benar mengikuti simulasi mengetik di atasnya. */
 .settings-page .preview-keyboard {
   display: flex;
-  gap: 5px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
   opacity: 0.4;
   filter: grayscale(1);
   transition: opacity 0.2s ease, filter 0.2s ease;
@@ -715,23 +736,92 @@ body.dark-mode .settings-page .form-check-input::before {
   filter: none;
 }
 
-.settings-page .pk {
-  width: 27px;
-  height: 27px;
-  border-radius: 6px;
+.settings-page .preview-keyboard .keyboard-row {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.settings-page .preview-keyboard .key {
+  /* flex-basis 0 + flex-grow: lebar akhir tiap tombol ditentukan oleh
+     RASIO flex-grow ini, bukan cuma max-width. Sebelumnya semua varian
+     ukuran (wide/medium/tab/small) memakai flex-grow "1" yang SAMA
+     dengan tombol huruf biasa, cuma beda max-width — akibatnya saat
+     browser membagi ruang kosong di tiap baris, semua tombol dapat
+     jatah rata dulu sebelum masing-masing mentok max-width-nya sendiri,
+     jadi backspace/tab/caps lock/enter/shift tidak pernah terlihat
+     proporsional lebih lebar seperti di keyboard fisik. Sekarang
+     flex-grow tiap varian mengikuti rasio unit tombol keyboard standar
+     (1 unit = lebar 1 tombol huruf biasa). */
+  flex: 1 1 0;
+  min-width: 14px;
+  max-width: 22px;
+  height: 20px;
+  border-radius: 4px;
   background: var(--sp-surface-secondary);
   border: 1px solid var(--sp-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.5rem;
   color: var(--sp-text-muted);
+  text-transform: uppercase;
+  overflow: hidden;
+  transition: background-color 0.12s ease, border-color 0.12s ease,
+    color 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
 }
 
-.settings-page .pk.active {
+/* Shift, Enter, Backspace — di keyboard sungguhan ±2.25 unit tombol biasa */
+.settings-page .preview-keyboard .key-wide {
+  flex: 2.25 1 0;
+  max-width: 50px;
+}
+
+/* Caps Lock — ±1.75 unit tombol biasa */
+.settings-page .preview-keyboard .key-medium {
+  flex: 1.75 1 0;
+  max-width: 39px;
+}
+
+/* Tab — ±1.5 unit tombol biasa */
+.settings-page .preview-keyboard .key-tab {
+  flex: 1.5 1 0;
+  max-width: 33px;
+}
+
+/* Ctrl / Win / Alt / Menu di baris bawah — di keyboard sungguhan tombol
+   ini justru sedikit LEBIH lebar dari tombol huruf (±1.15 unit), bukan
+   lebih sempit (sebelumnya max-width 18px, malah lebih kecil dari
+   tombol biasa yang 22px). */
+.settings-page .preview-keyboard .key-small {
+  flex: 1.15 1 0;
+  max-width: 26px;
+}
+
+.settings-page .preview-keyboard .key-space {
+  max-width: none;
+  flex: 6.25 1 0;
+}
+
+/* Tombol yang sedang "ditekan" oleh animasi mengetik di preview teks */
+.settings-page .preview-keyboard .key.active {
   background: var(--sp-accent-soft);
   border-color: var(--sp-accent);
   color: var(--sp-accent);
+  box-shadow: 0 0 0 2px var(--sp-accent-soft);
+  transform: translateY(1px) scale(0.94);
+}
+
+.settings-page .preview-keyboard .key.active.backspace-active {
+  background: rgba(253, 216, 53, 0.25);
+  border-color: #fdd835;
+  color: #b89a00;
+  box-shadow: 0 0 0 2px rgba(253, 216, 53, 0.35);
+}
+body.dark-mode .settings-page .preview-keyboard .key.active.backspace-active {
+  background: rgba(253, 216, 53, 0.2);
+  border-color: #fdd835;
+  color: #fdd835;
 }
 
 /* ---- Responsif ---- */
