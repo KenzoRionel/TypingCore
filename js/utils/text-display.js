@@ -31,6 +31,35 @@ const CARET_SMOOTH_DURATIONS = {
 let smoothCaretDuration = 0; // 0 = nonaktif, pakai kursor lama (::after)
 let smoothCaretEl = null;
 
+/* ==========================================================================
+   PERFORMANCE FIX: cache untuk updateWordHighlighting()
+   ==========================================================================
+   Sebelumnya, SETIAP keystroke melakukan:
+   1. querySelectorAll ke SELURUH #textDisplay untuk reset class kursor
+   2. Loop dari kata ke-0 sampai kata terakhir yang SUDAH selesai, dan
+      innerHTML="" + createElement ULANG untuk setiap kata tsb.
+
+   Kata yang sudah selesai diketik TIDAK PERNAH berubah lagi tampilannya,
+   jadi tidak perlu di-rebuild berulang-ulang. Yang perlu dilakukan hanyalah
+   me-render kata itu SEKALI saat baru selesai (finalize), lalu tidak
+   disentuh lagi. Begitu juga class kursor (has-cursor, cursor-before, dst)
+   hanya pernah menempel di kata AKTIF + 1 elemen spasi, jadi cukup lacak
+   elemen tsb secara eksplisit alih-alih query seluruh dokumen.
+
+   Ini mengubah kompleksitas per keystroke dari O(jumlah kata yang sudah
+   diketik) menjadi O(1), sehingga performa tidak lagi menurun seiring
+   makin banyak kata yang sudah diketik.
+*/
+let lastFinalizedWordIndex = -1; // index kata terakhir yang sudah di-render final
+let cursorMarkedEls = []; // elemen yang sedang membawa class terkait kursor/kata-aktif
+
+// Dipanggil setiap kali teks dirender ulang dari awal (test baru / restart),
+// supaya cache tidak "mengingat" state dari test sebelumnya.
+export function resetHighlightCache() {
+  lastFinalizedWordIndex = -1;
+  cursorMarkedEls = [];
+}
+
 function getOrCreateSmoothCaret(container) {
   if (smoothCaretEl && smoothCaretEl.parentElement === container) {
     return smoothCaretEl;
@@ -180,6 +209,9 @@ export function renderAllLines(
   startIndex = 0
 ) {
   const DOM = getGameDOMReferences();
+  // Container di-clear total di sini, jadi semua elemen lama (termasuk yang
+  // mungkin masih dilacak cache) sudah tidak valid lagi. Reset cache-nya.
+  resetHighlightCache();
   DOM.textDisplay.innerHTML = "";
 
   wordsToRender.forEach((word, i) => {
@@ -238,14 +270,18 @@ function appendLines(wordsToRender, startIndex) {
 
 export function lockTextDisplayHeightTo3Lines() {
   const DOM = getGameDOMReferences();
-  const words = DOM.textDisplay.querySelectorAll(".word-container");
-  if (words.length === 0) return;
+  // Sebelumnya querySelectorAll(".word-container") menyisir SEMUA kata yang
+  // sudah dirender hanya untuk mengambil elemen pertama - makin banyak kata,
+  // makin mahal query ini padahal kita cuma butuh "word-0". getElementById
+  // langsung O(1) tanpa perlu menyisir seluruh dokumen.
+  const firstWordEl = document.getElementById("word-0");
+  if (!firstWordEl) return;
 
   // Mendapatkan tinggi satu baris dari kata pertama.
   // Pakai getBoundingClientRect() (nilai sub-pixel/desimal) alih-alih
   // offsetHeight (dibulatkan ke integer terdekat) supaya tidak ada sisa
   // pembulatan yang menumpuk saat dikalikan 3 baris.
-  const lineHeight = words[0].getBoundingClientRect().height;
+  const lineHeight = firstWordEl.getBoundingClientRect().height;
 
   // Menetapkan tinggi maksimum 3 baris secara dinamis
   DOM.textDisplay.style.maxHeight = `${lineHeight * 3}px`;
@@ -293,6 +329,42 @@ function calculateLines() {
   document.body.removeChild(container);
 }
 
+// Render tampilan FINAL satu kata yang baru saja selesai diketik (benar
+// ataupun salah). Dipanggil TEPAT SEKALI per kata lewat lastFinalizedWordIndex
+// di updateWordHighlighting, bukan berulang-ulang untuk semua kata lama.
+function finalizeCompletedWord(i) {
+  const wordEl = document.getElementById(`word-${i}`);
+  if (!wordEl) return;
+
+  const isWordCorrect = gameState.typedWordCorrectness[i];
+  const targetWord = gameState.fullTextWords[i] || "";
+  const typedWord = gameState.userTypedWords[i] || "";
+
+  wordEl.classList.toggle("completed-wrong", isWordCorrect === false);
+
+  wordEl.innerHTML = "";
+  for (let j = 0; j < targetWord.length; j++) {
+    const charSpan = document.createElement("span");
+    charSpan.textContent = targetWord[j];
+    if (j < typedWord.length && typedWord[j] === targetWord[j]) {
+      charSpan.classList.add("correct");
+    } else if (j < typedWord.length) {
+      charSpan.classList.add("wrong");
+    }
+    wordEl.appendChild(charSpan);
+  }
+
+  // Karakter extra (kelebihan ketik) jika kata ternyata salah & lebih panjang
+  if (typedWord.length > targetWord.length) {
+    for (let j = targetWord.length; j < typedWord.length; j++) {
+      const extraSpan = document.createElement("span");
+      extraSpan.className = "wrong-extra";
+      extraSpan.textContent = typedWord[j];
+      wordEl.appendChild(extraSpan);
+    }
+  }
+}
+
 export function updateWordHighlighting() {
   const DOM = getGameDOMReferences();
   if (gameState.isTestInvalid) {
@@ -300,61 +372,24 @@ export function updateWordHighlighting() {
     return;
   }
 
-  // 1. Reset & Bersihkan SEMUA Class Kursor, dan terapkan underline untuk kata yang salah
-  const allElements = DOM.textDisplay.querySelectorAll(".word-container, .space-char, .word-container span");
-  allElements.forEach(el => {
-    el.classList.remove("current-word-target", "has-cursor", "cursor-before", "cursor-after", "current-space-target");
+  // 1. Bersihkan class kursor/kata-aktif HANYA dari elemen yang kita tandai
+  //    sendiri di panggilan sebelumnya (bukan query ke seluruh DOM).
+  cursorMarkedEls.forEach((el) => {
+    el.classList.remove(
+      "current-word-target",
+      "has-cursor",
+      "cursor-before",
+      "cursor-after",
+      "current-space-target"
+    );
   });
+  cursorMarkedEls = [];
 
-  // 2. Update styling untuk kata-kata yang sudah selesai (sebelum kata saat ini)
-  for (let i = 0; i < gameState.typedWordIndex; i++) {
-    const wordEl = document.getElementById(`word-${i}`);
-    if (wordEl) {
-      // Periksa apakah kata ini salah
-      const isWordCorrect = gameState.typedWordCorrectness[i];
-      const targetWord = gameState.fullTextWords[i] || "";
-      const typedWord = gameState.userTypedWords[i] || "";
-      
-      if (isWordCorrect === false) {
-        // Tambahkan underline merah untuk kata yang salah
-        wordEl.classList.add("completed-wrong");
-        
-        // Rebuild karakter spans untuk kata yang salah agar warna correct/wrong tetap ditampilkan
-        wordEl.innerHTML = "";
-        for (let j = 0; j < targetWord.length; j++) {
-          const charSpan = document.createElement("span");
-          charSpan.textContent = targetWord[j];
-          // Tentukan apakah karakter ini benar atau salah
-          if (j < typedWord.length) {
-            charSpan.classList.add(typedWord[j] === targetWord[j] ? "correct" : "wrong");
-          }
-          wordEl.appendChild(charSpan);
-        }
-        
-        // Tambahkan karakter extra jika ada
-        if (typedWord.length > targetWord.length) {
-          for (let j = targetWord.length; j < typedWord.length; j++) {
-            const extraSpan = document.createElement("span");
-            extraSpan.className = "wrong-extra";
-            extraSpan.textContent = typedWord[j];
-            wordEl.appendChild(extraSpan);
-          }
-        }
-      } else {
-        // Untuk kata yang selesai dan benar, rebuild dengan warna correct
-        wordEl.classList.remove("completed-wrong");
-        wordEl.innerHTML = "";
-        
-        for (let j = 0; j < targetWord.length; j++) {
-          const charSpan = document.createElement("span");
-          charSpan.textContent = targetWord[j];
-          if (j < typedWord.length && typedWord[j] === targetWord[j]) {
-            charSpan.classList.add("correct");
-          }
-          wordEl.appendChild(charSpan);
-        }
-      }
-    }
+  // 2. Finalisasi HANYA kata yang baru saja selesai sejak panggilan
+  //    terakhir (biasanya cuma 1 kata), bukan rebuild ulang semua kata lama.
+  while (lastFinalizedWordIndex < gameState.typedWordIndex - 1) {
+    lastFinalizedWordIndex++;
+    finalizeCompletedWord(lastFinalizedWordIndex);
   }
 
   const currentWordEl = document.getElementById(`word-${gameState.typedWordIndex}`);
@@ -362,8 +397,9 @@ export function updateWordHighlighting() {
     hideSmoothCaret();
     return;
   }
-  
+
   currentWordEl.classList.add("current-word-target");
+  cursorMarkedEls.push(currentWordEl);
 
   const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || "";
   const typedValue = DOM.hiddenInput.value || "";
@@ -424,6 +460,7 @@ export function updateWordHighlighting() {
   if (typedValue.length === 0 && allChars.length > 0) {
     // Belum ada input: kursor di depan karakter pertama
     allChars[0].classList.add("has-cursor", "cursor-before");
+    cursorMarkedEls.push(allChars[0]);
     smoothCaretTarget = allChars[0];
     smoothCaretBefore = true;
   } 
@@ -434,6 +471,7 @@ export function updateWordHighlighting() {
       const caretIndex = typedValue.length - 1;
       if (allChars[caretIndex]) {
         allChars[caretIndex].classList.add("has-cursor", "cursor-after");
+        cursorMarkedEls.push(allChars[caretIndex]);
         smoothCaretTarget = allChars[caretIndex];
         smoothCaretBefore = false;
       }
@@ -442,6 +480,7 @@ export function updateWordHighlighting() {
       const nextIndex = typedValue.length;
       if (allChars[nextIndex]) {
         allChars[nextIndex].classList.add("has-cursor", "cursor-before");
+        cursorMarkedEls.push(allChars[nextIndex]);
         smoothCaretTarget = allChars[nextIndex];
         smoothCaretBefore = true;
       }
@@ -451,6 +490,7 @@ export function updateWordHighlighting() {
      // Kata selesai, kursor pindah ke spasi (elemen terpisah)
      // Tandai juga spasi sebagai target agar mendapat highlight latar belakang
      nextSpace.classList.add("has-cursor", "cursor-before", "current-space-target");
+     cursorMarkedEls.push(nextSpace);
      smoothCaretTarget = nextSpace;
      smoothCaretBefore = true;
   } 
@@ -465,6 +505,7 @@ export function updateWordHighlighting() {
         lastExtra.classList.add("has-cursor", "cursor-before");
         smoothCaretBefore = true;
       }
+      cursorMarkedEls.push(lastExtra);
       smoothCaretTarget = lastExtra;
     }
   }
