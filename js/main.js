@@ -43,9 +43,20 @@ import { initSettingsPanel } from "./utils/settings-panel.js";
 // Set default kata-kata saat aplikasi pertama kali dijalankan
 window.defaultKataKata = top200Words;
 
+// Fisher-Yates (Durstenfeld) shuffle: O(n), unbiased.
+// `sort(() => Math.random() - 0.5)` dibuang karena:
+//  - Biasnya nyata: hasil sort tergantung comparator konsisten (transitif),
+//    sedangkan comparator random tidak transitif, jadi distribusi permutasi
+//    tidak seragam (elemen tertentu cenderung "menetap" di posisi tertentu).
+//  - Kompleksitasnya O(n log n) dan comparator dipanggil berkali-kali per elemen,
+//    padahal Fisher-Yates cukup O(n) dengan 1 kali random per elemen.
 function shuffleArray(array) {
-
-  return array.slice().sort(() => Math.random() - 0.5);
+  const result = array.slice();
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -57,6 +68,17 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     return;
   }
+
+  // PENTING: deklarasi ini HARUS ada sebelum setupLogoPop() dipanggil pertama kali.
+  // `function setupLogoPop(){...}` di-hoist penuh sehingga bisa dipanggil lebih awal,
+  // tapi `let logoPopObserver` / `let logoPopMouseMoveWired` di scope yang sama tetap
+  // kena Temporal Dead Zone sampai baris deklarasinya benar-benar dieksekusi.
+  // Kalau setupLogoPop() dipanggil sebelum baris ini, akan lempar:
+  // "ReferenceError: Cannot access 'logoPopObserver' before initialization"
+  // dan itu menghentikan seluruh sisa callback DOMContentLoaded (termasuk
+  // initGameListeners()/resetTestState() yang merender teks latihan).
+  let logoPopObserver = null;
+  let logoPopMouseMoveWired = false;
 
   initDarkMode(DOM.darkModeToggle);
   setupLogoPop();
@@ -179,6 +201,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // -- letakkan di luar DOMContentLoaded (bagian bawah file) --
+  //
+  // PENTING: setupLogoPop() dipanggil ULANG setiap kali restart (resetTestState()
+  // di listener restartButton). Sebelumnya, tiap panggilan menambahkan:
+  //   1. sebuah listener "mousemove" BARU ke `container` (tidak pernah dilepas)
+  //   2. sebuah MutationObserver BARU yang mengamati navbarLogo (tidak pernah di-disconnect)
+  // Setelah N kali restart, 1 gerakan mouse akan memicu handler yang sama N kali,
+  // dan N observer aktif sekaligus -> memory leak & kerja berulang yang sia-sia.
+  //
+  // Perbaikan: simpan observer & flag "sudah wired" di luar closure (di scope
+  // DOMContentLoaded, dideklarasikan di ATAS sebelum panggilan pertama), sehingga
+  // listener mousemove hanya dipasang SEKALI, dan observer lama selalu
+  // di-disconnect sebelum membuat yang baru.
   function setupLogoPop() {
     const container = document.querySelector(".text-display-container");
     if (!container) return;
@@ -202,13 +236,19 @@ document.addEventListener("DOMContentLoaded", () => {
     wrap.appendChild(img);
     container.appendChild(wrap);
 
-    // Mirror kalau dark mode ubah src
-    const observer = new MutationObserver(() => {
+    // Mirror kalau dark mode ubah src.
+    // Putuskan observer lama dulu (kalau ada) sebelum membuat yang baru,
+    // supaya tidak menumpuk observer tiap kali setupLogoPop() dipanggil ulang.
+    if (logoPopObserver) {
+      logoPopObserver.disconnect();
+      logoPopObserver = null;
+    }
+    logoPopObserver = new MutationObserver(() => {
       const newSrc = navbarLogo?.getAttribute("src");
       if (newSrc) img.src = newSrc;
     });
     if (navbarLogo)
-      observer.observe(navbarLogo, {
+      logoPopObserver.observe(navbarLogo, {
         attributes: true,
         attributeFilter: ["src"],
       });
@@ -224,10 +264,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el) el.classList.remove("pop");
     };
 
-    // Hilangkan logo kalau pointer gerak
-    container.addEventListener("mousemove", () => {
-      if (typeof window.resetLogoPop === "function") window.resetLogoPop();
-    });
+    // Hilangkan logo kalau pointer gerak.
+    // Listener ini hanya perlu dipasang SEKALI: dia membaca window.resetLogoPop
+    // secara dinamis tiap kali dipanggil, jadi tidak perlu di-rebind walaupun
+    // logo/elemen di dalamnya dibuat ulang oleh setupLogoPop().
+    if (!logoPopMouseMoveWired) {
+      container.addEventListener("mousemove", () => {
+        if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+      });
+      logoPopMouseMoveWired = true;
+    }
   }
   window.resetLogoPop = resetLogoPop;
 

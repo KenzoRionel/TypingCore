@@ -565,6 +565,15 @@ class TypingPlayer {
     document.addEventListener('visibilitychange', this._onVisibilityChange);
   }
 
+  // Tidak dipanggil di mana pun saat ini (halaman replay tidak pernah
+  // membuat lebih dari satu TypingPlayer), tapi disediakan supaya listener
+  // 'visibilitychange' ini punya jalan keluar yang jelas kalau nanti
+  // TypingPlayer perlu dibuat ulang (mis. navigasi SPA antar halaman history).
+  destroy() {
+    this.pause();
+    document.removeEventListener('visibilitychange', this._onVisibilityChange);
+  }
+
   resetInternal() {
     this.isPlaying = false;
     this.currentIndex = 0;
@@ -943,12 +952,25 @@ class TypingReplayApp {
 
     if (!this.eventListenersAdded) {
       this._addGlobalListeners();
+      this._wireResizeListener();
       this.eventListenersAdded = true;
     }
+  }
 
-    // Resize cache word positions
+  // Sebelumnya listener 'resize' dipasang di luar guard `eventListenersAdded`,
+  // sehingga aman-nya HANYA bergantung pada asumsi implisit bahwa
+  // initReplayContainer() tidak pernah dipanggil dua kali (dijamin oleh
+  // `if (this.isInitialized) return;` di awal fungsi itu). Sekarang listener
+  // ini dipindah ke bawah guard `eventListenersAdded` yang sama dengan
+  // listener lain, dan handler-nya disimpan sebagai referensi instance
+  // (`this._onResize`) supaya bisa di-removeEventListener lewat destroy()
+  // kalau suatu saat app ini perlu di-teardown (mis. SPA navigation).
+  _wireResizeListener() {
+    if (this._resizeListenerWired) return;
+    this._resizeListenerWired = true;
+
     let resizeDebounceId = null;
-    window.addEventListener('resize', () => {
+    this._onResize = () => {
       clearTimeout(resizeDebounceId);
       resizeDebounceId = setTimeout(() => {
         this.renderer?.recomputeWordPositionCache();
@@ -959,7 +981,8 @@ class TypingReplayApp {
           targetText: this.state.replayData.targetText || ''
         });
       }, 150);
-    });
+    };
+    window.addEventListener('resize', this._onResize);
   }
 
   _wireUI(replayContainer) {
@@ -1041,6 +1064,14 @@ class TypingReplayApp {
     const playBtn = this.playButton;
     if (playBtn) playBtn.disabled = false;
     this._setPlayButtonIcon(false);
+  }
+
+  // Sama seperti TypingPlayer.destroy(): tidak dipanggil di alur normal saat
+  // ini (replayApp adalah singleton untuk satu halaman), tapi menyediakan
+  // jalan keluar eksplisit untuk listener 'resize' dan player-nya.
+  destroy() {
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+    this.replayer?.destroy();
   }
 
   _addGlobalListeners() {

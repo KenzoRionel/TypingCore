@@ -288,41 +288,66 @@ function handleMouseMove() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  initTextDisplayResizeObserver();
-  
-  // Tambahkan event listener untuk pergerakan mouse
-  document.addEventListener('mousemove', handleMouseMove);
-  
-  // Tambahkan event listener untuk keyup untuk menghapus highlight tombol aktif dengan delay
-  document.addEventListener('keyup', (e) => {
+// Handler diberi nama (bukan arrow function anonim inline) supaya:
+//  1. Jelas terlihat di devtools/profiler siapa yang terpasang di listener list,
+//  2. Bisa di-removeEventListener kalau suatu saat modul ini perlu di-teardown
+//     (mis. hot-reload, SPA navigation), tanpa perlu refactor ulang.
+function onGlobalKeyUp() {
+  const keyboardContainer = document.getElementById('virtual-keyboard-container');
+  if (keyboardContainer) {
+    // Gunakan clearActiveKeyHighlight dengan delay agar animasi tetap terlihat saat mengetik cepat
+    clearActiveKeyHighlight(keyboardContainer);
+  }
+}
+
+function onGlobalKeyDownForCapsLock(e) {
+  if (e.key === 'CapsLock') {
     const keyboardContainer = document.getElementById('virtual-keyboard-container');
     if (keyboardContainer) {
-      // Gunakan clearActiveKeyHighlight dengan delay agar animasi tetap terlihat saat mengetik cepat
-      clearActiveKeyHighlight(keyboardContainer);
-    }
-  });
-
-  // Event listener untuk mendeteksi Caps Lock saat halaman dimuat atau fokus
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'CapsLock') {
-      const keyboardContainer = document.getElementById('virtual-keyboard-container');
-      if (keyboardContainer) {
-        const isCapsLockOn = e.getModifierState('CapsLock');
-        updateCapsLockIndicator(keyboardContainer, isCapsLockOn);
-      }
-    }
-  });
-
-  // Cek status Caps Lock saat halaman mendapatkan fokus
-  window.addEventListener('focus', () => {
-    const keyboardContainer = document.getElementById('virtual-keyboard-container');
-    if (keyboardContainer) {
-      // Simulasi event untuk mendapatkan status Caps Lock
-      const simulatedEvent = new KeyboardEvent('keydown', { key: 'CapsLock' });
-      const isCapsLockOn = simulatedEvent.getModifierState('CapsLock');
+      const isCapsLockOn = e.getModifierState('CapsLock');
       updateCapsLockIndicator(keyboardContainer, isCapsLockOn);
     }
-  });
+  }
+}
 
-});
+function onWindowFocusCheckCapsLock() {
+  const keyboardContainer = document.getElementById('virtual-keyboard-container');
+  if (keyboardContainer) {
+    // Simulasi event untuk mendapatkan status Caps Lock
+    const simulatedEvent = new KeyboardEvent('keydown', { key: 'CapsLock' });
+    const isCapsLockOn = simulatedEvent.getModifierState('CapsLock');
+    updateCapsLockIndicator(keyboardContainer, isCapsLockOn);
+  }
+}
+
+// Guard: memastikan listener global di bawah ini hanya pernah dipasang SATU KALI
+// untuk seluruh siklus hidup halaman, meskipun DOMContentLoaded ini secara teori
+// dipanggil ulang (mis. modul ter-reimport oleh bundler/HMR). resetTestState()
+// TIDAK memanggil blok ini, jadi ini murni pengaman tambahan, konsisten dengan
+// perbaikan pola yang sama di main.js dan typing-replay.js.
+let gameEventsGlobalListenersWired = false;
+
+function wireGameEventsGlobalListeners() {
+  if (gameEventsGlobalListenersWired) return;
+  gameEventsGlobalListenersWired = true;
+
+  initTextDisplayResizeObserver();
+
+  // Tambahkan event listener untuk pergerakan mouse
+  document.addEventListener('mousemove', handleMouseMove);
+
+  // Tambahkan event listener untuk keyup untuk menghapus highlight tombol aktif dengan delay
+  document.addEventListener('keyup', onGlobalKeyUp);
+
+  // Event listener untuk mendeteksi Caps Lock saat halaman dimuat atau fokus
+  document.addEventListener('keydown', onGlobalKeyDownForCapsLock);
+
+  // Cek status Caps Lock saat halaman mendapatkan fokus
+  window.addEventListener('focus', onWindowFocusCheckCapsLock);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', wireGameEventsGlobalListeners, { once: true });
+} else {
+  wireGameEventsGlobalListeners();
+}

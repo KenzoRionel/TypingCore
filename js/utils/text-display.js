@@ -53,11 +53,100 @@ let smoothCaretEl = null;
 let lastFinalizedWordIndex = -1; // index kata terakhir yang sudah di-render final
 let cursorMarkedEls = []; // elemen yang sedang membawa class terkait kursor/kata-aktif
 
+/* ==========================================================================
+   PERFORMANCE FIX: DOM word pruning
+   ==========================================================================
+   generateAndAppendWords() di game-logic.js terus menambah kata ke
+   gameState.fullTextWords tanpa batas selama tes berjalan (array ini baru
+   dikosongkan di resetTestState() saat restart). Selama ini appendLines()
+   di bawah juga cuma appendChild kata baru ke #textDisplay dan TIDAK PERNAH
+   menghapus word-group lama yang sudah selesai diketik dan sudah discroll
+   lewat. Untuk pengetik cepat / mode waktu panjang, ini bisa menumpuk
+   ribuan elemen (tiap kata = word-group + word-container + N char-span +
+   space-char) yang tidak lagi terlihat sama sekali (viewport dikunci 3
+   baris via lockTextDisplayHeightTo3Lines), tapi tetap ikut kena layout
+   cost browser.
+
+   Solusinya: begitu sebuah BARIS UTUH (semua kata di dalamnya) sudah selesai
+   diketik DAN sudah cukup jauh di belakang baris yang sedang berjalan
+   (lebih dari LINES_PRUNE_KEEP_BEHIND baris, jauh lebih besar dari jumlah
+   baris yang mungkin masih terlihat di 3 baris terkunci), seluruh
+   word-group di baris itu langsung dihapus dari DOM sekaligus.
+
+   PENTING - kenapa harus per BARIS UTUH, bukan per jumlah-kata mundur:
+   word-group adalah elemen inline-block (white-space: nowrap) yang posisi
+   barisnya ditentukan browser lewat wrapping berurutan berdasarkan lebar
+   kumulatif kata-kata SEBELUMNYA di baris yang sama. Kalau yang dihapus
+   cuma SEBAGIAN kata dari sebuah baris (bukan seluruhnya - ini yang terjadi
+   kalau prune dipatok dari jumlah kata mundur, karena jumlah kata per baris
+   itu variatif), sisa kata di baris itu ikut re-wrap dan bisa "menarik naik"
+   kata-kata dari baris berikutnya ke baris tsb. Efeknya: baris yang sedang
+   diketik terlihat "sudah naik" sebelum benar-benar selesai, karena isi
+   baris berikutnya memang sudah pindah posisi akibat reflow ini. Dengan
+   selalu menghapus SATU BARIS UTUH sekaligus (dipatok dari gameState.lines,
+   sumber data yang sama dipakai logika pindah-baris di game-events.js),
+   penghapusan hanya mengurangi tinggi total tanpa pernah mengubah
+   pengelompokan kata per baris untuk sisa teks yang masih ada.
+
+   PENTING: fungsi lockTextDisplayHeightTo3Lines() & ensureScrollSync() di
+   bawah sebelumnya memakai document.getElementById("word-0") sebagai
+   patokan tinggi satu baris. Karena word-0 sekarang bisa ikut kepruning,
+   referensi itu diganti dengan getReferenceLineHeight() yang di-cache dan
+   fallback ke word-container pertama yang MASIH ada di DOM.
+*/
+const LINES_PRUNE_KEEP_BEHIND = 5; // jauh lebih besar dari jumlah baris yg muat di 3 baris terkunci
+let lowestPrunedLineIndex = -1; // index (dalam gameState.lines) baris terpruning terakhir
+
+function pruneOldWordElements(latestFinalizedIndex) {
+  if (!gameState.lines || gameState.lines.length === 0) return;
+
+  const pruneLinesUpTo = gameState.currentLineIndex - LINES_PRUNE_KEEP_BEHIND;
+
+  for (let li = lowestPrunedLineIndex + 1; li <= pruneLinesUpTo; li++) {
+    const line = gameState.lines[li];
+    if (!line || line.length === 0) {
+      lowestPrunedLineIndex = li;
+      continue;
+    }
+
+    // Kalau masih ada kata di baris ini yang belum final diketik, hentikan -
+    // jangan sampai baris yang sedang berjalan ikut terpotong sebagian.
+    const lastWordIndexInLine = line[line.length - 1].index;
+    if (lastWordIndexInLine > latestFinalizedIndex) break;
+
+    line.forEach((w) => {
+      const groupEl = document.getElementById(`word-group-${w.index}`);
+      if (groupEl && groupEl.parentNode) {
+        groupEl.parentNode.removeChild(groupEl);
+      }
+    });
+    lowestPrunedLineIndex = li;
+  }
+}
+
+let cachedLineHeight = null; // hasil pengukuran tinggi 1 baris, di-cache supaya
+                              // tidak bergantung pada elemen kata tertentu yg
+                              // bisa hilang karena pruning
+
+// Ukur tinggi satu baris dari word-container PERTAMA YANG MASIH ADA di DOM
+// (bukan selalu word-0, karena word-0 bisa sudah kepruning), lalu cache
+// hasilnya supaya pemanggilan berikutnya tidak perlu query DOM lagi.
+function getReferenceLineHeight(DOM) {
+  if (cachedLineHeight !== null) return cachedLineHeight;
+  const anyWord = DOM.textDisplay.querySelector(".word-container");
+  if (!anyWord) return null;
+  const height = anyWord.getBoundingClientRect().height;
+  if (height > 0) cachedLineHeight = height;
+  return height > 0 ? height : null;
+}
+
 // Dipanggil setiap kali teks dirender ulang dari awal (test baru / restart),
 // supaya cache tidak "mengingat" state dari test sebelumnya.
 export function resetHighlightCache() {
   lastFinalizedWordIndex = -1;
   cursorMarkedEls = [];
+  lowestPrunedLineIndex = -1;
+  cachedLineHeight = null;
 }
 
 function getOrCreateSmoothCaret(container) {
@@ -270,18 +359,15 @@ function appendLines(wordsToRender, startIndex) {
 
 export function lockTextDisplayHeightTo3Lines() {
   const DOM = getGameDOMReferences();
-  // Sebelumnya querySelectorAll(".word-container") menyisir SEMUA kata yang
-  // sudah dirender hanya untuk mengambil elemen pertama - makin banyak kata,
-  // makin mahal query ini padahal kita cuma butuh "word-0". getElementById
-  // langsung O(1) tanpa perlu menyisir seluruh dokumen.
-  const firstWordEl = document.getElementById("word-0");
-  if (!firstWordEl) return;
-
-  // Mendapatkan tinggi satu baris dari kata pertama.
-  // Pakai getBoundingClientRect() (nilai sub-pixel/desimal) alih-alih
-  // offsetHeight (dibulatkan ke integer terdekat) supaya tidak ada sisa
-  // pembulatan yang menumpuk saat dikalikan 3 baris.
-  const lineHeight = firstWordEl.getBoundingClientRect().height;
+  // Dulu ambil tinggi baris langsung dari document.getElementById("word-0")
+  // (O(1), lebih murah dari querySelectorAll ke seluruh dokumen). Tapi
+  // sekarang word-group lama bisa dipruning dari DOM (lihat
+  // pruneOldWordElements di atas), jadi word-0 tidak dijamin selalu ada
+  // begitu tes berjalan cukup lama. getReferenceLineHeight() meng-cache
+  // tinggi baris sekali saja dan memakai ulang cache-nya, jadi tetap O(1)
+  // amortized tanpa terikat pada elemen kata tertentu.
+  const lineHeight = getReferenceLineHeight(DOM);
+  if (!lineHeight) return;
 
   // Menetapkan tinggi maksimum 3 baris secara dinamis
   DOM.textDisplay.style.maxHeight = `${lineHeight * 3}px`;
@@ -390,6 +476,12 @@ export function updateWordHighlighting() {
   while (lastFinalizedWordIndex < gameState.typedWordIndex - 1) {
     lastFinalizedWordIndex++;
     finalizeCompletedWord(lastFinalizedWordIndex);
+  }
+
+  // Buang word-group yang sudah selesai & sudah cukup jauh di belakang
+  // kursor dari DOM (lihat catatan LINES_PRUNE_KEEP_BEHIND di atas).
+  if (lastFinalizedWordIndex >= 0) {
+    pruneOldWordElements(lastFinalizedWordIndex);
   }
 
   const currentWordEl = document.getElementById(`word-${gameState.typedWordIndex}`);
@@ -548,10 +640,11 @@ export function ensureScrollSync() {
   // pas di batas baris -> baris atas & baris ke-4 sama-sama terlihat terpotong.
   const currentWordTop = currentWordEl.offsetTop;
 
-  // Dapatkan tinggi satu baris dari elemen kata pertama sebagai referensi
-  const firstWord = document.getElementById("word-0");
-  if (!firstWord) return;
-  const lineHeight = firstWord.getBoundingClientRect().height;
+  // Dapatkan tinggi satu baris sebagai referensi. Dulu selalu dari word-0,
+  // tapi word-0 bisa sudah dipruning dari DOM (lihat pruneOldWordElements),
+  // jadi pakai cache yang aman terhadap pruning.
+  const lineHeight = getReferenceLineHeight(DOM);
+  if (!lineHeight) return;
 
   // Jika kata saat ini berada di baris ke-2 atau lebih
   if (currentWordTop >= lineHeight) {
@@ -580,6 +673,11 @@ export function initTextDisplayResizeObserver() {
   const DOM = getGameDOMReferences();
   if (!DOM.textDisplay) return;
   const observer = new ResizeObserver(() => {
+    // Resize asli (mis. ukuran font berubah) berarti tinggi baris lama
+    // sudah tidak valid lagi, jadi cache-nya perlu di-invalidate supaya
+    // getReferenceLineHeight() mengukur ulang dari word-container yang
+    // masih ada di DOM.
+    cachedLineHeight = null;
     lockTextDisplayHeightTo3Lines();
     ensureScrollSync();
   });

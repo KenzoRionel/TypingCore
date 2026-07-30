@@ -1,10 +1,53 @@
 // js/utils/dom-elements.js
 
+/* ==========================================================================
+   PERFORMANCE FIX: cache referensi DOM per halaman
+   ==========================================================================
+   getGameDOMReferences() dipanggil ULANG di setiap keydown (lihat
+   handleKeydown di game-events.js) dan berkali-kali lagi di text-display.js
+   / game-logic.js / main.js — padahal elemen-elemen ini (#textDisplay,
+   #restartButton, dst.) dibuat SEKALI saat halaman dimuat dan tidak pernah
+   di-remove/diganti; yang berubah cuma isi/class-nya lewat referensi yang
+   sudah didapat. Hasilnya: puluhan getElementById per keystroke, padahal
+   hasilnya selalu sama.
+
+   Solusinya sama seperti pola resetHighlightCache() di text-display.js:
+   simpan hasil query pertama di variabel module-level, dan kembalikan cache
+   itu di panggilan berikutnya. Supaya cache tidak pernah "nyangkut" ke
+   elemen yang sudah tidak ada di DOM, setiap pemanggilan tetap memvalidasi
+   salah satu elemen kunci lewat `.isConnected` sebelum memutuskan pakai
+   cache atau query ulang — jadi cache-nya "self-healing", tidak wajib
+   dipanggil manual dari luar modul ini di jalur normal.
+   resetGameDOMCache()/resetLessonDOMCache()/resetHistoryDOMCache() tetap
+   diekspor untuk kasus di mana caller TAHU markup-nya baru saja di-rebuild
+   dan mau memaksa query ulang tanpa menunggu deteksi `.isConnected`.
+*/
+let cachedGameDOM = null;
+let cachedLessonDOM = null;
+let cachedHistoryDOM = null;
+
+export function resetGameDOMCache() {
+    cachedGameDOM = null;
+}
+
+export function resetLessonDOMCache() {
+    cachedLessonDOM = null;
+}
+
+export function resetHistoryDOMCache() {
+    cachedHistoryDOM = null;
+}
+
 /**
  * Mencari dan mengembalikan referensi elemen DOM yang dibutuhkan untuk halaman TYPING GAME.
  * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
  */
 export function getGameDOMReferences() {
+    // Cache hit: elemen kunci masih terpasang di DOM yang sama -> jangan query ulang.
+    if (cachedGameDOM && cachedGameDOM.hiddenInput.isConnected && cachedGameDOM.textDisplay.isConnected) {
+        return cachedGameDOM;
+    }
+
     const hiddenInput = getOrCreateHiddenInput();
     const textDisplay = document.getElementById('textDisplay');
     const restartButton = document.getElementById('restartButton');
@@ -43,7 +86,7 @@ export function getGameDOMReferences() {
         }
     } catch(e) {}
 
-    return {
+    cachedGameDOM = {
         hiddenInput,
         textDisplay,
         restartButton,
@@ -61,6 +104,7 @@ export function getGameDOMReferences() {
         header,
         menuButton
     };
+    return cachedGameDOM;
 }
 
 /**
@@ -68,6 +112,10 @@ export function getGameDOMReferences() {
  * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
  */
 export function getLessonDOMReferences() {
+    if (cachedLessonDOM && cachedLessonDOM.hiddenInput.isConnected && cachedLessonDOM.lessonTextDisplay.isConnected) {
+        return cachedLessonDOM;
+    }
+
     const hiddenInput = getOrCreateHiddenInput();
     const keyboardContainer = document.getElementById('virtual-keyboard');
     const lessonHeader = document.getElementById('lesson-header');
@@ -110,7 +158,7 @@ export function getLessonDOMReferences() {
         }
     } catch(e) {}
 
-    return {
+    cachedLessonDOM = {
         hiddenInput,
         keyboardContainer,
         lessonHeader,
@@ -132,6 +180,7 @@ export function getLessonDOMReferences() {
         lessonListBtn,
         darkModeToggle,
     };
+    return cachedLessonDOM;
 }
 
 /**
@@ -139,6 +188,10 @@ export function getLessonDOMReferences() {
  * @returns {Object|null} Objek berisi referensi elemen DOM, atau null jika ada elemen kunci yang tidak ditemukan.
  */
 export function getHistoryDOMReferences() {
+    if (cachedHistoryDOM && cachedHistoryDOM.scoreHistoryList.isConnected) {
+        return cachedHistoryDOM;
+    }
+
     const wpmProgressChart = document.getElementById('wpmProgressChart');
     const accuracyProgressChart = document.getElementById('accuracyProgressChart');
     const scoreHistoryList = document.getElementById('scoreHistoryList');
@@ -151,12 +204,13 @@ export function getHistoryDOMReferences() {
         return null;
     }
 
-    return {
+    cachedHistoryDOM = {
         wpmProgressChart,
         accuracyProgressChart,
         scoreHistoryList,
         noHistoryMessage,
     };
+    return cachedHistoryDOM;
 }
 
 /**
