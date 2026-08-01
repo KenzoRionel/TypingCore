@@ -43,7 +43,17 @@ export const gameState = {
     // Latihan kata yang salah (wrong-words practice mode)
     practiceMode: false, // true = generateAndAppendWords() memakai practiceWords, bukan window.defaultKataKata
     practiceWords: [], // daftar kata (dengan pengulangan berbobot sesuai frekuensi salah) untuk mode latihan
-    previousWordSet: null, // snapshot window.defaultKataKata sebelum mode latihan dimulai, untuk dipulihkan nanti
+    previousWordSet: null, // snapshot window.defaultKataKata sebelum mode latihan dimulai (dipakai baik oleh
+                            // practiceMode MAUPUN ghostMode, karena keduanya tidak pernah aktif bersamaan),
+                            // untuk dipulihkan nanti.
+
+    // Latihan "Ghost Caret" (ulangi teks sesi sebelumnya + bayangan caret dari sesi itu)
+    ghostMode: false, // true = generateAndAppendWords() memakai ghostWords (bukan random), bukan window.defaultKataKata
+    ghostData: null, // replayData mentah (targetText + keystrokes) dari sesi tes TERAKHIR yang selesai
+    ghostWords: [], // ghostData.targetText.split(' ') - urutan kata PERSIS sama seperti sesi sebelumnya
+    ghostTimeline: [], // array ms virtual (hasil computeGhostTimeline), sejajar index dengan ghostData.keystrokes
+    ghostCurrentIndex: 0, // index keystroke ghost yang sedang "ditunjuk" oleh ghost caret saat ini
+    ghostInterval: null, // interval id yang memajukan ghostCurrentIndex mengikuti waktu tes berjalan
 };
 
 window.gameState = gameState;

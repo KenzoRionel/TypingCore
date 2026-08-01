@@ -165,6 +165,114 @@ function hideSmoothCaret() {
   if (smoothCaretEl) smoothCaretEl.classList.remove("is-visible");
 }
 
+/* ==========================================================================
+   Ghost Caret (latihan "ulangi sesi sebelumnya")
+   ==========================================================================
+   Elemen tunggal terpisah dari smooth-caret (kursor milik user sendiri).
+   Posisinya dihitung dari inputState keystroke ghost yang sedang "ditunjuk"
+   oleh gameState.ghostCurrentIndex (dimajukan oleh timer di game-logic.js
+   berdasarkan waktu tes berjalan vs gameState.ghostTimeline). Dipakai
+   sebagai bayangan visual: user bisa melihat di mana posisi mengetik dirinya
+   pada sesi SEBELUMNYA di waktu yang sama.
+*/
+let ghostCaretEl = null;
+
+function getOrCreateGhostCaret(container) {
+  if (ghostCaretEl && ghostCaretEl.parentElement === container) {
+    return ghostCaretEl;
+  }
+  ghostCaretEl = document.createElement("div");
+  ghostCaretEl.className = "ghost-caret";
+  container.appendChild(ghostCaretEl);
+  return ghostCaretEl;
+}
+
+export function hideGhostCaret() {
+  if (ghostCaretEl) ghostCaretEl.classList.remove("is-visible");
+}
+window.hideGhostCaret = hideGhostCaret;
+
+// inputState yang direkam adalah "kata-kata yang sudah selesai (dipisah spasi)
+// + kata yang sedang berjalan (kalau ada)". Jumlah spasi = jumlah kata yang
+// sudah selesai = index kata yang sedang diketik pada momen itu. Panjang
+// segmen terakhir (setelah spasi terakhir) = posisi karakter di kata itu.
+function parseGhostPosition(inputState) {
+  if (!inputState) return { wordIndex: 0, charIndex: 0 };
+  const parts = inputState.split(" ");
+  const wordIndex = parts.length - 1;
+  const charIndex = parts[parts.length - 1].length;
+  return { wordIndex, charIndex };
+}
+
+/**
+ * Posisikan ghost caret mengikuti gameState.ghostCurrentIndex saat ini.
+ * Dipanggil dari updateWordHighlighting() supaya ghost caret selalu
+ * ikut ter-reposisi setiap kali tampilan teks berubah (baris baru, resize,
+ * scroll sync, dsb) - bukan hanya saat timer ghost berjalan.
+ */
+export function updateGhostHighlighting() {
+  const DOM = getGameDOMReferences();
+  if (!DOM || !DOM.textDisplay) return;
+
+  const keystrokes = gameState.ghostData && gameState.ghostData.keystrokes;
+  if (!gameState.ghostMode || !Array.isArray(keystrokes) || keystrokes.length === 0) {
+    hideGhostCaret();
+    return;
+  }
+
+  const idx = Math.max(0, Math.min(gameState.ghostCurrentIndex || 0, keystrokes.length - 1));
+  const keystroke = keystrokes[idx];
+  if (!keystroke) {
+    hideGhostCaret();
+    return;
+  }
+
+  const { wordIndex, charIndex } = parseGhostPosition(keystroke.inputState);
+  const wordEl = document.getElementById(`word-${wordIndex}`);
+  if (!wordEl) {
+    // Kata ghost belum/tidak lagi ada di DOM (mis. sudah kepruning atau
+    // belum dirender) - sembunyikan sementara daripada menampilkan posisi salah.
+    hideGhostCaret();
+    return;
+  }
+
+  const chars = wordEl.querySelectorAll("span");
+  const spaceEl = document.getElementById(`space-${wordIndex}`);
+
+  let targetEl = null;
+  let isBefore = true;
+
+  if (chars.length === 0) {
+    targetEl = wordEl;
+    isBefore = true;
+  } else if (charIndex <= 0) {
+    targetEl = chars[0];
+    isBefore = true;
+  } else if (charIndex < chars.length) {
+    targetEl = chars[charIndex - 1];
+    isBefore = false;
+  } else {
+    // Ghost sudah menyelesaikan kata ini pada momen itu - taruh di spasi
+    // (persis seperti perilaku smooth caret untuk kata yang baru selesai).
+    targetEl = spaceEl || chars[chars.length - 1];
+    isBefore = !!spaceEl;
+  }
+
+  if (!targetEl) {
+    hideGhostCaret();
+    return;
+  }
+
+  const el = getOrCreateGhostCaret(DOM.textDisplay);
+  const rect = computeSmoothCaretRect(DOM.textDisplay, targetEl, isBefore, "caret");
+  el.style.left = `${rect.left}px`;
+  el.style.top = `${rect.top}px`;
+  el.style.width = `${rect.width}px`;
+  el.style.height = `${rect.height}px`;
+  el.classList.add("is-visible");
+}
+window.updateGhostHighlighting = updateGhostHighlighting;
+
 function computeSmoothCaretRect(container, targetEl, isBefore, mode) {
   const containerRect = container.getBoundingClientRect();
   const elRect = targetEl.getBoundingClientRect();
@@ -604,6 +712,7 @@ export function updateWordHighlighting() {
 
   DOM.textDisplay.dataset.cursorMode = mode;
   positionSmoothCaret(smoothCaretTarget, smoothCaretBefore, mode);
+  updateGhostHighlighting();
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
 }

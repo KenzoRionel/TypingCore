@@ -431,12 +431,14 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
    lebih tinggi dari satu class, supaya PASTI menang melawan .d-flex
    walaupun sama-sama !important. */
 #statisticsButton.result-only-btn,
-#practiceWrongWordsBtn.result-only-btn {
+#practiceWrongWordsBtn.result-only-btn,
+#ghostPracticeBtn.result-only-btn {
     display: none !important;
 }
 
 #statisticsButton.result-only-btn.show,
-#practiceWrongWordsBtn.result-only-btn.show {
+#practiceWrongWordsBtn.result-only-btn.show,
+#ghostPracticeBtn.result-only-btn.show {
     display: flex !important;
 }
 
@@ -447,6 +449,17 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
 
 .practice-wrong-words-btn:hover {
     color: #d3690f;
+}
+
+/* Tombol "Ulangi dengan Ghost Caret" - warna berbeda dari tombol Latih Kata
+   Salah supaya kedua tombol mudah dibedakan sekilas di halaman hasil. */
+.ghost-practice-btn {
+    position: relative;
+    color: #8e44ad;
+}
+
+.ghost-practice-btn:hover {
+    color: #732d91;
 }
 
 .practice-wrong-words-count {

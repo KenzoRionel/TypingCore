@@ -526,3 +526,45 @@
 #textDisplay[data-cursor-mode="hidden"] .smooth-caret {
   display: none;
 }
+
+/* ==========================================================================
+   Ghost Caret ("Ulangi dengan Ghost Caret" - latihan mengulang teks sesi
+   sebelumnya sambil melihat bayangan posisi mengetik dari sesi itu)
+   ==========================================================================
+   Elemen TERPISAH dari .smooth-caret (kursor milik user sendiri) supaya
+   keduanya bisa terlihat bersamaan: satu menandai posisi user SEKARANG,
+   satu lagi menandai posisi user pada sesi SEBELUMNYA di waktu yang sama.
+   Warna oranye semi-transparan dipakai supaya jelas beda dari kursor utama
+   (abu-abu #555) tanpa mengganggu keterbacaan teks di belakangnya. */
+.ghost-caret {
+  position: absolute;
+  pointer-events: none;
+  z-index: 8; /* di bawah smooth-caret (z-index 10) supaya kursor user sendiri tetap dominan */
+  opacity: 0;
+  width: 2px;
+  background-color: rgba(255, 152, 0, 0.65);
+  border-radius: 1px;
+  box-shadow: 0 0 0 1px rgba(255, 152, 0, 0.15);
+  transition:
+    left 0.09s linear,
+    top 0.09s linear,
+    width 0.09s linear,
+    height 0.09s linear,
+    opacity 0.15s ease;
+}
+
+.ghost-caret.is-visible {
+  opacity: 1;
+}
+
+/* Dukungan dark mode: warna sedikit lebih terang & lebih pekat supaya tetap
+   kontras di atas background gelap. Selector ganda karena toggle dark mode
+   di proyek ini teramati memakai kombinasi atribut/class yang berbeda-beda
+   antar halaman; keduanya aman ditulis sekaligus (yang tidak dipakai halaman
+   ini otomatis tidak match, tidak menimbulkan efek samping). */
+[data-theme="dark"] .ghost-caret,
+.dark-mode .ghost-caret,
+body.dark .ghost-caret {
+  background-color: rgba(255, 183, 77, 0.75);
+  box-shadow: 0 0 0 1px rgba(255, 183, 77, 0.2);
+}

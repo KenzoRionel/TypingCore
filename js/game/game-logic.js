@@ -11,6 +11,8 @@ import {
   renderAllLines,
   updateWordHighlighting,
   triggerShakeAnimation,
+  updateGhostHighlighting,
+  hideGhostCaret,
 } from "../utils/text-display.js";
 import { renderResultChart } from "../history/result-chart.js";
 import { renderStatisticsPanel, initStatisticsPanel, resetStatisticsPanel } from "../history/statistics-panel.js";
@@ -46,6 +48,45 @@ function getInProgressCharCounts() {
 }
 
 export function generateAndAppendWords(numWords) {
+  // ✅ Mode ghost caret: selama ghostMode aktif & ada ghostWords, kata TIDAK
+  // diacak - kata diambil BERURUTAN dari ghostWords (persis urutan teks pada
+  // sesi sebelumnya), supaya teks yang tampil identik dengan sesi yang mau
+  // "dibayangi". gameState.fullTextWords.length dipakai sebagai pointer
+  // posisi berikutnya di ghostWords, karena generateAndAppendWords() bisa
+  // dipanggil berkali-kali (buffer awal, lalu top-up saat mendekati akhir).
+  const useGhostWords =
+    gameState.ghostMode &&
+    Array.isArray(gameState.ghostWords) &&
+    gameState.ghostWords.length > 0;
+
+  if (useGhostWords) {
+    const startPointer = gameState.fullTextWords.length;
+    for (let i = 0; i < numWords; i++) {
+      const ghostIdx = startPointer + i;
+      let word;
+      if (ghostIdx < gameState.ghostWords.length) {
+        word = gameState.ghostWords[ghostIdx];
+      } else {
+        // Teks ghost sudah habis (user mengetik lebih jauh dari sesi
+        // sebelumnya) - isi dengan kata acak dari word set asli supaya tes
+        // tetap bisa lanjut. Ghost caret sendiri otomatis berhenti bergerak
+        // begitu ghostTimeline-nya habis, jadi ini tidak memengaruhi ghost.
+        const fallbackSource =
+          (gameState.previousWordSet && gameState.previousWordSet.length > 0)
+            ? gameState.previousWordSet
+            : window.defaultKataKata;
+        word =
+          fallbackSource && fallbackSource.length > 0
+            ? fallbackSource[Math.floor(Math.random() * fallbackSource.length)]
+            : "placeholder";
+      }
+      gameState.fullTextWords.push(word);
+      gameState.typedWordCorrectness.push(false);
+      gameState.userTypedWords.push("");
+    }
+    return;
+  }
+
   // ✅ Mode latihan kata salah: selama practiceMode aktif & ada practiceWords,
   // kata diambil dari daftar itu (bukan window.defaultKataKata). Ini murni
   // menentukan SUMBER kata; format & cara push ke fullTextWords tetap sama
@@ -322,6 +363,143 @@ export function initPracticeWrongWordsButton() {
   btn.addEventListener("click", startWrongWordsPractice);
 }
 
+// =============== LATIHAN "GHOST CARET" (ULANGI SESI SEBELUMNYA) ===============
+
+// Sama seperti TypingRecorder.computePlaybackTimestamps() di typing-replay.js:
+// timestamp keystroke yang direkam sudah berupa elapsedMs (relatif ke
+// startTime sesi ITU), jadi pada dasarnya sudah jadi timeline virtual.
+// Yang perlu ditambahkan cuma pembatasan delay antar keystroke (delay cap)
+// supaya jeda yang sangat panjang (mis. user berhenti sejenak di tengah
+// sesi sebelumnya) tidak membuat ghost caret "diam" lama sekali saat
+// direplay - dibatasi maksimal GHOST_DELAY_CAP_MS per langkah.
+const GHOST_DELAY_CAP_MS = 2000;
+
+function computeGhostTimeline(keystrokes) {
+  if (!Array.isArray(keystrokes) || keystrokes.length === 0) return [];
+
+  const timeline = new Array(keystrokes.length).fill(0);
+  let prevTs =
+    typeof keystrokes[0]?.timestamp === "number" ? keystrokes[0].timestamp : 0;
+  let acc = 0;
+
+  for (let i = 0; i < keystrokes.length; i++) {
+    const ts =
+      typeof keystrokes[i]?.timestamp === "number"
+        ? keystrokes[i].timestamp
+        : prevTs;
+    const rawDelay = i === 0 ? 0 : ts - prevTs;
+    const delay = Math.min(Math.max(0, rawDelay), GHOST_DELAY_CAP_MS);
+    acc += delay;
+    timeline[i] = acc;
+    prevTs = ts;
+  }
+
+  return timeline;
+}
+
+/** Hentikan timer ghost caret (dipanggil saat tes berakhir/dibatalkan/direset). */
+function stopGhostTimer() {
+  if (gameState.ghostInterval) {
+    clearInterval(gameState.ghostInterval);
+    gameState.ghostInterval = null;
+  }
+}
+
+/**
+ * Mulai timer yang memajukan gameState.ghostCurrentIndex mengikuti waktu
+ * tes berjalan (Date.now() - gameState.startTime) dibandingkan dengan
+ * gameState.ghostTimeline, lalu memicu render posisi ghost caret. Dipanggil
+ * dari startTimer() begitu tes (yang sedang dalam ghostMode) benar-benar mulai.
+ */
+function startGhostTimer() {
+  if (!gameState.ghostMode) return;
+  const timeline = gameState.ghostTimeline;
+  if (!Array.isArray(timeline) || timeline.length === 0) return;
+
+  stopGhostTimer();
+  gameState.ghostCurrentIndex = 0;
+
+  gameState.ghostInterval = setInterval(() => {
+    if (!gameState.startTime) return;
+    const elapsed = Date.now() - gameState.startTime;
+
+    let idx = gameState.ghostCurrentIndex;
+    while (idx < timeline.length - 1 && timeline[idx + 1] <= elapsed) {
+      idx++;
+    }
+    gameState.ghostCurrentIndex = idx;
+
+    updateGhostHighlighting();
+
+    // Ghost sudah mencapai akhir sesi sebelumnya - tidak ada lagi yang perlu
+    // dimajukan, hentikan timer supaya tidak terus polling tanpa guna.
+    if (idx >= timeline.length - 1 && elapsed >= timeline[timeline.length - 1]) {
+      stopGhostTimer();
+    }
+  }, 100);
+}
+
+/**
+ * Tampilkan/sembunyikan tombol "Ulangi dengan Ghost Caret" (icon-only),
+ * mengikuti pola persis updatePracticeWrongWordsButton() di atas.
+ */
+function updateGhostPracticeButton(show) {
+  const btn = document.getElementById("ghostPracticeBtn");
+  if (!btn) return;
+
+  if (show) {
+    btn.classList.add("show");
+    btn.style.setProperty("display", "flex", "important");
+  } else {
+    btn.classList.remove("show");
+    btn.style.setProperty("display", "none", "important");
+  }
+}
+
+/** Sembunyikan tombol ghost caret practice (dipanggil saat reset/invalidate). */
+function hideGhostPracticeButton() {
+  updateGhostPracticeButton(false);
+}
+
+/**
+ * Handler klik tombol ghost caret. Menyimpan word set aktif sebagai
+ * gameState.previousWordSet (dipulihkan nanti), membangun ghostWords +
+ * ghostTimeline dari gameState.ghostData (replay sesi TERAKHIR yang
+ * selesai), lalu me-restart tes lewat resetTestState({ preserveGhostMode: true }).
+ */
+export function startGhostPractice() {
+  const data = gameState.ghostData;
+  if (
+    !data ||
+    typeof data.targetText !== "string" ||
+    !data.targetText.trim() ||
+    !Array.isArray(data.keystrokes) ||
+    data.keystrokes.length === 0
+  ) {
+    return;
+  }
+
+  gameState.ghostWords = data.targetText.split(" ").filter((w) => w.length > 0);
+  gameState.ghostTimeline = computeGhostTimeline(data.keystrokes);
+  gameState.ghostCurrentIndex = 0;
+
+  if (gameState.ghostWords.length === 0 || gameState.ghostTimeline.length === 0) {
+    return;
+  }
+
+  gameState.previousWordSet = window.defaultKataKata;
+  gameState.ghostMode = true;
+
+  resetTestState({ preserveGhostMode: true });
+}
+
+/** Pasang listener klik pada tombol ghost caret practice. */
+export function initGhostPracticeButton() {
+  const btn = document.getElementById("ghostPracticeBtn");
+  if (!btn) return;
+  btn.addEventListener("click", startGhostPractice);
+}
+
 export function calculateAndDisplayFinalResults() {
   const DOM = getGameDOMReferences();
 
@@ -499,7 +677,13 @@ export function calculateAndDisplayFinalResults() {
     // REMOVED: keystrokeDetails - too large, causes QuotaExceededError
   };
 
-
+  // ✅ Simpan replay sesi INI sebagai data ghost untuk fitur "Ulangi dengan
+  // Ghost Caret". Ditimpa setiap kali tes selesai, jadi tombolnya selalu
+  // merujuk ke sesi TERAKHIR yang baru saja diselesaikan (bukan yang sedang
+  // di-ghost-kan itu sendiri, karena reset di startGhostPractice() terjadi
+  // sebelum tes baru berjalan sampai selesai).
+  gameState.ghostData = replayData;
+  updateGhostPracticeButton(true);
 
   if (typeof window.saveScore === "function") {
     // 'en' untuk English, selain itu dianggap 'id' (Bahasa Indonesia) —
@@ -598,6 +782,21 @@ export function endTest() {
     gameState.previousWordSet = null;
   }
 
+  // ✅ Sesi latihan ghost caret (kalau ada) juga berakhir begitu tes-nya
+  // selesai: hentikan timer ghost & pulihkan word set asli. gameState.ghostData
+  // TIDAK direset di sini - itu akan ditimpa oleh replay sesi INI di
+  // calculateAndDisplayFinalResults() di atas, jadi tombol ghost berikutnya
+  // selalu merujuk ke sesi yang paling baru selesai.
+  if (gameState.ghostMode) {
+    stopGhostTimer();
+    if (gameState.previousWordSet) {
+      window.defaultKataKata = gameState.previousWordSet;
+    }
+    gameState.ghostMode = false;
+    gameState.previousWordSet = null;
+    hideGhostCaret();
+  }
+
   gameState.startTime = null;
   setTimerSpeedometer(0);
   hideStatsContainer();
@@ -652,6 +851,7 @@ export function invalidateTest(reason) {
   // jadi selalu sembunyikan & reset saat tes dibatalkan.
   resetStatisticsPanel();
   hidePracticeWrongWordsButton();
+  hideGhostPracticeButton();
 
   // ✅ Tes latihan kata salah yang dibatalkan (mis. user pindah tab) juga
   // dianggap berakhir: pulihkan word set asli, sama seperti di endTest().
@@ -662,6 +862,18 @@ export function invalidateTest(reason) {
     gameState.practiceMode = false;
     gameState.previousWordSet = null;
   }
+
+  // ✅ Tes latihan ghost caret yang dibatalkan juga dianggap berakhir:
+  // hentikan timer ghost & pulihkan word set asli, sama seperti di endTest().
+  if (gameState.ghostMode) {
+    stopGhostTimer();
+    if (gameState.previousWordSet) {
+      window.defaultKataKata = gameState.previousWordSet;
+    }
+    gameState.ghostMode = false;
+    gameState.previousWordSet = null;
+  }
+  hideGhostCaret();
 
   // Tampilkan menu & tombol restart lagi - jangan tampilkan jika test sudah selesai
   if (window.isTestCompleted) return;
@@ -676,7 +888,7 @@ export function invalidateTest(reason) {
 }
 
 export function resetTestState(options = {}) {
-  const { preservePracticeMode = false } = options;
+  const { preservePracticeMode = false, preserveGhostMode = false } = options;
   const DOM = getGameDOMReferences();
   
   // Reset flag global bahwa tes sudah selesai
@@ -697,7 +909,24 @@ export function resetTestState(options = {}) {
     gameState.practiceMode = false;
     gameState.previousWordSet = null;
   }
-  
+
+  // ✅ Perilaku default resetTestState() untuk ghost caret: sama seperti
+  // practiceMode di atas, SELALU keluar dari ghostMode & pulihkan
+  // window.defaultKataKata, KECUALI dipanggil dari startGhostPractice() lewat
+  // { preserveGhostMode: true }.
+  if (!preserveGhostMode && gameState.ghostMode) {
+    if (gameState.previousWordSet) {
+      window.defaultKataKata = gameState.previousWordSet;
+    }
+    gameState.ghostMode = false;
+    gameState.previousWordSet = null;
+    gameState.ghostWords = [];
+    gameState.ghostTimeline = [];
+  }
+  gameState.ghostCurrentIndex = 0;
+  stopGhostTimer();
+  hideGhostCaret();
+
   clearInterval(gameState.timerInterval);
   clearInterval(gameState.updateStatsInterval);
   clearTimeout(gameState.inactivityTimer);
@@ -748,6 +977,7 @@ export function resetTestState(options = {}) {
   // Reset statistics panel
   resetStatisticsPanel();
   hidePracticeWrongWordsButton();
+  hideGhostPracticeButton();
 
   const textDisplayContainer = document.querySelector(
     ".text-display-container"
@@ -827,6 +1057,10 @@ export function startTimer() {
   gameState.updateStatsInterval = setInterval(() => {
     updateRealtimeStats();
   }, 100);
+
+  if (gameState.ghostMode) {
+    startGhostTimer();
+  }
 }
 
 export function startInactivityTimer() {
@@ -1035,6 +1269,9 @@ export function initGameListeners() {
 
   // Initialize "Latih Kata yang Salah" button listener
   initPracticeWrongWordsButton();
+
+  // Initialize "Ulangi dengan Ghost Caret" button listener
+  initGhostPracticeButton();
 }
 
 export function showStatsContainer() {

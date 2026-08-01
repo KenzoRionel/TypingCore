@@ -235,6 +235,19 @@
                     >0</span
                   >
                </button>
+               <!-- Tombol "Ulangi dengan Ghost Caret": sama persis dengan tombol
+                    Latih Kata yang Salah di atas, hanya beda ikon & warna (lihat
+                    .ghost-practice-btn di style.css). Muncul setelah tes selesai
+                    (gameState.ghostData terisi dari sesi yang baru selesai), lihat
+                    updateGhostPracticeButton di game-logic.js. -->
+               <button
+                  id="ghostPracticeBtn"
+                  class="btn restart-btn result-only-btn ghost-practice-btn d-flex align-items-center justify-content-center flex-shrink-0"
+                  aria-label="Ulangi dengan Ghost Caret"
+                  title="Ulangi teks yang sama dengan bayangan caret dari sesi sebelumnya"
+                >
+                  <i class="fas fa-ghost fa-lg"></i>
+               </button>
               </div>
               <!-- Statistics Panel: tepat setelah tombol Restart/Statistik, di bawah area grafik -->
               <div id="statisticsPanel" class="statistics-panel" style="display: none;">
