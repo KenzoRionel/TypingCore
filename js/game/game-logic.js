@@ -46,9 +46,21 @@ function getInProgressCharCounts() {
 }
 
 export function generateAndAppendWords(numWords) {
-  if (!window.defaultKataKata || window.defaultKataKata.length === 0) {
+  // ✅ Mode latihan kata salah: selama practiceMode aktif & ada practiceWords,
+  // kata diambil dari daftar itu (bukan window.defaultKataKata). Ini murni
+  // menentukan SUMBER kata; format & cara push ke fullTextWords tetap sama
+  // persis seperti sebelumnya.
+  const usePracticeWords =
+    gameState.practiceMode &&
+    Array.isArray(gameState.practiceWords) &&
+    gameState.practiceWords.length > 0;
+  const sourceWords = usePracticeWords
+    ? gameState.practiceWords
+    : window.defaultKataKata;
+
+  if (!sourceWords || sourceWords.length === 0) {
     console.error(
-      "Tidak dapat menghasilkan kata baru: window.defaultKataKata kosong atau tidak terdefinisi."
+      "Tidak dapat menghasilkan kata baru: sumber kata (defaultKataKata/practiceWords) kosong atau tidak terdefinisi."
     );
     for (let i = 0; i < numWords; i++) {
       gameState.fullTextWords.push("placeholder");
@@ -58,10 +70,8 @@ export function generateAndAppendWords(numWords) {
     return;
   }
   for (let i = 0; i < numWords; i++) {
-    const randomIndex = Math.floor(
-      Math.random() * window.defaultKataKata.length
-    );
-    gameState.fullTextWords.push(window.defaultKataKata[randomIndex]);
+    const randomIndex = Math.floor(Math.random() * sourceWords.length);
+    gameState.fullTextWords.push(sourceWords[randomIndex]);
     gameState.typedWordCorrectness.push(false);
     gameState.userTypedWords.push("");
   }
@@ -221,6 +231,97 @@ export function updateRealtimeStats() {
   }
 }
 
+// =============== LATIHAN KATA YANG SALAH (WRONG-WORDS PRACTICE) ===============
+
+/**
+ * Hitung frekuensi kata yang salah dari historyData (entri hasil processTypedWord(),
+ * yaitu yang punya field `word` & `correct`), urutkan menurun (paling sering salah
+ * di atas), lalu bangun daftar "berbobot" untuk gameState.practiceWords: tiap kata
+ * diulang beberapa kali sesuai frekuensi kesalahannya (minimal beberapa kali per
+ * kata) supaya generateAndAppendWords() punya buffer yang cukup & kata yang lebih
+ * sering salah lebih sering muncul lagi saat latihan.
+ */
+function buildWrongWordsPracticeData(historyData) {
+  const freq = {};
+  (historyData || []).forEach((entry) => {
+    if (entry && entry.correct === false && entry.word) {
+      freq[entry.word] = (freq[entry.word] || 0) + 1;
+    }
+  });
+
+  const sortedWords = Object.keys(freq).sort((a, b) => freq[b] - freq[a]);
+  const weightedList = [];
+  sortedWords.forEach((word) => {
+    // Minimal 5x pengulangan per kata unik, ditambah bobot ekstra untuk kata
+    // yang lebih sering salah, supaya buffer sampling cukup & tidak monoton.
+    const repeatCount = Math.max(freq[word] * 3, 5);
+    for (let i = 0; i < repeatCount; i++) weightedList.push(word);
+  });
+
+  return { sortedWords, weightedList };
+}
+
+/**
+ * Tampilkan/sembunyikan tombol "Latih Kata yang Salah" (icon-only) beserta
+ * badge hitungan kata unik yang salah. Tombol ini HANYA relevan setelah
+ * halaman hasil muncul, jadi kalau tidak ada kata yang salah, tombol tetap
+ * disembunyikan. Sama seperti tombol Statistik: pakai class 'show' UNTUK
+ * KONSISTENSI dengan `.result-only-btn` di style.css, TAPI juga dipaksa lewat
+ * inline style ber-prioritas "important" karena tombol ini memakai class
+ * Bootstrap "d-flex" (display:flex !important) yang bisa menang dari aturan
+ * class biasa — inline !important selalu menang dari stylesheet manapun.
+ */
+function updatePracticeWrongWordsButton(uniqueWrongWordCount) {
+  const btn = document.getElementById("practiceWrongWordsBtn");
+  const countEl = document.getElementById("practiceWrongWordsCount");
+  if (!btn) return;
+
+  if (uniqueWrongWordCount > 0) {
+    if (countEl) countEl.textContent = String(uniqueWrongWordCount);
+    btn.classList.add("show");
+    btn.style.setProperty("display", "flex", "important");
+  } else {
+    btn.classList.remove("show");
+    btn.style.setProperty("display", "none", "important");
+  }
+}
+
+/** Sembunyikan tombol latihan kata salah (dipanggil saat reset/invalidate). */
+function hidePracticeWrongWordsButton() {
+  const btn = document.getElementById("practiceWrongWordsBtn");
+  if (btn) {
+    btn.classList.remove("show");
+    btn.style.setProperty("display", "none", "important");
+  }
+}
+
+/**
+ * Handler klik tombol "Latih Kata yang Salah".
+ * Menyimpan word set aktif saat ini (window.defaultKataKata) sebagai
+ * gameState.previousWordSet supaya bisa dipulihkan setelah sesi latihan
+ * berakhir, mengaktifkan practiceMode, lalu me-restart tes lewat
+ * resetTestState({ preservePracticeMode: true }) — variannya "preserve" ini
+ * penting karena resetTestState() secara default MEMATIKAN practiceMode
+ * (lihat komentar di resetTestState).
+ */
+export function startWrongWordsPractice() {
+  if (!Array.isArray(gameState.practiceWords) || gameState.practiceWords.length === 0) {
+    return;
+  }
+
+  gameState.previousWordSet = window.defaultKataKata;
+  gameState.practiceMode = true;
+
+  resetTestState({ preservePracticeMode: true });
+}
+
+/** Pasang listener klik pada tombol "Latih Kata yang Salah". */
+export function initPracticeWrongWordsButton() {
+  const btn = document.getElementById("practiceWrongWordsBtn");
+  if (!btn) return;
+  btn.addEventListener("click", startWrongWordsPractice);
+}
+
 export function calculateAndDisplayFinalResults() {
   const DOM = getGameDOMReferences();
 
@@ -309,6 +410,15 @@ export function calculateAndDisplayFinalResults() {
   animateXPBar(earnedXP);
 
   const historyData = gameState.history.slice();
+
+  // ✅ Hitung kata yang salah SEBELUM resetTestState() (yang akan mengosongkan
+  // gameState.history) dipanggil di mana pun setelah ini — lihat komentar di
+  // buildWrongWordsPracticeData(). Hasilnya disimpan ke gameState.practiceWords
+  // dan tombol "Latih Kata yang Salah" ditampilkan hanya jika ada kata yang salah.
+  const { sortedWords: wrongWordsUnique, weightedList: wrongWordsWeighted } =
+    buildWrongWordsPracticeData(historyData);
+  gameState.practiceWords = wrongWordsWeighted;
+  updatePracticeWrongWordsButton(wrongWordsUnique.length);
 
   renderResultChart(
     historyData,
@@ -472,6 +582,22 @@ export function endTest() {
   if (!gameState.isTestInvalid) {
     calculateAndDisplayFinalResults();
   }
+
+  // ✅ Sesi latihan kata salah (kalau ada) berakhir begitu tes-nya selesai:
+  // pulihkan window.defaultKataKata ke word set yang aktif SEBELUM latihan
+  // dimulai, lalu matikan practiceMode. gameState.practiceWords (daftar kata
+  // salah dari sesi INI) tetap dibiarkan apa adanya — sudah ditimpa dengan
+  // hasil terbaru oleh calculateAndDisplayFinalResults() di atas, dan tombol
+  // "Latih Kata yang Salah" tetap tampil kalau masih ada kata yang salah,
+  // supaya user bisa langsung melatih ulang kata yang masih sering keliru.
+  if (gameState.practiceMode) {
+    if (gameState.previousWordSet) {
+      window.defaultKataKata = gameState.previousWordSet;
+    }
+    gameState.practiceMode = false;
+    gameState.previousWordSet = null;
+  }
+
   gameState.startTime = null;
   setTimerSpeedometer(0);
   hideStatsContainer();
@@ -525,6 +651,17 @@ export function invalidateTest(reason) {
   // Tombol/panel statistik hanya relevan untuk hasil tes yang valid & selesai,
   // jadi selalu sembunyikan & reset saat tes dibatalkan.
   resetStatisticsPanel();
+  hidePracticeWrongWordsButton();
+
+  // ✅ Tes latihan kata salah yang dibatalkan (mis. user pindah tab) juga
+  // dianggap berakhir: pulihkan word set asli, sama seperti di endTest().
+  if (gameState.practiceMode) {
+    if (gameState.previousWordSet) {
+      window.defaultKataKata = gameState.previousWordSet;
+    }
+    gameState.practiceMode = false;
+    gameState.previousWordSet = null;
+  }
 
   // Tampilkan menu & tombol restart lagi - jangan tampilkan jika test sudah selesai
   if (window.isTestCompleted) return;
@@ -538,12 +675,28 @@ export function invalidateTest(reason) {
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
 }
 
-export function resetTestState() {
+export function resetTestState(options = {}) {
+  const { preservePracticeMode = false } = options;
   const DOM = getGameDOMReferences();
   
   // Reset flag global bahwa tes sudah selesai
   window.isTestCompleted = false;
   console.log('DEBUG: resetTestState() - window.isTestCompleted set to false');
+
+  // ✅ Perilaku default resetTestState(): SELALU keluar dari mode latihan kata
+  // salah & pulihkan window.defaultKataKata (restart manual, ganti mode waktu,
+  // tombol "Coba Lagi" di modal, dll — semua ini secara implisit berarti "balik
+  // ke tes normal"). Satu-satunya pengecualian adalah panggilan dari
+  // startWrongWordsPractice() sendiri, yang lewat { preservePracticeMode: true }
+  // supaya practiceMode & practiceWords yang baru saja di-set tidak langsung
+  // ditimpa balik oleh reset ini.
+  if (!preservePracticeMode && gameState.practiceMode) {
+    if (gameState.previousWordSet) {
+      window.defaultKataKata = gameState.previousWordSet;
+    }
+    gameState.practiceMode = false;
+    gameState.previousWordSet = null;
+  }
   
   clearInterval(gameState.timerInterval);
   clearInterval(gameState.updateStatsInterval);
@@ -594,6 +747,7 @@ export function resetTestState() {
 
   // Reset statistics panel
   resetStatisticsPanel();
+  hidePracticeWrongWordsButton();
 
   const textDisplayContainer = document.querySelector(
     ".text-display-container"
@@ -878,6 +1032,9 @@ export function initGameListeners() {
 
   // Initialize statistics panel button listener
   initStatisticsPanel();
+
+  // Initialize "Latih Kata yang Salah" button listener
+  initPracticeWrongWordsButton();
 }
 
 export function showStatsContainer() {

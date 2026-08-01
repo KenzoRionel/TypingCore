@@ -421,6 +421,64 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
     font-weight: 600;
 }
 
+/* Tombol yang HANYA boleh terlihat di halaman hasil tes (statistik & latih
+   kata yang salah). Kedua tombol ini juga memakai class Bootstrap "d-flex"
+   (display:flex !important) untuk layouting internal iconnya, dan Bootstrap
+   di-load SETELAH style.css — jadi selector berbasis class saja (mis.
+   ".result-only-btn") kalah karena specificity-nya sama-sama 1 class tapi
+   Bootstrap datang belakangan di cascade. Makanya di sini dipakai selector
+   ID (#statisticsButton / #practiceWrongWordsBtn), yang specificity-nya
+   lebih tinggi dari satu class, supaya PASTI menang melawan .d-flex
+   walaupun sama-sama !important. */
+#statisticsButton.result-only-btn,
+#practiceWrongWordsBtn.result-only-btn {
+    display: none !important;
+}
+
+#statisticsButton.result-only-btn.show,
+#practiceWrongWordsBtn.result-only-btn.show {
+    display: flex !important;
+}
+
+.practice-wrong-words-btn {
+    position: relative;
+    color: #e67e22;
+}
+
+.practice-wrong-words-btn:hover {
+    color: #d3690f;
+}
+
+.practice-wrong-words-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 50%;
+    background-color: #e67e22;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+body.dark-mode .practice-wrong-words-btn {
+    color: #f0a35c;
+}
+
+body.dark-mode .practice-wrong-words-btn:hover {
+    color: #f5b877;
+}
+
+body.dark-mode .practice-wrong-words-count {
+    background-color: #b9660b;
+}
+
 /* Dark Mode untuk Results Container */
 body.dark-mode .results-container {
     background-color: #23272a;

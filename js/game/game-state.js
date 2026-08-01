@@ -39,6 +39,11 @@ export const gameState = {
     keystrokeLog: [],
     correctCharsPerSecond: [],
     fullText: '', // Store the full text being typed
+
+    // Latihan kata yang salah (wrong-words practice mode)
+    practiceMode: false, // true = generateAndAppendWords() memakai practiceWords, bukan window.defaultKataKata
+    practiceWords: [], // daftar kata (dengan pengulangan berbobot sesuai frekuensi salah) untuk mode latihan
+    previousWordSet: null, // snapshot window.defaultKataKata sebelum mode latihan dimulai, untuk dipulihkan nanti
 };
 
 window.gameState = gameState;

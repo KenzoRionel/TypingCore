@@ -49,7 +49,17 @@ export function resetStatisticsPanel() {
   }
 
   if (button) {
-    button.style.display = 'none';
+    // ✅ Pakai class 'show' UNTUK KONSISTENSI dengan aturan `.result-only-btn`
+    // di style.css, TAPI juga paksa lewat inline style dengan prioritas
+    // "important" (style.setProperty(..., 'important')). Ini perlu karena
+    // tombol ini juga memakai class Bootstrap "d-flex" (display:flex
+    // !important) dan mungkin ada aturan lain di custom-button.css /
+    // statistics-panel.css yang dimuat setelah style.css — inline style
+    // ber-!important SELALU menang dari stylesheet manapun (termasuk yang
+    // !important), jadi ini jaminan paling pasti supaya tombol benar-benar
+    // tersembunyi di luar halaman hasil.
+    button.classList.remove('show');
+    button.style.setProperty('display', 'none', 'important');
     button.setAttribute('aria-label', 'Tampilkan Statistik');
   }
 
@@ -79,9 +89,12 @@ export function renderStatisticsPanel(historyData, finalWPM, totalTime, testCont
   const panelHTML = createPanelHTML(errorStats, perfStats, contextStats, progressStats);
   panel.innerHTML = panelHTML;
 
-  // Show statistics button
+  // Show statistics button (lihat catatan class 'show' + inline !important di resetStatisticsPanel)
   const statsButton = document.getElementById('statisticsButton');
-  if (statsButton) statsButton.style.display = 'flex';
+  if (statsButton) {
+    statsButton.classList.add('show');
+    statsButton.style.setProperty('display', 'flex', 'important');
+  }
 }
 
 // =============== ERROR STATISTICS ===============

@@ -209,11 +209,31 @@
                </button>
                <button
                   id="statisticsButton"
-                  class="btn restart-btn d-flex align-items-center justify-content-center flex-shrink-0"
+                  class="btn restart-btn result-only-btn d-flex align-items-center justify-content-center flex-shrink-0"
                   aria-label="Tampilkan Statistik"
-                  style="display: none;"
                 >
                   <i class="fas fa-chart-bar fa-lg"></i>
+               </button>
+               <!-- Tombol Latih Kata yang Salah: icon-only, sejajar dengan tombol
+                    Restart & Statistik. Ikon "spell-check" dipakai supaya beda dari
+                    ikon lain & langsung mengasosiasikan tombol ini dengan "perbaiki/latih
+                    kata yang salah ketik". Hanya muncul setelah halaman hasil tampil DAN
+                    ada kata yang salah (lihat updatePracticeWrongWordsButton di
+                    game-logic.js); disembunyikan lagi setiap kali tes direset.
+                    Class "result-only-btn" (lihat style.css) memaksa tombol ini & tombol
+                    statistik tetap disembunyikan (display:none !important) kecuali saat
+                    class "show" ditambahkan lewat JS, supaya keduanya konsisten HANYA
+                    muncul di halaman hasil. -->
+               <button
+                  id="practiceWrongWordsBtn"
+                  class="btn restart-btn result-only-btn practice-wrong-words-btn d-flex align-items-center justify-content-center flex-shrink-0"
+                  aria-label="Latih Kata yang Salah"
+                  title="Latih Kata yang Salah"
+                >
+                  <i class="fas fa-spell-check fa-lg"></i>
+                  <span id="practiceWrongWordsCount" class="practice-wrong-words-count"
+                    >0</span
+                  >
                </button>
               </div>
               <!-- Statistics Panel: tepat setelah tombol Restart/Statistik, di bawah area grafik -->
