@@ -32,6 +32,47 @@ let smoothCaretDuration = 0; // 0 = nonaktif, pakai kursor lama (::after)
 let smoothCaretEl = null;
 
 /* ==========================================================================
+   Mode Caret Baru
+   ==========================================================================
+   Daftar mode caret (lama + baru) yang punya "bentuk" sendiri di smooth-caret
+   (dipakai untuk toggle class `mode-<nama>` pada elemen tunggal smooth-caret,
+   lihat positionSmoothCaret()). "highlight" tidak masuk sini karena mode itu
+   sama sekali tidak menggambar elemen caret (lihat pengecekan awal di
+   positionSmoothCaret()).
+*/
+const CARET_SHAPE_MODES = [
+  "box",
+  "outline",
+  "bracket",
+  "dot",
+  "doubleline",
+  "laser",
+  "typewriter",
+  "comet",
+  "pen",
+  "reactive",
+];
+
+/* Mode yang menempatkan kursor SETELAH karakter terakhir yang diketik,
+   persis seperti mode "caret" klasik - kebalikannya (default/else) menempatkan
+   kursor SEBELUM karakter berikutnya yang akan diketik (seperti "underline"
+   / "box"). Dipakai di updateWordHighlighting() untuk menentukan
+   cursor-before vs cursor-after untuk mode-mode baru. */
+const CARET_AFTER_POSITION_MODES = new Set([
+  "caret",
+  "laser",
+  "comet",
+  "reactive",
+  "pen",
+]);
+
+// Timestamp panggilan positionSmoothCaret() sebelumnya, dipakai mengukur
+// interval antar-keystroke -> "speedFactor" (0 = lambat, 1 = cepat) yang
+// menggerakkan efek reaktif-kecepatan (glow laser, ekor comet) dan efek
+// reaktif-performa (warna mode reactive).
+let lastCaretMoveTs = null;
+
+/* ==========================================================================
    PERFORMANCE FIX: cache untuk updateWordHighlighting()
    ==========================================================================
    Sebelumnya, SETIAP keystroke melakukan:
@@ -292,12 +333,33 @@ function computeSmoothCaretRect(container, targetEl, isBefore, mode) {
     };
   }
 
-  if (mode === "box") {
+  // Box, Block Outline, Corner Bracket, Double Line: sama-sama mengelilingi
+  // seluruh kotak karakter - bedanya cuma gaya visual (diatur lewat CSS
+  // lewat class mode-<nama>), bukan geometrinya.
+  if (mode === "box" || mode === "outline" || mode === "bracket" || mode === "doubleline") {
     return { left: baseLeft, top: baseTop, width: elRect.width, height: elRect.height };
   }
 
-  // Mode "caret": garis tegak tipis, di kiri (before) atau kanan (after) karakter.
-  const barWidth = 2;
+  // Dot / Circle: buletan kecil di baseline (bawah) karakter, dipusatkan
+  // secara horizontal.
+  if (mode === "dot") {
+    const size = 6;
+    return {
+      left: baseLeft + elRect.width / 2 - size / 2,
+      top: baseTop + elRect.height - size / 2,
+      width: size,
+      height: size,
+    };
+  }
+
+  // Typewriter Head: kotak kecil di ATAS karakter (kebalikan underline).
+  if (mode === "typewriter") {
+    return { left: baseLeft, top: baseTop - 6, width: elRect.width, height: 4 };
+  }
+
+  // Mode "caret" dan kerabat garis-tegaknya (laser, comet, reactive, pen):
+  // garis tegak tipis, di kiri (before) atau kanan (after) karakter.
+  const barWidth = mode === "laser" ? 3 : 2;
   const left = isBefore ? baseLeft - 1 : baseLeft + elRect.width - 1;
   return { left, top: baseTop, width: barWidth, height: elRect.height };
 }
@@ -313,7 +375,42 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
 
   const el = getOrCreateSmoothCaret(DOM.textDisplay);
   const rect = computeSmoothCaretRect(DOM.textDisplay, targetEl, isBefore, mode);
-  el.classList.toggle("mode-box", mode === "box");
+
+  CARET_SHAPE_MODES.forEach((m) => el.classList.toggle(`mode-${m}`, mode === m));
+
+  // Ukur interval sejak perpindahan kursor terakhir -> speedFactor 0..1
+  // (1 = ngetik cepat, 0 = jeda lama). Dipakai mode Lightsaber (panjang glow),
+  // Comet (panjang ekor), dan Reactive Color (ambang hijau/kuning).
+  const now = performance.now();
+  const dt = lastCaretMoveTs !== null ? now - lastCaretMoveTs : 600;
+  lastCaretMoveTs = now;
+  const speedFactor = Math.max(0, Math.min(1, 1 - dt / 400));
+  el.style.setProperty("--caret-speed", speedFactor.toFixed(2));
+
+  if (mode === "reactive") {
+    // Hijau = ritme stabil & cepat, Kuning = melambat, Merah = karakter
+    // terakhir yang diketik salah (menang atas kecepatan).
+    const isWrong = targetEl.classList && targetEl.classList.contains("wrong");
+    el.classList.remove("state-good", "state-slow", "state-error");
+    if (isWrong) {
+      el.classList.add("state-error");
+    } else if (speedFactor > 0.5) {
+      el.classList.add("state-good");
+    } else {
+      el.classList.add("state-slow");
+    }
+  }
+
+  if (mode === "typewriter") {
+    // Restart animasi "ketak-ketuk" tiap kursor berpindah (satu keystroke =
+    // satu ketukan). Class dilepas lalu dipasang lagi setelah reflow paksa
+    // (el.offsetWidth) supaya browser mengulang animasinya dari awal walau
+    // class-nya sebenarnya "tetap" terpasang antar-panggilan.
+    el.classList.remove("tap");
+    void el.offsetWidth;
+    el.classList.add("tap");
+  }
+
   el.style.left = `${rect.left}px`;
   el.style.top = `${rect.top}px`;
   el.style.width = `${rect.width}px`;
@@ -666,8 +763,8 @@ export function updateWordHighlighting() {
   } 
   else if (typedValue.length > 0 && typedValue.length < targetWord.length) {
     // Sedang mengetik (belum selesai): kursor di dalam word container
-    if (mode === "caret") {
-      // Mode Caret: Kursor di SETELAH karakter terakhir yang diketik
+    if (CARET_AFTER_POSITION_MODES.has(mode)) {
+      // Mode Caret & kerabatnya: Kursor di SETELAH karakter terakhir yang diketik
       const caretIndex = typedValue.length - 1;
       if (allChars[caretIndex]) {
         allChars[caretIndex].classList.add("has-cursor", "cursor-after");
@@ -698,7 +795,7 @@ export function updateWordHighlighting() {
     // Kelebihan ketik: Kursor di karakter extra terakhir
     const lastExtra = allChars[allChars.length - 1];
     if (lastExtra) {
-      if (mode === "caret") {
+      if (CARET_AFTER_POSITION_MODES.has(mode)) {
         lastExtra.classList.add("has-cursor", "cursor-after");
         smoothCaretBefore = false;
       } else {

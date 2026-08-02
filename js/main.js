@@ -15,6 +15,10 @@ import {
 
 import { handleKeydown } from "./game/game-events.js";
 import {
+  formatDuration,
+  positionTimeModeModal,
+} from "./utils/time-mode-modal-helpers.js";
+import {
   resetTestState,
   initGameListeners,
   invalidateTest,
@@ -38,18 +42,16 @@ import {
   updateKeyboardVisibilityUI
 } from "./index-keyboard.js";
 import { initSettingsPanel } from "./utils/settings-panel.js";
+import { loadQuotes, isQuotesLoaded } from "./data/quotes-loader.js";
 
 
 // Set default kata-kata saat aplikasi pertama kali dijalankan
 window.defaultKataKata = top200Words;
 
-// Fisher-Yates (Durstenfeld) shuffle: O(n), unbiased.
-// `sort(() => Math.random() - 0.5)` dibuang karena:
-//  - Biasnya nyata: hasil sort tergantung comparator konsisten (transitif),
-//    sedangkan comparator random tidak transitif, jadi distribusi permutasi
-//    tidak seragam (elemen tertentu cenderung "menetap" di posisi tertentu).
-//  - Kompleksitasnya O(n log n) dan comparator dipanggil berkali-kali per elemen,
-//    padahal Fisher-Yates cukup O(n) dengan 1 kali random per elemen.
+loadQuotes().catch(() => {
+
+});
+
 function shuffleArray(array) {
   const result = array.slice();
   for (let i = result.length - 1; i > 0; i--) {
@@ -69,14 +71,24 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // PENTING: deklarasi ini HARUS ada sebelum setupLogoPop() dipanggil pertama kali.
-  // `function setupLogoPop(){...}` di-hoist penuh sehingga bisa dipanggil lebih awal,
-  // tapi `let logoPopObserver` / `let logoPopMouseMoveWired` di scope yang sama tetap
-  // kena Temporal Dead Zone sampai baris deklarasinya benar-benar dieksekusi.
-  // Kalau setupLogoPop() dipanggil sebelum baris ini, akan lempar:
-  // "ReferenceError: Cannot access 'logoPopObserver' before initialization"
-  // dan itu menghentikan seluruh sisa callback DOMContentLoaded (termasuk
-  // initGameListeners()/resetTestState() yang merender teks latihan).
+  const TEST_DURATION_STORAGE_KEY = "typingcore_selectedTestDuration";
+  function getStoredTestDuration() {
+    try {
+      const raw = localStorage.getItem(TEST_DURATION_STORAGE_KEY);
+      const val = parseInt(raw, 10);
+ 
+      if (Number.isFinite(val) && val >= 5 && val <= 86400) return val;
+    } catch (e) {
+      // localStorage tidak tersedia (mis. mode private) - abaikan, pakai default.
+    }
+    return 60;
+  }
+  const initialTestDuration = getStoredTestDuration();
+  if (window.gameState) {
+    window.gameState.TIMED_TEST_DURATION = initialTestDuration;
+    window.gameState.timeRemaining = initialTestDuration;
+  }
+
   let logoPopObserver = null;
   let logoPopMouseMoveWired = false;
 
@@ -145,52 +157,219 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  document.querySelectorAll(".time-mode-btn").forEach((btn) => {
+  const quoteModeBtnRef = document.getElementById("quoteModeBtn");
+
+  const timeModeToggleBtn = document.getElementById("timeModeToggleBtn");
+  const timeModeToggleValue = document.getElementById("timeModeToggleValue");
+  const timeModeModalOverlay = document.getElementById("timeModeModalOverlay");
+  const timeModeModal = document.getElementById("timeModeModal");
+  const timeModeModalClose = document.getElementById("timeModeModalClose");
+  const timeModeCustomInput = document.getElementById("timeModeCustomInput");
+  const timeModeCustomApply = document.getElementById("timeModeCustomApply");
+
+  const TIME_MODE_CUSTOM_MIN = 5;
+  const TIME_MODE_CUSTOM_MAX = 86400; // 24 jam (24 * 60 * 60 detik)
+
+  function repositionTimeModeModal() {
+    if (!timeModeToggleBtn || !timeModeModal) return;
+    positionTimeModeModal(timeModeToggleBtn, timeModeModal);
+  }
+
+  function openTimeModeModal() {
+    if (!timeModeModalOverlay) return;
+    timeModeModalOverlay.hidden = false;
+    if (timeModeToggleBtn) timeModeToggleBtn.setAttribute("aria-expanded", "true");
+    if (timeModeCustomInput) {
+
+      const currentDuration = window.gameState ? window.gameState.TIMED_TEST_DURATION : null;
+      const isPreset = ["30", "60", "120", "180"].includes(String(currentDuration));
+      const isQuoteModeActive = window.gameState && window.gameState.quoteMode;
+      timeModeCustomInput.value =
+        !isQuoteModeActive && !isPreset && currentDuration ? String(currentDuration) : "";
+      timeModeCustomInput.classList.remove("input-error");
+    }
+ 
+    repositionTimeModeModal();
+    window.addEventListener("resize", repositionTimeModeModal);
+    window.addEventListener("scroll", repositionTimeModeModal, true);
+    if (timeModeModal) timeModeModal.focus();
+  }
+
+  function closeTimeModeModal() {
+    if (!timeModeModalOverlay) return;
+    timeModeModalOverlay.hidden = true;
+    if (timeModeToggleBtn) timeModeToggleBtn.setAttribute("aria-expanded", "false");
+    window.removeEventListener("resize", repositionTimeModeModal);
+    window.removeEventListener("scroll", repositionTimeModeModal, true);
+  }
+
+  if (timeModeToggleBtn) {
+    timeModeToggleBtn.addEventListener("click", () => {
+      if (timeModeModalOverlay && !timeModeModalOverlay.hidden) {
+        closeTimeModeModal();
+      } else {
+        openTimeModeModal();
+      }
+    });
+  }
+
+  if (timeModeModalClose) {
+    timeModeModalClose.addEventListener("click", closeTimeModeModal);
+  }
+
+  if (timeModeModalOverlay) {
+    // Klik di area overlay (di luar kotak modal) menutup modal.
+    timeModeModalOverlay.addEventListener("click", (e) => {
+      if (e.target === timeModeModalOverlay) closeTimeModeModal();
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && timeModeModalOverlay && !timeModeModalOverlay.hidden) {
+      closeTimeModeModal();
+    }
+  });
+
+  function applySelectedDuration(selectedTime) {
+
+    if (window.gameState && window.gameState.quoteMode) {
+      window.gameState.quoteMode = false;
+      if (quoteModeBtnRef) quoteModeBtnRef.classList.remove("active");
+    }
+
+    document
+      .querySelectorAll(".time-mode-option-btn")
+      .forEach((b) => b.classList.remove("active"));
+    const matchingPreset = document.querySelector(
+      `.time-mode-option-btn[data-time="${selectedTime}"]`
+    );
+    if (matchingPreset) matchingPreset.classList.add("active");
+
+    if (window.gameState) {
+      window.gameState.TIMED_TEST_DURATION = selectedTime;
+      window.gameState.timeRemaining = selectedTime;
+    }
+ 
+    if (timeModeToggleValue) timeModeToggleValue.textContent = formatDuration(selectedTime);
+
+    // Simpan pilihan durasi supaya tetap sama setelah halaman di-refresh.
+    try {
+      localStorage.setItem(TEST_DURATION_STORAGE_KEY, String(selectedTime));
+    } catch (e) {
+      // localStorage tidak tersedia - abaikan, cukup berlaku untuk sesi ini saja.
+    }
+
+    if (typeof window.resetTest === "function") {
+      window.resetTest();
+    }
+    closeTimeModeModal();
+    DOM.hiddenInput.focus();
+  }
+
+  document.querySelectorAll(".time-mode-option-btn").forEach((btn) => {
     btn.addEventListener("click", function () {
       const selectedTime = parseInt(this.getAttribute("data-time"), 10);
-      document
-        .querySelectorAll(".time-mode-btn")
-        .forEach((b) => b.classList.remove("active"));
-      this.classList.add("active");
+      if (!Number.isFinite(selectedTime)) return;
+      applySelectedDuration(selectedTime);
+    });
+  });
 
-      if (window.gameState) {
-        window.gameState.TIMED_TEST_DURATION = selectedTime;
-        window.gameState.timeRemaining = selectedTime;
+  document
+    .querySelectorAll(".time-mode-option-btn")
+    .forEach((b) => b.classList.remove("active"));
+  const matchingInitialPreset = document.querySelector(
+    `.time-mode-option-btn[data-time="${initialTestDuration}"]`
+  );
+  if (matchingInitialPreset) matchingInitialPreset.classList.add("active");
+  if (timeModeToggleValue) timeModeToggleValue.textContent = formatDuration(initialTestDuration);
+
+  if (timeModeCustomInput) {
+    timeModeCustomInput.addEventListener("input", function () {
+      const digitsOnly = this.value.replace(/[^0-9]/g, "");
+      if (digitsOnly !== this.value) this.value = digitsOnly;
+      this.classList.remove("input-error");
+    });
+
+    timeModeCustomInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (timeModeCustomApply) timeModeCustomApply.click();
       }
-      setTimerSpeedometerMax(selectedTime);
+    });
+  }
+
+  if (timeModeCustomApply) {
+    timeModeCustomApply.addEventListener("click", () => {
+      const raw = timeModeCustomInput ? timeModeCustomInput.value.trim() : "";
+      const customTime = parseInt(raw, 10);
+
+      if (
+        !raw ||
+        !Number.isFinite(customTime) ||
+        customTime < TIME_MODE_CUSTOM_MIN ||
+        customTime > TIME_MODE_CUSTOM_MAX
+      ) {
+        if (timeModeCustomInput) {
+          timeModeCustomInput.classList.add("input-error");
+          timeModeCustomInput.focus();
+        }
+        return;
+      }
+
+      applySelectedDuration(customTime);
+    });
+  }
+
+  if (quoteModeBtnRef) {
+    quoteModeBtnRef.addEventListener("click", async () => {
+      const activating = !(window.gameState && window.gameState.quoteMode);
+
+      if (activating) {
+        // Beri feedback visual singkat sambil menunggu fetch quotes.json
+        // (biasanya sangat cepat, tapi tetap jaga-jaga kalau jaringan lambat).
+        quoteModeBtnRef.disabled = true;
+        quoteModeBtnRef.classList.add("loading");
+        try {
+          await loadQuotes();
+        } catch (e) {
+          // Sudah di-console.error di dalam loadQuotes(); beri tahu user juga.
+        }
+        quoteModeBtnRef.disabled = false;
+        quoteModeBtnRef.classList.remove("loading");
+
+        if (!isQuotesLoaded()) {
+          alert(
+            "Gagal memuat teks Quotes. Periksa koneksi kamu lalu coba lagi."
+          );
+          return;
+        }
+
+        if (window.gameState) window.gameState.quoteMode = true;
+        quoteModeBtnRef.classList.add("active");
+      } else {
+        if (window.gameState) window.gameState.quoteMode = false;
+        quoteModeBtnRef.classList.remove("active");
+      }
+
+      if (activating) closeTimeModeModal();
+
       if (typeof window.resetTest === "function") {
         window.resetTest();
       }
       DOM.hiddenInput.focus();
     });
-  });
-
-  const defaultTimeBtn = document.querySelector(
-    '.time-mode-btn[data-time="60"]'
-  );
-  if (defaultTimeBtn) defaultTimeBtn.classList.add("active");
+  }
 
   const defaultWordBtn = document.querySelector(
     '.word-type-btn[data-word-type="200"]'
   );
   if (defaultWordBtn) defaultWordBtn.classList.add("active");
 
-  // Set nilai default ke gameState
-  if (window.gameState) {
-    window.gameState.TIMED_TEST_DURATION = 60;
-    window.gameState.timeRemaining = 60;
-  }
-
-  // Inisialisasi Modal Pengaturan (redesign minimalis, auto-save).
-  // Menggantikan seluruh IIFE inisialisasi + handler tombol "Simpan" lama:
-  // sekarang setiap perubahan di modal langsung diterapkan & disimpan.
   initSettingsPanel({
     hideStats: hideStatsContainer,
     showStats: showStatsContainer,
   });
 
-  // updateKeyboardVisibilityUI tetap dipanggil di sini agar status keyboard
-  // (dan visibilitas panel statistik terkait) langsung sinkron saat halaman dimuat.
   setKeyboardVisibility(loadKeyboardVisibility());
   updateKeyboardVisibilityUI({
     hideStats: hideStatsContainer,
@@ -198,21 +377,6 @@ document.addEventListener("DOMContentLoaded", () => {
     statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
   });
 
-
-
-  // -- letakkan di luar DOMContentLoaded (bagian bawah file) --
-  //
-  // PENTING: setupLogoPop() dipanggil ULANG setiap kali restart (resetTestState()
-  // di listener restartButton). Sebelumnya, tiap panggilan menambahkan:
-  //   1. sebuah listener "mousemove" BARU ke `container` (tidak pernah dilepas)
-  //   2. sebuah MutationObserver BARU yang mengamati navbarLogo (tidak pernah di-disconnect)
-  // Setelah N kali restart, 1 gerakan mouse akan memicu handler yang sama N kali,
-  // dan N observer aktif sekaligus -> memory leak & kerja berulang yang sia-sia.
-  //
-  // Perbaikan: simpan observer & flag "sudah wired" di luar closure (di scope
-  // DOMContentLoaded, dideklarasikan di ATAS sebelum panggilan pertama), sehingga
-  // listener mousemove hanya dipasang SEKALI, dan observer lama selalu
-  // di-disconnect sebelum membuat yang baru.
   function setupLogoPop() {
     const container = document.querySelector(".text-display-container");
     if (!container) return;
@@ -236,9 +400,6 @@ document.addEventListener("DOMContentLoaded", () => {
     wrap.appendChild(img);
     container.appendChild(wrap);
 
-    // Mirror kalau dark mode ubah src.
-    // Putuskan observer lama dulu (kalau ada) sebelum membuat yang baru,
-    // supaya tidak menumpuk observer tiap kali setupLogoPop() dipanggil ulang.
     if (logoPopObserver) {
       logoPopObserver.disconnect();
       logoPopObserver = null;
@@ -264,10 +425,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (el) el.classList.remove("pop");
     };
 
-    // Hilangkan logo kalau pointer gerak.
-    // Listener ini hanya perlu dipasang SEKALI: dia membaca window.resetLogoPop
-    // secara dinamis tiap kali dipanggil, jadi tidak perlu di-rebind walaupun
-    // logo/elemen di dalamnya dibuat ulang oleh setupLogoPop().
     if (!logoPopMouseMoveWired) {
       container.addEventListener("mousemove", () => {
         if (typeof window.resetLogoPop === "function") window.resetLogoPop();
@@ -288,7 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (
       DOM.hiddenInput &&
       e.target !== DOM.hiddenInput &&
-      !e.target.closest("#settingsModal")
+      !e.target.closest("#settingsModal") &&
+      !e.target.closest("#timeModeModalOverlay")
     ) {
       DOM.hiddenInput.focus();
     }

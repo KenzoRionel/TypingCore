@@ -892,13 +892,32 @@ class TypingReplayApp {
       return;
     }
 
-    // Hapus container duplikat
-    const dups = document.querySelectorAll('#replay-container');
-    dups.forEach((el) => el.remove());
-
     const DOM = {
       scoreHistoryList: document.getElementById('scoreHistoryList'),
     };
+
+    // Panel replay ini HANYA relevan di halaman Riwayat Skor
+    // (score-history.html), yang punya #scoreHistoryList. Kalau elemen ini
+    // tidak ada (mis. di index.html / halaman tes mengetik), jangan sisipkan
+    // apa pun dan JANGAN tandai isInitialized, supaya tidak ada
+    // side-effect di halaman lain.
+    //
+    // Sebelumnya kode ini punya fallback ke `.chart-container` terakhir di
+    // halaman, dengan asumsi implisit ada elemen `.chart-container` kedua
+    // yang selalu tersembunyi di score-history.html untuk "menampung" panel
+    // ini secara tidak terlihat. Begitu duplikat itu dibersihkan (lihat
+    // catatan bonus fix di index.html), fallback tsb malah menempelkan
+    // panel replay ke `.chart-container` yang AKTIF/terlihat di index.html
+    // (area hasil tes mengetik) - itulah kenapa "Tonton Replay Mengetik"
+    // sempat nyasar muncul di halaman hasil tes, lengkap dengan
+    // WPM/akurasi/waktu 0 karena belum ada skor yang dipilih.
+    if (!DOM.scoreHistoryList) {
+      return;
+    }
+
+    // Hapus container duplikat
+    const dups = document.querySelectorAll('#replay-container');
+    dups.forEach((el) => el.remove());
 
     const replayContainer = document.createElement('div');
     replayContainer.id = 'replay-container';
@@ -940,12 +959,7 @@ class TypingReplayApp {
       </div>
     `;
 
-    const chartContainers = document.querySelectorAll('.chart-container');
-    if (chartContainers.length > 0) {
-      chartContainers[chartContainers.length - 1].after(replayContainer);
-    } else if (DOM.scoreHistoryList) {
-      DOM.scoreHistoryList.before(replayContainer);
-    }
+    DOM.scoreHistoryList.before(replayContainer);
 
     this._wireUI(replayContainer);
     this.isInitialized = true;

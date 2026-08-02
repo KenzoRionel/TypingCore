@@ -12,10 +12,10 @@
     />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/text-display.css" />
-    <link rel="stylesheet" href="css/custom-button.css" />
     <link rel="stylesheet" href="css/speedometer-style.css" />
     <link rel="stylesheet" href="css/dark-mode.css" />
     <link rel="stylesheet" href="css/statistics-panel.css" />
+    <link rel="stylesheet" href="css/time-mode-modal.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
@@ -124,28 +124,114 @@
             </div>
           </nav>
         </header>
-        <div id="MenuButton" class="d-flex gap-2 justify-content-center my-3">
-          <!-- Tombol waktu -->
-          <button class="btn btn-outline-primary time-mode-btn" data-time="30">
-            30
+        <div id="MenuButton" class="d-flex align-items-center gap-2 justify-content-center my-3 mode-toolbar">
+          <!-- Tombol mode "Quotes": TOGGLE (bukan salah satu dari beberapa
+               pilihan) untuk mengaktifkan/menonaktifkan teks latihan berupa
+               quote sungguhan (dengan nama sumber/author), bukan kata acak.
+               Ditaruh paling kiri, dipisah garis pembatas dari tombol mode
+               waktu supaya jelas ini kategori mode yang berbeda. Class
+               "time-mode-btn" dipertahankan HANYA supaya tampilannya tetap
+               konsisten dengan tombol mode waktu (styling di
+               time-mode-modal.css) - class ini TIDAK lagi dipakai sebagai
+               selector logika pemilihan durasi (lihat "time-mode-option-btn"
+               di dalam modal di bawah). -->
+          <button
+            id="quoteModeBtn"
+            type="button"
+            class="btn btn-outline-primary time-mode-btn quote-mode-btn"
+            aria-pressed="false"
+            title="Latihan mengetik kutipan (quote) sungguhan"
+          >
+            Quotes
           </button>
-          <button class="btn btn-outline-primary time-mode-btn" data-time="60">
-            60
+
+          <span class="mode-toolbar-divider" aria-hidden="true"></span>
+
+          <!-- Tombol mode waktu: satu tombol ikon jam yang menampilkan durasi
+               terpilih saat ini. Klik membuka modal kecil (#timeModeModal)
+               berisi pilihan preset 30/60/120/180 detik + input custom. -->
+          <button
+            id="timeModeToggleBtn"
+            type="button"
+            class="btn btn-outline-primary time-mode-btn time-mode-toggle-btn"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            title="Pilih durasi tes"
+          >
+            <i class="fas fa-clock"></i>
+            <span id="timeModeToggleValue">60s</span>
           </button>
-          <button class="btn btn-outline-primary time-mode-btn" data-time="120">
-            120
-          </button>
-          <button class="btn btn-outline-primary time-mode-btn" data-time="180">
-            180
-          </button>
+
+          <span class="mode-toolbar-divider" aria-hidden="true"></span>
+
+          <!-- Tombol Settings: sekarang memakai class "time-mode-btn" yang
+               sama dengan tombol Quotes & tombol durasi (lihat
+               time-mode-modal.css) supaya tinggi, border, dan warnanya
+               konsisten dengan tombol lain di toolbar - sebelumnya memakai
+               class Bootstrap polos ("btn btn-outline-dark") yang membuatnya
+               terlihat "lepas"/tidak sejajar dari kelompok tombol lain. -->
           <a
             id="settingsButton"
             href="settings.html"
-            class="btn btn-outline-dark ms-2"
+            class="btn btn-outline-primary time-mode-btn settings-mode-btn"
             aria-label="Pengaturan"
           >
             <i class="fas fa-cog"></i>
           </a>
+        </div>
+
+        <!-- Modal kecil pilihan durasi tes: muncul saat #timeModeToggleBtn
+             diklik. Berisi 4 preset (30/60/120/180 detik) dan satu input
+             custom (hanya angka) untuk durasi bebas dalam detik. -->
+        <div id="timeModeModalOverlay" class="time-mode-modal-overlay" hidden>
+          <div
+            id="timeModeModal"
+            class="time-mode-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="timeModeModalTitle"
+            tabindex="-1"
+          >
+            <div class="time-mode-modal-header">
+              <span id="timeModeModalTitle">Pilih Durasi Tes</span>
+              <button
+                id="timeModeModalClose"
+                type="button"
+                class="time-mode-modal-close"
+                aria-label="Tutup"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="time-mode-modal-options">
+              <button type="button" class="btn btn-outline-primary time-mode-btn time-mode-option-btn" data-time="30">30</button>
+              <button type="button" class="btn btn-outline-primary time-mode-btn time-mode-option-btn" data-time="60">60</button>
+              <button type="button" class="btn btn-outline-primary time-mode-btn time-mode-option-btn" data-time="120">120</button>
+              <button type="button" class="btn btn-outline-primary time-mode-btn time-mode-option-btn" data-time="180">180</button>
+            </div>
+            <div class="time-mode-modal-custom">
+              <label for="timeModeCustomInput">Custom (detik)</label>
+              <div class="time-mode-modal-custom-row">
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  id="timeModeCustomInput"
+                  class="time-mode-custom-input"
+                  placeholder="mis. 45"
+                  maxlength="5"
+                  autocomplete="off"
+                />
+                <button
+                  id="timeModeCustomApply"
+                  type="button"
+                  class="btn btn-primary time-mode-custom-apply"
+                >
+                  Set
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <section id="typing-test" class="page active">
           <div class="main-typing-area">
@@ -153,6 +239,11 @@
               <div class="text-display-container">
                 <div id="textDisplay" class="text-display"></div>
               </div>
+              <!-- Nama sumber/author quote yang sedang aktif diketik saat mode
+                   Quotes menyala. Disembunyikan (display:none) selama mode
+                   Quotes tidak aktif; diisi & disinkronkan otomatis oleh
+                   updateQuoteAuthorDisplay() di game-logic.js. -->
+              <div id="quoteAuthorDisplay" class="quote-author-display" style="display: none;"></div>
               <div
                 class="results-container"
                 id="resultsDisplayArea"
@@ -175,6 +266,10 @@
                 </div>
                 <div class="results-summary">
                   <div class="summary-details">
+                    <div class="details-item">
+                      <span class="details-label">RAW WPM</span>
+                      <span id="finalRawWPM">--</span>
+                    </div>
                     <div class="details-item">
                       <span class="details-label">Waktu Test</span>
                       <span id="finalTime">--s</span>
@@ -308,47 +403,6 @@
               <!-- Keyboard Virtual Container -->
               <div id="virtual-keyboard-container" class="keyboard-container hidden">
                 <!-- Keyboard akan dirender di sini oleh JavaScript -->
-              </div>
-            </div>
-          </div>
-          <div
-            class="results-container"
-            id="resultsDisplayArea"
-            style="display: none"
-          >
-            <div class="chart-container">
-              <canvas id="resultChart"></canvas>
-            </div>
-            <div class="results-summary">
-              <div class="summary-main">
-                <div class="summary-item">
-                  <span class="summary-label">WPM</span>
-                  <span id="finalWPM" class="summary-value">--</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label">Akurasi</span>
-                  <span id="finalAccuracy" class="summary-value">--%</span>
-                </div>
-              </div>
-              <div class="summary-details">
-                <div class="details-item">
-                  <span class="details-label">RAW WPM</span>
-                  <span id="finalRawWPM">--</span>
-                </div>
-                <div class="details-item">
-                  <span class="details-label">Waktu Test</span>
-                  <span id="finalTime">--s</span>
-                </div>
-                <div class="details-item">
-                  <span class="details-label"
-                    >Karakter (Benar/Salah/Total)</span
-                  >
-                  <span id="finalChars">-- / -- / --</span>
-                </div>
-                <div class="details-item">
-                  <span class="details-label">Konsistensi</span>
-                  <span id="finalConsistency">--%</span>
-                </div>
               </div>
             </div>
           </div>

@@ -89,6 +89,40 @@ width: 65px;   /* Atur lebar sesuai keinginan */
     border-color: #3e3e3f;
 }
 
+/* Tombol toggle "Quotes": tetap pakai warna/hover/active dari .time-mode-btn,
+   hanya lebar & padding-nya yang beda supaya teks "Quotes" muat (tombol
+   waktu lain lebarnya fixed 35px, terlalu sempit untuk kata ini). */
+.quote-mode-btn {
+    width: auto;
+    padding: 0 14px;
+}
+
+.quote-mode-btn.loading {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.time-mode-btn.disabled-btn {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Nama sumber/author quote yang sedang aktif diketik (mode Quotes). */
+.quote-author-display {
+    width: 100%;
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #6d6d6d;
+}
+
+body.dark-mode .quote-author-display {
+    color: #bbbbbb;
+}
+
 /* Tombol restart */
 .restart-btn {
     position: relative;
@@ -126,6 +160,3 @@ width: 65px;   /* Atur lebar sesuai keinginan */
         padding: 8px 0;
     }
 }
-
-
-

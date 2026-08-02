@@ -187,6 +187,28 @@
   color: #333;
 }
 
+/* Mode caret baru (Block Outline, Corner Bracket, Dot, Double Line, Lightsaber,
+   Typewriter Head, Comet, Pen, Reactive Color) semuanya menandai posisi kursor
+   di level KARAKTER (persis seperti caret/underline/box), jadi highlight abu-abu
+   di atas SELURUH kata aktif (aturan default di atas) harus ikut dimatikan
+   untuk mode-mode ini juga - kalau tidak, gray background bawaan tetap tampil
+   dan menutupi bentuk kursor baru. Ditulis sebagai override terpisah (bukan
+   menambah panjang chain :not() di atas) supaya mode lama tidak perlu disentuh
+   sama sekali - CSS ini murni aditif, memakai attribute selector [data-cursor-mode]
+   yang sudah di-set text-display.js di setiap render (lihat updateWordHighlighting()). */
+#textDisplay[data-cursor-mode="outline"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="bracket"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="dot"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="doubleline"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="laser"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="typewriter"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="comet"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="pen"] .word-container.current-word-target,
+#textDisplay[data-cursor-mode="reactive"] .word-container.current-word-target {
+  background-color: transparent !important;
+  color: inherit;
+}
+
 /* Hapus highlight untuk mode underline */
 .underline-mode-active .word-container.current-word-target {
   background-color: transparent !important;
@@ -444,9 +466,16 @@
   border: 1px solid #555;
 }
 
-/* Mode Hidden - Hanya Border, Tanpa Background */
+/* Mode Hidden - Tanpa border, tanpa background.
+   Sebelumnya ada border 1px yang muncul/hilang tiap kali kata aktif
+   berpindah. Karena .word-container tidak memakai box-sizing: border-box,
+   border itu menambah 2px ke ukuran kotak kata setiap kali dipasang lalu
+   dilepas lagi saat kata itu selesai - dikombinasikan dengan
+   `transition: border 0.1s ease` di .word-container, perubahan ukuran ini
+   ikut dianimasikan dan terlihat sebagai teks "berdenyut" tiap pindah kata.
+   Menghapus border sepenuhnya menghilangkan pergeseran layout tsb. */
 .hidden-mode-active .word-container.current-word-target {
-  border: 1px solid #ccc;
+  border: none;
   padding: 0;
   background-color: transparent !important; /* Memastikan tidak ada warna latar */
   color: inherit;
@@ -461,6 +490,251 @@
 /* Mode Hidden - Kursor hidden tidak perlu ditampilkan */
 [data-cursor-mode="hidden"] .has-cursor::after {
   display: none;
+}
+
+/* ==========================================================================
+   Mode Caret Baru
+   ==========================================================================
+   Setiap blok di bawah menulis SATU rule dengan selector gabungan yang
+   menyasar dua mekanisme kursor sekaligus (sesuai catatan di permintaan):
+     1. Kursor lama, lewat pseudo-element ::after yang ditempel ke karakter
+        aktif (`[data-cursor-mode="..."] .has-cursor.cursor-before::after`,
+        dan varian `.cursor-after` untuk mode yang menempatkan kursor SETELAH
+        karakter terakhir - lihat CARET_AFTER_POSITION_MODES di text-display.js).
+     2. Smooth Caret, elemen tunggal `.smooth-caret.mode-<nama>` yang posisinya
+        (left/top/width/height) sudah dihitung & di-set inline oleh JS
+        (computeSmoothCaretRect() di text-display.js) - jadi properti geometri
+        yang ditulis di sini (left/top/width/height) HANYA benar-benar dipakai
+        oleh jalur ::after; untuk smooth-caret nilai itu otomatis ditimpa oleh
+        inline style JS, sehingga aman digabung dalam satu rule tanpa konflik.
+
+   Efek yang butuh data real-time (kecepatan ngetik utk Lightsaber/Comet,
+   status benar/salah utk Reactive Color) HANYA bisa dibuat dinamis penuh di
+   jalur Smooth Caret, karena di situ ada satu elemen JS-controlled yang bisa
+   diberi custom property `--caret-speed` / class state- tiap keystroke (lihat
+   positionSmoothCaret()). Jalur ::after lama tidak punya hook JS per-keystroke
+   seperti itu (elemen-nya "sekali pakai", dibuang-pasang ulang oleh browser
+   tiap kursor pindah karakter), jadi untuk mode itu dipakai pendekatan
+   statis/aproksimasi yang tetap terlihat archetype yang sama (lihat komentar
+   per mode di bawah).
+*/
+
+/* --- 1. Block Outline: kebalikan Box - cuma border, tengah transparan --- */
+[data-cursor-mode="outline"] .has-cursor.cursor-before::after,
+[data-cursor-mode="outline"] .has-cursor.cursor-after::after,
+.smooth-caret.mode-outline {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: 2px solid #555;
+  box-sizing: border-box;
+  border-radius: 3px;
+}
+
+/* --- 2. Corner Bracket: 4 siku di pojok karakter, mirip target sniper ---
+   Teknik "corner bracket" murni CSS: 8 linear-gradient dipakai sebagai
+   background-image terpisah (masing-masing jadi satu garis pendek), lalu
+   diposisikan ke 4 sudut kotak lewat background-position. */
+[data-cursor-mode="bracket"] .has-cursor.cursor-before::after,
+[data-cursor-mode="bracket"] .has-cursor.cursor-after::after,
+.smooth-caret.mode-bracket {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  background-image:
+    linear-gradient(#555, #555), linear-gradient(#555, #555),
+    linear-gradient(#555, #555), linear-gradient(#555, #555),
+    linear-gradient(#555, #555), linear-gradient(#555, #555),
+    linear-gradient(#555, #555), linear-gradient(#555, #555);
+  background-repeat: no-repeat;
+  background-size: 2px 7px, 7px 2px, 2px 7px, 7px 2px, 2px 7px, 7px 2px, 2px 7px, 7px 2px;
+  background-position:
+    top left, top left,
+    top right, top right,
+    bottom left, bottom left,
+    bottom right, bottom right;
+}
+
+/* --- 3. Dot / Circle: buletan kecil di baseline (bawah) karakter --- */
+.smooth-caret.mode-dot {
+  background-color: #555;
+  border-radius: 50%;
+}
+/* Untuk jalur ::after, geometri dot dihitung manual dengan transform (bukan
+   lewat computeSmoothCaretRect() yang cuma dipakai smooth-caret) supaya tetap
+   presisi di tengah-bawah karakter tanpa perlu JS. */
+[data-cursor-mode="dot"] .has-cursor.cursor-before::after,
+[data-cursor-mode="dot"] .has-cursor.cursor-after::after {
+  left: 50%;
+  bottom: -3px;
+  top: auto;
+  width: 6px;
+  height: 6px;
+  transform: translateX(-50%);
+  background-color: #555;
+  border-radius: 50%;
+}
+
+/* --- 4. Double Line: dua garis, satu di atas satu di bawah karakter --- */
+[data-cursor-mode="doubleline"] .has-cursor.cursor-before::after,
+[data-cursor-mode="doubleline"] .has-cursor.cursor-after::after,
+.smooth-caret.mode-doubleline {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border-top: 2px solid #555;
+  border-bottom: 2px solid #555;
+  box-sizing: border-box;
+}
+
+/* --- 5. Lightsaber / Laser: garis tegak dengan glow yang memanjang seiring
+   kecepatan ngetik (var(--caret-speed), 0..1, disetel JS tiap keystroke utk
+   smooth-caret; jalur ::after memakai glow tetap berukuran sedang karena
+   tidak ada hook kecepatan real-time). --- */
+[data-cursor-mode="laser"] .has-cursor.cursor-before::after {
+  left: -1px;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background-color: #00c2ff;
+  box-shadow: 0 0 8px 2px rgba(0, 194, 255, 0.75), 0 0 16px 4px rgba(0, 194, 255, 0.35);
+}
+[data-cursor-mode="laser"] .has-cursor.cursor-after::after {
+  left: 100%;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background-color: #00c2ff;
+  box-shadow: 0 0 8px 2px rgba(0, 194, 255, 0.75), 0 0 16px 4px rgba(0, 194, 255, 0.35);
+}
+.smooth-caret.mode-laser {
+  background-color: #00c2ff;
+  box-shadow:
+    0 0 calc(4px + 12px * var(--caret-speed, 0)) calc(1px + 3px * var(--caret-speed, 0)) rgba(0, 194, 255, 0.75),
+    0 0 calc(8px + 20px * var(--caret-speed, 0)) calc(2px + 4px * var(--caret-speed, 0)) rgba(0, 194, 255, 0.35);
+}
+
+/* --- 6. Typewriter Head: kotak kecil di ATAS karakter dengan animasi
+   "ketak-ketuk" (tap) tiap kursor pindah/keystroke. Untuk jalur ::after,
+   animasi berjalan otomatis karena elemen ::after selalu "baru" tiap kali
+   pindah ke karakter berbeda (browser me-restart animasi CSS untuk elemen
+   baru dengan sendirinya). Untuk smooth-caret (elemen tunggal yang menetap),
+   class `.tap` di-restart manual lewat reflow paksa di positionSmoothCaret(). --- */
+[data-cursor-mode="typewriter"] .has-cursor.cursor-before::after,
+[data-cursor-mode="typewriter"] .has-cursor.cursor-after::after {
+  left: 0;
+  top: -6px;
+  width: 100%;
+  height: 4px;
+  background-color: #555;
+  border-radius: 2px;
+  animation: cursorBlink 1s infinite, typewriterTap 0.15s ease;
+}
+.smooth-caret.mode-typewriter {
+  background-color: #555;
+  border-radius: 2px;
+}
+.smooth-caret.mode-typewriter.tap {
+  animation: typewriterTap 0.15s ease;
+}
+@keyframes typewriterTap {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+
+/* --- 7. Comet / Trail: caret utama + ekor 3-4 "huruf" di belakangnya, makin
+   cepat ngetik makin panjang ekornya (var(--caret-speed) di jalur smooth-caret;
+   ekor tetap/statis di jalur ::after). --- */
+[data-cursor-mode="comet"] .has-cursor.cursor-before::after {
+  left: -1px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: #555;
+  box-shadow:
+    -5px 0 0 -0.5px rgba(85, 85, 85, 0.45),
+    -10px 0 0 -0.5px rgba(85, 85, 85, 0.22),
+    -15px 0 0 -0.5px rgba(85, 85, 85, 0.1);
+}
+[data-cursor-mode="comet"] .has-cursor.cursor-after::after {
+  left: 100%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: #555;
+  box-shadow:
+    -5px 0 0 -0.5px rgba(85, 85, 85, 0.45),
+    -10px 0 0 -0.5px rgba(85, 85, 85, 0.22),
+    -15px 0 0 -0.5px rgba(85, 85, 85, 0.1);
+}
+.smooth-caret.mode-comet {
+  background-color: #555;
+  box-shadow:
+    calc(-4px - 10px * var(--caret-speed, 0)) 0 0 -0.5px rgba(85, 85, 85, 0.45),
+    calc(-8px - 20px * var(--caret-speed, 0)) 0 0 -0.5px rgba(85, 85, 85, 0.22),
+    calc(-12px - 30px * var(--caret-speed, 0)) 0 0 -0.5px rgba(85, 85, 85, 0.1);
+}
+
+/* --- 8. Pen / Brush: batang kecil miring menyerupai ujung pena yang "mencoret"
+   karakter yang baru diketik. --- */
+[data-cursor-mode="pen"] .has-cursor.cursor-before::after,
+[data-cursor-mode="pen"] .has-cursor.cursor-after::after,
+.smooth-caret.mode-pen {
+  width: 3px;
+  background-color: #8b5a2b;
+  border-radius: 0 3px 3px 0;
+  transform: rotate(18deg);
+  transform-origin: bottom center;
+}
+[data-cursor-mode="pen"] .has-cursor.cursor-before::after {
+  left: -1px;
+  top: 0;
+  height: 100%;
+}
+[data-cursor-mode="pen"] .has-cursor.cursor-after::after {
+  left: 100%;
+  top: 0;
+  height: 100%;
+}
+
+/* --- 9. Reactive Color: warna caret mengikuti performa mengetik - hijau
+   (ritme stabil & cepat), kuning (melambat), merah (karakter salah). Bentuk
+   dasarnya garis tegak seperti caret. Untuk jalur ::after (tanpa hook
+   kecepatan real-time), state hanya dibedakan benar/salah lewat class
+   `.wrong` yang sudah ditempel text-display.js ke karakter yang sama. --- */
+[data-cursor-mode="reactive"] .has-cursor.cursor-before::after,
+[data-cursor-mode="reactive"] .has-cursor.cursor-after::after {
+  left: -1px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background-color: #2ecc71;
+}
+[data-cursor-mode="reactive"] .has-cursor.cursor-after::after {
+  left: 100%;
+}
+[data-cursor-mode="reactive"] .has-cursor.wrong::after,
+[data-cursor-mode="reactive"] .has-cursor.incorrect::after {
+  background-color: #e74c3c;
+}
+.smooth-caret.mode-reactive {
+  background-color: #2ecc71;
+}
+.smooth-caret.mode-reactive.state-good {
+  background-color: #2ecc71;
+}
+.smooth-caret.mode-reactive.state-slow {
+  background-color: #f1c40f;
+}
+.smooth-caret.mode-reactive.state-error {
+  background-color: #e74c3c;
 }
 
 @keyframes cursorBlink {

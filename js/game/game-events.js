@@ -45,7 +45,18 @@ export function handleKeydown(e) {
   // Reset inactivity timer on any keydown
   startInactivityTimer();
 
-  if (gameState.timeRemaining <= 0 && gameState.timerInterval) {
+  // ✅ Mode Quotes sengaja membiarkan timeRemaining di 0 (stopwatch naik,
+  // bukan hitung mundur) - jangan pernah blokir keystroke di mode ini
+  // berdasarkan timeRemaining. Selain itu, gameState.timerInterval TIDAK
+  // pernah di-null-kan setelah clearInterval() (lihat endTest/invalidateTest/
+  // resetTestState di game-logic.js), jadi nilainya tetap "truthy" dari sisa
+  // interval id tes sebelumnya - itulah kenapa cek ini sempat memblokir
+  // SEMUA keystroke tes Quotes berikutnya setelah tes pertama pada page load.
+  if (
+    !gameState.quoteMode &&
+    gameState.timeRemaining <= 0 &&
+    gameState.timerInterval
+  ) {
     e.preventDefault();
     return;
   }
@@ -241,6 +252,15 @@ export function handleKeydown(e) {
     DOM.hiddenInput.value = "";
     updateWordHighlighting();
     updateRealtimeStats();
+
+    // ✅ Mode Quotes: tidak ada batas waktu - tes berakhir begitu SELURUH
+    // kata quote sudah di-commit (kasus ini jarang terjadi karena biasanya
+    // kata terakhir quote tidak diikuti spasi, tapi tetap dijaga untuk
+    // kasus di mana user memang menekan spasi di akhir).
+    if (gameState.quoteMode && gameState.typedWordIndex >= gameState.fullTextWords.length) {
+      endTest();
+      return;
+    }
   } else if (e.key === "Backspace") {
     // Highlight the backspace key on keyboard
     const keyboardContainer = document.getElementById('virtual-keyboard-container');
@@ -263,6 +283,23 @@ export function handleKeydown(e) {
       gameState.userTypedWords[gameState.typedWordIndex] = DOM.hiddenInput.value;
       updateWordHighlighting();
       updateRealtimeStats();
+
+      // ✅ Mode Quotes: kalau ini kata TERAKHIR dari quote dan sudah
+      // diketik sepanjang (atau lebih dari) kata targetnya, akhiri tes
+      // langsung tanpa menunggu spasi - kalimat/quote memang biasanya
+      // diakhiri tanda baca, bukan spasi.
+      if (
+        gameState.quoteMode &&
+        gameState.typedWordIndex === gameState.fullTextWords.length - 1
+      ) {
+        const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || "";
+        const typedNow = DOM.hiddenInput.value;
+        if (targetWord.length > 0 && typedNow.length >= targetWord.length) {
+          processTypedWord();
+          gameState.typedWordIndex++;
+          endTest();
+        }
+      }
     }, 0);
   }
 

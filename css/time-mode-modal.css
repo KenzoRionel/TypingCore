@@ -1,0 +1,398 @@
+/* css/style.css atau css/common.css */
+
+#MenuButton {
+    /* ✅ PERBAIKAN: lebar tetap 800px sebelumnya membuat kotak toolbar jauh
+       lebih lebar dari isinya (3 tombol kecil), sehingga tombol-tombol
+       terlihat "menggantung"/tidak center secara visual di dalam kotak
+       besar yang kosong. Sekarang lebar mengikuti isi kontennya sendiri
+       (fit-content) - tetap dijaga konsisten walau class ".mode-toolbar"
+       (time-mode-modal.css) sudah mengatur ini juga lewat !important. */
+    width: fit-content;
+    height: 40px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 20px auto;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background-color: #ececec;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+#myCustomButton {
+    /* Tinggi 10px untuk button */
+    height: 10px; /* Ini akan membuat tombol sangat kecil. Mungkin Anda maksud 'padding' atau 'font-size'? */
+    width: auto; /* Lebar akan menyesuaikan konten, atau bisa diatur fixed jika mau */
+    padding: 10px 20px; /* Padding untuk tombol, membuat tombol lebih mudah diklik */
+    
+    font-size: 1em; /* Ukuran font */
+    background-color: #3e3e3f; /* Warna latar belakang tombol (misal: biru Bootstrap) */
+    color: white; /* Warna teks tombol */
+    border: none; /* Hapus border default tombol */
+    border-radius: 5px; /* Border-radius untuk tombol */
+    cursor: pointer; /* Ubah kursor menjadi pointer saat dihover */
+    transition: background-color 0.3s ease, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1); /* Efek transisi saat hover */
+
+    /* Bayangan untuk tombol, bisa berbeda dari wadahnya */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#myCustomButton:hover {
+    background-color: #3e3e3f; /* Warna saat tombol dihover */
+}
+
+/* Tambahkan di css/custom-button.css atau style.css */
+.time-mode-btn {
+    width: 35px;   /* Atur lebar sesuai keinginan */
+    flex: none;     /* Nonaktifkan flex agar width berlaku */
+    /* ✅ PERBAIKAN: dulu tiap tombol punya margin sendiri (0 8px) SEKALIGUS
+       #MenuButton juga punya `gap: 12px` di flex container-nya - dua-duanya
+       menumpuk jadi jarak antar tombol tidak konsisten/terlalu lebar dan
+       membuat toolbar terlihat berantakan. Sekarang jarak antar tombol
+       murni diatur oleh `gap` pada #MenuButton saja, jadi margin di sini
+       dihilangkan (bukan dihapus total supaya elemen non-flex yang mungkin
+       masih memakai class ini tidak collapse total - cukup di-nolkan).
+       display:inline-flex + align-items/justify-content: center dipakai
+       supaya ikon/teks di dalam tombol (termasuk tombol icon-only seperti
+       Settings) selalu presisi di tengah, apa pun elemennya (<button> atau
+       <a>). */
+    margin: 0;
+    height: 25px;           /* Tinggi tombol mengikuti tinggi container */
+    font-size: 12px;
+    font-family: monospace, monospace;;
+    border-radius: 5px;
+    background-color: #f8f9fa00;
+    color: #6d6d6d;
+    border: 2px solid #6d6d6d;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    padding: 0;             /* Hilangkan padding agar tinggi benar-benar 100% */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-decoration: none;  /* Kalau elemennya <a> (mis. tombol Settings), hilangkan underline default link */
+}
+
+.time-mode-btn.active,
+.time-mode-btn:hover,
+.time-mode-btn:focus {
+    background-color: #3e3e3f;
+    color: #fff;
+    border-color: #3e3e3f;
+}
+.word-type-btn{
+width: 65px;   /* Atur lebar sesuai keinginan */
+    flex: none;     /* Nonaktifkan flex agar width berlaku */
+    margin: 0 8px;
+    height: 25px;           /* Tinggi tombol mengikuti tinggi container */
+    font-size: 12px;
+    font-family: monospace, monospace;;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    color: #6d6d6d;
+    border: 2px solid #6d6d6d;
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    padding: 0;             /* Hilangkan padding agar tinggi benar-benar 100% */
+    background-color: #3e3e3f00;
+    color: #6d6d6d;
+   border-color: #6d6d6d;
+}
+.word-type-btn.active,
+.word-type-btn:hover,
+.word-type-btn:focus {
+    background-color: #3e3e3f;
+    color: #fff;
+    border-color: #3e3e3f;
+}
+
+/* Tombol toggle "Quotes": tetap pakai warna/hover/active dari .time-mode-btn,
+   hanya lebar & padding-nya yang beda supaya teks "Quotes" muat (tombol
+   waktu lain lebarnya fixed 35px, terlalu sempit untuk kata ini). */
+.quote-mode-btn {
+    width: auto;
+    padding: 0 14px;
+}
+
+.quote-mode-btn.loading {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* ✅ PERBAIKAN TATA LETAK: tombol Settings (ikon gear) sebelumnya memakai
+   class Bootstrap polos ("btn btn-outline-dark") yang punya tinggi, padding,
+   warna border, dan radius BERBEDA dari tombol-tombol lain di toolbar
+   (Quotes, jam durasi) yang semuanya memakai ".time-mode-btn". Akibatnya
+   tombol Settings terlihat "lepas"/tidak sejajar dari kelompok tombol lain
+   (lebih tinggi, border lebih tebal/gelap, tidak center secara vertikal).
+   Sekarang tombol Settings JUGA memakai class ".time-mode-btn" di HTML
+   (lihat index.html) supaya ukuran & warnanya otomatis konsisten; class
+   ".settings-mode-btn" ini hanya menambah aturan kecil yang spesifik untuk
+   tombol ini (icon-only, tanpa lebar tetap 35px seperti tombol angka -
+   tetap dipakai karena ukurannya memang cocok untuk satu ikon). */
+.settings-mode-btn {
+    text-decoration: none;
+}
+
+.settings-mode-btn:hover,
+.settings-mode-btn:focus {
+    text-decoration: none;
+}
+
+.time-mode-btn.disabled-btn {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ✅ PERBAIKAN: #timeModeToggleBtn (ikon jam + label durasi di toolbar)
+   sebelumnya ikut memakai lebar tetap 35px dari ".time-mode-btn" - lebar
+   itu dirancang untuk label pendek seperti "60s". Begitu durasi custom-nya
+   panjang (mis. "1000s" atau hasil konversi seperti "16m40s"), teksnya
+   keluar dari border tombol. Sekarang khusus tombol ini lebarnya
+   menyesuaikan isi (auto) dengan padding kiri-kanan & jarak kecil antara
+   ikon jam dan angka - tombol preset 30/60/120/180 di dalam modal TETAP
+   35px seperti semula karena tidak dipakai class ini. */
+.time-mode-toggle-btn {
+    width: auto;
+    min-width: 35px;
+    padding: 0 10px;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+/* Tombol preset durasi di dalam modal (30/60/120/180): sedikit lebih
+   lebar dari default 35px supaya "120"/"180" (3 digit) tidak mepet ke
+   border. */
+.time-mode-modal-options .time-mode-option-btn {
+    width: 48px;
+}
+
+/* Nama sumber/author quote yang sedang aktif diketik (mode Quotes). */
+.quote-author-display {
+    width: 100%;
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #6d6d6d;
+}
+
+body.dark-mode .quote-author-display {
+    color: #bbbbbb;
+}
+
+/* Tombol restart */
+.restart-btn {
+    position: relative;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #888 !important; /* Warna ikon lebih samar */
+    padding: 0 !important;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.restart-btn:hover,
+.restart-btn:focus {
+    color: #3e3e3f !important; /* Biru saat hover/fokus */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   MODAL DURASI TES (#timeModeModalOverlay / #timeModeModal)
+   ------------------------------------------------------------
+   ✅ PERBAIKAN: file ini (walau namanya "time-mode-modal.css")
+   sebelumnya TIDAK punya sama sekali aturan untuk class
+   ".time-mode-modal-overlay" / ".time-mode-modal" dkk, padahal
+   markup modalnya di index.html sudah memakai class-class ini.
+   Akibatnya modal tampil sebagai <div> polos tanpa styling/posisi
+   khusus (position: static bawaan browser) - dia cuma "jatuh"
+   mengikuti urutan dokumen HTML apa adanya (rata kiri di bawah
+   toolbar), bukan mengambang di dekat tombol jam yang diklik.
+
+   Sekarang modal memakai position: fixed dan digaya seperti toast/
+   tooltip (border + panah kecil menunjuk ke tombol). Posisi persis
+   (top/left) & posisi panah (--arrow-left) HARUS diisi lewat JS saat
+   modal dibuka, karena CSS saja tidak tahu di mana tombol pemicunya
+   berada di layar. Lihat catatan "positionTimeModeModal()" di bawah -
+   fungsi ini perlu ditambahkan/dipanggil dari main.js. */
+
+.time-mode-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: transparent; /* overlay di sini cuma buat nangkep klik di luar modal supaya modal tertutup, bukan buat menggelapkan layar seperti modal besar biasa */
+    z-index: 1050;
+}
+
+.time-mode-modal {
+    /* top/left sengaja diisi 0 di sini - nilai aslinya di-set inline oleh
+       JS (positionTimeModeModal) berdasarkan getBoundingClientRect() dari
+       #timeModeToggleBtn, supaya modal selalu presisi mengambang tepat di
+       bawah tombol itu, di halaman/ukuran layar manapun. */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px;
+    max-width: calc(100vw - 16px);
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    padding: 14px 16px 16px;
+    z-index: 1051;
+    box-sizing: border-box;
+}
+
+/* Panah kecil (segitiga) gaya toast yang menunjuk ke tombol jam.
+   --arrow-left diisi oleh JS (offset horizontal tombol relatif terhadap
+   sisi kiri modal) supaya panahnya tetap presisi di bawah tombol walau
+   modal digeser ke kiri/kanan agar tidak keluar layar. */
+.time-mode-modal::before,
+.time-mode-modal::after {
+    content: "";
+    position: absolute;
+    top: -9px;
+    left: var(--arrow-left, 24px);
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 9px solid #ccc;
+}
+
+.time-mode-modal::after {
+    top: -7.5px;
+    border-left-width: 8px;
+    border-right-width: 8px;
+    border-bottom: 8px solid #fff;
+}
+
+/* Kalau modal ditampilkan di ATAS tombol (lihat positionTimeModeModal()
+   di time-mode-modal-helpers.js - terjadi saat tombol dekat tepi bawah
+   layar), panah dibalik supaya tetap menunjuk ke arah tombol. */
+.time-mode-modal.arrow-bottom::before,
+.time-mode-modal.arrow-bottom::after {
+    top: auto;
+    bottom: -9px;
+    border-bottom: none;
+    border-top: 9px solid #ccc;
+}
+.time-mode-modal.arrow-bottom::after {
+    bottom: -7.5px;
+    border-top: 8px solid #fff;
+}
+body.dark-mode .time-mode-modal.arrow-bottom::before {
+    border-top-color: #444;
+}
+body.dark-mode .time-mode-modal.arrow-bottom::after {
+    border-top-color: #2a2a2a;
+}
+
+.time-mode-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #3e3e3f;
+    margin-bottom: 12px;
+}
+
+.time-mode-modal-close {
+    background: transparent;
+    border: none;
+    color: #6d6d6d;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 4px;
+}
+
+.time-mode-modal-close:hover {
+    color: #3e3e3f;
+}
+
+.time-mode-modal-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.time-mode-modal-custom label {
+    display: block;
+    font-size: 0.82rem;
+    color: #6d6d6d;
+    margin-bottom: 6px;
+}
+
+.time-mode-modal-custom-row {
+    display: flex;
+    gap: 8px;
+}
+
+.time-mode-custom-input {
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.time-mode-custom-apply {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+}
+
+body.dark-mode .time-mode-modal {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+body.dark-mode .time-mode-modal::before {
+    border-bottom-color: #444;
+}
+body.dark-mode .time-mode-modal::after {
+    border-bottom-color: #2a2a2a;
+}
+body.dark-mode .time-mode-modal-header {
+    color: #eee;
+}
+body.dark-mode .time-mode-modal-close {
+    color: #bbb;
+}
+body.dark-mode .time-mode-custom-input {
+    background-color: #1f1f1f;
+    border-color: #444;
+    color: #eee;
+}
+
+/* Responsive: jika container terlalu kecil, tombol tetap proporsional */
+@media (max-width: 900px) {
+    #MenuButton {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .time-mode-btn {
+        font-size: 0.95rem;
+        margin: 4px 2px;
+        padding: 8px 0;
+    }
+}

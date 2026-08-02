@@ -27,12 +27,8 @@ import {
   getLevelName,
 } from "../utils/level-system.js";
 import { showLevelUpToast } from "../utils/toast.js";
+import { getRandomQuoteSync } from "../data/quotes-loader.js";
 
-
-// ✅ BARU: helper untuk menghitung karakter benar/salah pada kata yang SEDANG diketik
-// (belum di-submit lewat processTypedWord). Sumber datanya adalah gameState.currentWordCharLog,
-// yang mencatat status tiap karakter (benar/salah, apakah spasi, dan "detik ke berapa" saat
-// karakter itu dihitung) sehingga bisa dibatalkan dengan presisi saat user menekan Backspace.
 function getInProgressCharCounts() {
   const log = gameState.currentWordCharLog || [];
   let correct = 0;
@@ -48,12 +44,6 @@ function getInProgressCharCounts() {
 }
 
 export function generateAndAppendWords(numWords) {
-  // ✅ Mode ghost caret: selama ghostMode aktif & ada ghostWords, kata TIDAK
-  // diacak - kata diambil BERURUTAN dari ghostWords (persis urutan teks pada
-  // sesi sebelumnya), supaya teks yang tampil identik dengan sesi yang mau
-  // "dibayangi". gameState.fullTextWords.length dipakai sebagai pointer
-  // posisi berikutnya di ghostWords, karena generateAndAppendWords() bisa
-  // dipanggil berkali-kali (buffer awal, lalu top-up saat mendekati akhir).
   const useGhostWords =
     gameState.ghostMode &&
     Array.isArray(gameState.ghostWords) &&
@@ -67,10 +57,7 @@ export function generateAndAppendWords(numWords) {
       if (ghostIdx < gameState.ghostWords.length) {
         word = gameState.ghostWords[ghostIdx];
       } else {
-        // Teks ghost sudah habis (user mengetik lebih jauh dari sesi
-        // sebelumnya) - isi dengan kata acak dari word set asli supaya tes
-        // tetap bisa lanjut. Ghost caret sendiri otomatis berhenti bergerak
-        // begitu ghostTimeline-nya habis, jadi ini tidak memengaruhi ghost.
+
         const fallbackSource =
           (gameState.previousWordSet && gameState.previousWordSet.length > 0)
             ? gameState.previousWordSet
@@ -87,10 +74,29 @@ export function generateAndAppendWords(numWords) {
     return;
   }
 
-  // ✅ Mode latihan kata salah: selama practiceMode aktif & ada practiceWords,
-  // kata diambil dari daftar itu (bukan window.defaultKataKata). Ini murni
-  // menentukan SUMBER kata; format & cara push ke fullTextWords tetap sama
-  // persis seperti sebelumnya.
+  if (gameState.quoteMode) {
+    if (gameState.quoteWordBuffer.length === 0) {
+      const quote = getRandomQuoteSync();
+      const words = quote
+        ? quote.text.trim().split(/\s+/)
+        : ["Quotes", "gagal", "dimuat."];
+
+      gameState.quoteWordBuffer = words;
+      gameState.quoteAuthorMarks = [
+        { atIndex: 0, author: quote ? (quote.author || "Anonim") : "", text: quote ? quote.text : "" },
+      ];
+
+      for (const word of words) {
+        gameState.fullTextWords.push(word);
+        gameState.typedWordCorrectness.push(false);
+        gameState.userTypedWords.push("");
+      }
+
+      updateQuoteAuthorDisplay();
+    }
+    return;
+  }
+
   const usePracticeWords =
     gameState.practiceMode &&
     Array.isArray(gameState.practiceWords) &&
@@ -116,6 +122,14 @@ export function generateAndAppendWords(numWords) {
     gameState.typedWordCorrectness.push(false);
     gameState.userTypedWords.push("");
   }
+}
+
+export function updateQuoteAuthorDisplay() {
+  const el = document.getElementById("quoteAuthorDisplay");
+  if (!el) return;
+
+  el.style.display = "none";
+  el.textContent = "";
 }
 
 export function processTypedWord() {
@@ -178,14 +192,12 @@ export function processTypedWord() {
 
   gameState.wordStartTime = now;
 
-  // ✅ PERBAIKAN (poin 3): reset log karakter kata berjalan setelah kata selesai diproses,
-  // supaya kata berikutnya mulai dari log kosong (tidak mewarisi jejak karakter kata lama).
   gameState.currentWordCharLog = [];
 }
 
-// ✅ KODE YANG DIUBAH
 export function updateRealtimeStats() {
   const DOM = getGameDOMReferences();
+  updateQuoteAuthorDisplay();
   if (!gameState.startTime) {
     try {
       setWpmSpeedometer(0);
@@ -202,10 +214,6 @@ export function updateRealtimeStats() {
   const elapsedMs = now - gameState.startTime;
   const elapsedMinutes = elapsedMs / 60000;
 
-  // ✅ PERBAIKAN UTAMA (poin 1): sebelumnya SEMUA karakter yang sedang diketik pada kata
-  // berjalan (DOM.hiddenInput.value.length) diasumsikan benar. Sekarang kita pakai
-  // currentWordCharLog yang mencatat status benar/salah per karakter secara real-time,
-  // supaya WPM & akurasi live tidak lagi selalu "sempurna" untuk kata yang belum selesai.
   const { correct: inProgressCorrect, incorrect: inProgressIncorrect } =
     getInProgressCharCounts();
   const totalCorrectChars = gameState.correctChars + inProgressCorrect;
@@ -272,16 +280,7 @@ export function updateRealtimeStats() {
   }
 }
 
-// =============== LATIHAN KATA YANG SALAH (WRONG-WORDS PRACTICE) ===============
 
-/**
- * Hitung frekuensi kata yang salah dari historyData (entri hasil processTypedWord(),
- * yaitu yang punya field `word` & `correct`), urutkan menurun (paling sering salah
- * di atas), lalu bangun daftar "berbobot" untuk gameState.practiceWords: tiap kata
- * diulang beberapa kali sesuai frekuensi kesalahannya (minimal beberapa kali per
- * kata) supaya generateAndAppendWords() punya buffer yang cukup & kata yang lebih
- * sering salah lebih sering muncul lagi saat latihan.
- */
 function buildWrongWordsPracticeData(historyData) {
   const freq = {};
   (historyData || []).forEach((entry) => {
@@ -302,16 +301,7 @@ function buildWrongWordsPracticeData(historyData) {
   return { sortedWords, weightedList };
 }
 
-/**
- * Tampilkan/sembunyikan tombol "Latih Kata yang Salah" (icon-only) beserta
- * badge hitungan kata unik yang salah. Tombol ini HANYA relevan setelah
- * halaman hasil muncul, jadi kalau tidak ada kata yang salah, tombol tetap
- * disembunyikan. Sama seperti tombol Statistik: pakai class 'show' UNTUK
- * KONSISTENSI dengan `.result-only-btn` di style.css, TAPI juga dipaksa lewat
- * inline style ber-prioritas "important" karena tombol ini memakai class
- * Bootstrap "d-flex" (display:flex !important) yang bisa menang dari aturan
- * class biasa — inline !important selalu menang dari stylesheet manapun.
- */
+
 function updatePracticeWrongWordsButton(uniqueWrongWordCount) {
   const btn = document.getElementById("practiceWrongWordsBtn");
   const countEl = document.getElementById("practiceWrongWordsCount");
@@ -336,15 +326,7 @@ function hidePracticeWrongWordsButton() {
   }
 }
 
-/**
- * Handler klik tombol "Latih Kata yang Salah".
- * Menyimpan word set aktif saat ini (window.defaultKataKata) sebagai
- * gameState.previousWordSet supaya bisa dipulihkan setelah sesi latihan
- * berakhir, mengaktifkan practiceMode, lalu me-restart tes lewat
- * resetTestState({ preservePracticeMode: true }) — variannya "preserve" ini
- * penting karena resetTestState() secara default MEMATIKAN practiceMode
- * (lihat komentar di resetTestState).
- */
+
 export function startWrongWordsPractice() {
   if (!Array.isArray(gameState.practiceWords) || gameState.practiceWords.length === 0) {
     return;
@@ -363,15 +345,6 @@ export function initPracticeWrongWordsButton() {
   btn.addEventListener("click", startWrongWordsPractice);
 }
 
-// =============== LATIHAN "GHOST CARET" (ULANGI SESI SEBELUMNYA) ===============
-
-// Sama seperti TypingRecorder.computePlaybackTimestamps() di typing-replay.js:
-// timestamp keystroke yang direkam sudah berupa elapsedMs (relatif ke
-// startTime sesi ITU), jadi pada dasarnya sudah jadi timeline virtual.
-// Yang perlu ditambahkan cuma pembatasan delay antar keystroke (delay cap)
-// supaya jeda yang sangat panjang (mis. user berhenti sejenak di tengah
-// sesi sebelumnya) tidak membuat ghost caret "diam" lama sekali saat
-// direplay - dibatasi maksimal GHOST_DELAY_CAP_MS per langkah.
 const GHOST_DELAY_CAP_MS = 2000;
 
 function computeGhostTimeline(keystrokes) {
@@ -405,12 +378,6 @@ function stopGhostTimer() {
   }
 }
 
-/**
- * Mulai timer yang memajukan gameState.ghostCurrentIndex mengikuti waktu
- * tes berjalan (Date.now() - gameState.startTime) dibandingkan dengan
- * gameState.ghostTimeline, lalu memicu render posisi ghost caret. Dipanggil
- * dari startTimer() begitu tes (yang sedang dalam ghostMode) benar-benar mulai.
- */
 function startGhostTimer() {
   if (!gameState.ghostMode) return;
   const timeline = gameState.ghostTimeline;
@@ -431,18 +398,13 @@ function startGhostTimer() {
 
     updateGhostHighlighting();
 
-    // Ghost sudah mencapai akhir sesi sebelumnya - tidak ada lagi yang perlu
-    // dimajukan, hentikan timer supaya tidak terus polling tanpa guna.
     if (idx >= timeline.length - 1 && elapsed >= timeline[timeline.length - 1]) {
       stopGhostTimer();
     }
   }, 100);
 }
 
-/**
- * Tampilkan/sembunyikan tombol "Ulangi dengan Ghost Caret" (icon-only),
- * mengikuti pola persis updatePracticeWrongWordsButton() di atas.
- */
+
 function updateGhostPracticeButton(show) {
   const btn = document.getElementById("ghostPracticeBtn");
   if (!btn) return;
@@ -461,12 +423,6 @@ function hideGhostPracticeButton() {
   updateGhostPracticeButton(false);
 }
 
-/**
- * Handler klik tombol ghost caret. Menyimpan word set aktif sebagai
- * gameState.previousWordSet (dipulihkan nanti), membangun ghostWords +
- * ghostTimeline dari gameState.ghostData (replay sesi TERAKHIR yang
- * selesai), lalu me-restart tes lewat resetTestState({ preserveGhostMode: true }).
- */
 export function startGhostPractice() {
   const data = gameState.ghostData;
   if (
@@ -521,7 +477,11 @@ export function calculateAndDisplayFinalResults() {
       ? Math.round((finalCorrectChars / totalTypedChars) * 100)
       : 0;
 
-  const totalTestMinutes = gameState.TIMED_TEST_DURATION / 60;
+  const actualTestDuration = gameState.quoteMode
+    ? Math.max(1, Math.round((Date.now() - gameState.startTime) / 1000))
+    : gameState.TIMED_TEST_DURATION;
+
+  const totalTestMinutes = actualTestDuration / 60;
   const finalWPM =
     totalTestMinutes > 0
       ? Math.round(finalCorrectChars / 5 / totalTestMinutes)
@@ -535,7 +495,7 @@ export function calculateAndDisplayFinalResults() {
   /** ✅ Hitung Konsistensi berdasarkan keystroke */
   let consistency = 0;
   const keystrokeLog = gameState.keystrokeLog || [];
-  const perSecond = new Array(gameState.TIMED_TEST_DURATION).fill(0);
+  const perSecond = new Array(actualTestDuration).fill(0);
 
   keystrokeLog.forEach((ts) => {
     const sec = Math.floor((ts - gameState.startTime) / 1000);
@@ -576,7 +536,7 @@ export function calculateAndDisplayFinalResults() {
   document.getElementById("finalAccuracy").textContent = `${finalAccuracy}%`;
   document.getElementById(
     "finalTime"
-  ).textContent = `${gameState.TIMED_TEST_DURATION}s`;
+  ).textContent = `${actualTestDuration}s`;
   document.getElementById(
     "finalChars"
   ).textContent = `${finalCorrectChars} / ${finalIncorrectChars} / ${totalTypedChars}`;
@@ -589,26 +549,27 @@ export function calculateAndDisplayFinalResults() {
 
   const historyData = gameState.history.slice();
 
-  // ✅ Hitung kata yang salah SEBELUM resetTestState() (yang akan mengosongkan
-  // gameState.history) dipanggil di mana pun setelah ini — lihat komentar di
-  // buildWrongWordsPracticeData(). Hasilnya disimpan ke gameState.practiceWords
-  // dan tombol "Latih Kata yang Salah" ditampilkan hanya jika ada kata yang salah.
   const { sortedWords: wrongWordsUnique, weightedList: wrongWordsWeighted } =
     buildWrongWordsPracticeData(historyData);
   gameState.practiceWords = wrongWordsWeighted;
   updatePracticeWrongWordsButton(wrongWordsUnique.length);
 
+  const quoteAuthorForChart =
+    gameState.quoteMode &&
+    Array.isArray(gameState.quoteAuthorMarks) &&
+    gameState.quoteAuthorMarks.length > 0
+      ? gameState.quoteAuthorMarks[gameState.quoteAuthorMarks.length - 1].author
+      : null;
+
   renderResultChart(
     historyData,
     finalWPM,
-    gameState.TIMED_TEST_DURATION,
+    actualTestDuration,
     gameState.rawWpmPerSecond,
-    gameState.correctCharsPerSecond
+    gameState.correctCharsPerSecond,
+    quoteAuthorForChart
   );
 
-  // Render statistics panel with test context
-  // Data diambil dari elemen/state yang sesungguhnya dipakai saat test berjalan,
-  // bukan nilai hardcoded, supaya "Konteks Test" menampilkan kondisi test yang nyata.
   const selectedLangInput = document.querySelector('input[name="language"]:checked');
   const languageLabel = selectedLangInput
     ? (selectedLangInput.value === 'en' ? 'English' : 'Bahasa Indonesia')
@@ -618,8 +579,7 @@ export function calculateAndDisplayFinalResults() {
   const avgWordLength = targetWordsUsed.length > 0
     ? targetWordsUsed.reduce((sum, w) => sum + w.length, 0) / targetWordsUsed.length
     : 0;
-  // Heuristik sederhana: kata dianggap "langka/sulit" jika panjangnya >= 7 karakter,
-  // karena tidak ada data frekuensi kata di kode ini untuk dijadikan acuan yang lebih akurat.
+
   const rareWordCount = targetWordsUsed.filter((w) => w.length >= 7).length;
   const rareWordPercent = targetWordsUsed.length > 0
     ? Math.round((rareWordCount / targetWordsUsed.length) * 100)
@@ -629,7 +589,9 @@ export function calculateAndDisplayFinalResults() {
   const hasPunctuation = targetWordsUsed.some((w) => /[.,!?;:'"()\-]/.test(w));
 
   const testContext = {
-    mode: `${languageLabel} · Time Mode (${gameState.TIMED_TEST_DURATION}s)`,
+    mode: gameState.quoteMode
+      ? `${languageLabel} · Quotes Mode (${actualTestDuration}s)`
+      : `${languageLabel} · Time Mode (${actualTestDuration}s)`,
     difficulty: avgWordLength > 0
       ? `Avg ${avgWordLength.toFixed(1)} karakter/kata, ${rareWordPercent}% kata langka`
       : '-',
@@ -640,19 +602,14 @@ export function calculateAndDisplayFinalResults() {
   renderStatisticsPanel(
     historyData,
     finalWPM,
-    gameState.TIMED_TEST_DURATION,
+    actualTestDuration,
     testContext
   );
 
-  // Prepare replay data - save text that was actually typed (not target words)
-  // Using join(' ') to include spaces between words
   const typedText = gameState.userTypedWords.filter(w => w && w.length > 0).join(' ');
-  
-  // Build target text (full text that should have been typed)
+
   const targetText = gameState.fullTextWords.slice(0, gameState.typedWordIndex + 1).join(' ');
-  
-  // OPTIMIZED: Only store minimal keystroke data to prevent localStorage quota exceeded
-  // Store only essential data, reconstruct state during replay from these keystrokes
+
   const keystrokesForReplay = (gameState.keystrokeDetails || []).map((keystroke, index) => {
     const elapsedMs = keystroke.timestamp - gameState.startTime;
     
@@ -664,7 +621,7 @@ export function calculateAndDisplayFinalResults() {
       inputState: keystroke.inputState || '',
       wpm: keystroke.wpm || 0,
       accuracy: keystroke.accuracy || 100,
-      timeElapsed: keystroke.timeElapsed || gameState.TIMED_TEST_DURATION
+      timeElapsed: keystroke.timeElapsed || actualTestDuration
     };
   });
 
@@ -677,27 +634,20 @@ export function calculateAndDisplayFinalResults() {
     // REMOVED: keystrokeDetails - too large, causes QuotaExceededError
   };
 
-  // ✅ Simpan replay sesi INI sebagai data ghost untuk fitur "Ulangi dengan
-  // Ghost Caret". Ditimpa setiap kali tes selesai, jadi tombolnya selalu
-  // merujuk ke sesi TERAKHIR yang baru saja diselesaikan (bukan yang sedang
-  // di-ghost-kan itu sendiri, karena reset di startGhostPractice() terjadi
-  // sebelum tes baru berjalan sampai selesai).
   gameState.ghostData = replayData;
   updateGhostPracticeButton(true);
 
   if (typeof window.saveScore === "function") {
-    // 'en' untuk English, selain itu dianggap 'id' (Bahasa Indonesia) —
-    // konsisten dengan logic languageLabel di atas. Dipakai oleh PB Cards
-    // di halaman profil untuk membedakan mode per bahasa.
+
     const languageCode = selectedLangInput && selectedLangInput.value === 'en' ? 'en' : 'id';
 
     window.saveScore(
       finalWPM,
       finalAccuracy,
-      gameState.TIMED_TEST_DURATION,
+      actualTestDuration,
       finalIncorrectChars,
-      "Tes Kata Umum (Acak)",
-      "default",
+      gameState.quoteMode ? "Tes Kutipan (Quotes)" : "Tes Kata Umum (Acak)",
+      gameState.quoteMode ? "quotes" : "default",
       gameState.totalCorrectWords,
       gameState.totalIncorrectWords,
       replayData,
@@ -736,12 +686,10 @@ function removeSpaceScrollPrevention() {
   document.removeEventListener('keydown', preventSpaceScroll);
 }
 
-
-
-
 export function endTest() {
   const DOM = getGameDOMReferences();
   clearInterval(gameState.timerInterval);
+  gameState.timerInterval = null;
   clearInterval(gameState.updateStatsInterval);
   clearTimeout(gameState.inactivityTimer);
   DOM.hiddenInput.disabled = true;
@@ -749,9 +697,7 @@ export function endTest() {
   // Set flag global bahwa tes sudah selesai
   window.isTestCompleted = true;
   console.log('DEBUG: endTest() - window.isTestCompleted set to true');
-  
-  // Update UI keyboard untuk menyembunyikan keyboard saat tes selesai
-  // Panggil SEBELUM calculateAndDisplayFinalResults untuk menghindari error di saveScore
+
   try {
     updateKeyboardVisibilityUI({
       hideStats: hideStatsContainer,
@@ -767,13 +713,6 @@ export function endTest() {
     calculateAndDisplayFinalResults();
   }
 
-  // ✅ Sesi latihan kata salah (kalau ada) berakhir begitu tes-nya selesai:
-  // pulihkan window.defaultKataKata ke word set yang aktif SEBELUM latihan
-  // dimulai, lalu matikan practiceMode. gameState.practiceWords (daftar kata
-  // salah dari sesi INI) tetap dibiarkan apa adanya — sudah ditimpa dengan
-  // hasil terbaru oleh calculateAndDisplayFinalResults() di atas, dan tombol
-  // "Latih Kata yang Salah" tetap tampil kalau masih ada kata yang salah,
-  // supaya user bisa langsung melatih ulang kata yang masih sering keliru.
   if (gameState.practiceMode) {
     if (gameState.previousWordSet) {
       window.defaultKataKata = gameState.previousWordSet;
@@ -782,11 +721,6 @@ export function endTest() {
     gameState.previousWordSet = null;
   }
 
-  // ✅ Sesi latihan ghost caret (kalau ada) juga berakhir begitu tes-nya
-  // selesai: hentikan timer ghost & pulihkan word set asli. gameState.ghostData
-  // TIDAK direset di sini - itu akan ditimpa oleh replay sesi INI di
-  // calculateAndDisplayFinalResults() di atas, jadi tombol ghost berikutnya
-  // selalu merujuk ke sesi yang paling baru selesai.
   if (gameState.ghostMode) {
     stopGhostTimer();
     if (gameState.previousWordSet) {
@@ -798,18 +732,9 @@ export function endTest() {
   }
 
   gameState.startTime = null;
-  setTimerSpeedometer(0);
+  setTimerSpeedometer(0, gameState.TIMED_TEST_DURATION);
   hideStatsContainer();
 
-
-
-
-
-
-
-
-
-  
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
   if (typeof window.resetLogoPop === "function") window.resetLogoPop();
@@ -823,6 +748,7 @@ export function invalidateTest(reason) {
   // Set flag dan hentikan semua aktivitas
   gameState.isTestInvalid = true;
   clearInterval(gameState.timerInterval);
+  gameState.timerInterval = null;
   clearInterval(gameState.updateStatsInterval);
   clearTimeout(gameState.inactivityTimer);
 
@@ -863,8 +789,6 @@ export function invalidateTest(reason) {
     gameState.previousWordSet = null;
   }
 
-  // ✅ Tes latihan ghost caret yang dibatalkan juga dianggap berakhir:
-  // hentikan timer ghost & pulihkan word set asli, sama seperti di endTest().
   if (gameState.ghostMode) {
     stopGhostTimer();
     if (gameState.previousWordSet) {
@@ -894,14 +818,6 @@ export function resetTestState(options = {}) {
   // Reset flag global bahwa tes sudah selesai
   window.isTestCompleted = false;
   console.log('DEBUG: resetTestState() - window.isTestCompleted set to false');
-
-  // ✅ Perilaku default resetTestState(): SELALU keluar dari mode latihan kata
-  // salah & pulihkan window.defaultKataKata (restart manual, ganti mode waktu,
-  // tombol "Coba Lagi" di modal, dll — semua ini secara implisit berarti "balik
-  // ke tes normal"). Satu-satunya pengecualian adalah panggilan dari
-  // startWrongWordsPractice() sendiri, yang lewat { preservePracticeMode: true }
-  // supaya practiceMode & practiceWords yang baru saja di-set tidak langsung
-  // ditimpa balik oleh reset ini.
   if (!preservePracticeMode && gameState.practiceMode) {
     if (gameState.previousWordSet) {
       window.defaultKataKata = gameState.previousWordSet;
@@ -909,11 +825,6 @@ export function resetTestState(options = {}) {
     gameState.practiceMode = false;
     gameState.previousWordSet = null;
   }
-
-  // ✅ Perilaku default resetTestState() untuk ghost caret: sama seperti
-  // practiceMode di atas, SELALU keluar dari ghostMode & pulihkan
-  // window.defaultKataKata, KECUALI dipanggil dari startGhostPractice() lewat
-  // { preserveGhostMode: true }.
   if (!preserveGhostMode && gameState.ghostMode) {
     if (gameState.previousWordSet) {
       window.defaultKataKata = gameState.previousWordSet;
@@ -926,8 +837,11 @@ export function resetTestState(options = {}) {
   gameState.ghostCurrentIndex = 0;
   stopGhostTimer();
   hideGhostCaret();
+  gameState.quoteWordBuffer = [];
+  gameState.quoteAuthorMarks = [];
 
   clearInterval(gameState.timerInterval);
+  gameState.timerInterval = null;
   clearInterval(gameState.updateStatsInterval);
   clearTimeout(gameState.inactivityTimer);
   gameState.isTestInvalid = false;
@@ -936,7 +850,9 @@ export function resetTestState(options = {}) {
   gameState.correctChars = 0;
   gameState.incorrectChars = 0;
   gameState.startTime = null;
-  gameState.timeRemaining = gameState.TIMED_TEST_DURATION;
+  // ✅ Mode Quotes: tidak pakai batas waktu, jadi mulai dari 0 dan berjalan
+  // NAIK (stopwatch) selama tes, bukan hitung mundur dari durasi terpilih.
+  gameState.timeRemaining = gameState.quoteMode ? 0 : gameState.TIMED_TEST_DURATION;
   gameState.totalCorrectWords = 0;
   gameState.totalIncorrectWords = 0;
   gameState.typedWordCorrectness = [];
@@ -956,7 +872,7 @@ export function resetTestState(options = {}) {
   gameState.smootherWPM = undefined;
 
   if (DOM.accuracySpan) DOM.accuracySpan.textContent = "0%";
-  if (DOM.timerSpan) DOM.timerSpan.textContent = gameState.TIMED_TEST_DURATION;
+  if (DOM.timerSpan) DOM.timerSpan.textContent = gameState.timeRemaining;
 
   DOM.hiddenInput.value = "";
   DOM.hiddenInput.disabled = false;
@@ -967,7 +883,13 @@ export function resetTestState(options = {}) {
 
   setWpmSpeedometer(0);
   setAccuracySpeedometer(0);
-  setTimerSpeedometer(timerMax);
+  setTimerSpeedometer(
+    gameState.quoteMode ? 0 : gameState.TIMED_TEST_DURATION,
+    gameState.quoteMode ? timerMax : gameState.TIMED_TEST_DURATION
+  );
+
+  const timerTextDisplayEl = document.getElementById("timerTextDisplay");
+  if (timerTextDisplayEl) timerTextDisplayEl.textContent = gameState.timeRemaining;
 
   const resultsArea = document.getElementById("resultsDisplayArea");
   if (resultsArea) {
@@ -1005,6 +927,7 @@ export function resetTestState(options = {}) {
   removeSpaceScrollPrevention();
 
   generateAndAppendWords(gameState.INITIAL_WORD_BUFFER);
+  updateQuoteAuthorDisplay();
   prepareAndRenderText();
 
   lockTextDisplayHeightTo3Lines();
@@ -1040,10 +963,18 @@ export function startTimer() {
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
   
   gameState.timerInterval = setInterval(() => {
+    if (gameState.quoteMode) {
+      gameState.timeRemaining++;
+      const timerText = document.getElementById("timerTextDisplay");
+      if (timerText) timerText.textContent = gameState.timeRemaining;
+      setTimerSpeedometer(Math.min(gameState.timeRemaining, timerMax), timerMax);
+      return;
+    }
+
     gameState.timeRemaining--;
     
     // Update Speedometer Timer
-    setTimerSpeedometer(gameState.timeRemaining);
+    setTimerSpeedometer(gameState.timeRemaining, gameState.TIMED_TEST_DURATION);
     
     // Update Teks Timer
     const timerText = document.getElementById("timerTextDisplay");
@@ -1093,10 +1024,6 @@ export function initGameListeners() {
       const currentInputLength = DOM.hiddenInput.value.length;
 
       if (typedChar.length === 1 && typedChar !== "Backspace") {
-        // ✅ PERBAIKAN (poin 2): hanya keystroke karakter "nyata" (huruf, angka, simbol, spasi)
-        // yang dicatat ke keystrokeLog untuk metrik burst. Backspace, Shift, Enter, Tab,
-        // Arrow keys, dsb. tidak lagi ikut masuk (sebelumnya SEMUA tombol dicatat di sini,
-        // sehingga burst bisa naik palsu saat user hanya menghapus/menekan tombol kontrol).
         gameState.keystrokeLog.push(now);
 
         let targetChar;
@@ -1121,9 +1048,6 @@ export function initGameListeners() {
           gameState.correctCharsPerSecond[currentSecond]++;
         }
 
-        // ✅ BARU: catat status karakter ini di currentWordCharLog (dipakai oleh
-        // updateRealtimeStats untuk stats live yang akurat, dan oleh handler Backspace
-        // di bawah untuk membatalkan hitungan correctCharsPerSecond dengan tepat).
         if (!gameState.currentWordCharLog) gameState.currentWordCharLog = [];
         gameState.currentWordCharLog.push({
           correct: isCorrect,
@@ -1134,9 +1058,6 @@ export function initGameListeners() {
         // Store detailed keystroke info for replay
         if (!gameState.keystrokeDetails) gameState.keystrokeDetails = [];
         if (!gameState.inputHistory) gameState.inputHistory = [];
-        
-        // Store the FULL accumulated text state (all completed words + current word)
-        // Build inputState from scratch each time to avoid duplication issues
         const completedWords = gameState.userTypedWords.slice(0, gameState.typedWordIndex).filter(w => w && w.length > 0);
         const currentInput = DOM.hiddenInput.value;
         
@@ -1147,10 +1068,7 @@ export function initGameListeners() {
         }
         
         gameState.inputHistory.push(fullInputState);
-        
-        // Calculate real-time stats for this keystroke
-        // ✅ PERBAIKAN: pakai currentWordCharLog (seluruh kata berjalan), bukan hanya
-        // karakter yang baru saja diketik, supaya konsisten dengan updateRealtimeStats().
+
         const currentElapsedMs = now - gameState.startTime;
         const currentElapsedMinutes = currentElapsedMs / 60000;
         const { correct: inProgCorrectNow, incorrect: inProgIncorrectNow } =
@@ -1192,11 +1110,6 @@ export function initGameListeners() {
         if (!gameState.keystrokeDetails) gameState.keystrokeDetails = [];
         if (!gameState.inputHistory) gameState.inputHistory = [];
 
-        // ✅ PERBAIKAN UTAMA (poin 4): sebelumnya Backspace tidak pernah mengurangi
-        // correctCharsPerSecond, jadi grafik "wpm" bisa lebih tinggi dari WPM final
-        // (karakter yang sudah dihapus tetap ikut terhitung selamanya). Sekarang kita
-        // pop karakter terakhir dari currentWordCharLog dan batalkan hitungannya di
-        // detik tempat ia awalnya dicatat.
         if (gameState.currentWordCharLog && gameState.currentWordCharLog.length > 0) {
           const removedEntry = gameState.currentWordCharLog.pop();
           if (removedEntry.correct && !removedEntry.isSpace) {
@@ -1207,8 +1120,6 @@ export function initGameListeners() {
           }
         }
 
-        // Get the text state after backspace (current hidden input value)
-        // Build inputState from scratch each time to avoid duplication issues
         const completedWords = gameState.userTypedWords.slice(0, gameState.typedWordIndex).filter(w => w && w.length > 0);
         const currentInput = DOM.hiddenInput.value;
         
@@ -1219,11 +1130,7 @@ export function initGameListeners() {
         }
         
         gameState.inputHistory.push(fullInputState);
-        
-        // Calculate real-time stats for backspace keystroke
-        // ✅ Ikut pakai currentWordCharLog (setelah karakter yang dihapus di-pop di atas)
-        // supaya wpm/accuracy yang disimpan untuk replay juga konsisten & tidak lagi
-        // membeku pada nilai lama saat user menghapus.
+
         const currentElapsedMs = now - gameState.startTime;
         const currentElapsedMinutes = currentElapsedMs / 60000;
         const { correct: inProgCorrectAfterDel, incorrect: inProgIncorrectAfterDel } =
@@ -1312,14 +1219,6 @@ export function hideStatsContainer() {
   const speedContainers = document.querySelectorAll('.speedometer-container');
   if (textStats) textStats.style.display = 'none';
   speedContainers.forEach((el) => (el.style.display = 'none'));
-
-  // CATATAN: hideStatsContainer() ini khusus untuk live-stats (speedometer/text stats
-  // saat mengetik), BUKAN untuk tombol/panel statistik hasil akhir tes.
-  // Jangan panggil resetStatisticsPanel() di sini, karena fungsi ini juga dipanggil
-  // di endTest() tepat setelah tombol statistik dimunculkan (calculateAndDisplayFinalResults),
-  // sehingga tombol yang baru saja tampil langsung ikut tersembunyi lagi.
-  // Reset tombol/panel statistik dilakukan secara eksplisit di resetTestState() dan
-  // invalidateTest() saat tes benar-benar direset/dibatalkan.
 }
 
 /**
@@ -1336,10 +1235,6 @@ function animateXPBar(earnedXP) {
   const currentTotalXP = parseInt(localStorage.getItem("userXP")) || 0;
   const previousTotalXP = currentTotalXP - earnedXP;
 
-  // ✅ Level & nama level ("Typing Journey") dihitung lewat modul BERSAMA
-  // js/utils/level-system.js — SATU sumber logic yang sama dipakai profile.html
-  // (lihat js/history/profile-stats.js), supaya keduanya selalu sinkron.
-  // Cara XP itu sendiri dihitung/didapat (di atas) TIDAK berubah.
   const currentInfo = getLevelInfo(currentTotalXP);
   const previousInfo = getLevelInfo(previousTotalXP);
 

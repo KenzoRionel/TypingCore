@@ -54,6 +54,16 @@ export const gameState = {
     ghostTimeline: [], // array ms virtual (hasil computeGhostTimeline), sejajar index dengan ghostData.keystrokes
     ghostCurrentIndex: 0, // index keystroke ghost yang sedang "ditunjuk" oleh ghost caret saat ini
     ghostInterval: null, // interval id yang memajukan ghostCurrentIndex mengikuti waktu tes berjalan
+
+    // Mode teks latihan "Quotes": BEDA dari practiceMode/ghostMode (yang
+    // hanya aktif untuk satu sesi latihan lalu otomatis mati), quoteMode
+    // adalah pilihan MODE yang persist sampai user mematikannya sendiri lewat
+    // tombol Quotes (sejajar tombol waktu) - resetTestState() TIDAK mematikan
+    // quoteMode secara otomatis, hanya mengosongkan buffer teksnya supaya
+    // urutan quote dimulai ulang dari acak setiap kali tes direset.
+    quoteMode: false, // true = generateAndAppendWords() mengambil kata dari quoteWordBuffer (quote sungguhan), bukan random dari window.defaultKataKata
+    quoteWordBuffer: [], // daftar kata hasil split dari satu/lebih quote yang sudah "dituangkan" berurutan, tumbuh sesuai kebutuhan buffer
+    quoteAuthorMarks: [], // [{ atIndex, author, text }] - penanda index awal tiap quote di dalam quoteWordBuffer, dipakai untuk menampilkan nama sumber/author quote yang sedang aktif diketik
 };
 
 window.gameState = gameState;

@@ -168,7 +168,7 @@
                   <!-- Pilihan Kursor -->
                   <div class="settings-block">
                     <p class="settings-row-label">Pilihan Kursor</p>
-                    <div class="segmented-control" role="radiogroup" aria-label="Pilihan kursor">
+                    <div class="segmented-control" role="radiogroup" aria-label="Pilihan kursor" style="flex-wrap: wrap; row-gap: 8px;">
                       <input type="radio" class="btn-check" name="cursorMode" id="cursorHighlight" value="highlight" checked>
                       <label class="segmented-option" for="cursorHighlight" title="Highlight Mode">
                         <i class="fas fa-highlighter"></i><span>Highlight</span>
@@ -192,6 +192,51 @@
                       <input type="radio" class="btn-check" name="cursorMode" id="cursorHidden" value="hidden">
                       <label class="segmented-option" for="cursorHidden" title="Hidden Mode">
                         <i class="fas fa-eye-slash"></i><span>Hidden</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorOutline" value="outline">
+                      <label class="segmented-option" for="cursorOutline" title="Block Outline">
+                        <i class="fas fa-vector-square"></i><span>Block Outline</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorBracket" value="bracket">
+                      <label class="segmented-option" for="cursorBracket" title="Corner Bracket">
+                        <i class="fas fa-crop-alt"></i><span>Corner Bracket</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorDot" value="dot">
+                      <label class="segmented-option" for="cursorDot" title="Dot / Circle">
+                        <i class="fas fa-circle" style="font-size: 0.6em;"></i><span>Dot</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorDoubleline" value="doubleline">
+                      <label class="segmented-option" for="cursorDoubleline" title="Double Line">
+                        <i class="fas fa-equals"></i><span>Double Line</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorLaser" value="laser">
+                      <label class="segmented-option" for="cursorLaser" title="Lightsaber / Laser">
+                        <i class="fas fa-bolt"></i><span>Lightsaber</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorTypewriter" value="typewriter">
+                      <label class="segmented-option" for="cursorTypewriter" title="Typewriter Head">
+                        <i class="fas fa-keyboard"></i><span>Typewriter</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorComet" value="comet">
+                      <label class="segmented-option" for="cursorComet" title="Comet / Trail">
+                        <i class="fas fa-meteor"></i><span>Comet</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorPen" value="pen">
+                      <label class="segmented-option" for="cursorPen" title="Pen / Brush">
+                        <i class="fas fa-pen"></i><span>Pen</span>
+                      </label>
+
+                      <input type="radio" class="btn-check" name="cursorMode" id="cursorReactive" value="reactive">
+                      <label class="segmented-option" for="cursorReactive" title="Reactive Color">
+                        <i class="fas fa-palette"></i><span>Reactive Color</span>
                       </label>
                     </div>
                   </div>
@@ -702,6 +747,11 @@
         let cursorMode = localStorage.getItem('cursorMode') || 'highlight';
         let smoothLevel = localStorage.getItem('caretSmoothness') || 'off';
 
+        // Sejajar dengan CARET_SHAPE_MODES / CARET_AFTER_POSITION_MODES di
+        // js/utils/text-display.js - lihat komentar di sana untuk penjelasan.
+        const CARET_SHAPE_MODES = ['box', 'outline', 'bracket', 'dot', 'doubleline', 'laser', 'typewriter', 'comet', 'pen', 'reactive'];
+        const CARET_AFTER_POSITION_MODES = new Set(['caret', 'laser', 'comet', 'reactive', 'pen']);
+
         // Kata mana yang sedang "diketik" & seberapa jauh.
         let currentWordIndex = 0;
         let typedLength = 0;
@@ -772,13 +822,39 @@
           let rect;
           if (cursorMode === 'underline') {
             rect = { left: baseLeft, top: baseTop + elRect.height - 3, width: elRect.width, height: 3 };
-          } else if (cursorMode === 'box') {
+          } else if (cursorMode === 'box' || cursorMode === 'outline' || cursorMode === 'bracket' || cursorMode === 'doubleline') {
             rect = { left: baseLeft, top: baseTop, width: elRect.width, height: elRect.height };
+          } else if (cursorMode === 'dot') {
+            const size = 6;
+            rect = { left: baseLeft + elRect.width / 2 - size / 2, top: baseTop + elRect.height - size / 2, width: size, height: size };
+          } else if (cursorMode === 'typewriter') {
+            rect = { left: baseLeft, top: baseTop - 6, width: elRect.width, height: 4 };
           } else {
+            // caret, laser, comet, reactive, pen: garis tegak tipis
+            const barWidth = cursorMode === 'laser' ? 3 : 2;
             const left = isBefore ? baseLeft - 1 : baseLeft + elRect.width - 1;
-            rect = { left, top: baseTop, width: 2, height: elRect.height };
+            rect = { left, top: baseTop, width: barWidth, height: elRect.height };
           }
-          el.classList.toggle('mode-box', cursorMode === 'box');
+
+          CARET_SHAPE_MODES.forEach((m) => el.classList.toggle('mode-' + m, cursorMode === m));
+
+          // Preview statis (bukan tes sungguhan): pakai speedFactor tetap yang
+          // cukup tinggi supaya efek Lightsaber/Comet tetap terlihat jelas,
+          // alih-alih dihitung dari interval keystroke asli.
+          el.style.setProperty('--caret-speed', '0.7');
+
+          if (cursorMode === 'reactive') {
+            const isWrong = targetEl.classList && targetEl.classList.contains('incorrect');
+            el.classList.remove('state-good', 'state-slow', 'state-error');
+            el.classList.add(isWrong ? 'state-error' : 'state-good');
+          }
+
+          if (cursorMode === 'typewriter') {
+            el.classList.remove('tap');
+            void el.offsetWidth;
+            el.classList.add('tap');
+          }
+
           el.style.left = rect.left + 'px';
           el.style.top = rect.top + 'px';
           el.style.width = rect.width + 'px';
@@ -841,7 +917,7 @@
                 spans[0].classList.add('has-cursor', 'cursor-before');
                 target = spans[0]; before = true;
               } else if (typedLength > 0 && typedLength < spans.length) {
-                if (cursorMode === 'caret') {
+                if (CARET_AFTER_POSITION_MODES.has(cursorMode)) {
                   spans[typedLength - 1].classList.add('has-cursor', 'cursor-after');
                   target = spans[typedLength - 1]; before = false;
                 } else {

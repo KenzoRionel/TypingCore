@@ -2,6 +2,7 @@
 
 let resultChartInstance = null;
 let pbLineVisible = true; // toggle state untuk garis PB (persist antar render)
+let currentQuoteAuthor = null; // ✅ BARU: author quote aktif (mode Quotes), ditampilkan di legend hasil
 
 // ✅ BARU: state untuk animasi "reveal" (garis bergerak dari kiri ke kanan)
 let revealProgress = 0; // 0 -> 1
@@ -55,11 +56,17 @@ function startRevealAnimation(chart) {
   revealAnimationId = requestAnimationFrame(step);
 }
 
-// ✅ PERUBAHAN: Sekarang fungsi menerima `rawWpmPerSecond` DAN `correctCharsPerSecond`
-export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSecond, correctCharsPerSecond) {
+// ✅ PERUBAHAN: Sekarang fungsi menerima `rawWpmPerSecond` DAN `correctCharsPerSecond`,
+// serta (opsional) `quoteAuthor` - nama sumber quote yang sedang aktif (mode Quotes),
+// ditampilkan sebagai item non-interaktif di legend hasil, di samping tombol
+// scale/pb/raw/burst/errors. `null`/`undefined` berarti bukan sesi mode Quotes,
+// sehingga item author tidak ditampilkan sama sekali.
+export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSecond, correctCharsPerSecond, quoteAuthor = null) {
   const canvas = document.getElementById("resultChart");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
+
+  currentQuoteAuthor = quoteAuthor;
 
   if (resultChartInstance) {
     resultChartInstance.destroy();
@@ -284,6 +291,18 @@ function setupCustomLegend(chart) {
     chartContainer.insertAdjacentElement("afterend", legend);
   }
 
+  // ✅ BARU: item author quote (mode Quotes) - non-interaktif (bukan <button>,
+  // tidak toggle apa-apa), murni label. Hanya dirender kalau currentQuoteAuthor
+  // terisi (yaitu hasil dari sesi mode Quotes); disembunyikan total untuk sesi
+  // mode biasa. Ditaruh di ujung kanan, sejajar tombol scale/pb/raw/burst/errors,
+  // sesuai permintaan supaya author tidak lagi mengambang di atas area teks
+  // selama mengetik.
+  const authorItemHtml = currentQuoteAuthor
+    ? `<span class="legend-item legend-quote-author" title="Sumber kutipan">
+         <i class="fas fa-quote-right"></i><span>${escapeHtml(currentQuoteAuthor)}</span>
+       </span>`
+    : "";
+
   legend.innerHTML = `
     <button type="button" class="legend-item legend-scale" data-active="false" title="Ubah skala grafik (linear/logaritmik)">
       <i class="fas fa-chart-bar"></i><span>scale</span>
@@ -300,6 +319,7 @@ function setupCustomLegend(chart) {
     <button type="button" class="legend-item legend-toggle" data-active="true" data-index="3" title="Tampilkan/sembunyikan errors">
       <i class="fas fa-times" style="color:#ff6b6b"></i><span>errors</span>
     </button>
+    ${authorItemHtml}
   `;
 
   legend.querySelectorAll(".legend-toggle").forEach((btn) => {
@@ -386,8 +406,29 @@ function injectLegendStyles() {
       border-top-style: solid;
       border-top-width: 3px;
     }
+    .chart-legend-custom .legend-quote-author {
+      opacity: 0.85;
+      cursor: default;
+      font-style: italic;
+      margin-left: auto;
+      padding-left: 10px;
+      border-left: 1px solid rgba(255,255,255,0.12);
+    }
+    .chart-legend-custom .legend-quote-author i {
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
   `;
   document.head.appendChild(style);
+}
+
+// Helper: escape teks author sebelum disisipkan lewat innerHTML, supaya
+// karakter seperti < > & tidak dianggap markup HTML kalau suatu saat nama
+// author mengandung karakter tsb.
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = String(str ?? "");
+  return div.innerHTML;
 }
 
 // Helper
