@@ -1,12 +1,6 @@
 /* css/style.css atau css/common.css */
 
 #MenuButton {
-    /* ✅ PERBAIKAN: lebar tetap 800px sebelumnya membuat kotak toolbar jauh
-       lebih lebar dari isinya (3 tombol kecil), sehingga tombol-tombol
-       terlihat "menggantung"/tidak center secara visual di dalam kotak
-       besar yang kosong. Sekarang lebar mengikuti isi kontennya sendiri
-       (fit-content) - tetap dijaga konsisten walau class ".mode-toolbar"
-       (time-mode-modal.css) sudah mengatur ini juga lewat !important. */
     width: fit-content;
     height: 40px; 
     display: flex;
@@ -16,9 +10,10 @@
     margin: 20px auto;
     padding: 8px 14px;
     border-radius: 8px;
-    background-color: #ececec;
-    border: 1px solid #ccc;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     box-sizing: border-box;
+    color: var(--text);
 }
 
 #myCustomButton {
@@ -63,9 +58,9 @@
     font-size: 12px;
     font-family: monospace, monospace;;
     border-radius: 5px;
-    background-color: #f8f9fa00;
-    color: #6d6d6d;
-    border: 2px solid #6d6d6d;
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 2px solid var(--border);
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
@@ -80,9 +75,9 @@
 .time-mode-btn.active,
 .time-mode-btn:hover,
 .time-mode-btn:focus {
-    background-color: #3e3e3f;
-    color: #fff;
-    border-color: #3e3e3f;
+    background-color: var(--accent);
+    color: var(--surface);
+    border-color: var(--accent);
 }
 .word-type-btn{
 width: 65px;   /* Atur lebar sesuai keinginan */
@@ -92,23 +87,23 @@ width: 65px;   /* Atur lebar sesuai keinginan */
     font-size: 12px;
     font-family: monospace, monospace;;
     border-radius: 5px;
-    background-color: #f8f9fa;
-    color: #6d6d6d;
-    border: 2px solid #6d6d6d;
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 2px solid var(--border);
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     padding: 0;             /* Hilangkan padding agar tinggi benar-benar 100% */
-    background-color: #3e3e3f00;
-    color: #6d6d6d;
-   border-color: #6d6d6d;
+    background-color: transparent;
+    color: var(--text-muted);
+   border-color: var(--border);
 }
 .word-type-btn.active,
 .word-type-btn:hover,
 .word-type-btn:focus {
-    background-color: #3e3e3f;
-    color: #fff;
-    border-color: #3e3e3f;
+    background-color: var(--accent);
+    color: var(--surface);
+    border-color: var(--accent);
 }
 
 /* Tombol toggle "Quotes": tetap pakai warna/hover/active dari .time-mode-btn,
@@ -181,9 +176,15 @@ width: 65px;   /* Atur lebar sesuai keinginan */
     margin-bottom: 6px;
     font-size: 0.9rem;
     font-style: italic;
-    color: #6d6d6d;
+    color: var(--text-muted);
 }
 
+/* Selector ganda: body.dark-mode dipertahankan untuk kompatibilitas
+   halaman lama yang mungkin masih memasang class itu secara manual,
+   [data-theme="dark"] adalah selector yang benar-benar aktif dipakai
+   sistem tema baru (js/theme.js) yang menyetel atribut ini di <html>,
+   bukan class di <body>. */
+[data-theme="dark"] .quote-author-display,
 body.dark-mode .quote-author-display {
     color: #bbbbbb;
 }
@@ -240,17 +241,14 @@ body.dark-mode .quote-author-display {
 }
 
 .time-mode-modal {
-    /* top/left sengaja diisi 0 di sini - nilai aslinya di-set inline oleh
-       JS (positionTimeModeModal) berdasarkan getBoundingClientRect() dari
-       #timeModeToggleBtn, supaya modal selalu presisi mengambang tepat di
-       bawah tombol itu, di halaman/ukuran layar manapun. */
     position: fixed;
     top: 0;
     left: 0;
     width: 220px;
     max-width: calc(100vw - 16px);
-    background-color: #fff;
-    border: 1px solid #ccc;
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
     padding: 14px 16px 16px;
@@ -277,7 +275,7 @@ body.dark-mode .quote-author-display {
     top: -7.5px;
     border-left-width: 8px;
     border-right-width: 8px;
-    border-bottom: 8px solid #fff;
+    border-bottom: 8px solid var(--surface);
 }
 
 /* Kalau modal ditampilkan di ATAS tombol (lihat positionTimeModeModal()
@@ -294,9 +292,11 @@ body.dark-mode .quote-author-display {
     bottom: -7.5px;
     border-top: 8px solid #fff;
 }
+[data-theme="dark"] .time-mode-modal.arrow-bottom::before,
 body.dark-mode .time-mode-modal.arrow-bottom::before {
     border-top-color: #444;
 }
+[data-theme="dark"] .time-mode-modal.arrow-bottom::after,
 body.dark-mode .time-mode-modal.arrow-bottom::after {
     border-top-color: #2a2a2a;
 }
@@ -307,14 +307,14 @@ body.dark-mode .time-mode-modal.arrow-bottom::after {
     justify-content: space-between;
     font-size: 0.95rem;
     font-weight: 600;
-    color: #3e3e3f;
+    color: var(--text);
     margin-bottom: 12px;
 }
 
 .time-mode-modal-close {
     background: transparent;
     border: none;
-    color: #6d6d6d;
+    color: var(--text-muted);
     cursor: pointer;
     font-size: 0.85rem;
     line-height: 1;
@@ -322,7 +322,7 @@ body.dark-mode .time-mode-modal.arrow-bottom::after {
 }
 
 .time-mode-modal-close:hover {
-    color: #3e3e3f;
+    color: var(--text);
 }
 
 .time-mode-modal-options {
@@ -335,7 +335,7 @@ body.dark-mode .time-mode-modal.arrow-bottom::after {
 .time-mode-modal-custom label {
     display: block;
     font-size: 0.82rem;
-    color: #6d6d6d;
+    color: var(--text-muted);
     margin-bottom: 6px;
 }
 
@@ -349,10 +349,12 @@ body.dark-mode .time-mode-modal.arrow-bottom::after {
     min-width: 0;
     height: 32px;
     padding: 0 10px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border);
     border-radius: 6px;
     font-size: 13px;
     box-sizing: border-box;
+    background-color: var(--bg);
+    color: var(--text);
 }
 
 .time-mode-custom-apply {
@@ -362,22 +364,28 @@ body.dark-mode .time-mode-modal.arrow-bottom::after {
     font-size: 13px;
 }
 
+[data-theme="dark"] .time-mode-modal,
 body.dark-mode .time-mode-modal {
     background-color: #2a2a2a;
     border-color: #444;
 }
+[data-theme="dark"] .time-mode-modal::before,
 body.dark-mode .time-mode-modal::before {
     border-bottom-color: #444;
 }
+[data-theme="dark"] .time-mode-modal::after,
 body.dark-mode .time-mode-modal::after {
     border-bottom-color: #2a2a2a;
 }
+[data-theme="dark"] .time-mode-modal-header,
 body.dark-mode .time-mode-modal-header {
     color: #eee;
 }
+[data-theme="dark"] .time-mode-modal-close,
 body.dark-mode .time-mode-modal-close {
     color: #bbb;
 }
+[data-theme="dark"] .time-mode-custom-input,
 body.dark-mode .time-mode-custom-input {
     background-color: #1f1f1f;
     border-color: #444;

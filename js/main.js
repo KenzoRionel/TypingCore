@@ -32,7 +32,7 @@ import {
   top1000Words,
   top10000Words,
 } from "./data/default-words.js";
-import { initDarkMode } from "./utils/dark-mode.js";
+import { initTheme } from "./theme.js";
 import {
   initIndexKeyboard,
   saveKeyboardSettings,
@@ -92,7 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let logoPopObserver = null;
   let logoPopMouseMoveWired = false;
 
-  initDarkMode(DOM.darkModeToggle);
+  // DOM.darkModeToggle (tombol trigger dropdown tema) tidak perlu di-pass
+  // ke initTheme - Bootstrap yang menangani buka/tutup dropdown-nya lewat
+  // atribut data-bs-toggle="dropdown" di index.html. initTheme hanya perlu
+  // tahu container tempat grid pilihan tema dirender.
+  initTheme({ pickerContainer: document.getElementById("themePickerContainer") });
   setupLogoPop();
 
   // Inisialisasi keyboard virtual untuk halaman index

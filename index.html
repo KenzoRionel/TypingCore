@@ -4,6 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Speed Typing Test - Kata Umum</title>
+    <!-- Anti-FOUC: set data-theme SEBELUM CSS lain di-render, supaya halaman
+         tidak "flash" tema default lalu berubah ke tema tersimpan. Logika ini
+         sengaja diduplikasi (bukan import js/theme.js) karena script inline
+         blocking di <head> tidak bisa pakai ES module secara sinkron. Tetap
+         konsisten dengan resolveInitialTheme() di js/theme.js: localStorage
+         ('typing-theme') > migrasi key lama 'darkMode' > prefers-color-scheme
+         > default 'light'. -->
+    <script>
+      (function () {
+        try {
+          var STORAGE_KEY = "typing-theme";
+          var LEGACY_STORAGE_KEY = "darkMode";
+          var theme = localStorage.getItem(STORAGE_KEY);
+
+          if (!theme) {
+            var legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+            if (legacy !== null) {
+              theme = legacy === "enabled" ? "dark" : "light";
+            }
+          }
+
+          if (!theme) {
+            var prefersDark =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches;
+            theme = prefersDark ? "dark" : "light";
+          }
+
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
     <link
@@ -11,9 +45,9 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/text-display.css" />
     <link rel="stylesheet" href="css/speedometer-style.css" />
-    <link rel="stylesheet" href="css/dark-mode.css" />
     <link rel="stylesheet" href="css/statistics-panel.css" />
     <link rel="stylesheet" href="css/time-mode-modal.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -80,18 +114,34 @@
                 id="navbarSupportedContent2"
               >
                 <ul class="navbar-nav align-items-center">
-                  <!-- Tombol mode malam/siang yang dipindahkan ke header -->
-                  <li class="nav-item">
+                  <!-- Pemilih tema: menggantikan toggle dark/light mode lama.
+                       id="darkModeToggle" DIPERTAHANKAN (bukan diganti nama)
+                       supaya referensi DOM.darkModeToggle di js/dom-elements.js
+                       / js/main.js tidak putus - elemen ini sekarang berfungsi
+                       sebagai trigger dropdown Bootstrap yang membuka grid
+                       pilihan tema (dirender oleh js/theme.js ke dalam
+                       #themePickerContainer, lihat renderThemePicker()). -->
+                  <li class="nav-item dropdown">
                     <button
                       id="darkModeToggle"
-                      class="dark-mode-slide-toggle nav-link"
-                      aria-label="Toggle Dark Mode"
+                      type="button"
+                      class="nav-link dropdown-toggle theme-picker-toggle"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      aria-label="Pilih Tema"
+                      title="Pilih Tema"
                     >
-                      <span class="slider">
-                        <span class="slider-icon sun">☀️</span>
-                        <span class="slider-icon moon">🌙</span>
-                      </span>
+                      <i class="fas fa-palette"></i>
                     </button>
+                    <div
+                      class="dropdown-menu dropdown-menu-end theme-picker-dropdown-menu"
+                      aria-labelledby="darkModeToggle"
+                    >
+                      <!-- Grid pilihan tema dirender di sini secara dinamis
+                           oleh renderThemePicker() (js/theme.js), berdasarkan
+                           data/themes.json. -->
+                      <div id="themePickerContainer"></div>
+                    </div>
                   </li>
                   <li class="nav-item dropdown">
                     <a

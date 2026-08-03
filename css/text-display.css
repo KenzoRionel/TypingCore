@@ -17,7 +17,7 @@
   /* Biarkan tinggi otomatis */
   font-family: monospace;
   font-size: 2.0em;
-  color: #666;
+  color: var(--text-muted);
   white-space: normal;
   letter-spacing: 0;
   word-spacing: 0;
@@ -70,50 +70,49 @@
 }
 
 .correct {
-  color: #0068bd;
-  /* atau sesuai tema */
+  color: var(--correct);
 }
 
 .wrong {
-  color: red;
+  color: var(--incorrect);
 }
 
 .word-container.completed-wrong {
   text-decoration: underline;
-  text-decoration-color: #f44336;
+  text-decoration-color: var(--incorrect);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
 
 /* Pastikan karakter yang benar dalam kata yang sudah selesai tetap tampil dengan warna biru */
 .word-container.completed-wrong span.correct {
-  color: #0068bd;
+  color: var(--correct);
   text-decoration: inherit;
 }
 
 /* Pastikan karakter yang benar tetap berwarna biru meski mode hidden */
 .hidden-mode-active .word-container.completed-wrong span.correct {
-  color: #0068bd;
+  color: var(--correct);
 }
 
 /* Karakter salah dalam kata yang sudah selesai tetap merah */
 .word-container.completed-wrong span.wrong {
-  color: #f44336;
+  color: var(--incorrect);
   text-decoration: inherit;
 }
 
 /* Untuk kata yang selesai diketik dengan benar, pertahankan warna correct */
 .word-container:not(.current-word-target):not(.completed-wrong) span.correct {
-  color: #0068bd;
+  color: var(--correct);
 }
 
 /* Untuk kata yang selesai diketik dengan benar, pertahankan warna wrong jika ada */
 .word-container:not(.current-word-target):not(.completed-wrong) span.wrong {
-  color: #f44336;
+  color: var(--incorrect);
 }
 
 .word-container .wrong-extra {
-  color: #e53935;
+  color: var(--incorrect);
 }
 
 #hiddenTextInput {
@@ -137,7 +136,7 @@
 }
 
 .text-line.active {
-  background: #f5f5f5;
+  background: var(--surface);
   border-radius: 6px;
 }
 
@@ -183,8 +182,8 @@
   transition: background-color 0.1s ease, color 0.1s ease, border 0.1s ease;
 }
 #textDisplay:not(.caret-mode-active):not(.underline-mode-active):not(.box-mode-active):not(.hidden-mode-active) .word-container.current-word-target {
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: var(--current-word-bg);
+  color: var(--text);
 }
 
 /* Mode caret baru (Block Outline, Corner Bracket, Dot, Double Line, Lightsaber,
@@ -224,8 +223,8 @@
 /* Highlight spasi terpisah ketika kata aktif */
 .word-container.current-word-target + .space-char,
 .space-char.current-space-target {
-  background-color: #e0e0e000;
-  color: #333;
+  background-color: transparent;
+  color: var(--text);
   border-radius: 4px;
 }
 
@@ -233,38 +232,38 @@
   .word-container.current-word-target
   span.correct {
   background-color: transparent;
-  color: #0068bd;
+  color: var(--correct);
 }
 
 #textDisplay:not(.caret-mode-active)
   .word-container.current-word-target
   span.wrong {
-  color: #f44336;
+  color: var(--incorrect);
 }
 
 /* Warna untuk mode underline dan box saat mengetik */
 .underline-mode-active .word-container.current-word-target span.correct,
 .box-mode-active .word-container.current-word-target span.correct {
-  color: #0068bd;
+  color: var(--correct);
 }
 
 .underline-mode-active .word-container.current-word-target span.wrong,
 .box-mode-active .word-container.current-word-target span.wrong {
-  color: #f44336;
+  color: var(--incorrect);
 }
 
 #textDisplay:not(.caret-mode-active) .word-container.word-correct {
   background-color: transparent;
-  color: #0068bd;
+  color: var(--correct);
 }
 
 #textDisplay:not(.caret-mode-active) .word-container.word-incorrect {
-  color: #d32f2f;
+  color: var(--incorrect);
 }
 
 .word-container .space-char.wrong {
-  background-color: #f44336;
-  color: #fff;
+  background-color: var(--incorrect);
+  color: var(--surface);
   border-radius: 2px;
   padding: 0;
   margin: 0;
@@ -298,7 +297,7 @@
 
 .blinking-cursor {
   position: absolute;
-  background-color: #333; /* Warna default */
+  background-color: var(--caret); /* Warna default */
   animation: blink 1s infinite;
   transition: left 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
               top 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
@@ -341,13 +340,11 @@
 
 /* Ubah warna teks untuk kata yang sudah selesai */
 .caret-mode-active .word-container.word-correct {
-  color: #0068bd;
-  /* Biru */
+  color: var(--correct);
 }
 
 .caret-mode-active .word-container.word-incorrect {
-  color: #d32f2f;
-  /* Merah */
+  color: var(--incorrect);
 }
 
 /* Hapus highlight latar belakang untuk kata yang sedang diketik */
@@ -357,14 +354,12 @@
 
 /* Atur warna karakter untuk kata yang sedang diketik */
 .caret-mode-active .word-container.current-word-target span.correct {
-  color: #0068bd;
-  /* Abu-abu cerah */
+  color: var(--correct);
 }
 
 /* Warna untuk karakter salah tetap sama (merah) */
 .caret-mode-active .word-container.current-word-target span.wrong {
-  color: #f44336;
-  /* Merah */
+  color: var(--incorrect);
 }
 
 .text-display-container {
@@ -394,7 +389,7 @@
 .has-cursor::after {
   content: "";
   position: absolute;
-  background-color: #555; /* Warna kursor */
+  background-color: var(--caret); /* Warna kursor */
   animation: cursorBlink 1s infinite;
   pointer-events: none;
   z-index: 10;

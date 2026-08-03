@@ -1,0 +1,286 @@
+/* ==========================================================================
+   themes.css
+   Sistem tema TypingCore — satu file, semua tema, via [data-theme] + CSS vars.
+
+   CARA PAKAI:
+   - <html data-theme="dark"> (di-set oleh inline anti-FOUC script + js/theme.js)
+   - Semua CSS lain (style.css, lessons-style.css, dll) HARUS pakai var(--...)
+     dari role di bawah, bukan hex hardcode.
+   - Menambah tema baru = tambah 1 blok [data-theme="xxx"] di sini +
+     1 entri di data/themes.json. Tidak ada file CSS baru yang perlu dibuat.
+   ========================================================================== */
+
+/* ---- Role warna wajib (dideklarasikan sebagai fallback di :root) ----
+   --bg               background utama halaman
+   --surface          background kartu/panel/modal (sedikit beda dari --bg)
+   --text             warna teks utama
+   --text-muted       teks sekunder/label/desc
+   --border           garis pembatas, outline halus
+   --accent           warna aksi utama (tombol, link aktif, progress)
+   --accent-hover     state hover/focus dari --accent
+   --caret            garis kursor pengetikan
+   --correct          huruf yang diketik benar
+   --incorrect        huruf yang diketik salah (teks)
+   --incorrect-bg     highlight background huruf salah
+   --current-word-bg  highlight kata yang sedang aktif diketik
+------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light dark;
+
+  /* Font khusus tema (di-override tema seperti "typewriter") */
+  --theme-font-family: inherit;
+
+  /* Durasi transisi ganti tema */
+  --theme-transition-duration: 0.25s;
+}
+
+/* Transisi halus saat ganti tema.
+   Class ditambahkan oleh js/theme.js SETELAH first paint,
+   supaya load pertama tidak ikut animasi (mencegah flash aneh). */
+.theme-transition-ready,
+.theme-transition-ready *,
+.theme-transition-ready *::before,
+.theme-transition-ready *::after {
+  transition:
+    background-color var(--theme-transition-duration) ease,
+    border-color var(--theme-transition-duration) ease,
+    color var(--theme-transition-duration) ease,
+    fill var(--theme-transition-duration) ease,
+    box-shadow var(--theme-transition-duration) ease;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+/* ==========================================================================
+   1. LIGHT — siang bersih (default / fallback)
+   Kontras teks vs bg: #1a1a1a on #ffffff ≈ 17.9:1
+   ========================================================================== */
+:root,
+[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #f5f5f6;
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;      /* vs #ffffff ≈ 5.4:1 */
+  --border: #e2e2e4;
+  --accent: #3e63dd;          /* vs #ffffff ≈ 4.7:1 */
+  --accent-hover: #2f4fc0;
+  --caret: #1a1a1a;
+  --correct: #15803d;         /* vs #ffffff ≈ 5.7:1 */
+  --incorrect: #c92a2a;       /* vs #ffffff ≈ 5.9:1 */
+  --incorrect-bg: #fbe0e0;
+  --current-word-bg: #eaefff;
+}
+
+/* ==========================================================================
+   2. DARK — malam pekat
+   Kontras teks vs bg: #f1f1f1 on #1a1a1a ≈ 15.6:1
+   ========================================================================== */
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --surface: #2a2a2a;
+  --text: #f1f1f1;
+  --text-muted: #a3a3a3;      /* vs #1a1a1a ≈ 7.4:1 */
+  --border: #3f3f3f;
+  --accent: #5aa9ff;          /* vs #1a1a1a ≈ 6.9:1 */
+  --accent-hover: #82c0ff;
+  --caret: #ffffff;
+  --correct: #6fdb85;         /* vs #1a1a1a ≈ 9.6:1 */
+  --incorrect: #ff7a7a;       /* vs #1a1a1a ≈ 6.7:1 */
+  --incorrect-bg: #3d2222;
+  --current-word-bg: #26314e;
+}
+
+/* ==========================================================================
+   3. DRACULA — populer di kalangan programmer
+   Kontras teks vs bg: #f8f8f2 on #282a36 ≈ 12.6:1
+   ========================================================================== */
+[data-theme="dracula"] {
+  --bg: #282a36;
+  --surface: #343746;
+  --text: #f8f8f2;
+  --text-muted: #b6b8cc;      /* vs #282a36 ≈ 7.8:1 */
+  --border: #44475a;
+  --accent: #bd93f9;          /* vs #282a36 ≈ 6.6:1 */
+  --accent-hover: #d1aefc;
+  --caret: #f8f8f2;
+  --correct: #50fa7b;         /* vs #282a36 ≈ 12.1:1 */
+  --incorrect: #ff6e6e;       /* vs #282a36 ≈ 6.6:1 */
+  --incorrect-bg: #45283a;
+  --current-word-bg: #3b3d54;
+}
+
+/* ==========================================================================
+   4. NORD — dingin, eye-friendly
+   Kontras teks vs bg: #eceff4 on #2e3440 ≈ 12.7:1
+   ========================================================================== */
+[data-theme="nord"] {
+  --bg: #2e3440;
+  --surface: #3b4252;
+  --text: #eceff4;
+  --text-muted: #b6c0d0;      /* vs #2e3440 ≈ 8.0:1 */
+  --border: #4c566a;
+  --accent: #88c0d0;          /* vs #2e3440 ≈ 7.5:1 */
+  --accent-hover: #a3d3e0;
+  --caret: #eceff4;
+  --correct: #a3be8c;         /* vs #2e3440 ≈ 7.1:1 */
+  --incorrect: #bf616a;       /* vs #2e3440 ≈ 4.9:1 */
+  --incorrect-bg: #3d2e33;
+  --current-word-bg: #434c5e;
+}
+
+/* ==========================================================================
+   5. SOLARIZED LIGHT — krem kertas
+   Kontras teks vs bg: #073642 on #fdf6e3 ≈ 11.9:1
+   ========================================================================== */
+[data-theme="solarized-light"] {
+  --bg: #fdf6e3;
+  --surface: #eee8d5;
+  --text: #073642;
+  --text-muted: #5b7279;      /* vs #fdf6e3 ≈ 4.9:1 */
+  --border: #d8d0b8;
+  --accent: #1e77ad;          /* vs #fdf6e3 ≈ 4.9:1 */
+  --accent-hover: #16608c;
+  --caret: #073642;
+  --correct: #6b8e00;         /* vs #fdf6e3 ≈ 4.6:1 */
+  --incorrect: #c33c22;       /* vs #fdf6e3 ≈ 4.8:1 */
+  --incorrect-bg: #f2ddd0;
+  --current-word-bg: #e6ddc0;
+}
+
+/* ==========================================================================
+   6. TYPEWRITER — kertas mesin ketik, font serif untuk teks pengetikan
+   Kontras teks vs bg: #3b2f1e on #f4ecd8 ≈ 10.1:1
+   ========================================================================== */
+[data-theme="typewriter"] {
+  --bg: #f4ecd8;
+  --surface: #ece1c4;
+  --text: #3b2f1e;
+  --text-muted: #6e5c42;      /* vs #f4ecd8 ≈ 4.6:1 */
+  --border: #d9c8a3;
+  --accent: #7a4a20;          /* vs #f4ecd8 ≈ 5.3:1 */
+  --accent-hover: #5f3a18;
+  --caret: #3b2f1e;
+  --correct: #3f6b2f;         /* vs #f4ecd8 ≈ 5.0:1 */
+  --incorrect: #96341f;       /* vs #f4ecd8 ≈ 5.1:1 */
+  --incorrect-bg: #e6d3ac;
+  --current-word-bg: #e5d7ab;
+
+  --theme-font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+/* Font khusus untuk area teks yang diketik pada tema typewriter.
+   Terapkan var ini di elemen teks (mis. .lesson-text, .typing-text)
+   lewat: font-family: var(--theme-font-family); */
+
+/* ==========================================================================
+   Util kelas umum yang bisa dipakai lintas CSS lama, memetakan langsung
+   ke role warna baru. Ini mempermudah migrasi bertahap (lihat penjelasan).
+   ========================================================================== */
+.themed-surface { background-color: var(--surface); border-color: var(--border); color: var(--text); }
+.themed-text-muted { color: var(--text-muted); }
+.themed-accent { color: var(--accent); }
+.themed-border { border-color: var(--border); }
+
+/* ==========================================================================
+   THEME PICKER — grid tombol, di-render dinamis oleh js/theme.js
+   dari data/themes.json. Warna preview diambil dari var(--bg)/var(--accent)
+   milik masing-masing tema lewat [data-theme] pada elemen swatch itu sendiri.
+   ========================================================================== */
+.theme-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.theme-option:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  transform: translateY(-2px);
+}
+.theme-option.active {
+  border-color: var(--accent);
+  color: var(--text);
+  box-shadow: 0 0 0 2px var(--accent-hover) inset;
+}
+.theme-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-option-swatch {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.theme-swatch-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+}
+.theme-swatch-accent {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+}
+
+.theme-option-icon {
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+
+.theme-option-name {
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ==========================================================================
+   THEME PICKER DROPDOWN — wadah Bootstrap dropdown (di header, mengganti
+   tombol toggle dark/light lama) yang membungkus .theme-picker-grid di atas.
+   Di-override dari style dropdown-menu default Bootstrap (putih polos) supaya
+   ikut berubah warna sesuai tema aktif juga - kalau tidak, tombol pemilih
+   tema justru jadi satu-satunya bagian UI yang tidak ikut bertema. -->*/
+.theme-picker-dropdown-menu {
+  padding: 12px;
+  min-width: 280px;
+  max-width: 90vw;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.theme-picker-toggle {
+  color: var(--text, inherit);
+}
+
+.theme-picker-toggle::after {
+  display: none; /* ikon palet sudah cukup jelas menandai ini dropdown, caret bawaan Bootstrap tidak perlu */
+}

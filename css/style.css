@@ -4,8 +4,8 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: #f4f7f6;
-    color: #333;
+    background-color: var(--bg);
+    color: var(--text);
     display: flex;
     min-height: 100vh;
 }
@@ -27,13 +27,16 @@ body {
 .wrapper {
     display: flex;
     width: 100%;
+    background-color: var(--bg);
+    color: var(--text);
 }
 
 /* ==================== LAYOUT & STRUCTURE ==================== */
 .main-content {
     flex-grow: 1;
     padding: 20px;
-    background-color: #ececec;
+    background-color: var(--surface);
+    color: var(--text);
 }
 
 /* ==================== HEADER & NAVIGATION ==================== */
@@ -70,8 +73,8 @@ body {
 
 /* ==================== TIMER-ACCURACY SECTION ==================== */
 .timer-accuracy-section {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
@@ -83,7 +86,7 @@ body {
     flex-shrink: 0;
     flex-grow: 0;
     font-family: 'Segoe UI', sans-serif;
-    color: #333;
+    color: var(--text);
 }
 
 .timer-accuracy-section .stat-item {
@@ -98,7 +101,7 @@ body {
 
 .timer-accuracy-section .stat-item span:first-child {
     font-weight: 600;
-    color: #555;
+    color: var(--text-muted);
     display: block;
     font-size: 0.9em;
     margin-bottom: 5px;
@@ -158,10 +161,11 @@ body {
 }
 
 .modal-content {
-    background-color: #fefefe;
+    background-color: var(--surface);
+    color: var(--text);
     margin: auto;
     padding: 30px;
-    border: 1px solid #888;
+    border: 1px solid var(--border);
     width: 80%;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -240,7 +244,7 @@ body {
 #resultsDisplayArea span {
     font-weight: bold;
     font-family: monospace;
-    color: #d3d8dd;
+    color: var(--text-muted);
 }
 
 #resultsDisplayArea .button {
@@ -260,112 +264,160 @@ body {
 }
 
 /* ==================== DARK MODE STYLING ==================== */
+html[data-theme="dark"] body,
+html[data-theme="dracula"] body,
+html[data-theme="nord"] body,
 body.dark-mode {
-    background-color: #181a1b;
-    color: #e0e0e0;
+    background-color: var(--bg);
+    color: var(--text);
 }
 
+html[data-theme="dark"] .main-content,
+html[data-theme="dracula"] .main-content,
+html[data-theme="nord"] .main-content,
 body.dark-mode .main-content {
-    background-color: #23272a;
-    color: #e0e0e0;
+    background-color: var(--surface);
+    color: var(--text);
 }
 
+html[data-theme="dark"] .timer-accuracy-section,
+html[data-theme="dracula"] .timer-accuracy-section,
+html[data-theme="nord"] .timer-accuracy-section,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dracula"] .modal-content,
+html[data-theme="nord"] .modal-content,
+html[data-theme="dark"] #resultsDisplayArea,
+html[data-theme="dracula"] #resultsDisplayArea,
+html[data-theme="nord"] #resultsDisplayArea,
 body.dark-mode .timer-accuracy-section,
 body.dark-mode .modal-content,
 body.dark-mode #resultsDisplayArea {
-    background-color: #23272a;
-    color: #e0e0e0;
-    border-color: #444;
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
 }
 
+html[data-theme="dark"] .site-header .nav-link,
+html[data-theme="dracula"] .site-header .nav-link,
+html[data-theme="nord"] .site-header .nav-link,
 body.dark-mode .site-header .nav-link {
-    color: #e0e0e0;
+    color: var(--text);
 }
 
+html[data-theme="dark"] .site-header .nav-link:hover,
+html[data-theme="dracula"] .site-header .nav-link:hover,
+html[data-theme="nord"] .site-header .nav-link:hover,
 body.dark-mode .site-header .nav-link:hover {
-    color: #fff;
+    color: var(--accent);
 }
 
+html[data-theme="dark"] .site-header .dropdown-menu,
+html[data-theme="dracula"] .site-header .dropdown-menu,
+html[data-theme="nord"] .site-header .dropdown-menu,
 body.dark-mode .site-header .dropdown-menu {
-    background-color: #23272a;
-    border-color: #444;
+    background-color: var(--surface);
+    border-color: var(--border);
 }
 
+html[data-theme="dark"] .site-header .dropdown-item,
+html[data-theme="dracula"] .site-header .dropdown-item,
+html[data-theme="nord"] .site-header .dropdown-item,
 body.dark-mode .site-header .dropdown-item {
-    color: #e0e0e0;
+    color: var(--text);
 }
 
+html[data-theme="dark"] .site-header .dropdown-item:hover,
+html[data-theme="dracula"] .site-header .dropdown-item:hover,
+html[data-theme="nord"] .site-header .dropdown-item:hover,
 body.dark-mode .site-header .dropdown-item:hover {
-    background-color: #333;
-    color: #fff;
+    background-color: var(--current-word-bg);
+    color: var(--text);
 }
 
+html[data-theme="dark"] #MenuButton,
+html[data-theme="dracula"] #MenuButton,
+html[data-theme="nord"] #MenuButton,
 body.dark-mode #MenuButton {
-    background-color: #23272a;
-    border-color: #444;
+    background-color: var(--surface);
+    border-color: var(--border);
 }
 
+html[data-theme="dark"] .btn-outline-dark,
+html[data-theme="dark"] .btn-outline-primary,
+html[data-theme="dark"] .btn-outline-success,
+html[data-theme="dracula"] .btn-outline-dark,
+html[data-theme="dracula"] .btn-outline-primary,
+html[data-theme="dracula"] .btn-outline-success,
+html[data-theme="nord"] .btn-outline-dark,
+html[data-theme="nord"] .btn-outline-primary,
+html[data-theme="nord"] .btn-outline-success,
 body.dark-mode .btn-outline-dark,
 body.dark-mode .btn-outline-primary,
 body.dark-mode .btn-outline-success {
-    background-color: #00000000;
-    color: #f3f3f3;
-    border-color: #888;
+    background-color: transparent;
+    color: var(--text);
+    border-color: var(--border);
 }
 
-body.dark-mode .time-mode-btn.active,
-body.dark-mode .time-mode-btn:hover,
-body.dark-mode .time-mode-btn:focus {
-    background-color: #cccbcb;
-    color: #141414;
-    border-color: #222121;
-}
-
-body.dark-mode .word-type-btn.active,
-body.dark-mode .word-type-btn:hover,
-body.dark-mode .word-type-btn:focus {
-    background-color: #cccbcb;
-    color: #141414;
-    border-color: #222121;
-}
-
+html[data-theme="dark"] .text-display,
+html[data-theme="dracula"] .text-display,
+html[data-theme="nord"] .text-display,
 body.dark-mode .text-display {
-    background-color: #23272a;
-    color: #e0e0e0;
+    background-color: var(--surface);
+    color: var(--text);
 }
 
+html[data-theme="dark"] #textDisplay:not(.caret-mode-active) .word-container.current-word-target,
+html[data-theme="dracula"] #textDisplay:not(.caret-mode-active) .word-container.current-word-target,
+html[data-theme="nord"] #textDisplay:not(.caret-mode-active) .word-container.current-word-target,
 body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.current-word-target {
-    background-color: #333;
-    color: #fff;
+    background-color: var(--current-word-bg);
+    color: var(--text);
 }
 
+html[data-theme="dark"] #textDisplay:not(.caret-mode-active) .word-container.current-word-target span.correct,
+html[data-theme="dracula"] #textDisplay:not(.caret-mode-active) .word-container.current-word-target span.correct,
+html[data-theme="nord"] #textDisplay:not(.caret-mode-active) .word-container.current-word-target span.correct,
 body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.current-word-target span.correct {
     background-color: transparent;
-    color: #00b0e6;
+    color: var(--correct);
 }
 
+html[data-theme="dark"] #textDisplay:not(.caret-mode-active) .word-container.word-correct,
+html[data-theme="dracula"] #textDisplay:not(.caret-mode-active) .word-container.word-correct,
+html[data-theme="nord"] #textDisplay:not(.caret-mode-active) .word-container.word-correct,
 body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.word-correct {
     background-color: transparent;
-    color: #fefefe;
+    color: var(--correct);
 }
 
+html[data-theme="dark"] #textDisplay:not(.caret-mode-active) .word-container.word-incorrect,
+html[data-theme="dracula"] #textDisplay:not(.caret-mode-active) .word-container.word-incorrect,
+html[data-theme="nord"] #textDisplay:not(.caret-mode-active) .word-container.word-incorrect,
 body.dark-mode #textDisplay:not(.caret-mode-active) .word-container.word-incorrect {
     background-color: transparent;
-    color: #f44336;
+    color: var(--incorrect);
 }
 
+html[data-theme="dark"] .caret-mode-active .word-container.word-correct,
+html[data-theme="dracula"] .caret-mode-active .word-container.word-correct,
+html[data-theme="nord"] .caret-mode-active .word-container.word-correct,
 body.dark-mode .caret-mode-active .word-container.word-correct {
-    color: #fefefe;
+    color: var(--correct);
 }
 
+html[data-theme="dark"] .caret-mode-active .word-container.current-word-target span.correct,
+html[data-theme="dracula"] .caret-mode-active .word-container.current-word-target span.correct,
+html[data-theme="nord"] .caret-mode-active .word-container.current-word-target span.correct,
 body.dark-mode .caret-mode-active .word-container.current-word-target span.correct {
-    color: #fefefe;
+    color: var(--correct);
 }
 
 /* ==================== RESULTS CONTAINER ==================== */
 .results-container {
     width: 100%;
-    background-color: #f4f7f6;
+    background-color: var(--surface);
+    color: var(--text);
     padding: 20px;
     position: relative;
 }
@@ -393,7 +445,7 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
 .summary-item .summary-label {
     display: block;
     font-size: 0.9em;
-    color: #666;
+    color: var(--text-muted);
     margin-bottom: 5px;
 }
 
@@ -401,7 +453,7 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
     display: block;
     font-size: 2.5em;
     font-weight: bold;
-    color: #333;
+    color: var(--text);
 }
 
 .summary-details {
@@ -413,7 +465,7 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
 .details-item .details-label {
     display: block;
     font-size: 0.8em;
-    color: #888;
+    color: var(--text-muted);
     margin-bottom: 5px;
 }
 
@@ -444,22 +496,22 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
 
 .practice-wrong-words-btn {
     position: relative;
-    color: #e67e22;
+    color: var(--accent);
 }
 
 .practice-wrong-words-btn:hover {
-    color: #d3690f;
+    color: var(--accent-hover);
 }
 
 /* Tombol "Ulangi dengan Ghost Caret" - warna berbeda dari tombol Latih Kata
    Salah supaya kedua tombol mudah dibedakan sekilas di halaman hasil. */
 .ghost-practice-btn {
     position: relative;
-    color: #8e44ad;
+    color: var(--accent);
 }
 
 .ghost-practice-btn:hover {
-    color: #732d91;
+    color: var(--accent-hover);
 }
 
 .practice-wrong-words-count {
@@ -536,7 +588,8 @@ body.modal-active .main-content {
 }
 
 .modal-overlay .modal-content {
-    background-color: white;
+    background-color: var(--surface);
+    color: var(--text);
     padding: 40px;
     border-radius: 15px;
     text-align: center;

@@ -1,0 +1,41 @@
+{
+  "themes": [
+    {
+      "id": "light",
+      "name": "Light",
+      "icon": "fa-sun",
+      "type": "light"
+    },
+    {
+      "id": "dark",
+      "name": "Dark",
+      "icon": "fa-moon",
+      "type": "dark"
+    },
+    {
+      "id": "dracula",
+      "name": "Dracula",
+      "icon": "fa-ghost",
+      "type": "dark"
+    },
+    {
+      "id": "nord",
+      "name": "Nord",
+      "icon": "fa-snowflake",
+      "type": "dark"
+    },
+    {
+      "id": "solarized-light",
+      "name": "Solarized Light",
+      "icon": "fa-cloud-sun",
+      "type": "light"
+    },
+    {
+      "id": "typewriter",
+      "name": "Typewriter",
+      "icon": "fa-feather-alt",
+      "type": "light"
+    }
+  ],
+  "default": "light"
+}
