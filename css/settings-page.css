@@ -686,13 +686,13 @@
   max-width: 22px;
   height: 20px;
   border-radius: 4px;
-  background: var(--sp-surface-secondary);
-  border: 1px solid var(--sp-border);
+  background: var(--key-bg);
+  border: 1px solid var(--key-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.5rem;
-  color: var(--sp-text-muted);
+  color: var(--key-text);
   text-transform: uppercase;
   overflow: hidden;
   transition: background-color 0.12s ease, border-color 0.12s ease,
@@ -729,18 +729,25 @@
 
 /* Tombol yang sedang "ditekan" oleh animasi mengetik di preview teks */
 .settings-page .preview-keyboard .key.active {
-  background: var(--sp-accent-soft);
-  border-color: var(--sp-accent);
-  color: var(--sp-accent);
-  box-shadow: 0 0 0 2px var(--sp-accent-soft);
+  background: var(--key-active-bg);
+  border-color: var(--key-border);
+  color: var(--key-active-text);
+  box-shadow: 0 0 0 2px var(--key-active-shadow);
   transform: translateY(1px) scale(0.94);
 }
 
 .settings-page .preview-keyboard .key.active.backspace-active {
-  background: rgba(253, 216, 53, 0.22);
-  border-color: #fdd835;
-  color: color-mix(in srgb, #fdd835 65%, var(--sp-text) 35%);
-  box-shadow: 0 0 0 2px rgba(253, 216, 53, 0.32);
+  background: var(--key-special-active-bg);
+  border-color: var(--key-border);
+  color: var(--key-special-active-text);
+  box-shadow: 0 0 0 2px var(--key-active-shadow);
+}
+
+.settings-page .preview-keyboard .key.capslock-active {
+  background: var(--key-special-active-bg);
+  border-color: var(--key-border);
+  color: var(--key-special-active-text);
+  box-shadow: 0 0 0 2px var(--key-active-shadow);
 }
 
 /* ---- Responsif ---- */

@@ -22,7 +22,6 @@ import { renderSimpleDrillLesson } from './lesson-simple-drill.js';
 import { renderCharacterDrillLesson, resetCharacterDrillState } from './lesson-character-drill.js';
 import { attachInputHandlers } from './input-handler.js';
 import { keyLayout } from './keyboard-layout.js';
-import { initDarkMode } from './utils/dark-mode.js'; // Impor modul dark mode
 
 function showLessonElements() {
     // Perbaikan: Gunakan getLessonDOMReferences()
@@ -226,9 +225,6 @@ export function setupEventListeners() {
     if (continueBtn) {
         continueBtn.addEventListener('click', goToNextLesson);
     }
-
-    // Panggil modul dark mode yang baru
-    initDarkMode(domElements.darkModeToggle);
 
     lessons.forEach((lesson, index) => {
         document.addEventListener(`lesson${index + 1}-finished`, () => {

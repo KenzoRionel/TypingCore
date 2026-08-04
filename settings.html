@@ -37,6 +37,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Fredoka&family=Noto+Serif+JP&family=Nunito&family=Quicksand&family=Shippori+Mincho&family=Special+Elite&family=VT323&display=swap"
+    />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/text-display.css" />
@@ -116,6 +120,7 @@
                       title="Pilih Tema"
                     >
                       <i class="fas fa-palette"></i>
+                      <span class="theme-picker-current-name">Tema</span>
                     </button>
                     <div
                       class="dropdown-menu dropdown-menu-end theme-picker-dropdown-menu"
@@ -316,6 +321,7 @@
                     <p class="settings-row-label">Pilih Font</p>
                     <div class="chip-group" role="radiogroup" aria-label="Pilih font">
                       <button type="button" class="chip-option font-choice-btn active" data-font="default" style="font-family: Arial" role="radio" aria-checked="true">Default</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="theme" style="font-family: var(--theme-font-family)" role="radio" aria-checked="false">Theme Font</button>
                       <button type="button" class="chip-option font-choice-btn" data-font="monospace" style="font-family: monospace" role="radio" aria-checked="false">Monospace</button>
                       <button type="button" class="chip-option font-choice-btn" data-font="serif" style="font-family: serif" role="radio" aria-checked="false">Serif</button>
                       <button type="button" class="chip-option font-choice-btn" data-font="sans-serif" style="font-family: sans-serif" role="radio" aria-checked="false">Sans</button>

@@ -4,6 +4,7 @@ import { initDOMAndState, getHiddenInput } from './learn-typing-state.js';
 import { createKeyboard, animateBorder } from './learn-typing-ui.js';
 import { renderLesson, setupEventListeners } from './learn-typing-logic.js';
 import { keyLayout } from './keyboard-layout.js';
+import { initTheme } from './theme.js';
 
 function initApp() {
     const domElements = initDOMAndState();
@@ -20,6 +21,7 @@ function initApp() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     initApp();
     window.requestAnimationFrame(animateBorder);
     document.body.addEventListener('click', () => {

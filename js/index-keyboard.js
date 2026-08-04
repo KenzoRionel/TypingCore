@@ -26,8 +26,11 @@ const ACTIVE_KEY_DELAY = 30; // ms to keep highlight after keyup (reduced for fa
 // Caps Lock state
 let isCapsLockActive = false;
 
-
-
+function getThemeColor(name, fallback) {
+  const source = animatedKeyElement || document.documentElement;
+  const value = getComputedStyle(source).getPropertyValue(name).trim();
+  return value || fallback;
+}
 
 
 /**
@@ -135,15 +138,16 @@ export function animateBorder() {
     }
 
     rotation += animationSpeed;
-    let startColor = `rgba(0, 123, 255, ${0.8 * borderOpacity})`;
-    let endColor = `rgba(255, 255, 255, ${1 * borderOpacity})`;
+    let startColor = getThemeColor('--key-active-bg', getThemeColor('--accent', '#007bff'));
+    let endColor = getThemeColor('--key-active-text', getThemeColor('--surface', '#ffffff'));
     
     if (isCorrectInputAnimationActive) {
-      startColor = `rgba(253, 216, 53, ${1 * borderOpacity})`;
-      endColor = `rgba(200, 255, 0, ${1 * borderOpacity})`;
+      startColor = getThemeColor('--correct', startColor);
+      endColor = getThemeColor('--accent', endColor);
     }
     
-    const gradient = `conic-gradient(from ${rotation}deg, ${startColor} 0%, ${endColor} 25%, ${startColor} 50%, ${endColor} 75%, ${startColor} 100%)`;
+    const fade = Math.max(0.2, borderOpacity);
+    const gradient = `conic-gradient(from ${rotation}deg, color-mix(in srgb, ${startColor} ${fade * 100}%, transparent) 0%, ${endColor} 25%, ${startColor} 50%, ${endColor} 75%, color-mix(in srgb, ${startColor} ${fade * 100}%, transparent) 100%)`;
     animatedKeyElement.style.borderImageSource = gradient;
     requestAnimationFrame(animateBorder);
   } else {

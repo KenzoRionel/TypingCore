@@ -5,14 +5,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Belajar Mengetik - TypingCore</title>
+    <script>
+        (function () {
+            try {
+                var STORAGE_KEY = "typing-theme";
+                var LEGACY_STORAGE_KEY = "darkMode";
+                var theme = localStorage.getItem(STORAGE_KEY);
+
+                if (!theme) {
+                    var legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+                    if (legacy !== null) {
+                        theme = legacy === "enabled" ? "dark" : "light";
+                    }
+                }
+
+                if (!theme) {
+                    var prefersDark =
+                        window.matchMedia &&
+                        window.matchMedia("(prefers-color-scheme: dark)").matches;
+                    theme = prefersDark ? "dark" : "light";
+                }
+
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
     <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Fredoka&family=Noto+Serif+JP&family=Nunito&family=Quicksand&family=Shippori+Mincho&family=Special+Elite&family=VT323&display=swap">
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/learn-typing-style.css">
     <link rel="stylesheet" href="css/underline-styles.css">
     <link rel="stylesheet" href="css/lesson-complete-notification.css">
-    <link rel="stylesheet" href="css/dark-mode.css">
 </head>
 
 <body>

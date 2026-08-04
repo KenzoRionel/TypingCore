@@ -86,7 +86,9 @@ function applyWordSet(value) {
 
 function applyFont(textDisplay, font) {
   if (!textDisplay) return;
-  textDisplay.style.fontFamily = font === "default" ? "" : font;
+  textDisplay.style.fontFamily =
+    font === "default" ? "" : font === "theme" ? "var(--theme-font-family)" : font;
+  textDisplay.classList.toggle("font-theme", font === "theme");
   textDisplay.classList.toggle("font-sans-serif", font === "sans-serif");
   textDisplay.classList.toggle("font-serif", font === "serif");
 }

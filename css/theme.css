@@ -31,6 +31,28 @@
   /* Font khusus tema (di-override tema seperti "typewriter") */
   --theme-font-family: inherit;
 
+  /* Role turunan untuk komponen latihan mengetik. Nilainya sengaja
+     mengambil role tema utama supaya tema baru otomatis mewarnai keyboard,
+     caret effect, dan preview tanpa perlu selector tambahan. */
+  --key-bg: transparent;
+  --key-text: var(--accent);
+  --key-border: var(--border);
+  --key-active-bg: var(--accent);
+  --key-active-text: var(--surface);
+  --key-active-shadow: color-mix(in srgb, var(--accent) 55%, transparent);
+  --key-special-active-bg: var(--accent-hover);
+  --key-special-active-text: var(--surface);
+  --key-wrong-bg: var(--incorrect-bg);
+  --key-wrong-text: var(--incorrect);
+  --caret-soft-bg: color-mix(in srgb, var(--caret) 24%, transparent);
+  --caret-glow-strong: color-mix(in srgb, var(--caret) 72%, transparent);
+  --caret-glow-soft: color-mix(in srgb, var(--caret) 34%, transparent);
+  --caret-trail-strong: color-mix(in srgb, var(--caret) 45%, transparent);
+  --caret-trail-medium: color-mix(in srgb, var(--caret) 22%, transparent);
+  --caret-trail-soft: color-mix(in srgb, var(--caret) 10%, transparent);
+  --ghost-caret: var(--accent);
+  --ghost-caret-shadow: color-mix(in srgb, var(--accent) 22%, transparent);
+
   /* Durasi transisi ganti tema */
   --theme-transition-duration: 0.25s;
 }
@@ -65,6 +87,7 @@
   .modal,
   .theme-option,
   .theme-option-swatch,
+  .theme-picker-current-name,
   .theme-picker-dropdown-menu,
   .themed-surface,
   .themed-text-muted,
@@ -522,7 +545,20 @@ body {
 }
 
 .theme-picker-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text, inherit);
+}
+
+.theme-picker-current-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .theme-picker-toggle::after {

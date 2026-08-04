@@ -528,17 +528,7 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
     line-height: 1;
 }
 
-body.dark-mode .practice-wrong-words-btn {
-    color: #f0a35c;
-}
 
-body.dark-mode .practice-wrong-words-btn:hover {
-    color: #f5b877;
-}
-
-body.dark-mode .practice-wrong-words-count {
-    background-color: #b9660b;
-}
 
 /* ✅ PERBAIKAN TEMA: blok "Dark Mode untuk Results Container" di bawah ini
    (dulu ada di sini) DIHAPUS. Semua elemen yang di-override (.results-container,
@@ -610,14 +600,14 @@ header.hidden,
 
 /* ==================== VIRTUAL KEYBOARD STYLES ==================== */
 :root {
-    --key-bg-color: #5555550e;
-    --active-key-bg-color: #00e1ff;
-    --active-key-shadow-color: #77aaff80;
-    --next-key-bg-color: #39a8e7;
-    --next-key-text-color: #ffffff;
-    --next-key-border-color: #77a777;
-    --highlight-color: #007bff;
-    --primary-color: #126ed6;
+    --key-bg-color: var(--key-bg);
+    --active-key-bg-color: var(--key-active-bg);
+    --active-key-shadow-color: var(--key-active-shadow);
+    --next-key-bg-color: var(--key-active-bg);
+    --next-key-text-color: var(--key-active-text);
+    --next-key-border-color: var(--key-border);
+    --highlight-color: var(--accent);
+    --primary-color: var(--accent);
 }
 
 #virtual-keyboard-container {
@@ -673,19 +663,18 @@ header.hidden,
    di tema Solarized-Light/Typewriter (yang punya accent krem/coklat sendiri)
    keyboard-nya tetap biru generik, tidak related sama sekali ke tema aktif.
    Diganti var(--accent)/var(--border) supaya ikut tema; efek glow "active"/
-   gold capslock/backspace SENGAJA tidak diubah (lihat komentar di dekat
-   var(--active-key-bg-color) dkk di atas) karena warna neon itu memang
-   dirancang sebagai sinyal feedback yang konsisten, bukan representasi tema. */
+   state aktif, backspace, capslock, dan wrong flash juga memakai role tema
+   supaya tidak lagi terkunci ke neon/emas/merah generik. */
 #virtual-keyboard-container .key {
-    background-color: transparent;
-    color: var(--accent);
+    background-color: var(--key-bg);
+    color: var(--key-text);
     padding: 4px 0;
     border-radius: 4px;
     min-width: 24px;
     max-width: 54px;
     text-align: center;
     font-size: 1.1em;
-    border: 2px solid var(--border);
+    border: 2px solid var(--key-border);
     will-change: transform, box-shadow, background-color;
     flex: 0 1 50px;
     transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, background-color 0.1s ease;
@@ -702,6 +691,7 @@ header.hidden,
 /* Active key styling with pop animation - OPTIMIZED FOR FAST TYPING */
 #virtual-keyboard-container .key.active {
     background-color: var(--active-key-bg-color);
+    color: var(--key-active-text);
     transform: translateY(2px) scale(1.05);
     box-shadow: 0 0 10px 2px var(--active-key-shadow-color);
     animation: key-press-pop 0.12s cubic-bezier(.36, .07, .19, .97) forwards;
@@ -710,23 +700,24 @@ header.hidden,
 
 /* Backspace key active styling with yellow highlight - using data-key attribute */
 #virtual-keyboard-container .key.active[data-key="backspace"] {
-    background-color: #ffd700 !important;
-    box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6) !important;
+    background-color: var(--key-special-active-bg) !important;
+    color: var(--key-special-active-text) !important;
+    box-shadow: 0 0 10px 2px var(--active-key-shadow-color) !important;
     animation: backspace-key-press-pop 0.12s cubic-bezier(.36, .07, .19, .97) forwards;
 }
 
 @keyframes backspace-key-press-pop {
     0% {
         transform: translateY(0) scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+        box-shadow: 0 0 0 0 transparent;
     }
     50% {
         transform: translateY(2px) scale(1.08);
-        box-shadow: 0 0 15px 3px rgba(255, 215, 0, 0.8);
+        box-shadow: 0 0 15px 3px var(--active-key-shadow-color);
     }
     100% {
         transform: translateY(2px) scale(1.05);
-        box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6);
+        box-shadow: 0 0 10px 2px var(--active-key-shadow-color);
     }
 }
 
@@ -762,7 +753,7 @@ header.hidden,
 /* Wrong key flash animation with combined shake and flash */
 #virtual-keyboard-container .key.wrong-key-flash {
     animation: wrong-key-flash-shake 0.2s ease-in-out !important;
-    color: #fff !important;
+    color: var(--key-wrong-text) !important;
 }
 
 @keyframes wrong-key-flash-shake {
@@ -771,15 +762,15 @@ header.hidden,
         transform: translateX(0) scale(1);
     }
     25% {
-        background-color: rgba(255, 77, 77, 0.7);
+        background-color: var(--key-wrong-bg);
         transform: translateX(-2px) scale(1.1);
     }
     50% {
-        background-color: rgba(255, 77, 77, 0.7);
+        background-color: var(--key-wrong-bg);
         transform: translateX(2px) scale(1.1);
     }
     75% {
-        background-color: rgba(255, 77, 77, 0.7);
+        background-color: var(--key-wrong-bg);
         transform: translateX(-2px) scale(1.1);
     }
     100% {
@@ -840,51 +831,32 @@ header.hidden,
     margin: 0px;
 }
 
-/* ✅ dulu "Dark mode support for keyboard" di sini override color/border-color
-   ke abu-abu tetap (#e0e0e0/#666) - sekarang sudah otomatis benar lewat
-   var(--accent)/var(--border) di aturan dasar .key di atas, jadi baris itu
-   dihapus. .key.active (glow neon saat ditekan) TETAP dipertahankan apa
-   adanya - itu warna sinyal, bukan warna tema. */
 body.dark-mode #virtual-keyboard-container .key.active {
     background-color: var(--active-key-bg-color);
     box-shadow: 0 0 12px 2px var(--active-key-shadow-color);
 }
 
-/* Caps Lock key active styling with yellow highlight - using data-key attribute */
+/* Caps Lock key active styling with theme highlight - using data-key attribute */
 #virtual-keyboard-container .key.capslock-active {
-    background-color: #ffd700 !important;
-    box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6) !important;
-    color: #333 !important;
+    background-color: var(--key-special-active-bg) !important;
+    box-shadow: 0 0 10px 2px var(--active-key-shadow-color) !important;
+    color: var(--key-special-active-text) !important;
     animation: capslock-key-press-pop 0.12s cubic-bezier(.36, .07, .19, .97) forwards;
 }
 
 @keyframes capslock-key-press-pop {
     0% {
         transform: translateY(0) scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+        box-shadow: 0 0 0 0 transparent;
     }
     50% {
         transform: translateY(2px) scale(1.08);
-        box-shadow: 0 0 15px 3px rgba(255, 215, 0, 0.8);
+        box-shadow: 0 0 15px 3px var(--active-key-shadow-color);
     }
     100% {
         transform: translateY(2px) scale(1.05);
-        box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6);
+        box-shadow: 0 0 10px 2px var(--active-key-shadow-color);
     }
-}
-
-/* Dark mode backspace key styling - using data-key attribute */
-body.dark-mode #virtual-keyboard-container .key.active[data-key="backspace"] {
-    background-color: #ffd700 !important;
-    box-shadow: 0 0 12px 2px rgba(255, 215, 0, 0.8) !important;
-    color: #333 !important;
-}
-
-/* Dark mode Caps Lock key styling */
-body.dark-mode #virtual-keyboard-container .key.capslock-active {
-    background-color: #ffd700 !important;
-    box-shadow: 0 0 12px 2px rgba(255, 215, 0, 0.8) !important;
-    color: #333 !important;
 }
 
 /* Dark mode next key highlighting - DISABLED */

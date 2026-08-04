@@ -56,6 +56,21 @@
   padding: 0;
 }
 
+#textDisplay.font-theme {
+  font-family: var(--theme-font-family);
+  letter-spacing: normal;
+  word-spacing: normal;
+}
+
+#textDisplay.font-theme .space-char {
+  width: 0.32em;
+}
+
+#textDisplay.font-theme .word-container span {
+  margin: 0;
+  padding: 0;
+}
+
 .text-line {
   margin: 0;
   /* pastikan ga ada jarak vertikal ekstra */
@@ -441,8 +456,8 @@
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: #ffffff50; /* Pastikan background transparan */
-  border: 1px solid #555;
+  background-color: var(--caret-soft-bg);
+  border: 1px solid var(--caret);
 }
 
 .hidden-mode-active .word-container.current-word-target {
@@ -472,7 +487,7 @@
   width: 100%;
   height: 100%;
   background-color: transparent;
-  border: 2px solid #555;
+  border: 2px solid var(--caret);
   box-sizing: border-box;
   border-radius: 3px;
 }
@@ -486,10 +501,10 @@
   height: 100%;
   background-color: transparent;
   background-image:
-    linear-gradient(#555, #555), linear-gradient(#555, #555),
-    linear-gradient(#555, #555), linear-gradient(#555, #555),
-    linear-gradient(#555, #555), linear-gradient(#555, #555),
-    linear-gradient(#555, #555), linear-gradient(#555, #555);
+    linear-gradient(var(--caret), var(--caret)), linear-gradient(var(--caret), var(--caret)),
+    linear-gradient(var(--caret), var(--caret)), linear-gradient(var(--caret), var(--caret)),
+    linear-gradient(var(--caret), var(--caret)), linear-gradient(var(--caret), var(--caret)),
+    linear-gradient(var(--caret), var(--caret)), linear-gradient(var(--caret), var(--caret));
   background-repeat: no-repeat;
   background-size: 2px 7px, 7px 2px, 2px 7px, 7px 2px, 2px 7px, 7px 2px, 2px 7px, 7px 2px;
   background-position:
@@ -501,7 +516,7 @@
 
 /* --- 3. Dot / Circle: buletan kecil di baseline (bawah) karakter --- */
 .smooth-caret.mode-dot {
-  background-color: #555;
+  background-color: var(--caret);
   border-radius: 50%;
 }
 
@@ -513,7 +528,7 @@
   width: 6px;
   height: 6px;
   transform: translateX(-50%);
-  background-color: #555;
+  background-color: var(--caret);
   border-radius: 50%;
 }
 
@@ -526,8 +541,8 @@
   width: 100%;
   height: 100%;
   background-color: transparent;
-  border-top: 2px solid #555;
-  border-bottom: 2px solid #555;
+  border-top: 2px solid var(--caret);
+  border-bottom: 2px solid var(--caret);
   box-sizing: border-box;
 }
 
@@ -536,22 +551,22 @@
   top: 0;
   width: 3px;
   height: 100%;
-  background-color: #00c2ff;
-  box-shadow: 0 0 8px 2px rgba(0, 194, 255, 0.75), 0 0 16px 4px rgba(0, 194, 255, 0.35);
+  background-color: var(--caret);
+  box-shadow: 0 0 8px 2px var(--caret-glow-strong), 0 0 16px 4px var(--caret-glow-soft);
 }
 [data-cursor-mode="laser"] .has-cursor.cursor-after::after {
   left: 100%;
   top: 0;
   width: 3px;
   height: 100%;
-  background-color: #00c2ff;
-  box-shadow: 0 0 8px 2px rgba(0, 194, 255, 0.75), 0 0 16px 4px rgba(0, 194, 255, 0.35);
+  background-color: var(--caret);
+  box-shadow: 0 0 8px 2px var(--caret-glow-strong), 0 0 16px 4px var(--caret-glow-soft);
 }
 .smooth-caret.mode-laser {
-  background-color: #00c2ff;
+  background-color: var(--caret);
   box-shadow:
-    0 0 calc(4px + 12px * var(--caret-speed, 0)) calc(1px + 3px * var(--caret-speed, 0)) rgba(0, 194, 255, 0.75),
-    0 0 calc(8px + 20px * var(--caret-speed, 0)) calc(2px + 4px * var(--caret-speed, 0)) rgba(0, 194, 255, 0.35);
+    0 0 calc(4px + 12px * var(--caret-speed, 0)) calc(1px + 3px * var(--caret-speed, 0)) var(--caret-glow-strong),
+    0 0 calc(8px + 20px * var(--caret-speed, 0)) calc(2px + 4px * var(--caret-speed, 0)) var(--caret-glow-soft);
 }
 
 [data-cursor-mode="typewriter"] .has-cursor.cursor-before::after,
@@ -560,12 +575,12 @@
   top: -6px;
   width: 100%;
   height: 4px;
-  background-color: #555;
+  background-color: var(--caret);
   border-radius: 2px;
   animation: cursorBlink 1s infinite, typewriterTap 0.15s ease;
 }
 .smooth-caret.mode-typewriter {
-  background-color: #555;
+  background-color: var(--caret);
   border-radius: 2px;
 }
 .smooth-caret.mode-typewriter.tap {
@@ -582,29 +597,29 @@
   top: 0;
   width: 2px;
   height: 100%;
-  background-color: #555;
+  background-color: var(--caret);
   box-shadow:
-    -5px 0 0 -0.5px rgba(85, 85, 85, 0.45),
-    -10px 0 0 -0.5px rgba(85, 85, 85, 0.22),
-    -15px 0 0 -0.5px rgba(85, 85, 85, 0.1);
+    -5px 0 0 -0.5px var(--caret-trail-strong),
+    -10px 0 0 -0.5px var(--caret-trail-medium),
+    -15px 0 0 -0.5px var(--caret-trail-soft);
 }
 [data-cursor-mode="comet"] .has-cursor.cursor-after::after {
   left: 100%;
   top: 0;
   width: 2px;
   height: 100%;
-  background-color: #555;
+  background-color: var(--caret);
   box-shadow:
-    -5px 0 0 -0.5px rgba(85, 85, 85, 0.45),
-    -10px 0 0 -0.5px rgba(85, 85, 85, 0.22),
-    -15px 0 0 -0.5px rgba(85, 85, 85, 0.1);
+    -5px 0 0 -0.5px var(--caret-trail-strong),
+    -10px 0 0 -0.5px var(--caret-trail-medium),
+    -15px 0 0 -0.5px var(--caret-trail-soft);
 }
 .smooth-caret.mode-comet {
-  background-color: #555;
+  background-color: var(--caret);
   box-shadow:
-    calc(-4px - 10px * var(--caret-speed, 0)) 0 0 -0.5px rgba(85, 85, 85, 0.45),
-    calc(-8px - 20px * var(--caret-speed, 0)) 0 0 -0.5px rgba(85, 85, 85, 0.22),
-    calc(-12px - 30px * var(--caret-speed, 0)) 0 0 -0.5px rgba(85, 85, 85, 0.1);
+    calc(-4px - 10px * var(--caret-speed, 0)) 0 0 -0.5px var(--caret-trail-strong),
+    calc(-8px - 20px * var(--caret-speed, 0)) 0 0 -0.5px var(--caret-trail-medium),
+    calc(-12px - 30px * var(--caret-speed, 0)) 0 0 -0.5px var(--caret-trail-soft);
 }
 
 /* --- 8. Pen / Brush: batang kecil miring menyerupai ujung pena yang "mencoret"
@@ -613,7 +628,7 @@
 [data-cursor-mode="pen"] .has-cursor.cursor-after::after,
 .smooth-caret.mode-pen {
   width: 3px;
-  background-color: #8b5a2b;
+  background-color: var(--caret);
   border-radius: 0 3px 3px 0;
   transform: rotate(18deg);
   transform-origin: bottom center;
@@ -635,26 +650,26 @@
   top: 0;
   width: 2px;
   height: 100%;
-  background-color: #2ecc71;
+  background-color: var(--correct);
 }
 [data-cursor-mode="reactive"] .has-cursor.cursor-after::after {
   left: 100%;
 }
 [data-cursor-mode="reactive"] .has-cursor.wrong::after,
 [data-cursor-mode="reactive"] .has-cursor.incorrect::after {
-  background-color: #e74c3c;
+  background-color: var(--incorrect);
 }
 .smooth-caret.mode-reactive {
-  background-color: #2ecc71;
+  background-color: var(--correct);
 }
 .smooth-caret.mode-reactive.state-good {
-  background-color: #2ecc71;
+  background-color: var(--correct);
 }
 .smooth-caret.mode-reactive.state-slow {
-  background-color: #f1c40f;
+  background-color: var(--accent);
 }
 .smooth-caret.mode-reactive.state-error {
-  background-color: #e74c3c;
+  background-color: var(--incorrect);
 }
 
 @keyframes cursorBlink {
@@ -667,7 +682,7 @@
   pointer-events: none;
   z-index: 10;
   opacity: 0;
-  background-color: #555;
+  background-color: var(--caret);
   border-radius: 1px;
   transition:
     left var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
@@ -682,8 +697,8 @@
   animation: cursorBlink 1s infinite;
 }
 .smooth-caret.mode-box {
-  background-color: #ffffff50;
-  border: 1px solid #555;
+  background-color: var(--caret-soft-bg);
+  border: 1px solid var(--caret);
   box-sizing: border-box;
 }
 
@@ -706,9 +721,9 @@
   z-index: 8; /* di bawah smooth-caret (z-index 10) supaya kursor user sendiri tetap dominan */
   opacity: 0;
   width: 2px;
-  background-color: rgba(255, 152, 0, 0.65);
+  background-color: var(--ghost-caret);
   border-radius: 1px;
-  box-shadow: 0 0 0 1px rgba(255, 152, 0, 0.15);
+  box-shadow: 0 0 0 1px var(--ghost-caret-shadow);
   transition:
     left 0.09s linear,
     top 0.09s linear,
@@ -724,6 +739,6 @@
 [data-theme="dark"] .ghost-caret,
 .dark-mode .ghost-caret,
 body.dark .ghost-caret {
-  background-color: rgba(255, 183, 77, 0.75);
-  box-shadow: 0 0 0 1px rgba(255, 183, 77, 0.2);
+  background-color: var(--ghost-caret);
+  box-shadow: 0 0 0 1px var(--ghost-caret-shadow);
 }

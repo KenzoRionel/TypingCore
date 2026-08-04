@@ -8,6 +8,8 @@ const LEGACY_STORAGE_KEY = 'darkMode'; // key lama dari dark-mode.js
 const THEMES_JSON_PATH = 'data/themes.json';
 
 let themesCache = null;
+let committedThemeId = null;
+let previewThemeId = null;
 
 /* ---------------------------------------------------------------------
  * Helper localStorage yang aman. Di Safari private mode (dan browser lain
@@ -112,6 +114,35 @@ export function applyTheme(themeId) {
   document.body.classList.toggle('theme-dark', isDarkTheme);
 }
 
+function getThemeById(themeId) {
+  return (themesCache?.themes || []).find((theme) => theme.id === themeId);
+}
+
+function updateThemeToggleLabel(themeId) {
+  const selectedTheme = getThemeById(themeId);
+  document.querySelectorAll('.theme-picker-current-name').forEach((label) => {
+    label.textContent = selectedTheme?.name || themeId || 'Tema';
+  });
+}
+
+function previewTheme(themeId) {
+  if (!themeId || themeId === previewThemeId) return;
+  previewThemeId = themeId;
+  applyTheme(themeId);
+  updateActivePickerState(themeId);
+  updateThemeToggleLabel(themeId);
+  document.dispatchEvent(new CustomEvent('themepreview', { detail: { theme: themeId } }));
+}
+
+function restoreCommittedTheme() {
+  if (!previewThemeId || !committedThemeId) return;
+  previewThemeId = null;
+  applyTheme(committedThemeId);
+  updateActivePickerState(committedThemeId);
+  updateThemeToggleLabel(committedThemeId);
+  document.dispatchEvent(new CustomEvent('themepreviewend', { detail: { theme: committedThemeId } }));
+}
+
 /**
  * Ganti tema + simpan preferensi.
  *
@@ -128,8 +159,11 @@ export function setTheme(themeId) {
   }
 
   applyTheme(themeId);
+  committedThemeId = themeId;
+  previewThemeId = null;
   safeSetItem(STORAGE_KEY, themeId);
   updateActivePickerState(themeId);
+  updateThemeToggleLabel(themeId);
   document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: themeId } }));
 }
 
@@ -213,9 +247,24 @@ export async function renderThemePicker(container) {
     nameSpan.textContent = theme.name; // textContent, BUKAN innerHTML -> anti-XSS
 
     btn.append(swatch, iconWrap, nameSpan);
+    btn.addEventListener('mouseenter', () => previewTheme(theme.id));
+    btn.addEventListener('focus', () => previewTheme(theme.id));
     btn.addEventListener('click', () => setTheme(theme.id));
     container.appendChild(btn);
   });
+
+  container.addEventListener('mouseleave', restoreCommittedTheme);
+  container.addEventListener('focusout', () => {
+    requestAnimationFrame(() => {
+      if (!container.contains(document.activeElement)) restoreCommittedTheme();
+    });
+  });
+
+  const dropdownMenu = container.closest('.dropdown-menu');
+  if (dropdownMenu) {
+    dropdownMenu.addEventListener('hidden.bs.dropdown', restoreCommittedTheme);
+    dropdownMenu.parentElement?.addEventListener('hidden.bs.dropdown', restoreCommittedTheme);
+  }
 }
 
 /**
@@ -253,10 +302,14 @@ export async function initTheme({ pickerContainer } = {}) {
     // supaya class dark-mode/theme-dark ikut benar sekarang setelah
     // themesCache terisi — inline script hanya sempat set atributnya saja.
     applyTheme(currentTheme);
+    committedThemeId = currentTheme;
   } else {
     // Jaga-jaga kalau ada halaman yang lupa pasang inline script.
-    applyTheme(resolveInitialTheme(defaultTheme));
+    committedThemeId = resolveInitialTheme(defaultTheme);
+    applyTheme(committedThemeId);
   }
+
+  updateThemeToggleLabel(committedThemeId);
 
   enableThemeTransitions();
 
