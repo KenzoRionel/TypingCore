@@ -37,17 +37,54 @@
 
 /* Transisi halus saat ganti tema.
    Class ditambahkan oleh js/theme.js SETELAH first paint,
-   supaya load pertama tidak ikut animasi (mencegah flash aneh). */
+   supaya load pertama tidak ikut animasi (mencegah flash aneh).
+
+   Selector dibatasi ke elemen-elemen yang benar-benar butuh transisi warna
+   (bukan `*` universal). Di halaman typing dengan ribuan <span> per huruf,
+   mentransisikan SEMUA elemen bisa memicu repaint besar-besaran dan bikin
+   lag saat ganti tema. Tambahkan selector ke daftar :where(...) di bawah
+   kalau ada elemen lain yang perlu ikut bertransisi halus. */
 .theme-transition-ready,
-.theme-transition-ready *,
-.theme-transition-ready *::before,
-.theme-transition-ready *::after {
+.theme-transition-ready :where(
+  body,
+  header,
+  footer,
+  nav,
+  main,
+  section,
+  article,
+  aside,
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  .card,
+  .surface,
+  .panel,
+  .modal,
+  .theme-option,
+  .theme-option-swatch,
+  .theme-picker-dropdown-menu,
+  .themed-surface,
+  .themed-text-muted,
+  .themed-accent,
+  .themed-border
+) {
   transition:
     background-color var(--theme-transition-duration) ease,
     border-color var(--theme-transition-duration) ease,
     color var(--theme-transition-duration) ease,
     fill var(--theme-transition-duration) ease,
     box-shadow var(--theme-transition-duration) ease;
+}
+
+/* Hormati preferensi user yang mematikan animasi di OS/browser. */
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition-ready,
+  .theme-transition-ready * {
+    transition: none !important;
+  }
 }
 
 body {
@@ -170,6 +207,189 @@ body {
   --current-word-bg: #e5d7ab;
 
   --theme-font-family: "Courier Prime", "Courier New", Courier, monospace;
+}
+
+/* ==========================================================================
+   7. MINIONS — kuning pastel, playful
+   Kontras teks vs bg: #2e2a1b on #fffbeb ≈ 15.5:1
+   ========================================================================== */
+[data-theme="minions"] {
+  --bg: #FFFBEB;              /* krem pisang, bukan putih polos */
+  --surface: #f8de47;          /* kartu / panel - kuning pastel */
+  --text: #2E2A1B;             /* coklat tua goggle - vs bg 15.5:1 */
+  --text-muted: #7A6D4E;       /* vs bg 5.1:1 */
+  --border: #bea62d;
+  --accent: #2E5AAC;           /* biru denim overall - vs bg 6.2:1 */
+  --accent-hover: #1F3D7A;
+  --caret: #2E2A1B;
+  --correct: #2E5AAC;       /* benar = biru celana minion, nyambung tema */
+  --incorrect: #6B4C6E;     /* salah = ungu evil minion */
+  --incorrect-bg: #E9D5F5;  /* bg ungu pucat, nggak perlu merah */
+  --current-word-bg: #FFEA80;  /* highlight kata aktif */
+
+  --theme-font-family: "Nunito", "Fredoka", sans-serif; /* opsional, biar bulet playful */
+}
+
+/* ==========================================================================
+   8. MINIONS DARK — versi gelap dari tema minions, biar mata tetap nyaman
+   Kontras teks vs bg: #FFF3B0 on #1A1E3A ≈ 12.5:1
+   ========================================================================== */
+[data-theme="minions-dark"] {
+  --bg: #1A1E3A;               /* malam lab Gru */
+  --surface: #252A4A;
+  --text: #FFF3B0;
+  --text-muted: #C2B68A;
+  --border: #3A3F62;
+  --accent: #FFD60A;           /* kuning minion jadi aksen di dark */
+  --accent-hover: #FFEB70;
+  --caret: #FFD60A;
+  --correct: #A8E6A3;
+  --incorrect: #FF8A80;
+  --incorrect-bg: #3D1F3A;     /* ungu evil minion */
+  --current-word-bg: #2F345E;
+}
+
+/* ==========================================================================
+   9. MATCHA — latte, creamy, zen
+   Kontras teks vs bg: #2B3329 on #F6F9F0 ≈ 15.2:1
+   ========================================================================== */
+[data-theme="matcha"] {
+  --bg: #F6F9F0;               /* kertas beras + semburat matcha */
+  --surface: #E8EFE0;          /* panel - daun matcha muda */
+  --text: #2B3329;             /* hijau-hitam pekat */
+  --text-muted: #6F7E6D;       /* vs #F6F9F0 ≈ 5.1:1 */
+  --border: #D1DCC7;
+  --accent: #6A9C5A;           /* matcha pekat - vs #F6F9F0 ≈ 4.8:1 */
+  --accent-hover: #4E7A41;
+  --caret: #3A5D2F;
+  --correct: #3A4D33;        /* benar = teks jadi lebih pekat, kayak teh pekat */
+  --incorrect: #8D6E6E;     /* salah = abu-ungu, kayak adzuki pudar */
+  --incorrect-bg: #E9DDD9;
+  --current-word-bg: #DDE8D0;   /* highlight kata aktif - hijau susu */
+
+  --theme-font-family: "Quicksand", "Nunito", sans-serif;
+}
+
+/* ==========================================================================
+   10. DEEP FOREST — hutan gelap, misterius
+   Kontras teks vs bg: #E6E9D9 on #1E2620 ≈ 12.5:1
+   ========================================================================== */
+[data-theme="deep-forest"] {
+  --bg: #1E2620;
+  --surface: #2A352C;
+  --text: #E6E9D9;
+  --text-muted: #A8B5A3;
+  --border: #3A4A3C;
+  --accent: #9AC18B;
+  --accent-hover: #BDDCB1;
+  --caret: #CDE6C2;
+  --correct: #A8D5A0;
+  --incorrect: #E6A08A;
+  --incorrect-bg: #3D2A26;
+  --current-word-bg: #2F3D32;
+}
+
+/* ==========================================================================
+   11. MOONLIGHT — cahaya bulan di atas laut malam
+   Kontras teks vs bg: #D9E1F2 on #121826 ≈ 13.8:1
+   ========================================================================== */
+[data-theme="moonlight"] {
+  --bg: #121826;
+  --surface: #1B253B;
+  --text: #D9E1F2;
+  --text-muted: #8A9BB8;
+  --border: #2A3A5A;
+  --accent: #8FB8FF;
+  --accent-hover: #AACBFF;
+  --caret: #F9E08B;
+  --correct: #F9E08B;
+  --incorrect: #6E84A8;      /* gelapin dikit dari text-muted biar beda */
+  --incorrect-bg: #1E2E4F;
+  --current-word-bg: #253655; /* terangin dikit biar current word lebih kebaca */
+}
+
+/* ==========================================================================
+   12. OLD SCHOOL — lab komputer 90-an, kertas ujian menguning
+   Kontras teks vs bg: #2B2316 on #F2E8CF ≈ 14.9:1
+   ========================================================================== */
+[data-theme="old-school"] {
+  --bg: #F2E8CF;               /* kertas ujian yang udah menguning */
+  --surface: #E6D5A7;           /* meja kayu lab / plastik monitor beige */
+  --text: #2B2316;              /* pensil 2B / tinta hitam pudar */
+  --text-muted: #8A7D62;        /* vs #F2E8CF ≈ 4.8:1 - coretan pinggir buku */
+  --border: #C9B896;            /* garis buku tulis lama */
+  --accent: #385A7A;            /* tinta pulpen biru - buat tombol & link */
+  --accent-hover: #2A425A;
+  --caret: #2B2316;
+  --correct: #385A7A;           /* benar = jadi biru pulpen, kayak jawaban benar */
+  --incorrect: #bb774f;         /* salah = jadi coklat pudar kayak bekas hapusan */
+  --incorrect-bg: #E2CFC0;      /* bg salah = bekas penghapus yang kotor */
+  --current-word-bg: #E0D0A8;   /* kata aktif = stabilo kuning yang udah pudar */
+
+  --theme-font-family: "Special Elite", "Courier Prime", Courier, monospace;
+}
+
+/* ==========================================================================
+   13. MINECRAFT — overworld siang, inventory crafting
+   Kontras teks vs bg: #2D2416 on #F1E8C9 ≈ 13.4:1
+   ========================================================================== */
+[data-theme="minecraft"] {
+  --bg: #D6D6D6;
+  --surface: #C6C6C6;
+  --text: #3B3B3B;
+  --text-muted: #5E5E5E; /* di SS kamu masih kepudaran, gelapin dikit */
+  --border: #8B8B8B;
+  --accent: #3A7D44; /* biarin hijau buat aksen aja */
+  --accent-hover: #2F6637;
+  --correct: #8C6D1F; /* gold yang di SS kamu udah oke, cuma gelapin dikit biar kontras */
+  --incorrect: #9E5A4A;
+  --incorrect-bg: #D6A99A;
+  --current-word-bg: #B8B8B8;
+
+  --theme-font-family: "VT323", monospace; /* pixel font */
+}
+
+/* ==========================================================================
+   14. SHOGUN — washi, sumi ink, dan stempel vermillion
+   Kontras teks vs bg: #1C1C1C on #F0EAD6 ≈ 15.6:1
+   ========================================================================== */
+[data-theme="shogun"] {
+  --bg: #F0EAD6;
+  --surface: #E2D6B8;
+  --text: #1C1C1C;
+  --text-muted: #756445; /* gelapin dikit dari SS */
+  --border: #C9B896;
+  --accent: #A31F24;
+  --accent-hover: #7F181C;
+  --caret: #1C1C1C;
+  --correct: #8C6D1F; /* gold versi lebih tua biar kontras, yang di SS kepucatan */
+  --incorrect: #A31F24; 
+  --incorrect-bg: #E2C5B8; /* bekas usapan kuas, biar incorrect ada alasnya */
+  --current-word-bg: #E8DCC0;
+
+  --theme-font-family: "Shippori Mincho", "Noto Serif JP", serif;
+}
+
+/* ==========================================================================
+   15. WATERMELON — daging juicy, kulit segar, biji hitam
+   Kontras teks vs bg: #2B2023 on #FEF6F6 ≈ 15.2:1
+   ========================================================================== */
+[data-theme="watermelon"] {
+  --bg: #F8F0F1;               /* hampir putih, bukan pink gonjreng lagi */
+  --surface: #FFFFFF;          /* tempat ngetik putih bersih biar teks fokus */
+  --text: #2B1215;              /* biji hitam pekat - kontras 14:1 */
+  --text-muted: #6E444B;        /* vs #FFFFFF 5.2:1, kebaca tapi nggak nyilau */
+  --border: #E6C2C6;
+  --accent: #2D5A3E;            /* hijau kulit tua - buat keyboard & tombol, bukan pink lagi */
+  --accent-hover: #1A3525;
+  --caret: #D94E64;
+
+  --correct: #C23A54;           /* daging merah matang, tapi di atas putih jadi jelas */
+  --incorrect: #6A8C5E;          /* kulit pait */
+  --incorrect-bg: #E2E9D8;
+  --current-word-bg: #FFF0F2;    /* pink super tipis aja buat highlight */
+
+  --theme-font-family: "Fredoka", "Nunito", sans-serif;
 }
 
 /* Font khusus untuk area teks yang diketik pada tema typewriter.

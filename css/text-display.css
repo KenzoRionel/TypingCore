@@ -30,17 +30,10 @@
   word-spacing: normal;
 }
 
-/* Space character pada font proporsional: 'ch' (lebar digit '0') tidak mewakili
-   lebar spasi asli, jadi pakai nilai em yang mendekati lebar spasi font sans-serif
-   pada umumnya, bukan satuan 'ch' yang hanya akurat untuk monospace. */
 #textDisplay.font-sans-serif .space-char {
   width: 0.28em;
 }
 
-/* Reset margins dan padding pada span elements untuk sans-serif.
-   PENTING: tidak ada min-width di sini - huruf sempit (i, l, t, f, j) harus boleh
-   selebar glyph aslinya, kalau dipaksa min-width akan muncul jarak kosong ekstra
-   di huruf-huruf sempit dan terlihat "berjarak" tidak rata seperti sebelumnya. */
 #textDisplay.font-sans-serif .word-container span {
   margin: 0;
   padding: 0;
@@ -186,15 +179,6 @@
   color: var(--text);
 }
 
-/* Mode caret baru (Block Outline, Corner Bracket, Dot, Double Line, Lightsaber,
-   Typewriter Head, Comet, Pen, Reactive Color) semuanya menandai posisi kursor
-   di level KARAKTER (persis seperti caret/underline/box), jadi highlight abu-abu
-   di atas SELURUH kata aktif (aturan default di atas) harus ikut dimatikan
-   untuk mode-mode ini juga - kalau tidak, gray background bawaan tetap tampil
-   dan menutupi bentuk kursor baru. Ditulis sebagai override terpisah (bukan
-   menambah panjang chain :not() di atas) supaya mode lama tidak perlu disentuh
-   sama sekali - CSS ini murni aditif, memakai attribute selector [data-cursor-mode]
-   yang sudah di-set text-display.js di setiap render (lihat updateWordHighlighting()). */
 #textDisplay[data-cursor-mode="outline"] .word-container.current-word-target,
 #textDisplay[data-cursor-mode="bracket"] .word-container.current-word-target,
 #textDisplay[data-cursor-mode="dot"] .word-container.current-word-target,
@@ -461,14 +445,6 @@
   border: 1px solid #555;
 }
 
-/* Mode Hidden - Tanpa border, tanpa background.
-   Sebelumnya ada border 1px yang muncul/hilang tiap kali kata aktif
-   berpindah. Karena .word-container tidak memakai box-sizing: border-box,
-   border itu menambah 2px ke ukuran kotak kata setiap kali dipasang lalu
-   dilepas lagi saat kata itu selesai - dikombinasikan dengan
-   `transition: border 0.1s ease` di .word-container, perubahan ukuran ini
-   ikut dianimasikan dan terlihat sebagai teks "berdenyut" tiap pindah kata.
-   Menghapus border sepenuhnya menghilangkan pergeseran layout tsb. */
 .hidden-mode-active .word-container.current-word-target {
   border: none;
   padding: 0;
@@ -487,33 +463,6 @@
   display: none;
 }
 
-/* ==========================================================================
-   Mode Caret Baru
-   ==========================================================================
-   Setiap blok di bawah menulis SATU rule dengan selector gabungan yang
-   menyasar dua mekanisme kursor sekaligus (sesuai catatan di permintaan):
-     1. Kursor lama, lewat pseudo-element ::after yang ditempel ke karakter
-        aktif (`[data-cursor-mode="..."] .has-cursor.cursor-before::after`,
-        dan varian `.cursor-after` untuk mode yang menempatkan kursor SETELAH
-        karakter terakhir - lihat CARET_AFTER_POSITION_MODES di text-display.js).
-     2. Smooth Caret, elemen tunggal `.smooth-caret.mode-<nama>` yang posisinya
-        (left/top/width/height) sudah dihitung & di-set inline oleh JS
-        (computeSmoothCaretRect() di text-display.js) - jadi properti geometri
-        yang ditulis di sini (left/top/width/height) HANYA benar-benar dipakai
-        oleh jalur ::after; untuk smooth-caret nilai itu otomatis ditimpa oleh
-        inline style JS, sehingga aman digabung dalam satu rule tanpa konflik.
-
-   Efek yang butuh data real-time (kecepatan ngetik utk Lightsaber/Comet,
-   status benar/salah utk Reactive Color) HANYA bisa dibuat dinamis penuh di
-   jalur Smooth Caret, karena di situ ada satu elemen JS-controlled yang bisa
-   diberi custom property `--caret-speed` / class state- tiap keystroke (lihat
-   positionSmoothCaret()). Jalur ::after lama tidak punya hook JS per-keystroke
-   seperti itu (elemen-nya "sekali pakai", dibuang-pasang ulang oleh browser
-   tiap kursor pindah karakter), jadi untuk mode itu dipakai pendekatan
-   statis/aproksimasi yang tetap terlihat archetype yang sama (lihat komentar
-   per mode di bawah).
-*/
-
 /* --- 1. Block Outline: kebalikan Box - cuma border, tengah transparan --- */
 [data-cursor-mode="outline"] .has-cursor.cursor-before::after,
 [data-cursor-mode="outline"] .has-cursor.cursor-after::after,
@@ -528,10 +477,6 @@
   border-radius: 3px;
 }
 
-/* --- 2. Corner Bracket: 4 siku di pojok karakter, mirip target sniper ---
-   Teknik "corner bracket" murni CSS: 8 linear-gradient dipakai sebagai
-   background-image terpisah (masing-masing jadi satu garis pendek), lalu
-   diposisikan ke 4 sudut kotak lewat background-position. */
 [data-cursor-mode="bracket"] .has-cursor.cursor-before::after,
 [data-cursor-mode="bracket"] .has-cursor.cursor-after::after,
 .smooth-caret.mode-bracket {
@@ -559,9 +504,7 @@
   background-color: #555;
   border-radius: 50%;
 }
-/* Untuk jalur ::after, geometri dot dihitung manual dengan transform (bukan
-   lewat computeSmoothCaretRect() yang cuma dipakai smooth-caret) supaya tetap
-   presisi di tengah-bawah karakter tanpa perlu JS. */
+
 [data-cursor-mode="dot"] .has-cursor.cursor-before::after,
 [data-cursor-mode="dot"] .has-cursor.cursor-after::after {
   left: 50%;
@@ -588,10 +531,6 @@
   box-sizing: border-box;
 }
 
-/* --- 5. Lightsaber / Laser: garis tegak dengan glow yang memanjang seiring
-   kecepatan ngetik (var(--caret-speed), 0..1, disetel JS tiap keystroke utk
-   smooth-caret; jalur ::after memakai glow tetap berukuran sedang karena
-   tidak ada hook kecepatan real-time). --- */
 [data-cursor-mode="laser"] .has-cursor.cursor-before::after {
   left: -1px;
   top: 0;
@@ -615,12 +554,6 @@
     0 0 calc(8px + 20px * var(--caret-speed, 0)) calc(2px + 4px * var(--caret-speed, 0)) rgba(0, 194, 255, 0.35);
 }
 
-/* --- 6. Typewriter Head: kotak kecil di ATAS karakter dengan animasi
-   "ketak-ketuk" (tap) tiap kursor pindah/keystroke. Untuk jalur ::after,
-   animasi berjalan otomatis karena elemen ::after selalu "baru" tiap kali
-   pindah ke karakter berbeda (browser me-restart animasi CSS untuk elemen
-   baru dengan sendirinya). Untuk smooth-caret (elemen tunggal yang menetap),
-   class `.tap` di-restart manual lewat reflow paksa di positionSmoothCaret(). --- */
 [data-cursor-mode="typewriter"] .has-cursor.cursor-before::after,
 [data-cursor-mode="typewriter"] .has-cursor.cursor-after::after {
   left: 0;
@@ -644,9 +577,6 @@
   100% { transform: translateY(0); }
 }
 
-/* --- 7. Comet / Trail: caret utama + ekor 3-4 "huruf" di belakangnya, makin
-   cepat ngetik makin panjang ekornya (var(--caret-speed) di jalur smooth-caret;
-   ekor tetap/statis di jalur ::after). --- */
 [data-cursor-mode="comet"] .has-cursor.cursor-before::after {
   left: -1px;
   top: 0;
@@ -699,11 +629,6 @@
   height: 100%;
 }
 
-/* --- 9. Reactive Color: warna caret mengikuti performa mengetik - hijau
-   (ritme stabil & cepat), kuning (melambat), merah (karakter salah). Bentuk
-   dasarnya garis tegak seperti caret. Untuk jalur ::after (tanpa hook
-   kecepatan real-time), state hanya dibedakan benar/salah lewat class
-   `.wrong` yang sudah ditempel text-display.js ke karakter yang sama. --- */
 [data-cursor-mode="reactive"] .has-cursor.cursor-before::after,
 [data-cursor-mode="reactive"] .has-cursor.cursor-after::after {
   left: -1px;
@@ -737,14 +662,6 @@
   50% { opacity: 0; }
 }
 
-/* ==========================================================================
-   Smooth Caret (opsional, diatur dari Modal Pengaturan)
-   ==========================================================================
-   Alih-alih menempelkan pseudo-element ::after pada karakter yang berbeda
-   setiap kali kursor berpindah (yang tidak bisa dianimasikan mulus karena
-   selalu jadi elemen baru), kita pakai SATU elemen tunggal yang posisinya
-   (left/top/width/height) diperbarui lewat JS lalu di-transition oleh CSS.
-   Elemen ini hanya aktif kalau user memilih tingkat kehalusan > Nonaktif. */
 .smooth-caret {
   position: absolute;
   pointer-events: none;
@@ -752,13 +669,6 @@
   opacity: 0;
   background-color: #555;
   border-radius: 1px;
-  /* PENTING: animation TIDAK dipasang di sini (tanpa syarat), karena
-     keyframe cursorBlink juga mengatur opacity dan akan selalu menang atas
-     opacity:0 di atas maupun opacity:1 di .is-visible - membuat elemen ini
-     terus berkedip di posisi terakhirnya walau sudah "disembunyikan" lewat
-     hideSmoothCaret() (yang hanya melepas class is-visible, bukan
-     menghentikan animasi). Animasi baru dinyalakan lewat .is-visible di
-     bawah, supaya saat tidak aktif elemen benar2 diam & transparan. */
   transition:
     left var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
     top var(--caret-smooth-duration, 0ms) cubic-bezier(0.4, 0, 0.2, 1),
@@ -777,16 +687,10 @@
   box-sizing: border-box;
 }
 
-/* Kursor tidak boleh berkedip saat opsi "Kursor Berkedip" dimatikan.
-   Diberi juga syarat .is-visible (spesifisitas lebih tinggi dari rule di
-   atas sehingga tetap menang saat aktif) supaya elemen yang sedang
-   disembunyikan tidak ikut dipaksa opacity:1 oleh keyframe noBlinkCursor. */
 #textDisplay.cursor-no-blink .smooth-caret.is-visible {
   animation: noBlinkCursor 1s infinite;
 }
 
-/* Saat smooth caret aktif, matikan kursor lama (per-karakter, via ::after)
-   supaya tidak tampil dobel dengan si smooth caret */
 #textDisplay.smooth-caret-active .has-cursor::after {
   display: none !important;
 }
@@ -796,15 +700,6 @@
   display: none;
 }
 
-/* ==========================================================================
-   Ghost Caret ("Ulangi dengan Ghost Caret" - latihan mengulang teks sesi
-   sebelumnya sambil melihat bayangan posisi mengetik dari sesi itu)
-   ==========================================================================
-   Elemen TERPISAH dari .smooth-caret (kursor milik user sendiri) supaya
-   keduanya bisa terlihat bersamaan: satu menandai posisi user SEKARANG,
-   satu lagi menandai posisi user pada sesi SEBELUMNYA di waktu yang sama.
-   Warna oranye semi-transparan dipakai supaya jelas beda dari kursor utama
-   (abu-abu #555) tanpa mengganggu keterbacaan teks di belakangnya. */
 .ghost-caret {
   position: absolute;
   pointer-events: none;
@@ -826,11 +721,6 @@
   opacity: 1;
 }
 
-/* Dukungan dark mode: warna sedikit lebih terang & lebih pekat supaya tetap
-   kontras di atas background gelap. Selector ganda karena toggle dark mode
-   di proyek ini teramati memakai kombinasi atribut/class yang berbeda-beda
-   antar halaman; keduanya aman ditulis sekaligus (yang tidak dipakai halaman
-   ini otomatis tidak match, tidak menimbulkan efek samping). */
 [data-theme="dark"] .ghost-caret,
 .dark-mode .ghost-caret,
 body.dark .ghost-caret {

@@ -33,8 +33,62 @@
     {
       "id": "typewriter",
       "name": "Typewriter",
-      "icon": "fa-feather-alt",
+      "icon": "fa-feather-pointed",
       "type": "light"
+    },
+    {
+  "id": "minions",
+  "name": "Minions",
+  "icon": "fa-helmet-safety",
+  "type": "light"
+    },
+    {
+  "id": "minions-dark",
+  "name": "Minions Dark",
+  "icon": "fa-helmet-safety",
+  "type": "dark"
+    },
+    {
+  "id": "matcha",
+  "name": "Matcha",
+  "icon": "fa-leaf",
+  "type": "light"
+    },
+    {
+  "id": "deep-forest",
+  "name": "Deep Forest",
+  "icon": "fa-tree",
+  "type": "dark"
+    },
+    {
+  "id": "moonlight",
+  "name": "Moonlight",
+  "icon": "fa-cloud-moon",
+  "type": "dark"
+    },
+    {
+  "id": "old-school",
+  "name": "Old School",
+  "icon": "fa-floppy-disk",
+  "type": "light"
+    },
+    {
+  "id": "minecraft",
+  "name": "Minecraft",
+  "icon": "fa-cube",
+  "type": "light"
+    },
+    {
+  "id": "shogun",
+  "name": "Shogun",
+  "icon": "fa-torii-gate",
+  "type": "light"
+    },
+    {
+  "id": "watermelon",
+  "name": "Watermelon",
+  "icon": "fa-watermelon-slice",
+  "type": "light"
     }
   ],
   "default": "light"
