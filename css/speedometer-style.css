@@ -36,7 +36,7 @@
     position: absolute;
     width: 1px;       /* Ukuran lebar tick yang tipis */
     height: 6px;      /* Ukuran tinggi tick */
-    background-color: #3a3a3a; /* Warna default tick */
+    background-color: var(--text-muted); /* ✅ dulu #3a3a3a tetap (tak ikut tema) - nyaris tak kelihatan di atas --bg gelap */
     border-radius: 0.5px; /* Membulatkan sudut tick yang tipis */
     top: 50%; /* Posisikan tick di tengah-tengah container */
     left: 50%;
@@ -50,7 +50,7 @@
     position: absolute;
     width: 3px;      /* Lebar jarum */
     height: 70px;    /* Panjang jarum, disesuaikan dengan ukuran speedometer */
-    background-color: #4e4e4e; /* Warna jarum */
+    background-color: var(--accent); /* ✅ dulu #4e4e4e tetap (tak ikut tema) */
     border-radius: 2px;
     z-index: 10; /* Pastikan jarum di atas ticks */
 
@@ -67,10 +67,10 @@
     position: absolute;
     width: 24px;
     height: 24px;
-    background-color: #4e4e4e; /* Warna pin tengah */
+    background-color: var(--accent); /* ✅ dulu #4e4e4e tetap (tak ikut tema) */
     border-radius: 50%;
     z-index: 11; /* Pastikan pin di atas jarum */
-    border: 2px solid #555;
+    border: 2px solid var(--surface);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); /* Pusatkan pin */
@@ -82,7 +82,7 @@
     bottom: 25px; /* Posisikan angka agar terlihat bagus di bawah pin */
     font-size: 2em; /* Ukuran font angka */
     font-weight: bold;
-    color: #4e4e4e; /* Warna angka */
+    color: var(--text); /* ✅ dulu #4e4e4e tetap (tak ikut tema) */
     z-index: 12; /* Pastikan angka di atas semuanya */
     text-align: center;
     width: 100%; /* Agar bisa text-align center */
@@ -92,7 +92,7 @@
     position: absolute;
     bottom: 10px; /* Posisikan unit di bawah angka */
     font-size: 0.8em; /* Ukuran font unit */
-    color: #4e4e4e; /* Warna unit */
+    color: var(--text-muted); /* ✅ dulu #4e4e4e tetap (tak ikut tema) */
     z-index: 12;
     text-align: center;
     width: 100%; /* Agar bisa text-align center */

@@ -174,7 +174,7 @@ body {
 }
 
 .close-button {
-    color: #aaa;
+    color: var(--text-muted); /* ✅ dulu #aaa - hardcode tanpa varian dark sama sekali */
     font-size: 28px;
     font-weight: bold;
     position: absolute;
@@ -186,13 +186,13 @@ body {
 
 .close-button:hover,
 .close-button:focus {
-    color: #333;
+    color: var(--text); /* ✅ dulu #333 - nyaris tak kelihatan kalau modal-nya di tema gelap */
     text-decoration: none;
     cursor: pointer;
 }
 
 .modal-content h2 {
-    color: #007bff;
+    color: var(--accent); /* ✅ dulu #007bff tetap (tak ikut tema) */
     margin-top: 0;
     margin-bottom: 20px;
 }
@@ -204,7 +204,7 @@ body {
 
 .modal-content p span {
     font-weight: bold;
-    color: #333;
+    color: var(--text); /* ✅ dulu #333 - sama seperti close-button, tak ada varian dark */
 }
 
 #restartButtonModal {
@@ -221,20 +221,32 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ✅ PERBAIKAN TEMA: seisi #resultsDisplayArea (bg, teks judul, teks tombol)
+   sebelumnya hardcode (#ececec/#333/#007bff) dan HANYA #resultsDisplayArea
+   sendiri (bukan anak-anaknya seperti h3/.button) yang punya varian dark di
+   bawah (baris "DARK MODE STYLING") - jadi judul & tombolnya tetap warna
+   terang/biru generik walau kontainernya sudah berganti gelap. Selain itu,
+   [data-theme] di sistem ini punya 6 tema (bukan cuma terang/gelap biner):
+   solarized-light & typewriter juga "light-type" tapi warnanya krem, bukan
+   putih - hardcode #ececec sebelumnya bikin kotak ini selalu abu-abu dingin
+   walau halamannya krem. var(--surface)/var(--text)/var(--accent) di bawah
+   otomatis benar untuk KEENAM tema sekaligus, jadi override manual dark-mode
+   untuk elemen ini (lihat bagian "DARK MODE STYLING") sudah tidak diperlukan
+   lagi & dihapus. */
 #resultsDisplayArea {
     margin-top: 20px;
     padding: 20px;
-    background-color: #ececec;
+    background-color: var(--surface);
     border-radius: 8px;
     text-align: center;
-    color: #333;
+    color: var(--text);
     font-size: 1.1em;
     display: none;
 }
 
 #resultsDisplayArea h3 {
     margin-bottom: 15px;
-    color: #333;
+    color: var(--text);
 }
 
 #resultsDisplayArea p {
@@ -250,7 +262,7 @@ body {
 #resultsDisplayArea .button {
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: #007bff;
+    background-color: var(--accent);
     color: white;
     border: none;
     border-radius: 5px;
@@ -260,7 +272,7 @@ body {
 }
 
 #resultsDisplayArea .button:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-hover);
 }
 
 /* ==================== DARK MODE STYLING ==================== */
@@ -286,12 +298,8 @@ html[data-theme="nord"] .timer-accuracy-section,
 html[data-theme="dark"] .modal-content,
 html[data-theme="dracula"] .modal-content,
 html[data-theme="nord"] .modal-content,
-html[data-theme="dark"] #resultsDisplayArea,
-html[data-theme="dracula"] #resultsDisplayArea,
-html[data-theme="nord"] #resultsDisplayArea,
 body.dark-mode .timer-accuracy-section,
-body.dark-mode .modal-content,
-body.dark-mode #resultsDisplayArea {
+body.dark-mode .modal-content {
     background-color: var(--surface);
     color: var(--text);
     border-color: var(--border);
@@ -438,7 +446,7 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
     display: flex;
     justify-content: space-around;
     text-align: center;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border); /* ✅ dulu #eee tetap */
     padding-bottom: 20px;
 }
 
@@ -544,29 +552,24 @@ body.dark-mode .practice-wrong-words-count {
     background-color: #b9660b;
 }
 
-/* Dark Mode untuk Results Container */
-body.dark-mode .results-container {
-    background-color: #23272a;
-    color: #e0e0e0;
-}
+/* ✅ PERBAIKAN TEMA: blok "Dark Mode untuk Results Container" di bawah ini
+   (dulu ada di sini) DIHAPUS. Semua elemen yang di-override (.results-container,
+   .summary-main, .summary-label/.details-label, .summary-value, .blinking-cursor)
+   sudah memakai var(--surface)/var(--border)/var(--text-muted)/var(--text)/
+   var(--caret) di aturan dasarnya masing-masing (lihat file ini & text-display.css)
+   - override hardcode di sini (#23272a, #e0e0e0, #444, #aaa, #fff) cuma berlaku
+   utk tema "dark" secara kebetulan mirip, dan MENIMPA warna asli tema lain
+   (dracula/nord punya --text/--surface berbeda) dengan abu-abu generik yang
+   sama untuk ketiganya. Menghapusnya membuat ketiga tema gelap tsb kembali
+   menampilkan warnanya masing-masing dengan benar.
 
-body.dark-mode .summary-main {
-    border-color: #444;
-}
-
-body.dark-mode .summary-item .summary-label,
-body.dark-mode .details-item .details-label {
-    color: #aaa;
-}
-
-body.dark-mode .summary-item .summary-value,
-body.dark-mode .details-item span:not(.details-label) {
-    color: #fff;
-}
-
-body.dark-mode .blinking-cursor {
-    background-color: #e0e0e0;
-}
+   Blok "Speedometer Dark Mode Styles" (dulu juga di sini, semua #ffffff)
+   juga DIHAPUS dengan alasan sama - lihat speedometer-style.css yang sekarang
+   sudah pakai var(--accent)/var(--text)/var(--text-muted) di aturan dasarnya;
+   override #ffffff di sini justru MENIMPA itu (specificity "body.dark-mode .tick"
+   lebih tinggi dari ".tick" biasa) sehingga jarum/tick/angka speedometer
+   selalu putih polos di ketiga tema gelap, bukan var(--accent) masing-masing
+   tema. */
 
 /* ==================== MISC STYLES ==================== */
 body.modal-active .main-content {
@@ -595,27 +598,6 @@ body.modal-active .main-content {
     text-align: center;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     animation: modal-pop 0.3s ease-out;
-}
-
-/* Speedometer Dark Mode Styles */
-body.dark-mode .tick {
-    background-color: #ffffff;
-}
-
-body.dark-mode .speedometer-needle {
-    background-color: #ffffff;
-}
-
-body.dark-mode .speedometer-center-pin {
-    background-color: #ffffff;
-}
-
-body.dark-mode .speed-display {
-    color: #ffffff;
-}
-
-body.dark-mode .speed-unit {
-    color: #ffffff;
 }
 
 /* Header & MenuButton transisi halus */
@@ -697,17 +679,25 @@ header.hidden,
     margin-bottom: 0;
 }
 
-/* Individual keys */
+/* Individual keys
+   ✅ PERBAIKAN TEMA: warna teks & border tombol keyboard sebelumnya
+   var(--primary-color) (var lokal statis #126ed6) & #444 tetap - artinya
+   di tema Solarized-Light/Typewriter (yang punya accent krem/coklat sendiri)
+   keyboard-nya tetap biru generik, tidak related sama sekali ke tema aktif.
+   Diganti var(--accent)/var(--border) supaya ikut tema; efek glow "active"/
+   gold capslock/backspace SENGAJA tidak diubah (lihat komentar di dekat
+   var(--active-key-bg-color) dkk di atas) karena warna neon itu memang
+   dirancang sebagai sinyal feedback yang konsisten, bukan representasi tema. */
 #virtual-keyboard-container .key {
     background-color: transparent;
-    color: var(--primary-color);
+    color: var(--accent);
     padding: 4px 0;
     border-radius: 4px;
     min-width: 24px;
     max-width: 54px;
     text-align: center;
     font-size: 1.1em;
-    border: 1px solid #444;
+    border: 1px solid var(--border);
     will-change: transform, box-shadow, background-color;
     flex: 0 1 50px;
     transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, background-color 0.1s ease;
@@ -862,12 +852,11 @@ header.hidden,
     margin: 0px;
 }
 
-/* Dark mode support for keyboard */
-body.dark-mode #virtual-keyboard-container .key {
-    color: #e0e0e0;
-    border-color: #666;
-}
-
+/* ✅ dulu "Dark mode support for keyboard" di sini override color/border-color
+   ke abu-abu tetap (#e0e0e0/#666) - sekarang sudah otomatis benar lewat
+   var(--accent)/var(--border) di aturan dasar .key di atas, jadi baris itu
+   dihapus. .key.active (glow neon saat ditekan) TETAP dipertahankan apa
+   adanya - itu warna sinyal, bukan warna tema. */
 body.dark-mode #virtual-keyboard-container .key.active {
     background-color: var(--active-key-bg-color);
     box-shadow: 0 0 12px 2px var(--active-key-shadow-color);
@@ -944,30 +933,31 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 .mini-stat {
     font-size: 1.15em;
     font-weight: 700;
-    color: #333;
+    color: var(--text); /* ✅ dulu #333 tetap + override body.dark-mode #fff terpisah - disatukan jadi var(--text) yang otomatis benar di 6 tema */
     line-height: 1.2;
 }
 
 .xp-bar-text {
     font-size: 1.1em;
     font-weight: bold;
-    color: #979da3;
+    color: var(--text-muted); /* ✅ dulu #979da3 tetap (light) / #81C784 hardcode (dark) - disederhanakan ke var(--text-muted), warna hijau "level up" dipindah ke .xp-bar-text.show saja supaya tetap terasa "seru" tanpa mengunci warna dasarnya ke 2 tema saja */
     margin-bottom: 3px;
     opacity: 0;
     transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
 }
 
 .xp-bar-text.show {
     opacity: 1;
     transform: translateY(0);
+    color: var(--correct); /* aksen "berhasil naik XP" - var(--correct) sudah hijau yang kontras di semua tema */
 }
 
 
 .xp-bar-wrapper {
     width: 200px;
     height: 4px;
-    background-color: #e0e0e0;
+    background-color: var(--border); /* ✅ dulu #e0e0e0 tetap + override body.dark-mode #444 terpisah - disatukan jadi var(--border) */
     border-radius: 2px;
     overflow: hidden;
     position: relative;
@@ -976,30 +966,18 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 .xp-bar-progress {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #e0e0e0, #8BC34A);
+    background: linear-gradient(90deg, var(--border), var(--correct)); /* ✅ dulu gradient abu→hijau hardcode, kini otomatis ikut tema */
     border-radius: 2px;
     transition: width 1s ease-out;
     box-shadow: 0 1px 3px rgba(76, 175, 80, 0.3);
 }
 
 
-/* Dark mode support for XP bar */
-body.dark-mode .xp-bar-wrapper {
-    background-color: #444;
-}
-
-body.dark-mode .xp-bar-text {
-    color: #81C784;
-}
-
-body.dark-mode .mini-stat {
-    color: #fff;
-}
-
-body.dark-mode .xp-bar-progress {
-    background: linear-gradient(90deg, #81C784, #A5D6A7);
-    box-shadow: 0 1px 3px rgba(129, 199, 132, 0.3);
-}
+/* ✅ PERBAIKAN TEMA: blok "Dark mode support for XP bar" di sini dihapus.
+   .xp-bar-wrapper, .xp-bar-text, .mini-stat, dan .xp-bar-progress sekarang
+   sudah memakai var(--border)/var(--text-muted)/var(--text)/var(--correct)
+   di aturan dasarnya (lihat di atas) yang otomatis benar untuk KEENAM tema,
+   bukan cuma light/dark biner seperti override manual sebelumnya. */
 
 /* ==================== LEVEL UP TOAST ==================== */
 .tc-toast-container {
@@ -1021,12 +999,19 @@ body.dark-mode .xp-bar-progress {
     gap: 10px;
     padding: 12px 20px;
     border-radius: 14px;
-    background: #fff;
-    border: 1px solid #f0d799;
+    background: var(--surface); /* ✅ dulu #fff tetap + override body.dark-mode #2a2a2a terpisah */
+    /* Border emas lembut DIPERTAHANKAN (bukan var(--border) netral) - toast
+       ini konteksnya "pencapaian/level up", border keemasan tipis di semua
+       state (levelup mempertegasnya lebih pekat lewat .tc-toast-levelup di
+       bawah) memang bagian dari identitas visualnya, sama seperti aksen
+       emas capslock/backspace di keyboard. rgba dipakai (bukan hex solid
+       spesifik per-mode) supaya satu nilai saja sudah cukup kontras baik
+       di atas --surface terang maupun gelap, tanpa perlu override manual. */
+    border: 1px solid rgba(217, 164, 6, 0.35);
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
     font-weight: 700;
     font-size: 0.95em;
-    color: #333;
+    color: var(--text); /* ✅ dulu #333 tetap + override body.dark-mode #f1f1f1 terpisah */
     opacity: 0;
     transform: translateY(-16px) scale(0.96);
     transition: opacity 0.3s ease, transform 0.3s ease;
@@ -1045,6 +1030,9 @@ body.dark-mode .xp-bar-progress {
 }
 
 .tc-toast-levelup {
+    /* Aksen emas "naik level" SENGAJA tetap warna tetap (bukan var tema) -
+       ini warna pencapaian/achievement, sinyal yang sama di tema apa pun,
+       sama seperti glow capslock/backspace gold di keyboard virtual. */
     background: linear-gradient(90deg, rgba(251, 191, 36, 0.16), rgba(251, 191, 36, 0.04));
     border-color: #fbbf24;
 }
@@ -1054,17 +1042,12 @@ body.dark-mode .xp-bar-progress {
     line-height: 1;
 }
 
-body.dark-mode .tc-toast {
-    background: #2a2a2a;
-    color: #f1f1f1;
-    border-color: #4d3d16;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-}
-
-body.dark-mode .tc-toast-levelup {
-    background: linear-gradient(90deg, rgba(255, 180, 84, 0.18), rgba(255, 180, 84, 0.05));
-    border-color: #ffb454;
-}
+/* ✅ PERBAIKAN TEMA: override "body.dark-mode .tc-toast" (dulu di sini)
+   dihapus - .tc-toast sudah pakai var(--surface)/var(--text) di atas yang
+   otomatis benar untuk keenam tema, dan border emasnya kini satu nilai
+   rgba yang sudah kontras di kedua mode tanpa perlu varian terpisah.
+   .tc-toast-levelup TETAP pakai warna emas tetap (lihat komentar di
+   atasnya). */
 
 @media (prefers-reduced-motion: reduce) {
     .tc-toast {

@@ -4,6 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pengaturan - TypingCore</title>
+    <script>
+      (function () {
+        try {
+          var STORAGE_KEY = "typing-theme";
+          var LEGACY_STORAGE_KEY = "darkMode";
+          var theme = localStorage.getItem(STORAGE_KEY);
+
+          if (!theme) {
+            var legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+            if (legacy !== null) {
+              theme = legacy === "enabled" ? "dark" : "light";
+            }
+          }
+
+          if (!theme) {
+            var prefersDark =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches;
+            theme = prefersDark ? "dark" : "light";
+          }
+
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
     <link
@@ -11,7 +38,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
     />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/dark-mode.css" />
+    <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/text-display.css" />
     <link rel="stylesheet" href="css/speedometer-style.css" />
     <link rel="stylesheet" href="css/settings-page.css" />
@@ -67,7 +94,7 @@
                     ></a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" href="score-history.html"
+                    <a class="nav-link active" href="settings.html"
                       ><i class="fas fa-bars"></i
                     ></a>
                   </li>
@@ -78,18 +105,26 @@
                 id="navbarSupportedContent2"
               >
                 <ul class="navbar-nav align-items-center">
-                  <!-- Tombol dark mode -->
-                  <li class="nav-item">
+                  <li class="nav-item dropdown">
                     <button
                       id="darkModeToggle"
-                      class="dark-mode-slide-toggle nav-link"
-                      aria-label="Toggle Dark Mode"
+                      type="button"
+                      class="nav-link dropdown-toggle theme-picker-toggle"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      aria-label="Pilih Tema"
+                      title="Pilih Tema"
                     >
-                      <span class="slider">
-                        <span class="slider-icon sun">☀️</span>
-                        <span class="slider-icon moon">🌙</span>
-                      </span>
+                      <i class="fas fa-palette"></i>
                     </button>
+                    <div
+                      class="dropdown-menu dropdown-menu-end theme-picker-dropdown-menu"
+                      aria-labelledby="darkModeToggle"
+                    >
+                      <!-- Grid pilihan tema dirender di sini secara dinamis
+                           oleh renderThemePicker() (js/theme.js). -->
+                      <div id="themePickerContainer"></div>
+                    </div>
                   </li>
                   <li class="nav-item dropdown">
                     <a
@@ -168,7 +203,7 @@
                   <!-- Pilihan Kursor -->
                   <div class="settings-block">
                     <p class="settings-row-label">Pilihan Kursor</p>
-                    <div class="segmented-control" role="radiogroup" aria-label="Pilihan kursor" style="flex-wrap: wrap; row-gap: 8px;">
+                    <div class="segmented-control segmented-wrap" role="radiogroup" aria-label="Pilihan kursor">
                       <input type="radio" class="btn-check" name="cursorMode" id="cursorHighlight" value="highlight" checked>
                       <label class="segmented-option" for="cursorHighlight" title="Highlight Mode">
                         <i class="fas fa-highlighter"></i><span>Highlight</span>
@@ -353,12 +388,6 @@
                   <p class="preview-block-label">Teks &amp; Kursor</p>
                   <div class="preview-typing-box">
                     <div class="text-display-container">
-                      <!-- Elemen ini SENGAJA memakai id="textDisplay" (bukan class
-                           tiruan) supaya seluruh aturan di css/text-display.css
-                           (mode kursor, font, blink, smooth caret, dst) berlaku
-                           persis sama seperti pada area tes mengetik sungguhan,
-                           tanpa perlu duplikasi style. Halaman ini tidak punya
-                           #textDisplay lain sehingga aman dipakai di sini. -->
                       <div id="textDisplay" class="text-display" data-cursor-mode="highlight"></div>
                     </div>
                   </div>
@@ -367,10 +396,6 @@
                 <div class="preview-block">
                   <p class="preview-block-label">Statistik</p>
                   <div class="preview-stats">
-                    <!-- Memakai markup & class ASLI dari css/speedometer-style.css
-                         (persis sama dengan 3 gauge WPM/Akurasi/Waktu di halaman
-                         tes sungguhan), hanya diperkecil lewat CSS transform di
-                         settings-page.css (lihat .preview-speedo-scale). -->
                     <div class="preview-real-stats" id="previewRealStats">
                       <div class="preview-speedo-scale">
                         <div class="speedometer-container">
@@ -425,10 +450,6 @@
 
                 <div class="preview-block">
                   <p class="preview-block-label">Keyboard Virtual</p>
-                  <!-- Dikosongkan di markup; diisi via createKeyboard() (dari
-                       js/index-keyboard.js, layout sama dgn keyboard-layout.js)
-                       supaya tombol yang disorot mengikuti animasi mengetik
-                       persis seperti keyboard virtual sungguhan. -->
                   <div class="preview-keyboard" id="previewKeyboard"></div>
                 </div>
 
@@ -452,7 +473,7 @@
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="module">
       import { initSettingsPanel } from './js/utils/settings-panel.js';
-      import { initDarkMode } from './js/utils/dark-mode.js';
+      import { initTheme } from './js/theme.js';
       import {
         createSpeedometerTicks,
         wpmTickColors,
@@ -469,9 +490,6 @@
         loadKeyboardVisibility,
       } from './js/index-keyboard.js';
 
-      // Dipakai oleh script preview di bawah (sengaja tetap classic script,
-      // BUKAN type="module", supaya listener DOMContentLoaded-nya terpasang
-      // sebelum event itu ditembakkan — lihat komentar di script tersebut).
       window.__previewHelpers = {
         createSpeedometerTicks,
         wpmTickColors,
@@ -487,14 +505,8 @@
       };
 
       document.addEventListener('DOMContentLoaded', () => {
-        // Inisialisasi dark mode
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        if (darkModeToggle) {
-          initDarkMode(darkModeToggle);
-        }
+        initTheme({ pickerContainer: document.getElementById('themePickerContainer') });
 
-        // Inisialisasi panel pengaturan (tanpa hideStats/showStats karena
-        // tidak ada tes yang berjalan di halaman ini)
         initSettingsPanel();
 
         // Tangani tombol ESC untuk kembali
@@ -507,45 +519,19 @@
     </script>
 
     <!-- ============ SINKRONISASI PANEL PRATINJAU (Teks & Kursor) ============ -->
-    <!--
-      Preview ini memakai markup & class PERSIS SAMA dengan yang dibuat
-      text-display.js untuk area tes mengetik sungguhan (word-group >
-      word-container > span karakter, .space-char, .has-cursor,
-      .cursor-before/after, .smooth-caret, dst), dan elemen wadahnya
-      memakai id="textDisplay" yang sama supaya seluruh aturan di
-      css/text-display.css (mode kursor, blink, smooth caret) otomatis
-      berlaku tanpa duplikasi style. Teks preview SENGAJA tetap statis:
-      "Jadi pengetik sepuluh jari nomor 1". "Diketik"-nya disimulasikan
-      SATU KALI saja (bukan berulang-ulang tanpa henti) setiap preview
-      dimuat, dan dimainkan ulang hanya ketika opsi yang berhubungan
-      dengan tampilan teks/kursor (mode kursor, kehalusan kursor, font)
-      diganti — supaya efek visualnya (kursor pindah karakter/kata, warna
-      benar/salah, smooth caret) langsung terlihat tanpa membuat animasi
-      berputar terus-menerus (yang sebelumnya membuat animasi blink
-      kursor jadi restart tiap 150ms / terlihat berkedip terlalu cepat).
-    -->
+  
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         const textDisplay = document.getElementById('textDisplay');
         if (!textDisplay) return;
 
-        // Fungsi-fungsi dari js/utils/speedometer.js & js/index-keyboard.js
-        // yang diekspos oleh script module di atas (lihat window.__previewHelpers).
         const helpers = window.__previewHelpers || {};
 
-        // Diambil & dibuat di awal (bukan di bawah dekat pemakaiannya) supaya
-        // sudah "ada" (bukan undeclared/TDZ) sebelum playTypingOnce() memanggil
-        // render() untuk pertama kali beberapa baris di bawah.
         const previewKeyboard = document.getElementById('previewKeyboard');
         if (previewKeyboard && helpers.createKeyboard) {
           helpers.createKeyboard(previewKeyboard);
         }
 
-        // --- Statistik: inisialisasi 3 gauge speedometer ASLI (WPM/Akurasi/Waktu) ---
-        // Nilai TARGET (bukan dari tes sungguhan) yang dituju secara BERTAHAP
-        // oleh updatePreviewSpeedometers() seiring progres animasi "mengetik"
-        // di bawah, supaya jarum gauge terlihat ikut bergerak mengikuti teks
-        // pratinjau alih-alih diam di satu nilai statis sepanjang waktu.
         const PREVIEW_WPM_TARGET = 67;
         const PREVIEW_ACCURACY_START = 100;
         const PREVIEW_ACCURACY_TARGET = 83;
@@ -571,17 +557,6 @@
           updatePreviewSpeedometers(0);
         }
 
-        // --- Tween sudut jarum lewat requestAnimationFrame ---
-        // Sebelumnya jarum di-set LANGSUNG ke sudut baru tiap kali
-        // updatePreviewSpeedometers() dipanggil (tiap ~150ms, mengikuti
-        // step animasi mengetik), lalu mengandalkan CSS transition di
-        // css/speedometer-style.css untuk menghaluskannya. Itu ternyata
-        // tidak cukup andal — kita tidak punya kendali atas rule CSS di
-        // file tersebut (bisa saja durasinya beda, ketimpa rule lain,
-        // atau memang tidak meng-transition custom property/transform-nya).
-        // Di sini jarum di-animasikan manual frame-demi-frame dari sudut
-        // SAAT INI menuju sudut TARGET dengan easing, jadi kehalusannya
-        // sepenuhnya dikontrol di sini, terlepas dari CSS eksternal apa pun.
         const needleTweens = {}; // needleId -> { angle, raf }
 
         function easeOutCubic(t) {
@@ -620,23 +595,10 @@
           if (!needle || !valueEl) return;
           const clamped = Math.max(0, Math.min(max, value));
           const angle = (clamped / max) * 240 - 120;
-          // Durasi tween sengaja lebih panjang dari interval update (150ms)
-          // supaya animasi antar-step saling menyambung mulus (overlap
-          // sedikit), bukan berhenti-lalu-jalan-lagi tiap step.
           tweenNeedleAngle(needleId, angle, 220);
           valueEl.textContent = formatValue(clamped);
         }
 
-        // Dipanggil di setiap frame render() animasi mengetik dengan `progress`
-        // (0..1) = seberapa jauh kalimat pratinjau sudah "diketik". WPM naik
-        // dari 0 menuju target, akurasi turun sedikit demi sedikit (simulasi
-        // kesalahan ketik terkumpul), dan timer menghitung mundur dari nilai
-        // maksimum menuju sisa waktu target — supaya ketiga gauge terlihat
-        // hidup bergerak beriringan dengan teks yang sedang "diketik".
-        // FIX FINAL: 
-        // - Akurasi = correct/total real (100% normal, drop hanya saat typo, balik 100% setelah backspace)
-        // - WPM = naik seiring progres (0 -> TARGET), sedikit drop saat typo
-        // - Waktu: gauge = countdown (berkurang), text = elapsed (waktu yang digunakan)
         function updatePreviewSpeedometers(progress, opts = {}) {
           const { wpmMax, accuracyMax, timerMax } = helpers;
           if (!wpmMax) return;
@@ -667,15 +629,6 @@
           setPreviewGaugeNeedle('previewAccuracyNeedle', 'previewAccuracyValue', currentAccuracy, accuracyMax, (v) => `${Math.round(v)}%`);
           setPreviewGaugeNeedle('previewTimerNeedle', 'previewTimerValue', remaining, timerMax, (v) => Math.round(v));
 
-          // Text stats: WPM & Akurasi sama, Timer tampilkan elapsed sebagai "waktu yang digunakan"
-          // tapi biar sinkron dengan gauge yang berkurang, kita kirim remaining juga ke text?
-          // Sesuai request: waktu berkurang + total waktu = total teks, jadi:
-          // - gauge = remaining (berkurang)
-          // - text timer = remaining juga (berkurang dari TARGET ke 0) + kita simpan elapsed untuk logika
-          // Untuk memenuhi "waktu yang digunakan = total teks", text timer kita tampilkan sebagai elapsed (0->TARGET) 
-          // tapi kita buat opsi: jika user mau lihat countdown, gauge sudah countdown.
-          // Di sini text timer kita tampilkan remainingCountdown dari TARGET (58 -> 0) biar jelas berkurang,
-          // sesuai kalimat "seharusnya waktu berkurang".
           const textTimerValue = PREVIEW_TIMER_TARGET * (1 - p); // 58 -> 0 berkurang
           updatePreviewStatsText(currentWpm, currentAccuracy, textTimerValue, elapsed);
         }
@@ -686,8 +639,6 @@
           const timerEl = document.getElementById('previewStatsTextTimer');
           if (wpmEl) wpmEl.textContent = Math.round(wpm);
           if (accuracyEl) accuracyEl.textContent = `${Math.round(accuracy)}%`;
-          // timerRemaining = countdown 58->0 (sesuai request "waktu berkurang")
-          // Jika ingin tampilkan elapsed (waktu digunakan), ganti ke elapsed
           if (timerEl) timerEl.textContent = `${Math.round(timerRemaining)}s`;
         }
 
@@ -696,26 +647,10 @@
         const PREVIEW_WORDS = ['Jadi', 'pengetik', 'sepuluh', 'jari', 'nomor', '1'];
         const SMOOTH_DURATIONS = { off: 0, low: 90, medium: 160, high: 280 };
 
-        // --- Simulasi salah ketik (typo) & koreksi ---
-        // Supaya pratinjau terasa seperti pengetikan sungguhan (bukan cuma
-        // mengetik benar terus-menerus), satu huruf SENGAJA "diketik salah"
-        // di tengah simulasi, sempat tampil sebagai karakter salah (class
-        // "incorrect", sama seperti area tes sungguhan), lalu dihapus
-        // (backspace) dan diketik ulang dengan benar sebelum melanjutkan ke
-        // sisa kalimat. TYPO_WORD_INDEX/TYPO_CHAR_POS menentukan di kata &
-        // posisi huruf ke berapa typo ini terjadi; TYPO_WRONG_CHAR adalah
-        // huruf salah yang ditampilkan sesaat (juga dipakai untuk menyorot
-        // tombol yang "salah ditekan" di preview Keyboard Virtual).
         const TYPO_WORD_INDEX = 1; // kata "pengetik"
         const TYPO_CHAR_POS = 4; // typo terjadi menggantikan huruf ke-5 ("e")
         const TYPO_WRONG_CHAR = 'x';
 
-        // Membangun urutan langkah ("skrip") animasi mengetik satu kalimat
-        // penuh, termasuk selipan typo+backspace di atas. Setiap langkah
-        // adalah satu aksi atomic: 'type' (huruf benar), 'typo' (huruf
-        // salah), 'backspace' (hapus satu huruf terakhir), atau 'space'
-        // (pindah ke kata berikutnya). Dibangun sekali saja di awal karena
-        // urutannya selalu sama setiap preview mengetik ulang.
         function buildTypingScript() {
           const steps = [];
           PREVIEW_WORDS.forEach((word, wordIndex) => {
@@ -736,34 +671,16 @@
         const typingScript = buildTypingScript();
         let scriptStepIndex = 0;
 
-        // Dibaca langsung dari localStorage (bukan dari radio ":checked")
-        // supaya TIDAK bergantung pada urutan eksekusi antara skrip ini
-        // (classic script, jalan sinkron saat parsing) dan settings-panel.js
-        // (module, jalan setelah parsing selesai) yang baru menyinkronkan
-        // status "checked" pada radio setelahnya. Sebelumnya, karena skrip
-        // ini kadang jalan LEBIH DULU, preview selalu jatuh ke nilai default
-        // ("highlight" / "off") walau pengaturan tersimpan sudah berbeda,
-        // sampai user mengubah pilihan secara manual.
         let cursorMode = localStorage.getItem('cursorMode') || 'highlight';
         let smoothLevel = localStorage.getItem('caretSmoothness') || 'off';
 
-        // Sejajar dengan CARET_SHAPE_MODES / CARET_AFTER_POSITION_MODES di
-        // js/utils/text-display.js - lihat komentar di sana untuk penjelasan.
         const CARET_SHAPE_MODES = ['box', 'outline', 'bracket', 'dot', 'doubleline', 'laser', 'typewriter', 'comet', 'pen', 'reactive'];
         const CARET_AFTER_POSITION_MODES = new Set(['caret', 'laser', 'comet', 'reactive', 'pen']);
 
-        // Kata mana yang sedang "diketik" & seberapa jauh.
         let currentWordIndex = 0;
         let typedLength = 0;
-        // Status tiap huruf yang sudah "diketik" pada kata berjalan saat ini
-        // (true = benar, false = salah/typo), sejajar indeksnya dengan
-        // typedLength - dipakai render() untuk mewarnai huruf yang sedang
-        // typo secara berbeda dari huruf yang benar.
         let typedCharStatus = [];
         let smoothCaretEl = null;
-        // Menyimpan id timeout animasi "mengetik" yang sedang berjalan,
-        // supaya bisa dibatalkan bila pengaturan berganti lagi sebelum
-        // animasi sebelumnya selesai.
         let typingAnimId = null;
 
         // --- Render struktur kata (sekali saja) ---
@@ -838,9 +755,6 @@
 
           CARET_SHAPE_MODES.forEach((m) => el.classList.toggle('mode-' + m, cursorMode === m));
 
-          // Preview statis (bukan tes sungguhan): pakai speedFactor tetap yang
-          // cukup tinggi supaya efek Lightsaber/Comet tetap terlihat jelas,
-          // alih-alih dihitung dari interval keystroke asli.
           el.style.setProperty('--caret-speed', '0.7');
 
           if (cursorMode === 'reactive') {
@@ -944,10 +858,6 @@
             }
           });
 
-          // --- Keyboard Virtual: sorot tombol yang cocok dengan karakter
-          // yang sedang/akan diketik di preview teks di atasnya, supaya
-          // kedua preview ("Teks & Kursor" dan "Keyboard Virtual") terlihat
-          // seperti benar-benar mengetik kalimat yang sama secara bersamaan. ---
           if (previewKeyboard && helpers.highlightActiveKeyOnKeyboard) {
             // FIX: Backspace juga disorot
             const nextStep = typingScript[scriptStepIndex];
@@ -981,10 +891,6 @@
           }
         }
 
-        // Menjalankan simulasi "mengetik" SATU KALI dari awal kalimat sampai
-        // ke frame istirahat, lalu berhenti (tidak berulang). Dipanggil saat
-        // preview pertama kali dimuat, dan dipanggil ulang hanya ketika
-        // pengaturan yang memengaruhi tampilan kursor/teks berubah.
         function playTypingOnce() {
           stopTypingAnimation();
           currentWordIndex = 0;
@@ -993,14 +899,6 @@
           scriptStepIndex = 0;
           render();
 
-          // Menjalankan tepat SATU langkah dari typingScript (lihat
-          // buildTypingScript() di atas) setiap kali dipanggil, lalu
-          // menjadwalkan langkah berikutnya. Jeda antar-langkah dibuat
-          // TIDAK seragam secara sengaja: langkah 'typo' diberi jeda lebih
-          // lama supaya huruf salahnya sempat terlihat jelas sebelum
-          // dihapus, dan langkah 'backspace' diberi jeda singkat sebelum
-          // lanjut mengetik ulang - meniru jeda alami saat orang sadar
-          // salah ketik lalu membetulkannya.
           function step() {
             if (scriptStepIndex >= typingScript.length) {
               typingAnimId = null;
@@ -1041,27 +939,14 @@
         renderWords();
         playTypingOnce();
 
-        // --- Mode kursor (Highlight / Caret / Underline / Box / Hidden) ---
-        // Kelas visualnya (caret-mode-active, dst.) sudah diterapkan otomatis
-        // oleh settings-panel.js ke elemen #textDisplay ini; di sini kita
-        // hanya perlu memperbarui posisi kursor sesuai mode barunya.
         document.querySelectorAll('input[name="cursorMode"]').forEach((radio) => {
           radio.addEventListener('change', () => {
             if (!radio.checked) return;
             cursorMode = radio.value;
-            // Mainkan ulang animasi mengetik dari awal (bukan sekadar
-            // render() di posisi saat ini) supaya render() lama yang
-            // memakai mode kursor sebelumnya benar-benar dibersihkan,
-            // bukan meninggalkan kursor lama yang diam tak terpakai.
             playTypingOnce();
           });
         });
 
-        // --- Kursor berkedip ---
-        // Kelas cursor-no-blink sudah diterapkan otomatis oleh
-        // settings-panel.js ke #textDisplay; tidak perlu kode tambahan.
-
-        // --- Kehalusan perpindahan kursor (Smooth Caret) ---
         document.querySelectorAll('input[name="caretSmoothness"]').forEach((radio) => {
           radio.addEventListener('change', () => {
             if (!radio.checked) return;
@@ -1079,12 +964,6 @@
         textDisplay.classList.toggle('smooth-caret-active', (SMOOTH_DURATIONS[smoothLevel] || 0) > 0);
         textDisplay.style.setProperty('--caret-smooth-duration', `${SMOOTH_DURATIONS[smoothLevel] || 0}ms`);
 
-        // --- Font ---
-        // Perubahan font (font-family + class font-sans-serif/font-serif)
-        // juga sudah diterapkan otomatis oleh settings-panel.js ke
-        // #textDisplay ini; kita mainkan ulang animasi mengetik supaya
-        // posisi kursor ikut diperbarui dengan bersih setelah lebar
-        // karakter berubah.
         document.querySelectorAll('.font-choice-btn').forEach((btn) => {
           btn.addEventListener('click', () => requestAnimationFrame(playTypingOnce));
         });
@@ -1099,12 +978,6 @@
           if (statsTextEl) statsTextEl.style.display = isText ? 'flex' : 'none';
         }
 
-        // Terapkan mode statistik yang TERSIMPAN begitu pratinjau dimuat.
-        // Sebelumnya blok ini hanya berjalan lewat listener "click" di bawah,
-        // jadi setiap kali halaman pengaturan dibuka ulang, panel pratinjau
-        // selalu jatuh ke tampilan default "speedometer" walau tombol nav-nya
-        // sendiri (disinkronkan oleh settings-panel.js) sudah menunjukkan
-        // status aktif yang benar sesuai pilihan sebelumnya.
         applyPreviewStatsMode(localStorage.getItem('statsMode') || 'speedometer');
 
         document.querySelectorAll('.stats-mode-btn').forEach((btn) => {
@@ -1119,17 +992,11 @@
           if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!(keyboardToggle && keyboardToggle.checked));
         }
         if (keyboardToggle) keyboardToggle.addEventListener('change', applyKeyboard);
-        // Status AWAL sengaja dibaca langsung dari localStorage (bukan dari
-        // keyboardToggle.checked) - lihat komentar di atas cursorMode/
-        // smoothLevel untuk alasan yang sama persis: skrip classic ini
-        // berjalan SEBELUM settings-panel.js (module) sempat menyinkronkan
-        // status "checked" pada checkbox-nya.
         const initialKeyboardOn = helpers.loadKeyboardVisibility
           ? helpers.loadKeyboardVisibility()
           : !!(keyboardToggle && keyboardToggle.checked);
         if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!initialKeyboardOn);
 
-        // Reposisikan smooth caret saat ukuran jendela berubah
         window.addEventListener('resize', render);
       });
     </script>

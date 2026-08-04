@@ -1,48 +1,24 @@
 /* ==========================================================================
-   settings-page.css
-   Halaman Pengaturan Typing Core — standalone page (bukan modal).
-   Menyatu langsung dengan .main-content (transparan, tanpa kartu
-   mengambang), mengikuti tema siang/malam situs (body.dark-mode) dengan
-   token warna yang sama persis dengan style.css & dark-mode.css.
-   ========================================================================== */
-
-/* ---- CSS Variables (Siang) — diselaraskan dgn style.css ---- */
+   settings-page.css*/
 .settings-page {
-  --sp-surface: #ffffff;              /* dipakai utk elemen kecil: box teks preview, dsb */
-  --sp-surface-secondary: #ececec;    /* sama dgn .main-content light */
-  --sp-surface-tertiary: #f4f7f6;     /* sama dgn body light */
-  --sp-border: #e0e0e0;
-  --sp-border-soft: rgba(0, 0, 0, 0.08);
-  --sp-text: #333333;
-  --sp-text-strong: #111111;
-  --sp-text-muted: #71717a;
-  --sp-text-faint: #9a9aa0;
-  --sp-track-off: #d4d4d8;
-  --sp-accent: #126ed6;               /* sama dgn --primary-color situs */
-  --sp-accent-soft: rgba(18, 110, 214, 0.1);
-  --sp-focus-ring: #3b82f6;
+  --sp-surface: var(--surface);
+  --sp-surface-secondary: color-mix(in srgb, var(--surface) 55%, var(--bg) 45%);
+  --sp-surface-tertiary: var(--bg);
+  --sp-border: var(--border);
+  --sp-border-soft: color-mix(in srgb, var(--border) 55%, transparent);
+  --sp-text: var(--text);
+  --sp-text-strong: var(--text);
+  --sp-text-muted: var(--text-muted);
+  --sp-text-faint: color-mix(in srgb, var(--text-muted) 80%, transparent);
+  --sp-track-off: color-mix(in srgb, var(--text-muted) 35%, var(--surface) 65%);
+  --sp-accent: var(--accent);
+  --sp-accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --sp-focus-ring: var(--accent);
   --sp-radius-lg: 16px;
   --sp-radius-md: 12px;
   --sp-radius-full: 999px;
   --sp-font: "Inter", "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --preview-transition: .15s;
-}
-
-/* ---- CSS Variables (Malam) — diselaraskan dgn dark-mode.css ---- */
-body.dark-mode .settings-page {
-  --sp-surface: #2c2c2c;              /* sama dgn .lesson-card / .card-footer dark */
-  --sp-surface-secondary: #23272a;    /* sama dgn .main-content dark */
-  --sp-surface-tertiary: #181a1b;     /* sama dgn body.dark-mode */
-  --sp-border: #444444;
-  --sp-border-soft: rgba(255, 255, 255, 0.08);
-  --sp-text: #e0e0e0;
-  --sp-text-strong: #ffffff;
-  --sp-text-muted: #a1a1aa;
-  --sp-text-faint: #71717a;
-  --sp-track-off: #3f3f46;
-  --sp-accent: #60a5fa;
-  --sp-accent-soft: rgba(96, 165, 250, 0.16);
-  --sp-focus-ring: #a1a1aa;
 }
 
 /* ---- Layout Halaman: transparan, menyatu dengan .main-content ---- */
@@ -75,10 +51,6 @@ body.dark-mode .settings-page {
     "header  header  header"
     "nav     body    preview"
     "footer  footer  footer";
-}
-
-body.dark-mode .settings-page .settings-card {
-  box-shadow: none;
 }
 
 /* ---- Header ---- */
@@ -332,11 +304,7 @@ body.dark-mode .settings-page .settings-card {
 
 .settings-page .segmented-option:hover {
   color: var(--sp-text);
-  background: rgba(0, 0, 0, 0.04);
-}
-
-body.dark-mode .settings-page .segmented-option:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--sp-text) 6%, transparent);
 }
 
 .settings-page .btn-check:checked + .segmented-option {
@@ -353,6 +321,11 @@ body.dark-mode .settings-page .segmented-option:hover {
 .settings-page .segmented-sm .segmented-option {
   font-size: 0.8rem;
   padding: 7px 12px;
+}
+
+.settings-page .segmented-control.segmented-wrap {
+  border-radius: var(--sp-radius-lg);
+  row-gap: 8px;
 }
 
 /* ---- Chip Group ---- */
@@ -430,12 +403,8 @@ body.dark-mode .settings-page .segmented-option:hover {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #d4d4d8;
+  background: #ffffff;
   transition: transform 0.2s ease-out, background-color 0.2s ease-out;
-}
-
-body.dark-mode .settings-page .form-check-input::before {
-  background: #d4d4d8;
 }
 
 .settings-page .form-check-input:checked {
@@ -596,19 +565,12 @@ body.dark-mode .settings-page .form-check-input::before {
 
 /* Kotak teks ketik contoh */
 .settings-page .preview-typing-box {
-  /* Latar belakang dibuat transparan supaya teks preview menyatu langsung
-     dengan latar panel pengaturan (bukan tampil sebagai kartu terpisah). */
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--sp-radius-md);
   padding: 1.1rem 1.15rem;
 }
 
-/* Preview "Teks & Kursor" sekarang memakai elemen #textDisplay yang SAMA
-   dengan area tes mengetik sungguhan (lihat css/text-display.css), jadi
-   semua gaya kursor/font/blink/smooth-caret otomatis mengikuti tanpa
-   duplikasi. Di sini kita hanya mengecilkan ukurannya supaya pas di
-   sidebar preview yang sempit, tanpa mengubah perilaku aslinya. */
 .settings-page .preview-typing-box #textDisplay {
   margin-top: 0;
   padding: 0;
@@ -632,16 +594,6 @@ body.dark-mode .settings-page .form-check-input::before {
   padding: 0.6rem 0 0.2rem;
 }
 
-/* Preview "Statistik" sekarang memakai markup & class ASLI dari
-   css/speedometer-style.css (speedometer-container, speedometer-gauge-face,
-   speedometer-ticks, speedometer-needle, speedometer-center-pin,
-   speed-display, speed-unit) — persis sama dengan 3 gauge (WPM, Akurasi,
-   Waktu) yang tampil di halaman tes mengetik sungguhan, bukan lagi
-   tiruan cincin conic-gradient. Supaya muat di sidebar preview yang
-   sempit, tiap gauge dibungkus dalam ".preview-speedo-scale" berukuran
-   tetap dan gauge aslinya (180x180) diperkecil lewat CSS transform:
-   scale() — jadi TIDAK ada duplikasi/penghitungan ulang posisi tick atau
-   sudut jarum, semuanya otomatis ikut mengecil bersama container-nya. */
 .settings-page .preview-real-stats {
   display: flex;
   justify-content: center;
@@ -673,14 +625,6 @@ body.dark-mode .settings-page .form-check-input::before {
 
 .settings-page .preview-speedo-scale .speedometer-needle {
   background-color: var(--sp-text-strong);
-  /* Sudut jarum preview ini sekarang di-animasikan penuh lewat JS
-     (requestAnimationFrame + easing, lihat tweenNeedleAngle() di
-     settings.html) supaya kehalusannya tidak bergantung pada rule
-     transition di css/speedometer-style.css yang tidak kita kontrol.
-     Transition CSS bawaan sengaja DIMATIKAN di sini (!important, agar
-     menang atas rule manapun) supaya tidak dobel-menganimasikan/
-     "mengejar" nilai yang tiap frame sudah berubah dari JS — kalau
-     dibiarkan aktif, hasilnya justru tersendat, bukan tambah mulus. */
   transition: none !important;
   will-change: transform;
 }
@@ -716,12 +660,6 @@ body.dark-mode .settings-page .form-check-input::before {
   letter-spacing: 0.08em;
 }
 
-/* Keyboard virtual — layout penuh (dibuat lewat createKeyboard() dari
-   js/utils/index-keyboard.js, memakai keyboard-layout.js yang sama dengan
-   keyboard sungguhan), diperkecil supaya muat di sidebar preview. Tombol
-   yang sedang/akan diketik pada animasi teks preview disorot otomatis
-   lewat class ".active" (dari highlightActiveKeyOnKeyboard()) sehingga
-   preview ini benar-benar mengikuti simulasi mengetik di atasnya. */
 .settings-page .preview-keyboard {
   display: flex;
   flex-direction: column;
@@ -743,16 +681,6 @@ body.dark-mode .settings-page .form-check-input::before {
 }
 
 .settings-page .preview-keyboard .key {
-  /* flex-basis 0 + flex-grow: lebar akhir tiap tombol ditentukan oleh
-     RASIO flex-grow ini, bukan cuma max-width. Sebelumnya semua varian
-     ukuran (wide/medium/tab/small) memakai flex-grow "1" yang SAMA
-     dengan tombol huruf biasa, cuma beda max-width — akibatnya saat
-     browser membagi ruang kosong di tiap baris, semua tombol dapat
-     jatah rata dulu sebelum masing-masing mentok max-width-nya sendiri,
-     jadi backspace/tab/caps lock/enter/shift tidak pernah terlihat
-     proporsional lebih lebar seperti di keyboard fisik. Sekarang
-     flex-grow tiap varian mengikuti rasio unit tombol keyboard standar
-     (1 unit = lebar 1 tombol huruf biasa). */
   flex: 1 1 0;
   min-width: 14px;
   max-width: 22px;
@@ -789,10 +717,6 @@ body.dark-mode .settings-page .form-check-input::before {
   max-width: 33px;
 }
 
-/* Ctrl / Win / Alt / Menu di baris bawah — di keyboard sungguhan tombol
-   ini justru sedikit LEBIH lebar dari tombol huruf (±1.15 unit), bukan
-   lebih sempit (sebelumnya max-width 18px, malah lebih kecil dari
-   tombol biasa yang 22px). */
 .settings-page .preview-keyboard .key-small {
   flex: 1.15 1 0;
   max-width: 26px;
@@ -813,15 +737,10 @@ body.dark-mode .settings-page .form-check-input::before {
 }
 
 .settings-page .preview-keyboard .key.active.backspace-active {
-  background: rgba(253, 216, 53, 0.25);
+  background: rgba(253, 216, 53, 0.22);
   border-color: #fdd835;
-  color: #b89a00;
-  box-shadow: 0 0 0 2px rgba(253, 216, 53, 0.35);
-}
-body.dark-mode .settings-page .preview-keyboard .key.active.backspace-active {
-  background: rgba(253, 216, 53, 0.2);
-  border-color: #fdd835;
-  color: #fdd835;
+  color: color-mix(in srgb, #fdd835 65%, var(--sp-text) 35%);
+  box-shadow: 0 0 0 2px rgba(253, 216, 53, 0.32);
 }
 
 /* ---- Responsif ---- */

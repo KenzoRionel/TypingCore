@@ -179,23 +179,26 @@ width: 65px;   /* Atur lebar sesuai keinginan */
     color: var(--text-muted);
 }
 
-/* Selector ganda: body.dark-mode dipertahankan untuk kompatibilitas
-   halaman lama yang mungkin masih memasang class itu secara manual,
-   [data-theme="dark"] adalah selector yang benar-benar aktif dipakai
-   sistem tema baru (js/theme.js) yang menyetel atribut ini di <html>,
-   bukan class di <body>. */
-[data-theme="dark"] .quote-author-display,
-body.dark-mode .quote-author-display {
-    color: #bbbbbb;
-}
+/* ✅ PERBAIKAN TEMA: dulu ada override warna khusus dark (#bbbbbb) di sini,
+   padahal .quote-author-display sudah pakai var(--text-muted) di atas -
+   var itu SUDAH benar untuk semua tema (termasuk dark). Override ini
+   cuma bikin warnanya sedikit meleset dari --text-muted asli tema dark
+   dan tidak berlaku sama sekali untuk tema lain (dracula/nord/dst),
+   jadi dihapus - var(--text-muted) saja sudah cukup & konsisten. */
 
-/* Tombol restart */
+/* Tombol restart
+   ✅ PERBAIKAN TEMA: warna sebelumnya di-hardcode #888 (default) dan
+   #3e3e3f (hover) - #3e3e3f itu abu-abu sangat gelap, nyaris tak
+   terlihat di atas background gelap tema dark/dracula/nord (kontras
+   buruk, bukan cuma "tidak ikut tema" tapi aksesibilitas rendah).
+   Diganti ke var(--text-muted)/var(--accent) supaya selalu kontras
+   terhadap var(--bg) tema aktif, apa pun temanya. */
 .restart-btn {
     position: relative;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    color: #888 !important; /* Warna ikon lebih samar */
+    color: var(--text-muted) !important;
     padding: 0 !important;
     width: 40px;
     height: 40px;
@@ -203,12 +206,12 @@ body.dark-mode .quote-author-display {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transition: color 0.2s ease, cursor 0.13s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .restart-btn:hover,
 .restart-btn:focus {
-    color: #3e3e3f !important; /* Biru saat hover/fokus */
+    color: var(--accent) !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -259,7 +262,13 @@ body.dark-mode .quote-author-display {
 /* Panah kecil (segitiga) gaya toast yang menunjuk ke tombol jam.
    --arrow-left diisi oleh JS (offset horizontal tombol relatif terhadap
    sisi kiri modal) supaya panahnya tetap presisi di bawah tombol walau
-   modal digeser ke kiri/kanan agar tidak keluar layar. */
+   modal digeser ke kiri/kanan agar tidak keluar layar.
+   ✅ PERBAIKAN TEMA: sebelumnya warna panah di-hardcode (#ccc / #fff / #444
+   / #2a2a2a) dan hanya di-override khusus untuk [data-theme="dark"] -
+   akibatnya di tema lain (dracula, nord, solarized-light, typewriter)
+   panahnya tetap abu-abu/putih generik, tidak menyatu dengan warna modal
+   tema tsb. Sekarang pakai var(--border)/var(--surface) yang sudah
+   otomatis benar untuk SEMUA tema tanpa perlu override per-tema. */
 .time-mode-modal::before,
 .time-mode-modal::after {
     content: "";
@@ -268,7 +277,7 @@ body.dark-mode .quote-author-display {
     left: var(--arrow-left, 24px);
     border-left: 9px solid transparent;
     border-right: 9px solid transparent;
-    border-bottom: 9px solid #ccc;
+    border-bottom: 9px solid var(--border);
 }
 
 .time-mode-modal::after {
@@ -286,19 +295,11 @@ body.dark-mode .quote-author-display {
     top: auto;
     bottom: -9px;
     border-bottom: none;
-    border-top: 9px solid #ccc;
+    border-top: 9px solid var(--border);
 }
 .time-mode-modal.arrow-bottom::after {
     bottom: -7.5px;
-    border-top: 8px solid #fff;
-}
-[data-theme="dark"] .time-mode-modal.arrow-bottom::before,
-body.dark-mode .time-mode-modal.arrow-bottom::before {
-    border-top-color: #444;
-}
-[data-theme="dark"] .time-mode-modal.arrow-bottom::after,
-body.dark-mode .time-mode-modal.arrow-bottom::after {
-    border-top-color: #2a2a2a;
+    border-top: 8px solid var(--surface);
 }
 
 .time-mode-modal-header {
@@ -364,33 +365,15 @@ body.dark-mode .time-mode-modal.arrow-bottom::after {
     font-size: 13px;
 }
 
-[data-theme="dark"] .time-mode-modal,
-body.dark-mode .time-mode-modal {
-    background-color: #2a2a2a;
-    border-color: #444;
-}
-[data-theme="dark"] .time-mode-modal::before,
-body.dark-mode .time-mode-modal::before {
-    border-bottom-color: #444;
-}
-[data-theme="dark"] .time-mode-modal::after,
-body.dark-mode .time-mode-modal::after {
-    border-bottom-color: #2a2a2a;
-}
-[data-theme="dark"] .time-mode-modal-header,
-body.dark-mode .time-mode-modal-header {
-    color: #eee;
-}
-[data-theme="dark"] .time-mode-modal-close,
-body.dark-mode .time-mode-modal-close {
-    color: #bbb;
-}
-[data-theme="dark"] .time-mode-custom-input,
-body.dark-mode .time-mode-custom-input {
-    background-color: #1f1f1f;
-    border-color: #444;
-    color: #eee;
-}
+/* ✅ PERBAIKAN TEMA: blok override [data-theme="dark"]/body.dark-mode
+   di bawah ini dihapus. Semua properti yang di-override (background,
+   border, warna teks) di atas SUDAH memakai var(--surface)/var(--border)/
+   var(--text)/var(--text-muted)/var(--bg) yang otomatis berganti nilai
+   sesuai [data-theme] aktif lewat theme.css - jadi override manual ini
+   murni duplikat (kebetulan cocok untuk tema "dark" saja) dan tidak
+   pernah berlaku untuk tema lain (dracula, nord, solarized-light,
+   typewriter), yang sebelumnya diam-diam memakai warna hardcode di atas
+   alih-alih warna temanya sendiri. */
 
 /* Responsive: jika container terlalu kecil, tombol tetap proporsional */
 @media (max-width: 900px) {
