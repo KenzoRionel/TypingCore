@@ -57,7 +57,11 @@ export function generateAndAppendWords(numWords) {
       if (ghostIdx < gameState.ghostWords.length) {
         word = gameState.ghostWords[ghostIdx];
       } else {
-
+        // ✅ FIX: ghostFromQuote (dari Quotes mode) → berhenti total, tidak ada fallback.
+        // ghostFromQuote=false (dari mode waktu) → fallback ke random words seperti semula.
+        if (gameState.ghostFromQuote) {
+          break;
+        }
         const fallbackSource =
           (gameState.previousWordSet && gameState.previousWordSet.length > 0)
             ? gameState.previousWordSet
@@ -266,17 +270,20 @@ export function updateRealtimeStats() {
   if (DOM.accuracyDisplay)
     DOM.accuracyDisplay.textContent = `${accuracyPercent}%`;
 
+  // ✅ FIX: Burst WPM sekarang dihitung dari correctCharsPerSecond
+  // (karakter benar yang sudah terkonfirmasi per detik), bukan jumlah
+  // keystroke mentah. Ini menghasilkan burst WPM yang lebih akurat karena:
+  // 1. Spasi tidak dihitung (spasi bukan karakter WPM)
+  // 2. Hanya karakter yang benar yang dihitung (konsisten dengan net WPM)
+  // 3. Tidak ada inflasi dari keystroke yang tidak menghasilkan karakter
   const currentSecond = Math.floor((now - gameState.startTime) / 1000);
-  const totalKeystrokes = gameState.keystrokeLog.filter((ts) => {
-    const tsSecond = Math.floor((ts - gameState.startTime) / 1000);
-    return tsSecond === currentSecond;
-  }).length;
-  const wpm = Math.round((totalKeystrokes / 5) * 60);
+  const burstCorrectChars = gameState.correctCharsPerSecond[currentSecond] || 0;
+  const burstWPM = Math.round((burstCorrectChars / 5) * 60);
 
   if (gameState.rawWpmPerSecond.length <= currentSecond) {
-    gameState.rawWpmPerSecond.push(wpm);
+    gameState.rawWpmPerSecond.push(burstWPM);
   } else {
-    gameState.rawWpmPerSecond[currentSecond] = wpm;
+    gameState.rawWpmPerSecond[currentSecond] = burstWPM;
   }
 }
 
@@ -330,6 +337,14 @@ function hidePracticeWrongWordsButton() {
 export function startWrongWordsPractice() {
   if (!Array.isArray(gameState.practiceWords) || gameState.practiceWords.length === 0) {
     return;
+  }
+
+  // ✅ FIX: Matikan quoteMode saat masuk practice mode, supaya
+  // generateAndAppendWords() tidak terjebak di blok quoteMode (prioritas 2)
+  // dan bisa sampai ke blok practiceMode (prioritas 3) yang menggunakan
+  // practiceWords (kata-kata yang salah).
+  if (gameState.quoteMode) {
+    gameState.quoteMode = false;
   }
 
   gameState.previousWordSet = window.defaultKataKata;
@@ -445,6 +460,10 @@ export function startGhostPractice() {
 
   gameState.previousWordSet = window.defaultKataKata;
   gameState.ghostMode = true;
+  // ✅ FIX: Tandai asal ghost mode — quotes atau waktu.
+  // Jika dari quotes: ghostWords berhenti total (tidak ada fallback random).
+  // Jika dari waktu: ghostWords boleh fallback ke random words setelah habis.
+  gameState.ghostFromQuote = !!gameState.quoteMode;
 
   resetTestState({ preserveGhostMode: true });
 }
@@ -728,6 +747,7 @@ export function endTest() {
     }
     gameState.ghostMode = false;
     gameState.previousWordSet = null;
+    gameState.ghostFromQuote = false;
     hideGhostCaret();
   }
 
@@ -796,6 +816,7 @@ export function invalidateTest(reason) {
     }
     gameState.ghostMode = false;
     gameState.previousWordSet = null;
+    gameState.ghostFromQuote = false;
   }
   hideGhostCaret();
 
@@ -833,6 +854,7 @@ export function resetTestState(options = {}) {
     gameState.previousWordSet = null;
     gameState.ghostWords = [];
     gameState.ghostTimeline = [];
+    gameState.ghostFromQuote = false;
   }
   gameState.ghostCurrentIndex = 0;
   stopGhostTimer();

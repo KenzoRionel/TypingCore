@@ -293,6 +293,13 @@
             <div class="typing-area-left-side">
               <div class="text-display-container">
                 <div id="textDisplay" class="text-display"></div>
+                <!-- Rumah baru untuk .smooth-caret: sibling #textDisplay,
+                     TIDAK overflow-hidden/mask, supaya glow caret (mode
+                     laser/lightsaber dkk.) tidak pernah terpotong atau
+                     memudar di tepi atas text display. Lihat
+                     text-display.js (getCaretOverlay) & text-display.css
+                     (.caret-overlay). -->
+                <div id="caretOverlay" class="caret-overlay"></div>
               </div>
               <!-- Nama sumber/author quote yang sedang aktif diketik saat mode
                    Quotes menyala. Disembunyikan (display:none) selama mode

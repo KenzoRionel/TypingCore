@@ -5,14 +5,18 @@
   align-items: flex-start;
   max-width: 100%;
   width: 100%;
-  margin-top: 30px;
-  padding: 0 50px 0 50px;
-  /* core fix */
+  padding: 0 50px;
+  /* #textDisplay TETAP overflow-hidden + mask - ini scroll container asli
+     (JS men-drive scrollTop-nya langsung, lihat ensureScrollSync() di
+     text-display.js), jadi clip & fade tepi atas harus tetap di sini supaya
+     baris lama yang ter-scroll keluar terpotong & memudar dengan benar. */
   overflow-y: hidden;
+  mask-image: linear-gradient(to bottom, transparent 0px, black 8px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 8px);
   line-height: 1.5em;
   max-height: none;
-  /* diperlukan supaya .smooth-caret (position: absolute) menempatkan diri
-     relatif terhadap #textDisplay, bukan ancestor lain di atasnya */
+  /* diperlukan supaya .ghost-caret (position: absolute) menempatkan diri
+     relatif terhadap #textDisplay */
   position: relative;
   /* Biarkan tinggi otomatis */
   font-family: monospace;
@@ -22,6 +26,23 @@
   letter-spacing: 0;
   word-spacing: 0;
   font-feature-settings: "kern" 0;
+}
+
+/* --- Caret Overlay ---
+   Elemen sibling dari #textDisplay (lihat .text-display-container di HTML),
+   posisinya di-stack persis di atas #textDisplay lewat margin-top yang sama
+   (dipindah ke .text-display-container, lihat di bawah) dan inset:0.
+   TIDAK overflow-hidden, TIDAK mask -- inilah rumah baru .smooth-caret,
+   supaya glow-nya (mode laser/lightsaber, comet, dll) tidak pernah lagi
+   ikut terpotong atau memudar oleh clip/mask #textDisplay. Posisi & sinkron
+   scroll-nya tetap dihitung manual lewat JS (computeSmoothCaretRect),
+   BUKAN lewat DOM nesting, karena #textDisplay pakai scrollTop asli. */
+.caret-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 12;
 }
 
 /* Fix untuk font sans-serif - font proporsional tidak butuh koreksi letter-spacing/kerning manual */
@@ -364,6 +385,9 @@
 .text-display-container {
   position: relative;
   overflow: visible;
+  /* Dipindah dari #textDisplay, supaya #textDisplay dan .caret-overlay
+     (sibling, position:absolute; inset:0) berbagi origin box yang identik. */
+  margin-top: 15px;
 }
 
 .logo-pop {
@@ -548,25 +572,27 @@
 
 [data-cursor-mode="laser"] .has-cursor.cursor-before::after {
   left: -1px;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 3px;
-  height: 100%;
+  height: 80%;
   background-color: var(--caret);
-  box-shadow: 0 0 8px 2px var(--caret-glow-strong), 0 0 16px 4px var(--caret-glow-soft);
+  box-shadow: 0 0 5px 1px var(--caret-glow-strong), 0 0 10px 2px var(--caret-glow-soft);
 }
 [data-cursor-mode="laser"] .has-cursor.cursor-after::after {
   left: 100%;
-  top: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 3px;
-  height: 100%;
+  height: 80%;
   background-color: var(--caret);
-  box-shadow: 0 0 8px 2px var(--caret-glow-strong), 0 0 16px 4px var(--caret-glow-soft);
+  box-shadow: 0 0 5px 1px var(--caret-glow-strong), 0 0 10px 2px var(--caret-glow-soft);
 }
 .smooth-caret.mode-laser {
   background-color: var(--caret);
   box-shadow:
-    0 0 calc(4px + 12px * var(--caret-speed, 0)) calc(1px + 3px * var(--caret-speed, 0)) var(--caret-glow-strong),
-    0 0 calc(8px + 20px * var(--caret-speed, 0)) calc(2px + 4px * var(--caret-speed, 0)) var(--caret-glow-soft);
+    0 0 calc(3px + 5px * var(--caret-speed, 0)) calc(1px + 1px * var(--caret-speed, 0)) var(--caret-glow-strong),
+    0 0 calc(5px + 10px * var(--caret-speed, 0)) calc(1px + 2px * var(--caret-speed, 0)) var(--caret-glow-soft);
 }
 
 [data-cursor-mode="typewriter"] .has-cursor.cursor-before::after,
@@ -702,7 +728,12 @@
   box-sizing: border-box;
 }
 
-#textDisplay.cursor-no-blink .smooth-caret.is-visible {
+/* .smooth-caret sekarang hidup di .caret-overlay (sibling #textDisplay),
+   bukan lagi descendant #textDisplay -- JS men-sinkronkan class
+   "cursor-no-blink" & atribut data-cursor-mode ke .caret-overlay juga
+   supaya dua selector ini tetap match (lihat getCaretOverlay() /
+   positionSmoothCaret() di text-display.js). */
+.caret-overlay.cursor-no-blink .smooth-caret.is-visible {
   animation: noBlinkCursor 1s infinite;
 }
 
@@ -711,7 +742,7 @@
 }
 
 /* Mode Hidden tetap tidak menampilkan kursor sama sekali */
-#textDisplay[data-cursor-mode="hidden"] .smooth-caret {
+.caret-overlay[data-cursor-mode="hidden"] .smooth-caret {
   display: none;
 }
 

@@ -41,31 +41,5 @@ window.defaultKataKata = [
 ];
 
 
-    const mainContent = document.querySelector('.main-content'); // Dapatkan main-content
-    // --- Fungsi Global untuk Menyimpan Skor (updated with replayData support) ---
-window.saveScore = function(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null) {
-    const scores = JSON.parse(localStorage.getItem('typingScores') || '[]');
-    const newScore = {
-        wpm: wpm,
-        accuracy: accuracy,
-        time: time,
-        errors: errors,
-        type: type,
-        mode: mode,
-        correctWords: correctWords,
-        incorrectWords: incorrectWords,
-        date: new Date().toISOString()
-    };
-
-    if (replayData) {
-        newScore.replayData = replayData;
-    }
-
-    scores.unshift(newScore);
-    localStorage.setItem('typingScores', JSON.stringify(scores));
-    console.log("Skor disimpan:", newScore);
-
-    if (window.location.pathname.includes('score-history.html') && typeof window.displayFullScoreHistory === 'function') {
-        window.displayFullScoreHistory();
-    }
-};
+// --- Fungsi saveScore telah dipindahkan ke js/history/score-manager.js ---
+// (dengan dukungan language parameter dan QuotaExceededError handling)

@@ -190,21 +190,57 @@ export function resetHighlightCache() {
   cachedLineHeight = null;
 }
 
-function getOrCreateSmoothCaret(container) {
-  if (smoothCaretEl && smoothCaretEl.parentElement === container) {
+/* ==========================================================================
+   Caret Overlay
+   ==========================================================================
+   #textDisplay adalah scroll container ASLI (overflow-y:hidden + JS
+   men-drive scrollTop-nya langsung, lihat ensureScrollSync()) dan punya
+   mask-image untuk memudarkan baris lama di tepi atas. Karena mask & clip
+   itu berlaku untuk SELURUH subtree #textDisplay (termasuk box-shadow glow
+   milik .smooth-caret kalau ia jadi child-nya), mode caret yang punya glow
+   (laser/lightsaber, comet, dst) selalu ikut terpotong/memudar tajam kalau
+   posisinya dekat tepi atas.
+
+   Solusinya: .smooth-caret dipindah ke .caret-overlay - elemen SIBLING dari
+   #textDisplay (lihat index.html, di dalam .text-display-container yang
+   sama), yang di-stack pas di atasnya lewat position:absolute; inset:0,
+   TANPA overflow-hidden dan TANPA mask. Karena bukan lagi descendant
+   #textDisplay, .smooth-caret tidak lagi ikut ter-scroll otomatis oleh
+   scrollTop #textDisplay - makanya computeSmoothCaretRect() untuk elemen
+   ini TIDAK menambahkan kembali scrollTop (beda dengan ghost-caret, yang
+   tetap tinggal di dalam #textDisplay dan tetap butuh kompensasi itu).
+*/
+function getCaretOverlay(textDisplayEl) {
+  if (!textDisplayEl) return null;
+  const parent = textDisplayEl.parentElement;
+  if (!parent) return null;
+  let overlay = parent.querySelector(":scope > .caret-overlay");
+  if (!overlay) {
+    // Fallback kalau markup di index.html belum diupdate - buat sendiri.
+    overlay = document.createElement("div");
+    overlay.className = "caret-overlay";
+    parent.appendChild(overlay);
+  }
+  return overlay;
+}
+
+function getOrCreateSmoothCaret(textDisplayEl) {
+  const overlay = getCaretOverlay(textDisplayEl) || textDisplayEl;
+  if (smoothCaretEl && smoothCaretEl.parentElement === overlay) {
     return smoothCaretEl;
   }
-  // Container lama sudah di-clear (mis. saat renderAllLines melakukan
-  // innerHTML = ""), jadi buat ulang elemennya di container yang baru.
+  // Parent lama sudah tidak valid (mis. overlay baru dibuat ulang), jadi
+  // buat ulang elemennya di parent yang baru.
   smoothCaretEl = document.createElement("div");
   smoothCaretEl.className = "smooth-caret";
-  container.appendChild(smoothCaretEl);
+  overlay.appendChild(smoothCaretEl);
   return smoothCaretEl;
 }
 
-function hideSmoothCaret() {
+export function hideSmoothCaret() {
   if (smoothCaretEl) smoothCaretEl.classList.remove("is-visible");
 }
+window.hideSmoothCaret = hideSmoothCaret;
 
 /* ==========================================================================
    Ghost Caret (latihan "ulangi sesi sebelumnya")
@@ -314,15 +350,25 @@ export function updateGhostHighlighting() {
 }
 window.updateGhostHighlighting = updateGhostHighlighting;
 
-function computeSmoothCaretRect(container, targetEl, isBefore, mode) {
-  const containerRect = container.getBoundingClientRect();
+function computeSmoothCaretRect(referenceEl, targetEl, isBefore, mode, compensateScroll = true) {
+  const containerRect = referenceEl.getBoundingClientRect();
   const elRect = targetEl.getBoundingClientRect();
-  // Ubah koordinat viewport (dipengaruhi scroll) menjadi koordinat lokal
-  // #textDisplay yang tidak terpengaruh scroll, karena scrollTop-nya sudah
-  // ditambahkan kembali -> ini yang membuat caret ikut ter-scroll dengan
-  // benar bersama teks saat baris baru muncul.
-  const baseLeft = elRect.left - containerRect.left + container.scrollLeft;
-  const baseTop = elRect.top - containerRect.top + container.scrollTop;
+  // compensateScroll=true: referenceEl ADALAH scroll container-nya sendiri
+  // (mis. ghost-caret, yang masih jadi child #textDisplay) - posisi harus
+  // dihitung dalam koordinat lokal yang tidak terpengaruh scroll, karena
+  // scrollTop-nya ditambahkan kembali di sini supaya elemen yang kita
+  // posisikan (yang NANTINYA ikut ter-scroll oleh #textDisplay) tetap jatuh
+  // di tempat yang benar setelah scroll itu terjadi.
+  //
+  // compensateScroll=false: referenceEl adalah .caret-overlay, yang TIDAK
+  // ikut ter-scroll oleh #textDisplay (ia sibling, bukan descendant).
+  // elRect sudah mencerminkan posisi visual TERKINI target (setelah scroll
+  // #textDisplay diterapkan), jadi selisih mentah terhadap overlay sudah
+  // benar tanpa perlu kompensasi scrollTop apa pun.
+  const scrollLeft = compensateScroll ? referenceEl.scrollLeft : 0;
+  const scrollTop = compensateScroll ? referenceEl.scrollTop : 0;
+  const baseLeft = elRect.left - containerRect.left + scrollLeft;
+  const baseTop = elRect.top - containerRect.top + scrollTop;
 
   if (mode === "underline") {
     return {
@@ -359,6 +405,10 @@ function computeSmoothCaretRect(container, targetEl, isBefore, mode) {
 
   // Mode "caret" dan kerabat garis-tegaknya (laser, comet, reactive, pen):
   // garis tegak tipis, di kiri (before) atau kanan (after) karakter.
+  // Catatan: laser mode DULU mengecilkan tinggi jadi 0.8x supaya glow-nya
+  // tidak menabrak tepi #textDisplay. Sekarang caret hidup di .caret-overlay
+  // yang tidak di-clip/mask sama sekali, jadi tidak perlu dikecilkan lagi -
+  // tinggi penuh seperti mode garis-tegak lainnya.
   const barWidth = mode === "laser" ? 3 : 2;
   const left = isBefore ? baseLeft - 1 : baseLeft + elRect.width - 1;
   return { left, top: baseTop, width: barWidth, height: elRect.height };
@@ -374,7 +424,29 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
   }
 
   const el = getOrCreateSmoothCaret(DOM.textDisplay);
-  const rect = computeSmoothCaretRect(DOM.textDisplay, targetEl, isBefore, mode);
+  const overlay = getCaretOverlay(DOM.textDisplay);
+  const rect = computeSmoothCaretRect(
+    overlay || DOM.textDisplay,
+    targetEl,
+    isBefore,
+    mode,
+    /* compensateScroll */ !overlay
+  );
+
+  // .smooth-caret sekarang tinggal di .caret-overlay, bukan descendant
+  // #textDisplay lagi - mirror atribut/class/CSS-var yang dibutuhkan
+  // selector & transition-nya supaya tetap berfungsi sama seperti dulu.
+  if (overlay) {
+    overlay.dataset.cursorMode = mode;
+    overlay.classList.toggle(
+      "cursor-no-blink",
+      DOM.textDisplay.classList.contains("cursor-no-blink")
+    );
+    overlay.style.setProperty(
+      "--caret-smooth-duration",
+      DOM.textDisplay.style.getPropertyValue("--caret-smooth-duration") || "0ms"
+    );
+  }
 
   CARET_SHAPE_MODES.forEach((m) => el.classList.toggle(`mode-${m}`, mode === m));
 
@@ -433,6 +505,12 @@ export function setCaretSmoothness(level) {
 
   DOM.textDisplay.classList.toggle("smooth-caret-active", ms > 0);
   DOM.textDisplay.style.setProperty("--caret-smooth-duration", `${ms}ms`);
+  // .smooth-caret hidup di .caret-overlay (sibling), jadi tidak mewarisi
+  // custom property dari #textDisplay lewat CSS cascade - mirror manual.
+  const overlayForDuration = getCaretOverlay(DOM.textDisplay);
+  if (overlayForDuration) {
+    overlayForDuration.style.setProperty("--caret-smooth-duration", `${ms}ms`);
+  }
 
   if (ms <= 0) {
     hideSmoothCaret();
@@ -808,10 +886,18 @@ export function updateWordHighlighting() {
   }
 
   DOM.textDisplay.dataset.cursorMode = mode;
-  positionSmoothCaret(smoothCaretTarget, smoothCaretBefore, mode);
-  updateGhostHighlighting();
+  // PENTING: settle dulu scroll/tinggi baris SEBELUM menghitung posisi
+  // caret. .smooth-caret sekarang di .caret-overlay (unscrolled) dan
+  // posisinya dihitung sebagai snapshot getBoundingClientRect() saat ini -
+  // kalau dihitung sebelum ensureScrollSync() menggeser scrollTop ke baris
+  // baru, caret sempat "ketinggalan" di posisi baris lama selama 1 frame
+  // (keliatan sebagai lompat ke baris berikutnya lalu balik). Ghost-caret
+  // tidak terpengaruh urutan ini (masih descendant #textDisplay, otomatis
+  // ikut scroll berapa pun urutannya).
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
+  positionSmoothCaret(smoothCaretTarget, smoothCaretBefore, mode);
+  updateGhostHighlighting();
 }
 
 window.updateWordHighlighting = updateWordHighlighting;
@@ -888,6 +974,27 @@ export function initTextDisplayResizeObserver() {
     ensureScrollSync();
   });
   observer.observe(DOM.textDisplay);
+
+  /* Safety net untuk caret "nyangkut" (mis. saat notice AFK menggantikan
+     isi #textDisplay). Dulu ini otomatis beres sendiri karena
+     .smooth-caret jadi child #textDisplay - begitu isinya di-innerHTML="",
+     caret ikut lenyap. Sekarang .smooth-caret tinggal di .caret-overlay
+     (sibling, supaya tidak ikut ke-clip/mask), jadi tidak lagi otomatis
+     ikut kehapus. Observer ini menggantikan efek itu secara generik: kapan
+     pun children LANGSUNG #textDisplay berubah (word-group ditambah/
+     dihapus, ATAU seluruh isinya diganti notice lain) dan sudah tidak ada
+     .word-container tersisa sama sekali, sembunyikan kedua caret. Tidak
+     perlu mengubah kode AFK di file lain sama sekali - kalau kode itu
+     tetap ingin kontrol eksplisit, hideSmoothCaret() sekarang sudah
+     ter-export & tersedia lewat window.hideSmoothCaret() juga. */
+  const caretVisibilityObserver = new MutationObserver(() => {
+    const hasWords = !!DOM.textDisplay.querySelector(".word-container");
+    if (!hasWords) {
+      hideSmoothCaret();
+      hideGhostCaret();
+    }
+  });
+  caretVisibilityObserver.observe(DOM.textDisplay, { childList: true });
 }
 
 function addScrollEventListener() {

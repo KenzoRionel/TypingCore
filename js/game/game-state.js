@@ -54,6 +54,8 @@ export const gameState = {
     ghostTimeline: [], // array ms virtual (hasil computeGhostTimeline), sejajar index dengan ghostData.keystrokes
     ghostCurrentIndex: 0, // index keystroke ghost yang sedang "ditunjuk" oleh ghost caret saat ini
     ghostInterval: null, // interval id yang memajukan ghostCurrentIndex mengikuti waktu tes berjalan
+    ghostFromQuote: false, // true jika ghost mode dimulai dari sesi Quotes — ghostWords berhenti
+                            // total tanpa fallback. false jika dari mode waktu — boleh fallback random.
 
     // Mode teks latihan "Quotes": BEDA dari practiceMode/ghostMode (yang
     // hanya aktif untuk satu sesi latihan lalu otomatis mati), quoteMode

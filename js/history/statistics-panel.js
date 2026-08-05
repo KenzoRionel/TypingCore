@@ -249,14 +249,18 @@ function calculatePerformanceStats(historyData, finalWPM, totalTime) {
   // Calculate WPM variants
   const wpmVariants = calculateWPMVariants(keystrokesPerSecond, correctCharsPerSecond, totalTime);
 
-  // Find burst and lowest WPM with timing
-  const wpmPerSecond = keystrokesPerSecond.map((k, idx) => {
-    const timeMs = (idx + 1) * 1000;
-    const minutes = timeMs / 60000;
-    return minutes > 0 ? Math.round(k / 5 / minutes) : 0;
+  // ✅ FIX: Hitung WPM per detik dari keystrokes (bukan kumulatif),
+  // lalu gunakan untuk burst, lowest, DAN stdDev.
+  // Sebelumnya burst/lowest salah dibagi waktu kumulatif, dan stdDev
+  // merujuk array lama yang sudah dihapus.
+  const ONE_MINUTE_IN_MS = 60000;
+  const wpmPerSecond = keystrokesPerSecond.map(k => {
+    const rounded = Math.round(k);
+    return Math.round((rounded / 5) * (ONE_MINUTE_IN_MS / 1000));
   });
 
-  const nonZeroWPM = wpmPerSecond.map((w, idx) => ({ wpm: w, second: idx + 1 }))
+  const nonZeroWPM = wpmPerSecond
+    .map((wpm, idx) => ({ wpm, second: idx + 1 }))
     .filter(w => w.wpm > 0);
 
   const burstWPM = nonZeroWPM.length > 0
@@ -295,8 +299,15 @@ function calculateWPMVariants(keystrokesPerSecond, correctCharsPerSecond, totalT
   const rawWPM = timeMinutes > 0 ? Math.round(cumulativeTyped / 5 / timeMinutes) : 0;
   const netWPM = timeMinutes > 0 ? Math.round(cumulativeCorrect / 5 / timeMinutes) : 0;
 
-  // Adjusted WPM = Net WPM, but could be further adjusted based on penalty
-  const adjustedWPM = netWPM;
+  // ✅ FIX: Adjusted WPM = Net WPM - pinalti untuk setiap karakter salah.
+  // Pinalti: setiap karakter salah mengurangi 1 karakter dari total efektif,
+  // lalu dihitung ulang sebagai WPM. Jadi adjustedWPM < netWPM jika ada error,
+  // dan = netWPM jika tidak ada error (akurasi 100%).
+  const totalErrors = keystrokesPerSecond.reduce((sum, k, idx) => {
+    return sum + Math.max(0, (k || 0) - (correctCharsPerSecond[idx] || 0));
+  }, 0);
+  const effectiveCorrectChars = Math.max(0, cumulativeCorrect - totalErrors);
+  const adjustedWPM = timeMinutes > 0 ? Math.round(effectiveCorrectChars / 5 / timeMinutes) : 0;
 
   return { rawWPM, netWPM, adjustedWPM };
 }

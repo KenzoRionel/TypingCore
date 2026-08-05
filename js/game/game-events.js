@@ -102,8 +102,15 @@ export function handleKeydown(e) {
     }
 
   // Pastikan buffer kata aman
+  // ✅ FIX: Ghost mode dari Quotes (ghostFromQuote=true): jangan generate kata baru
+  // saat ghostWords habis — ghost mode hanya menampilkan teks quotes secara persis.
+  // Ghost mode dari waktu (ghostFromQuote=false): tetap fallback ke random words.
   const WORD_BUFFER_THRESHOLD = 80;
+  const ghostFromQuoteExhausted = gameState.ghostMode && gameState.ghostFromQuote &&
+    gameState.ghostWords.length > 0 &&
+    gameState.fullTextWords.length >= gameState.ghostWords.length;
   if (
+    !ghostFromQuoteExhausted &&
     gameState.fullTextWords.length - gameState.typedWordIndex <
       WORD_BUFFER_THRESHOLD &&
     window.defaultKataKata &&
@@ -113,7 +120,13 @@ export function handleKeydown(e) {
   }
 
   // Kalau index kelewatan, siapkan barisnya
+  // ✅ FIX: Ghost mode dari Quotes: akhiri tes saat user mencapai akhir ghost words.
+  // Ghost mode dari waktu: tetap generate kata baru seperti biasa.
   if (gameState.typedWordIndex >= gameState.fullTextWords.length) {
+    if (gameState.ghostMode && gameState.ghostFromQuote) {
+      endTest();
+      return;
+    }
     if (window.defaultKataKata && window.defaultKataKata.length > 0) {
       const prevLength = gameState.fullTextWords.length;
       generateAndAppendWords(100);
@@ -209,55 +222,15 @@ export function handleKeydown(e) {
       ); 
     }
 
-    const elapsedTime = (new Date().getTime() - gameState.startTime) / 1000;
-    if (elapsedTime > 0) {
-      const totalCorrectChars = gameState.correctChars;
-      const totalIncorrectChars = gameState.incorrectChars;
-      const allTypedChars =
-        totalCorrectChars + totalIncorrectChars + DOM.hiddenInput.value.length;
-
-      const wpm = Math.round(totalCorrectChars / 5 / (elapsedTime / 60));
-      const rawWpm = Math.round(allTypedChars / 5 / (elapsedTime / 60));
-
-      const wasCorrect =
-        gameState.typedWordCorrectness[gameState.typedWordIndex];
-      const typedWord =
-        gameState.userTypedWords[gameState.typedWordIndex] || "";
-      const targetWord2 =
-        gameState.fullTextWords[gameState.typedWordIndex] || "";
-      let incorrectCharsInWord = 0;
-      for (let i = 0; i < typedWord.length; i++) {
-        if (i >= targetWord2.length || typedWord[i] !== targetWord2[i]) {
-          incorrectCharsInWord++;
-        }
-      }
-      if (targetWord2.length > typedWord.length) {
-        incorrectCharsInWord += targetWord2.length - typedWord.length;
-      }
-      const errorPercentage =
-        targetWord2.length > 0
-          ? (incorrectCharsInWord / targetWord2.length) * 100
-          : 0;
-
-      gameState.history.push({
-        wpm: wpm,
-        rawWpm: rawWpm,
-        errors: totalIncorrectChars,
-        correct: wasCorrect,
-        errorPercentage: errorPercentage,
-      });
-    }
-
     gameState.typedWordIndex++;
     DOM.hiddenInput.value = "";
     updateWordHighlighting();
     updateRealtimeStats();
 
-    // ✅ Mode Quotes: tidak ada batas waktu - tes berakhir begitu SELURUH
-    // kata quote sudah di-commit (kasus ini jarang terjadi karena biasanya
-    // kata terakhir quote tidak diikuti spasi, tapi tetap dijaga untuk
-    // kasus di mana user memang menekan spasi di akhir).
-    if (gameState.quoteMode && gameState.typedWordIndex >= gameState.fullTextWords.length) {
+    // ✅ Mode Quotes/Ghost-from-Quote: tidak ada batas waktu - tes berakhir begitu
+    // SELURUH kata sudah di-commit. Ghost-from-Time tetap lanjut (buffer refill).
+    if ((gameState.quoteMode || (gameState.ghostMode && gameState.ghostFromQuote)) &&
+        gameState.typedWordIndex >= gameState.fullTextWords.length) {
       endTest();
       return;
     }
@@ -284,12 +257,11 @@ export function handleKeydown(e) {
       updateWordHighlighting();
       updateRealtimeStats();
 
-      // ✅ Mode Quotes: kalau ini kata TERAKHIR dari quote dan sudah
+      // ✅ Mode Quotes/Ghost-from-Quote: kalau ini kata TERAKHIR dan sudah
       // diketik sepanjang (atau lebih dari) kata targetnya, akhiri tes
-      // langsung tanpa menunggu spasi - kalimat/quote memang biasanya
-      // diakhiri tanda baca, bukan spasi.
+      // langsung tanpa menunggu spasi. Ghost-from-Time tetap lanjut.
       if (
-        gameState.quoteMode &&
+        (gameState.quoteMode || (gameState.ghostMode && gameState.ghostFromQuote)) &&
         gameState.typedWordIndex === gameState.fullTextWords.length - 1
       ) {
         const targetWord = gameState.fullTextWords[gameState.typedWordIndex] || "";
@@ -305,25 +277,6 @@ export function handleKeydown(e) {
 
 }
 
-
-function advanceLineIndex() {
-  if (gameState.currentLineIndex === 0) {
-    return 0;
-  } else if (gameState.currentLineIndex === 1) {
-    return 2;
-  } else {
-    return gameState.currentLineIndex + 1;
-  }
-}
-
-// Fungsi untuk menangani pergerakan mouse
-function handleMouseMove() {
-  if (gameState.isTypingActive && gameState.startTime) {
-    // Tampilkan kembali logo dan speedometer saat mouse bergerak
-    if (typeof window.triggerLogoPop === 'function') window.triggerLogoPop();
-    showStatsContainer();
-  }
-}
 
 // Handler diberi nama (bukan arrow function anonim inline) supaya:
 //  1. Jelas terlihat di devtools/profiler siapa yang terpasang di listener list,
@@ -369,9 +322,6 @@ function wireGameEventsGlobalListeners() {
   gameEventsGlobalListenersWired = true;
 
   initTextDisplayResizeObserver();
-
-  // Tambahkan event listener untuk pergerakan mouse
-  document.addEventListener('mousemove', handleMouseMove);
 
   // Tambahkan event listener untuk keyup untuk menghapus highlight tombol aktif dengan delay
   document.addEventListener('keyup', onGlobalKeyUp);

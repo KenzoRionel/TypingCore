@@ -85,12 +85,17 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
   let cumulativeCorrectChars = 0;
   let cumulativeIncorrectChars = 0;
 
-  // Hitung error untuk setiap detik
+  // ✅ FIX: Error ditempatkan di detik saat word DIMULAI (bukan selesai).
+  // Sebelumnya menggunakan data.endTime, yang menyebabkan error muncul
+  // di detik yang terlambat dibandingkan keystroke benar (correctCharsPerSecond
+  // di-update saat keystroke terjadi). Dengan menggunakan data.startTime,
+  // error dan karakter benar kini berada di basis waktu yang selaras,
+  // sehingga garis raw WPM kumulatif lebih akurat.
   historyData.forEach(data => {
-      const endSecond = Math.floor((data.endTime - (historyData[0]?.startTime || 0)) / 1000);
+      const startSecond = Math.floor((data.startTime - (historyData[0]?.startTime || 0)) / 1000);
       const errorCount = data.errorCount != null ? data.errorCount : computeErrorCount(data);
-      if (errorCount > 0 && endSecond >= 0 && endSecond < totalTime) {
-          errorCountsBySecond[endSecond] = (errorCountsBySecond[endSecond] || 0) + errorCount;
+      if (errorCount > 0 && startSecond >= 0 && startSecond < totalTime) {
+          errorCountsBySecond[startSecond] = (errorCountsBySecond[startSecond] || 0) + errorCount;
       }
   });
 
