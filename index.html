@@ -200,6 +200,20 @@
             Quotes
           </button>
 
+          <button
+            id="punctuationModeBtn"
+            type="button"
+            class="btn btn-outline-primary time-mode-btn quote-mode-btn"
+            aria-pressed="false"
+            title="Tambahkan tanda baca ke teks (tetap mode waktu; frekuensi bisa diatur di Settings)"
+          >
+            Punctuation
+            <!-- Penanda minimalis bahwa mode Punctuation aktif: dot kecil di
+                 pojok kanan atas tombol, muncul lewat CSS saat tombol punya
+                 class "active" (lihat time-mode-modal.css) - bukan teks. -->
+            <span class="punctuation-mode-indicator" aria-hidden="true"></span>
+          </button>
+
           <span class="mode-toolbar-divider" aria-hidden="true"></span>
 
           <!-- Tombol mode waktu: satu tombol ikon jam yang menampilkan durasi

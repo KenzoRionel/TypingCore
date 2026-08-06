@@ -43,6 +43,69 @@ function getInProgressCharCounts() {
   return { correct, incorrect };
 }
 
+const PUNCTUATION_CHANCE = 0.3; // 30% kata dapat tanda baca (default jika user belum mengatur di settings)
+const SENTENCE_END_MARKS = [".", ".", ".", "!", "?"]; // titik lebih sering muncul
+const MID_SENTENCE_MARKS = [",", ",", ",", ";", ":"];  // koma lebih sering muncul
+const SENTENCE_END_PROBABILITY = 0.3; // dari kata yang kena tanda baca, 30% penutup kalimat
+// Tanda baca berpasangan (pembuka + penutup): tanda kutip & tanda kurung.
+const WRAP_MARKS = [
+  { open: '"', close: '"' },
+  { open: "'", close: "'" },
+  { open: "(", close: ")" },
+  { open: "[", close: "]" },
+];
+const WRAP_PUNCTUATION_PROBABILITY = 0.25; // dari kata yang kena tanda baca, 25% berupa pasangan pembuka/penutup
+
+/**
+ * Peluang kata diberi tanda baca untuk sesi ini. Bisa diatur user lewat
+ * halaman settings (localStorage 'punctuationChance', dalam persen) dan
+ * disinkronkan ke gameState.punctuationChance (0.0 - 1.0). Fallback ke
+ * PUNCTUATION_CHANCE jika state belum terisi.
+ * @returns {number} peluang 0.0 - 1.0
+ */
+function getPunctuationChance() {
+  const chance = gameState.punctuationChance;
+  if (typeof chance === "number" && Number.isFinite(chance)) {
+    return Math.max(0, Math.min(1, chance));
+  }
+  return PUNCTUATION_CHANCE;
+}
+
+/**
+ * Menambahkan tanda baca ke sebuah kata sesuai state pungtuasi saat ini.
+ * @param {string} word - kata asli (belum diberi tanda baca)
+ * @param {boolean} isSentenceStart - true jika kata ini adalah awal
+ *   kalimat baru, sehingga huruf pertamanya perlu dikapitalisasi
+ * @returns {{ word: string, endsSentence: boolean }} kata yang sudah
+ *   diproses + status apakah kalimat berakhir di kata ini (dipakai
+ *   caller untuk meng-update gameState.punctuationSentenceStart)
+ */
+function applyPunctuationToWord(word, isSentenceStart) {
+  let result = isSentenceStart
+    ? word.charAt(0).toUpperCase() + word.slice(1)
+    : word;
+
+  if (Math.random() >= getPunctuationChance()) {
+    return { word: result, endsSentence: false };
+  }
+
+  // Sebagian kata diberi tanda baca BERGANDA (pasangan pembuka/penutup):
+  // tanda kutip atau kurung yang "membungkus" kata. Ini tidak pernah
+  // menutup kalimat, supaya tanda titik/tanya/seru tetap datang dari
+  // tanda baca tunggal yang menempel di belakang kata.
+  if (Math.random() < WRAP_PUNCTUATION_PROBABILITY) {
+    const wrap = WRAP_MARKS[Math.floor(Math.random() * WRAP_MARKS.length)];
+    return { word: wrap.open + result + wrap.close, endsSentence: false };
+  }
+
+  const endsSentence = Math.random() < SENTENCE_END_PROBABILITY;
+  const mark = endsSentence
+    ? SENTENCE_END_MARKS[Math.floor(Math.random() * SENTENCE_END_MARKS.length)]
+    : MID_SENTENCE_MARKS[Math.floor(Math.random() * MID_SENTENCE_MARKS.length)];
+
+  return { word: result + mark, endsSentence };
+}
+
 export function generateAndAppendWords(numWords) {
   const useGhostWords =
     gameState.ghostMode &&
@@ -122,7 +185,18 @@ export function generateAndAppendWords(numWords) {
   }
   for (let i = 0; i < numWords; i++) {
     const randomIndex = Math.floor(Math.random() * sourceWords.length);
-    gameState.fullTextWords.push(sourceWords[randomIndex]);
+    let word = sourceWords[randomIndex];
+
+    if (gameState.punctuationMode) {
+      const { word: punctuatedWord, endsSentence } = applyPunctuationToWord(
+        word,
+        gameState.punctuationSentenceStart
+      );
+      word = punctuatedWord;
+      gameState.punctuationSentenceStart = endsSentence;
+    }
+
+    gameState.fullTextWords.push(word);
     gameState.typedWordCorrectness.push(false);
     gameState.userTypedWords.push("");
   }
@@ -861,6 +935,7 @@ export function resetTestState(options = {}) {
   hideGhostCaret();
   gameState.quoteWordBuffer = [];
   gameState.quoteAuthorMarks = [];
+  gameState.punctuationSentenceStart = true; // mulai kalimat baru tiap sesi tes baru
 
   clearInterval(gameState.timerInterval);
   gameState.timerInterval = null;

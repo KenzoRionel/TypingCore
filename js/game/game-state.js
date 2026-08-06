@@ -66,6 +66,32 @@ export const gameState = {
     quoteMode: false, // true = generateAndAppendWords() mengambil kata dari quoteWordBuffer (quote sungguhan), bukan random dari window.defaultKataKata
     quoteWordBuffer: [], // daftar kata hasil split dari satu/lebih quote yang sudah "dituangkan" berurutan, tumbuh sesuai kebutuhan buffer
     quoteAuthorMarks: [], // [{ atIndex, author, text }] - penanda index awal tiap quote di dalam quoteWordBuffer, dipakai untuk menampilkan nama sumber/author quote yang sedang aktif diketik
+
+    // Mode "Punctuation": TOGGLE persist (mirip quoteMode) yang menambahkan
+    // ~30% tanda baca (koma/titik/dll) ke kata-kata acak, TAPI teksnya tetap
+    // dihasilkan dari window.defaultKataKata/practiceWords seperti biasa dan
+    // tetap memakai mode waktu (timer hitung mundur) - beda dari quoteMode
+    // yang mengganti seluruh sumber teks & memakai stopwatch naik. Mutually
+    // exclusive dengan quoteMode (lihat main.js): mengaktifkan salah satu
+    // mematikan yang lain.
+    punctuationMode: false,
+    // true jika kata berikutnya adalah awal kalimat baru (huruf pertama
+    // dikapitalisasi) - persist antar panggilan generateAndAppendWords()
+    // karena buffer kata dihasilkan bertahap per-chunk, bukan sekaligus.
+    punctuationSentenceStart: true,
+    // Peluang sebuah kata diberi tanda baca (0.0 - 1.0). Diisi dari
+    // localStorage ('punctuationChance', dalam persen) yang diatur user di
+    // settings.html, supaya nilai sudah benar SEJAK modul dimuat - tidak
+    // bergantung pada urutan panggilan initSettingsPanel()/resetTestState()
+    // di main.js. Default 30% (0.3) jika belum pernah diatur.
+    punctuationChance: (() => {
+      let raw = null;
+      try {
+        raw = localStorage.getItem("punctuationChance");
+      } catch (e) {}
+      const value = raw === null ? NaN : parseFloat(raw);
+      return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) / 100 : 0.3;
+    })(),
 };
 
 window.gameState = gameState;

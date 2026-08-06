@@ -358,6 +358,27 @@
                       <label class="chip-option" for="wordSet10000">Top 10K</label>
                     </div>
                   </div>
+
+                  <!-- Frekuensi Tanda Baca Mode Punctuation: persentase kata
+                       yang akan diberi tanda baca saat mode Punctuation aktif
+                       di halaman tes (disimpan di localStorage
+                       'punctuationChance', default 30%). -->
+                  <div class="settings-block">
+                    <p class="settings-row-label no-margin">Frekuensi Tanda Baca (Punctuation)</p>
+                    <p class="settings-row-desc" style="margin-bottom: 0.6rem;">Persentase kata yang diberi tanda baca saat mode Punctuation aktif</p>
+                    <div class="settings-range-row">
+                      <input
+                        type="range"
+                        id="punctuationChanceRange"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value="30"
+                        aria-label="Persentase kata bertanda baca"
+                      >
+                      <span id="punctuationChanceValue" class="settings-range-value">30%</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- ============ GRUP: STATISTIK & INTERFACE ============ -->

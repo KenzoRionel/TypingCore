@@ -114,6 +114,34 @@ width: 65px;   /* Atur lebar sesuai keinginan */
     padding: 0 14px;
 }
 
+/* Penanda minimalis (dot) pada tombol Punctuation: muncul hanya saat mode
+   aktif (.active), tanpa teks, supaya konsisten dengan gaya toolbar.
+   Warna memakai var(--correct) supaya kontras di atas latar accent tombol
+   yang terisi saat aktif; saat nonaktif dot disembunyikan total. */
+#punctuationModeBtn {
+    position: relative;
+}
+
+#punctuationModeBtn .punctuation-mode-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--correct);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    pointer-events: none;
+}
+
+#punctuationModeBtn.active .punctuation-mode-indicator {
+    opacity: 1;
+    transform: scale(1);
+}
+
 .quote-mode-btn.loading {
     opacity: 0.6;
     cursor: wait;

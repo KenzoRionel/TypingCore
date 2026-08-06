@@ -144,7 +144,18 @@ function applyStoredPreferences(textDisplay, { hideStats, showStats } = {}) {
   const savedCaretSmoothness = localStorage.getItem("caretSmoothness") || "off";
   setCaretSmoothness(savedCaretSmoothness);
 
-  return { savedCursorMode, savedWordSet, savedFont, initialStatsMode, savedBlink, savedCaretSmoothness };
+  // Frekuensi tanda baca mode Punctuation (dalam persen 0-100, default 30).
+  // Disimpan di gameState.punctuationChance sebagai pecahan 0.0-1.0 supaya
+  // langsung dipakai generateAndAppendWords() tanpa konversi lagi.
+  const rawPunctuationChance = parseFloat(localStorage.getItem("punctuationChance"));
+  const savedPunctuationChance = Number.isFinite(rawPunctuationChance)
+    ? Math.max(0, Math.min(100, rawPunctuationChance))
+    : 30;
+  if (window.gameState) {
+    window.gameState.punctuationChance = savedPunctuationChance / 100;
+  }
+
+  return { savedCursorMode, savedWordSet, savedFont, initialStatsMode, savedBlink, savedCaretSmoothness, savedPunctuationChance };
 }
 
 /**
@@ -372,6 +383,36 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
         showStats,
         statsMode: window.gameState ? window.gameState.statsMode : "speedometer",
       });
+      pulseAutosave();
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Frekuensi Tanda Baca Mode Punctuation                            */
+  /* ---------------------------------------------------------------- */
+  const punctuationRange = document.getElementById("punctuationChanceRange");
+  const punctuationValue = document.getElementById("punctuationChanceValue");
+  if (punctuationRange) {
+    punctuationRange.value = String(saved.savedPunctuationChance);
+    if (punctuationValue) {
+      punctuationValue.textContent = `${saved.savedPunctuationChance}%`;
+    }
+
+    punctuationRange.addEventListener("input", () => {
+      if (punctuationValue) punctuationValue.textContent = `${punctuationRange.value}%`;
+    });
+
+    // "change" (lepas/drag selesai) supaya tidak menulis localStorage
+    // berulang kali selama user masih menggeser slider.
+    punctuationRange.addEventListener("change", () => {
+      const percent = parseFloat(punctuationRange.value);
+      const clamped = Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 30;
+      if (window.gameState) {
+        window.gameState.punctuationChance = clamped / 100;
+      }
+      try {
+        localStorage.setItem("punctuationChance", String(clamped));
+      } catch (e) {}
       pulseAutosave();
     });
   }

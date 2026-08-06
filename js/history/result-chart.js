@@ -4,6 +4,51 @@ let resultChartInstance = null;
 let pbLineVisible = true; // toggle state untuk garis PB (persist antar render)
 let currentQuoteAuthor = null; // ✅ BARU: author quote aktif (mode Quotes), ditampilkan di legend hasil
 
+// ✅ BARU: baca warna dari CSS variabel tema aktif
+function getThemeColor(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
+function getChartThemeColors() {
+  return {
+    accent: getThemeColor("--accent") || "#f4c20d",
+    textMuted: getThemeColor("--text-muted") || "#9aa0a6",
+    text: getThemeColor("--text") || "#f1f1f1",
+    incorrect: getThemeColor("--incorrect") || "#ff6b6b",
+    border: getThemeColor("--border") || "#3f3f3f",
+    surface: getThemeColor("--surface") || "#2a2a2a",
+  };
+}
+
+// ✅ BARU: auto-update chart warna saat tema berubah
+const _themeObserver = new MutationObserver(() => {
+  if (!resultChartInstance) return;
+  const c = getChartThemeColors();
+  // update dataset colors
+  resultChartInstance.data.datasets[0].borderColor = c.accent;
+  resultChartInstance.data.datasets[0].backgroundColor = c.accent;
+  resultChartInstance.data.datasets[1].borderColor = c.accent;
+  resultChartInstance.data.datasets[1].backgroundColor = c.accent;
+  resultChartInstance.data.datasets[2].borderColor = c.textMuted;
+  resultChartInstance.data.datasets[2].backgroundColor = c.textMuted;
+  resultChartInstance.data.datasets[3].borderColor = c.incorrect;
+  resultChartInstance.data.datasets[3].backgroundColor = c.incorrect;
+  // update axis & grid
+  const x = resultChartInstance.options.scales.x;
+  x.title.color = c.textMuted;
+  x.ticks.color = c.textMuted;
+  x.grid.color = `${c.border}40`;
+  const yWpm = resultChartInstance.options.scales.yWpm;
+  yWpm.title.color = c.textMuted;
+  yWpm.ticks.color = c.textMuted;
+  yWpm.grid.color = `${c.border}40`;
+  const yErr = resultChartInstance.options.scales.yErr;
+  yErr.title.color = c.textMuted;
+  yErr.ticks.color = c.textMuted;
+  resultChartInstance.update("none");
+});
+_themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
 // ✅ BARU: state untuk animasi "reveal" (garis bergerak dari kiri ke kanan)
 let revealProgress = 0; // 0 -> 1
 let revealAnimationId = null;
@@ -130,26 +175,29 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
   const yWpmMax = Math.ceil(wpmMaxCandidate / 10) * 10;
   const yErrMax = Math.max(6, ...errorCountsBySecond.filter((v) => v != null));
 
+  const themeColors = getChartThemeColors();
+
   const pbLine = {
     id: "pbLine",
     afterDatasetsDraw(chart) {
-      if (!pbLineVisible) return; // ✅ BARU: bisa disembunyikan lewat legend "pb"
+      if (!pbLineVisible) return;
       const {
         ctx,
         chartArea: { left, right },
         scales: { yWpm },
       } = chart;
+      const colors = getChartThemeColors();
       const y = yWpm.getPixelForValue(finalWPM);
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = "#6f6f6f";
+      ctx.strokeStyle = colors.textMuted;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(left, y);
       ctx.lineTo(right, y);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = "#bdbdbd";
+      ctx.fillStyle = colors.textMuted;
       ctx.font = "12px sans-serif";
       ctx.fillText(`PB: ${finalWPM}`, right - 70, y - 6);
       ctx.restore();
@@ -168,9 +216,9 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
       datasets: [
         {
           label: "wpm",
-          data: netWpmData, // ✅ Menggunakan data yang baru dihitung
-          borderColor: "#f4c20d",
-          backgroundColor: "#f4c20d",
+          data: netWpmData,
+          borderColor: themeColors.accent,
+          backgroundColor: themeColors.accent,
           borderWidth: 3,
           tension: 0.25,
           pointRadius: 2,
@@ -178,13 +226,10 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           yAxisID: "yWpm",
         },
         {
-          // ✅ BARU: "raw" sekarang mengikuti bentuk kurva "wpm" (kumulatif),
-          // digambar putus-putus dan hanya terlihat renggang saat akurasi turun —
-          // persis konsep pada gambar acuan.
           label: "raw",
           data: rawCumulativeData,
-          borderColor: "#f4c20d",
-          backgroundColor: "#f4c20d",
+          borderColor: themeColors.accent,
+          backgroundColor: themeColors.accent,
           borderWidth: 1.5,
           borderDash: [5, 3],
           tension: 0.25,
@@ -193,12 +238,10 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           yAxisID: "yWpm",
         },
         {
-          // ✅ PERUBAHAN KONSEP: dataset ini (kecepatan per-detik yang naik-turun tajam)
-          // sekarang diberi label "burst", bukan lagi "raw"
           label: "burst",
           data: rawWpmPerSecond,
-          borderColor: "#9aa0a6",
-          backgroundColor: "#9aa0a6",
+          borderColor: themeColors.textMuted,
+          backgroundColor: themeColors.textMuted,
           borderWidth: 2,
           tension: 0.25,
           pointRadius: 2,
@@ -213,8 +256,8 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           pointStyle: "crossRot",
           radius: 4,
           borderWidth: 1,
-          backgroundColor: "#ff6b6b",
-          borderColor: "#ff6b6b",
+          backgroundColor: themeColors.incorrect,
+          borderColor: themeColors.incorrect,
           yAxisID: "yErr",
         },
       ],
@@ -226,29 +269,31 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
       interaction: { mode: "index", intersect: false },
       scales: {
         x: {
-          title: { display: true, text: `Waktu (detik)` },
+          title: { display: true, text: `Waktu (detik)`, color: themeColors.textMuted },
           ticks: {
             autoSkip: true,
             maxTicksLimit: 10,
             stepSize: xInterval,
             callback: (value) => `${value + 1}`,
+            color: themeColors.textMuted,
           },
-          grid: { color: "rgba(255,255,255,0.06)" },
+          grid: { color: `${themeColors.border}40` },
         },
         yWpm: {
           type: "linear",
           position: "left",
           beginAtZero: true,
           max: yWpmMax,
-          title: { display: true, text: "Kata per Menit" },
-          ticks: { stepSize: Math.ceil(yWpmMax / 5) },
-          grid: { color: "rgba(255,255,255,0.06)" },
+          title: { display: true, text: "Kata per Menit", color: themeColors.textMuted },
+          ticks: { stepSize: Math.ceil(yWpmMax / 5), color: themeColors.textMuted },
+          grid: { color: `${themeColors.border}40` },
         },
         yErr: {
           position: "right",
           min: 0,
           max: yErrMax,
-          title: { display: true, text: "Eror" },
+          title: { display: true, text: "Eror", color: themeColors.textMuted },
+          ticks: { color: themeColors.textMuted },
           grid: { drawOnChartArea: false },
         },
       },
@@ -319,10 +364,10 @@ function setupCustomLegend(chart) {
       <span class="legend-line legend-line-dashed"></span><span>raw</span>
     </button>
     <button type="button" class="legend-item legend-toggle" data-active="true" data-index="2" title="Tampilkan/sembunyikan burst">
-      <span class="legend-line legend-line-solid" style="border-top-color:#9aa0a6"></span><span>burst</span>
+      <span class="legend-line legend-line-solid legend-line-burst"></span><span>burst</span>
     </button>
     <button type="button" class="legend-item legend-toggle" data-active="true" data-index="3" title="Tampilkan/sembunyikan errors">
-      <i class="fas fa-times" style="color:#ff6b6b"></i><span>errors</span>
+      <i class="fas fa-times legend-icon-errors"></i><span>errors</span>
     </button>
     ${authorItemHtml}
   `;
@@ -375,7 +420,7 @@ function injectLegendStyles() {
       margin: 6px 4px 10px;
       font-size: 0.78rem;
       font-family: inherit;
-      color: #9aa0a6;
+      color: var(--text-muted, #9aa0a6);
     }
     .chart-legend-custom .legend-item {
       display: inline-flex;
@@ -402,7 +447,7 @@ function injectLegendStyles() {
       display: inline-block;
       width: 18px;
       height: 0;
-      border-top: 2px solid #f4c20d;
+      border-top: 2px solid var(--accent, #f4c20d);
     }
     .chart-legend-custom .legend-line-dashed {
       border-top-style: dashed;
@@ -411,13 +456,19 @@ function injectLegendStyles() {
       border-top-style: solid;
       border-top-width: 3px;
     }
+    .chart-legend-custom .legend-line-burst {
+      border-top-color: var(--text-muted, #9aa0a6);
+    }
+    .chart-legend-custom .legend-icon-errors {
+      color: var(--incorrect, #ff6b6b);
+    }
     .chart-legend-custom .legend-quote-author {
       opacity: 0.85;
       cursor: default;
       font-style: italic;
       margin-left: auto;
       padding-left: 10px;
-      border-left: 1px solid rgba(255,255,255,0.12);
+      border-left: 1px solid var(--border, rgba(255,255,255,0.12));
     }
     .chart-legend-custom .legend-quote-author i {
       font-size: 0.75rem;

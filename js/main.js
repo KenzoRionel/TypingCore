@@ -163,6 +163,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const quoteModeBtnRef = document.getElementById("quoteModeBtn");
 
+  const punctuationModeBtnRef = document.getElementById("punctuationModeBtn");
+
   const timeModeToggleBtn = document.getElementById("timeModeToggleBtn");
   const timeModeToggleValue = document.getElementById("timeModeToggleValue");
   const timeModeModalOverlay = document.getElementById("timeModeModalOverlay");
@@ -348,6 +350,11 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
+        if (window.gameState && window.gameState.punctuationMode) {
+          window.gameState.punctuationMode = false;
+          if (punctuationModeBtnRef) punctuationModeBtnRef.classList.remove("active");
+        }
+
         if (window.gameState) window.gameState.quoteMode = true;
         quoteModeBtnRef.classList.add("active");
       } else {
@@ -356,6 +363,31 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (activating) closeTimeModeModal();
+
+      if (typeof window.resetTest === "function") {
+        window.resetTest();
+      }
+      DOM.hiddenInput.focus();
+    });
+  }
+
+  if (punctuationModeBtnRef) {
+    punctuationModeBtnRef.addEventListener("click", () => {
+      const activating = !(window.gameState && window.gameState.punctuationMode);
+
+      if (activating) {
+        // Punctuation mode selalu pakai mode waktu -> matikan Quotes kalau aktif
+        if (window.gameState && window.gameState.quoteMode) {
+          window.gameState.quoteMode = false;
+          if (quoteModeBtnRef) quoteModeBtnRef.classList.remove("active");
+        }
+        if (window.gameState) window.gameState.punctuationMode = true;
+        punctuationModeBtnRef.classList.add("active");
+        closeTimeModeModal();
+      } else {
+        if (window.gameState) window.gameState.punctuationMode = false;
+        punctuationModeBtnRef.classList.remove("active");
+      }
 
       if (typeof window.resetTest === "function") {
         window.resetTest();
