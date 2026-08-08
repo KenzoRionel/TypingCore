@@ -69,8 +69,89 @@ const CARET_AFTER_POSITION_MODES = new Set([
 // Timestamp panggilan positionSmoothCaret() sebelumnya, dipakai mengukur
 // interval antar-keystroke -> "speedFactor" (0 = lambat, 1 = cepat) yang
 // menggerakkan efek reaktif-kecepatan (glow laser, ekor comet) dan efek
-// reaktif-performa (warna mode reactive).
+// reaktif-performa (warna mode reactive). Kecepatan dihitung dari JARAK
+// piksel antar posisi caret dibagi waktu (velocity = jarak / dt), bukan cuma
+// selisih waktu antar-keystroke -- supaya yang terukur adalah gerakan visual
+// caret, bukan sekedar ritme ketik.
 let lastCaretMoveTs = null;
+let lastCaretRect = null; // { left, top } posisi batang caret sebelumnya.
+
+// Ambang velocity (px/ms) yang dianggap "ketik cepat". Dipakai menormalkan
+// jarak/dt menjadi speedFactor 0..1: ~1 karakter per 100ms (monospace kira-kira
+// 19px per karakter) -> 0.19/0.2 -> ~0.95; ketik lambat ~1 karakter per 200ms
+// -> ~0.5.
+const CARET_SPEED_VELOCITY_REF = 0.2;
+
+/* Peluruhan (decay) ekor saat idle: berhenti mengetik -> panjang ekor harus
+   menyusut mulus ke 0. Di sini dipakai SATU timer pendek + transisi CSS yang
+   sudah ada pada --caret-speed (didaftarkan via @property di CSS sehingga bisa
+   di-transition), bukan loop requestAnimationFrame yang menurunkan nilai
+   bertahap -- hasil visualnya setara (menyusut ~250ms via transition ease-out),
+   tapi jauh lebih hemat dan tidak bertabrakan dengan transition property yang
+   sama. Timer ini dibatalkan/direset setiap ada keystroke baru dan setiap caret
+   disembunyikan, jadi tidak ada timer "nyangkut". */
+const CARET_DECAY_IDLE_MS = 200; // jeda tanpa keystroke sebelum decay mulai
+let caretDecayTimer = null;
+
+function scheduleCaretDecay() {
+  if (caretDecayTimer) {
+    clearTimeout(caretDecayTimer);
+  }
+  caretDecayTimer = setTimeout(() => {
+    caretDecayTimer = null;
+    if (smoothCaretEl) {
+      smoothCaretEl.style.setProperty("--caret-speed", "0");
+    }
+    cursorMarkedEls.forEach((el) => el.style.setProperty("--caret-speed", "0"));
+  }, CARET_DECAY_IDLE_MS);
+}
+
+function cancelCaretDecay() {
+  if (caretDecayTimer) {
+    clearTimeout(caretDecayTimer);
+    caretDecayTimer = null;
+  }
+}
+
+/**
+ * Fungsi tunggal penghitung kecepatan caret, dipanggil dari DUA jalur:
+ * positionSmoothCaret() (Smooth Caret aktif) DAN jalur fallback non-smooth
+ * (updateWordHighlighting()) -- supaya elemen yang "mewarisi" ekor comet
+ * (.smooth-caret maupun .has-cursor target) selalu menerima --caret-speed
+ * dan data-caret-direction, bukan hanya .smooth-caret.
+ * @param {HTMLElement} targetEl elemen yang menerima CSS var & atribut arah
+ * @param {{left:number, top:number}} rect posisi batang caret saat ini (px)
+ * @returns {number} speedFactor 0..1 (dipakai juga oleh mode reactive)
+ */
+function updateCaretSpeed(targetEl, rect) {
+  const now = performance.now();
+  let speedFactor;
+  let direction = "forward";
+  if (lastCaretRect) {
+    const d = Math.hypot(rect.left - lastCaretRect.left, rect.top - lastCaretRect.top);
+    const dt = Math.max(1, now - lastCaretMoveTs);
+    speedFactor = Math.max(0, Math.min(1, d / dt / CARET_SPEED_VELOCITY_REF));
+    // Arah gerak: prioritas selisih baris (top), lalu horizontal (left).
+    const dy = rect.top - lastCaretRect.top;
+    if (dy > 0.5) direction = "forward";
+    else if (dy < -0.5) direction = "backward";
+    else direction = rect.left >= lastCaretRect.left ? "forward" : "backward";
+  } else {
+    // Keystroke pertama / keadaan sudah ter-reset: tanpa data jarak, fallback
+    // ritme ketik (persis perilaku lama).
+    const dt = lastCaretMoveTs !== null ? now - lastCaretMoveTs : 200;
+    speedFactor = Math.max(0, Math.min(1, 1 - dt / 400));
+  }
+  lastCaretMoveTs = now;
+  lastCaretRect = { left: rect.left, top: rect.top };
+
+  if (targetEl) {
+    targetEl.style.setProperty("--caret-speed", speedFactor.toFixed(3));
+    targetEl.dataset.caretDirection = direction;
+  }
+  scheduleCaretDecay();
+  return speedFactor;
+}
 
 /* ==========================================================================
    PERFORMANCE FIX: cache untuk updateWordHighlighting()
@@ -188,6 +269,12 @@ export function resetHighlightCache() {
   cursorMarkedEls = [];
   lowestPrunedLineIndex = -1;
   cachedLineHeight = null;
+  // Reset metrik kecepatan & decay caret: state dari tes sebelumnya tidak
+  // boleh "terbawa" ke tes baru (kalau tidak, keystroke pertama di tes baru
+  // akan mengukur jarak palsu dari posisi caret lama).
+  cancelCaretDecay();
+  lastCaretMoveTs = null;
+  lastCaretRect = null;
 }
 
 /* ==========================================================================
@@ -238,7 +325,15 @@ function getOrCreateSmoothCaret(textDisplayEl) {
 }
 
 export function hideSmoothCaret() {
-  if (smoothCaretEl) smoothCaretEl.classList.remove("is-visible");
+  // Hentikan decay yang mungkin terjadwal supaya tidak ada timer yang terus
+  // jalan setelah caret disembunyikan, dan reset --caret-speed agar ekor
+  // comet yang tersisa ikut hilang (jangan "nyangkut" di panjang terakhir).
+  cancelCaretDecay();
+  if (smoothCaretEl) {
+    smoothCaretEl.style.setProperty("--caret-speed", "0");
+    smoothCaretEl.classList.remove("is-visible");
+  }
+  cursorMarkedEls.forEach((el) => el.style.setProperty("--caret-speed", "0"));
 }
 window.hideSmoothCaret = hideSmoothCaret;
 
@@ -450,14 +545,12 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
 
   CARET_SHAPE_MODES.forEach((m) => el.classList.toggle(`mode-${m}`, mode === m));
 
-  // Ukur interval sejak perpindahan kursor terakhir -> speedFactor 0..1
-  // (1 = ngetik cepat, 0 = jeda lama). Dipakai mode Lightsaber (panjang glow),
-  // Comet (panjang ekor), dan Reactive Color (ambang hijau/kuning).
-  const now = performance.now();
-  const dt = lastCaretMoveTs !== null ? now - lastCaretMoveTs : 600;
-  lastCaretMoveTs = now;
-  const speedFactor = Math.max(0, Math.min(1, 1 - dt / 400));
-  el.style.setProperty("--caret-speed", speedFactor.toFixed(2));
+  // Ukur kecepatan gerak caret (velocity = jarak piksel / waktu) -> speedFactor
+  // 0..1 (1 = gerak cepat, 0 = stabil/diam). Dipakai mode Lightsaber (panjang
+  // glow), Comet (panjang ekor), dan Reactive Color (ambang hijau/kuning).
+  // updateCaretSpeed() juga menyalurkan --caret-speed + data-caret-direction
+  // ke elemen (el), dan menjadwalkan decay saat idle.
+  const speedFactor = updateCaretSpeed(el, rect);
 
   if (mode === "reactive") {
     // Hijau = ritme stabil & cepat, Kuning = melambat, Merah = karakter
@@ -897,6 +990,25 @@ export function updateWordHighlighting() {
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
   positionSmoothCaret(smoothCaretTarget, smoothCaretBefore, mode);
+  // Jalur non-smooth (smoothCaretDuration <= 0, jadi positionSmoothCaret()
+  // di atas langsung return & memanggil hideSmoothCaret()): mode comet tetap
+  // harus menerima --caret-speed + data-caret-direction di elemen karakter
+  // target, supaya ekor non-smooth (.has-cursor::before) ikut reaktif terhadap
+  // kecepatan & arah — persis seperti versi smooth. Ditaruh SETELAH
+  // positionSmoothCaret() supaya nilainya tidak di-overwrite oleh reset yang
+  // dilakukan hideSmoothCaret(). Jalur smooth di-handle di dalam
+  // positionSmoothCaret() lewat updateCaretSpeed().
+  if (smoothCaretDuration <= 0 && mode === "comet" && smoothCaretTarget) {
+    const overlay = getCaretOverlay(DOM.textDisplay);
+    const rect = computeSmoothCaretRect(
+      overlay || DOM.textDisplay,
+      smoothCaretTarget,
+      smoothCaretBefore,
+      mode,
+      /* compensateScroll */ !overlay
+    );
+    updateCaretSpeed(smoothCaretTarget, rect);
+  }
   updateGhostHighlighting();
 }
 

@@ -155,7 +155,17 @@ function applyStoredPreferences(textDisplay, { hideStats, showStats } = {}) {
     window.gameState.punctuationChance = savedPunctuationChance / 100;
   }
 
-  return { savedCursorMode, savedWordSet, savedFont, initialStatsMode, savedBlink, savedCaretSmoothness, savedPunctuationChance };
+  // Frekuensi angka mode Numbers (dalam persen 0-100, default 30). Pola
+  // identik dengan punctuationChance di atas.
+  const rawNumberChance = parseFloat(localStorage.getItem("numberChance"));
+  const savedNumberChance = Number.isFinite(rawNumberChance)
+    ? Math.max(0, Math.min(100, rawNumberChance))
+    : 30;
+  if (window.gameState) {
+    window.gameState.numberChance = savedNumberChance / 100;
+  }
+
+  return { savedCursorMode, savedWordSet, savedFont, initialStatsMode, savedBlink, savedCaretSmoothness, savedPunctuationChance, savedNumberChance };
 }
 
 /**
@@ -412,6 +422,34 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
       }
       try {
         localStorage.setItem("punctuationChance", String(clamped));
+      } catch (e) {}
+      pulseAutosave();
+    });
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Frekuensi Angka Mode Numbers                                     */
+  /* ---------------------------------------------------------------- */
+  const numberRange = document.getElementById("numberChanceRange");
+  const numberValue = document.getElementById("numberChanceValue");
+  if (numberRange) {
+    numberRange.value = String(saved.savedNumberChance);
+    if (numberValue) {
+      numberValue.textContent = `${saved.savedNumberChance}%`;
+    }
+
+    numberRange.addEventListener("input", () => {
+      if (numberValue) numberValue.textContent = `${numberRange.value}%`;
+    });
+
+    numberRange.addEventListener("change", () => {
+      const percent = parseFloat(numberRange.value);
+      const clamped = Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 30;
+      if (window.gameState) {
+        window.gameState.numberChance = clamped / 100;
+      }
+      try {
+        localStorage.setItem("numberChance", String(clamped));
       } catch (e) {}
       pulseAutosave();
     });

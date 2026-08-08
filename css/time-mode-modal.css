@@ -142,6 +142,30 @@ width: 65px;   /* Atur lebar sesuai keinginan */
     transform: scale(1);
 }
 
+#numberModeBtn {
+    position: relative;
+}
+
+#numberModeBtn .number-mode-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--correct);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    pointer-events: none;
+}
+
+#numberModeBtn.active .number-mode-indicator {
+    opacity: 1;
+    transform: scale(1);
+}
+
 .quote-mode-btn.loading {
     opacity: 0.6;
     cursor: wait;

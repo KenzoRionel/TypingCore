@@ -379,6 +379,27 @@
                       <span id="punctuationChanceValue" class="settings-range-value">30%</span>
                     </div>
                   </div>
+
+                  <!-- Frekuensi Angka Mode Numbers: persentase token yang
+                       akan digenerate sebagai angka berdiri sendiri saat
+                       mode Numbers aktif di halaman tes (disimpan di
+                       localStorage 'numberChance', default 30%). -->
+                  <div class="settings-block">
+                    <p class="settings-row-label no-margin">Frekuensi Angka (Numbers)</p>
+                    <p class="settings-row-desc" style="margin-bottom: 0.6rem;">Persentase token yang digenerate sebagai angka saat mode Numbers aktif</p>
+                    <div class="settings-range-row">
+                      <input
+                        type="range"
+                        id="numberChanceRange"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value="30"
+                        aria-label="Persentase token berupa angka"
+                      >
+                      <span id="numberChanceValue" class="settings-range-value">30%</span>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- ============ GRUP: STATISTIK & INTERFACE ============ -->

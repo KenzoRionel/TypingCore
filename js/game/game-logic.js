@@ -106,6 +106,64 @@ function applyPunctuationToWord(word, isSentenceStart) {
   return { word: result + mark, endsSentence };
 }
 
+const NUMBER_CHANCE = 0.3; // 30% token jadi angka (default jika user belum atur di settings)
+const MATH_OPERATORS = ["+", "-", "x", "/"]; // "x" dipakai alih-alih "*" karena lebih mudah diketik & dibaca
+const NUMBER_PUNCTUATION_PROBABILITY = 0.4; // dari token angka, 40% dikombinasikan gaya matematika
+
+/**
+ * Peluang sebuah token digenerate sebagai angka. Sinkron dengan pola
+ * getPunctuationChance() di atas.
+ * @returns {number} peluang 0.0 - 1.0
+ */
+function getNumberChance() {
+  const chance = gameState.numberChance;
+  if (typeof chance === "number" && Number.isFinite(chance)) {
+    return Math.max(0, Math.min(1, chance));
+  }
+  return NUMBER_CHANCE;
+}
+
+/**
+ * Menghasilkan satu token angka berdiri sendiri. Selalu berupa angka polos
+ * (digit saja). Baru dikombinasikan dengan tanda baca gaya matematika
+ * (desimal ".", persen "%", operator + "=") JIKA mode Punctuation aktif;
+ * tanpa punctuation hanya angka polos yang muncul.
+ * @returns {string} token angka, mis. "42" (selalu), atau "3.14"/"12+8="/"45%"
+ *   saat punctuationMode aktif.
+ */
+function generateNumberToken() {
+  const isMathStyle =
+    gameState.punctuationMode &&
+    Math.random() < NUMBER_PUNCTUATION_PROBABILITY;
+
+  if (!isMathStyle) {
+    // Angka polos (tanpa tanda baca apa pun): panjang 1-4 digit supaya
+    // tidak monoton. Ini satu-satunya bentuk saat punctuationMode nonaktif.
+    const max = [9, 99, 999, 9999][Math.floor(Math.random() * 4)];
+    return String(Math.floor(Math.random() * (max + 1)));
+  }
+
+  // Gaya matematika (hanya saat punctuationMode aktif): desimal, persentase,
+  // atau "a<operator>b" (kadang ditutup "=").
+  const isDecimal = Math.random() < 0.2;
+  if (isDecimal) {
+    const whole = Math.floor(Math.random() * 100);
+    const frac = Math.floor(Math.random() * 100);
+    return `${whole}.${String(frac).padStart(2, "0")}`;
+  }
+
+  const isPercent = Math.random() < 0.3;
+  if (isPercent) {
+    return `${Math.floor(Math.random() * 100)}%`;
+  }
+
+  const a = Math.floor(Math.random() * 100);
+  const b = Math.floor(Math.random() * 100);
+  const op = MATH_OPERATORS[Math.floor(Math.random() * MATH_OPERATORS.length)];
+  const withEquals = Math.random() < 0.5;
+  return `${a}${op}${b}${withEquals ? "=" : ""}`;
+}
+
 export function generateAndAppendWords(numWords) {
   const useGhostWords =
     gameState.ghostMode &&
@@ -184,16 +242,23 @@ export function generateAndAppendWords(numWords) {
     return;
   }
   for (let i = 0; i < numWords; i++) {
-    const randomIndex = Math.floor(Math.random() * sourceWords.length);
-    let word = sourceWords[randomIndex];
+    let word;
+    const useNumberToken = gameState.numberMode && Math.random() < getNumberChance();
 
-    if (gameState.punctuationMode) {
-      const { word: punctuatedWord, endsSentence } = applyPunctuationToWord(
-        word,
-        gameState.punctuationSentenceStart
-      );
-      word = punctuatedWord;
-      gameState.punctuationSentenceStart = endsSentence;
+    if (useNumberToken) {
+      word = generateNumberToken();
+    } else {
+      const randomIndex = Math.floor(Math.random() * sourceWords.length);
+      word = sourceWords[randomIndex];
+
+      if (gameState.punctuationMode) {
+        const { word: punctuatedWord, endsSentence } = applyPunctuationToWord(
+          word,
+          gameState.punctuationSentenceStart
+        );
+        word = punctuatedWord;
+        gameState.punctuationSentenceStart = endsSentence;
+      }
     }
 
     gameState.fullTextWords.push(word);

@@ -164,6 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const quoteModeBtnRef = document.getElementById("quoteModeBtn");
 
   const punctuationModeBtnRef = document.getElementById("punctuationModeBtn");
+  const numberModeBtnRef = document.getElementById("numberModeBtn");
 
   const timeModeToggleBtn = document.getElementById("timeModeToggleBtn");
   const timeModeToggleValue = document.getElementById("timeModeToggleValue");
@@ -355,6 +356,11 @@ document.addEventListener("DOMContentLoaded", () => {
           if (punctuationModeBtnRef) punctuationModeBtnRef.classList.remove("active");
         }
 
+        if (window.gameState && window.gameState.numberMode) {
+          window.gameState.numberMode = false;
+          if (numberModeBtnRef) numberModeBtnRef.classList.remove("active");
+        }
+
         if (window.gameState) window.gameState.quoteMode = true;
         quoteModeBtnRef.classList.add("active");
       } else {
@@ -387,6 +393,33 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         if (window.gameState) window.gameState.punctuationMode = false;
         punctuationModeBtnRef.classList.remove("active");
+      }
+
+      if (typeof window.resetTest === "function") {
+        window.resetTest();
+      }
+      DOM.hiddenInput.focus();
+    });
+  }
+
+  if (numberModeBtnRef) {
+    numberModeBtnRef.addEventListener("click", () => {
+      const activating = !(window.gameState && window.gameState.numberMode);
+
+      if (activating) {
+        // Number mode selalu pakai mode waktu -> matikan Quotes kalau aktif
+        // (angka berdiri sendiri tidak relevan untuk mode Quotes, yang
+        // memakai teks kutipan asli apa adanya).
+        if (window.gameState && window.gameState.quoteMode) {
+          window.gameState.quoteMode = false;
+          if (quoteModeBtnRef) quoteModeBtnRef.classList.remove("active");
+        }
+        if (window.gameState) window.gameState.numberMode = true;
+        numberModeBtnRef.classList.add("active");
+        closeTimeModeModal();
+      } else {
+        if (window.gameState) window.gameState.numberMode = false;
+        numberModeBtnRef.classList.remove("active");
       }
 
       if (typeof window.resetTest === "function") {

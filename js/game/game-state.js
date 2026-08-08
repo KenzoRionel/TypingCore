@@ -92,6 +92,25 @@ export const gameState = {
       const value = raw === null ? NaN : parseFloat(raw);
       return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) / 100 : 0.3;
     })(),
+
+    // Mode "Numbers": TOGGLE persist (mirip punctuationMode) yang membuat
+    // ~30% token yang digenerate menjadi ANGKA BERDIRI SENDIRI (bukan
+    // menyatu dengan kata), kadang dikombinasikan dengan tanda baca
+    // matematika (+, -, x, %, =, .). Mutually exclusive dengan quoteMode
+    // (lihat main.js), tapi BOLEH aktif bersamaan dengan punctuationMode
+    // karena keduanya memproses token yang berbeda (kata vs angka).
+    numberMode: false,
+    // Peluang sebuah token yang digenerate menjadi angka (0.0 - 1.0).
+    // Diisi dari localStorage ('numberChance', dalam persen) yang diatur
+    // user di settings.html. Default 30% (0.3) jika belum pernah diatur.
+    numberChance: (() => {
+      let raw = null;
+      try {
+        raw = localStorage.getItem("numberChance");
+      } catch (e) {}
+      const value = raw === null ? NaN : parseFloat(raw);
+      return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) / 100 : 0.3;
+    })(),
 };
 
 window.gameState = gameState;

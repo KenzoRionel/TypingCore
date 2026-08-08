@@ -45,11 +45,15 @@
   --key-wrong-bg: var(--incorrect-bg);
   --key-wrong-text: var(--incorrect);
   --caret-soft-bg: color-mix(in srgb, var(--caret) 24%, transparent);
-  --caret-glow-strong: color-mix(in srgb, var(--caret) 72%, transparent);
+--caret-glow-strong: color-mix(in srgb, var(--caret) 72%, transparent);
   --caret-glow-soft: color-mix(in srgb, var(--caret) 34%, transparent);
   --caret-trail-strong: color-mix(in srgb, var(--caret) 45%, transparent);
-  --caret-trail-medium: color-mix(in srgb, var(--caret) 22%, transparent);
-  --caret-trail-soft: color-mix(in srgb, var(--caret) 10%, transparent);
+  /* Panjang maksimum & blur ujung ekor comet (dipakai mode cursor "comet").
+     --caret-trail-medium / --caret-trail-soft dihapus karena ekor comet
+     sekarang digambar dengan SATU gradient menyambung (strong -> transparent,
+     lihat text-display.css), jadi var medium/soft tidak pernah terpakai lagi. */
+  --caret-trail-max-length: 56px;
+  --caret-trail-blur: 1.5px;
   --ghost-caret: var(--accent);
   --ghost-caret-shadow: color-mix(in srgb, var(--accent) 22%, transparent);
 
