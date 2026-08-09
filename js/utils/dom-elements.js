@@ -75,12 +75,13 @@ export function getGameDOMReferences() {
     try {
         const savedCursor = localStorage.getItem('cursorMode');
         if (savedCursor && textDisplay) {
-            textDisplay.classList.remove('caret-mode-active','underline-mode-active','box-mode-active','hidden-mode-active');
+            textDisplay.classList.remove('caret-mode-active','underline-mode-active','box-mode-active','hidden-mode-active','highlight-mode-active');
             switch (savedCursor) {
                 case 'caret': textDisplay.classList.add('caret-mode-active'); break;
                 case 'underline': textDisplay.classList.add('underline-mode-active'); break;
                 case 'box': textDisplay.classList.add('box-mode-active'); break;
                 case 'hidden': textDisplay.classList.add('hidden-mode-active'); break;
+                case 'highlight': textDisplay.classList.add('highlight-mode-active'); break;
                 default: break;
             }
         }
@@ -147,12 +148,13 @@ export function getLessonDOMReferences() {
     try {
         const savedCursor = localStorage.getItem('cursorMode');
         if (savedCursor && lessonTextDisplay) {
-            lessonTextDisplay.classList.remove('caret-mode-active','underline-mode-active','box-mode-active','hidden-mode-active');
+            lessonTextDisplay.classList.remove('caret-mode-active','underline-mode-active','box-mode-active','hidden-mode-active','highlight-mode-active');
             switch (savedCursor) {
                 case 'caret': lessonTextDisplay.classList.add('caret-mode-active'); break;
                 case 'underline': lessonTextDisplay.classList.add('underline-mode-active'); break;
                 case 'box': lessonTextDisplay.classList.add('box-mode-active'); break;
                 case 'hidden': lessonTextDisplay.classList.add('hidden-mode-active'); break;
+                case 'highlight': lessonTextDisplay.classList.add('highlight-mode-active'); break;
                 default: break;
             }
         }

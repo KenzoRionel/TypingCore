@@ -106,10 +106,16 @@
     box-shadow var(--theme-transition-duration) ease;
 }
 
-/* Hormati preferensi user yang mematikan animasi di OS/browser. */
+/* Hormati preferensi user yang mematikan animasi di OS/browser.
+   Smooth caret & ghost caret DICABUT dari pengecualian ini: perpindahan
+   kursor punya setting-nya sendiri di Panel Pengaturan ("Kehalusan
+   Perpindahan Kursor") dengan pilihan "Off" - jadi siapa pun yang memang
+   tidak ingin animasi kursor bisa mematikannya di sana. Aturan blanket
+   `*` ini (yang dibuat untuk transisi warna tema) tidak boleh menimpa
+   setting eksplisit tersebut. */
 @media (prefers-reduced-motion: reduce) {
   .theme-transition-ready,
-  .theme-transition-ready * {
+  .theme-transition-ready :not(.smooth-caret):not(.ghost-caret) {
     transition: none !important;
   }
 }

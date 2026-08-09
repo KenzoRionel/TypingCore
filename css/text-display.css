@@ -56,6 +56,31 @@
   z-index: 12;
 }
 
+/* --- Mode Caret "Highlight": kotak kata di .caret-overlay ---
+   Kotak highlight dipindah ke .caret-overlay (TANPA mask/clip dan di atas
+   teks). Background kata asli di dalam #textDisplay adalah descendant yang
+   ikut kena mask-image #textDisplay - itu sebabnya dulu selalu terpotong di
+   baris teratas. Untuk menjaga glyph kata tetap terbaca padahal kotak berada
+   DI ATAS teks, teks kata dirender ulang di dalam kotak lewat elemen
+   .highlight-text-layer (lihat positionSmoothCaret() di text-display.js) -
+   glyph pada #textDisplay jadi "bayangan" tertutup oleh kotak yang opaque. */
+.smooth-caret.mode-highlight {
+  background-color: var(--current-word-bg);
+  border-radius: 4px;
+  overflow: visible;
+}
+
+.smooth-caret.mode-highlight .highlight-text-layer {
+  display: block;
+  width: 100%;
+}
+
+/* Highlight tidak berkedip (seperti background statis lama) - matikan animasi
+   blink bawaan .smooth-caret.is-visible supaya tidak "kelap-kelip". */
+.smooth-caret.mode-highlight.is-visible {
+  animation: none;
+}
+
 /* Fix untuk font sans-serif - font proporsional tidak butuh koreksi letter-spacing/kerning manual */
 #textDisplay.font-sans-serif {
   letter-spacing: normal;
@@ -223,6 +248,16 @@
 }
 #textDisplay:not(.caret-mode-active):not(.underline-mode-active):not(.box-mode-active):not(.hidden-mode-active) .word-container.current-word-target {
   background-color: var(--current-word-bg);
+  color: var(--text);
+}
+
+/* Kotak highlight mode "highlight" dipindah ke .caret-overlay (sibling
+   #textDisplay, jadi tidak lagi ter-mask/ter-clip). Background di dalam
+   #textDisplay harus dibersihkan untuk mode ini supaya tidak double-render.
+   !important menang atas rule tema gelap (style.css) yang juga mengecat
+   background ini. */
+#textDisplay.highlight-mode-active .word-container.current-word-target {
+  background-color: transparent !important;
   color: var(--text);
 }
 
@@ -802,6 +837,22 @@
   animation: noBlinkCursor 1s infinite;
 }
 
+/* .smooth-caret (di .caret-overlay) sekarang dipakai UNTUK SEMUA mode caret,
+   terlepas dari setCaretSmoothness() (smooth off pun overlay dipakai, cuma
+   transisi 0ms = instan). Pseudo-element lama `.has-cursor::after` / `::before`
+   yang menempel di elemen karakter (masih descendant #textDisplay, jadi kena
+   mask/clip) tidak lagi boleh tampil di halaman game -> disembunyikan permanen
+   (scoped ke #textDisplay.caret-overlay-active, yang cuma di-set oleh game
+   sungguhan lewat getCaretOverlay(); pratinjauan settings.html yang masih
+   pakai pseudo element ini tidak ikut tersembunyi). Ini sekaligus mencegah
+   render ganda / caret dobel untuk segala mode. */
+#textDisplay.caret-overlay-active .has-cursor::after,
+#textDisplay.caret-overlay-active .has-cursor::before {
+  display: none !important;
+}
+
+/* Kompatibilitas: pratinjauan settings.html (salinan penuh tanpa overlay)
+   memakai aturan ini untuk menyembunyikan ::after-nya saat smooth aktf. */
 #textDisplay.smooth-caret-active .has-cursor::after {
   display: none !important;
 }

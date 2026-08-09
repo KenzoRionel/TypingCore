@@ -28,17 +28,28 @@ const CARET_SMOOTH_DURATIONS = {
   high: 280,
 };
 
-let smoothCaretDuration = 0; // 0 = nonaktif, pakai kursor lama (::after)
+let smoothCaretDuration = 0; // 0 = transisi instan (bukan 0-lama: overlay tetap dipakai)
 let smoothCaretEl = null;
+
+/* Cache mode highlight (.highlight-text-layer di dalam .smooth-caret).
+   Rebuild clone kata (cloneNode + getComputedStyle + innerHTML) di SETIAP
+   keystroke terbukti menyebabkan jank - padahal isi/posisi kata tidak
+   berubah tiap ketik. Variabel ini membuat clone cuma di-rebuild kalau
+   target kata berganti ATAU isi kata (warna correct/wrong) berubah, dan
+   metrik font diukur sekali lalu dipakai ulang untuk semua clone. */
+let lastHighlightSourceEl = null; // targetEl terakhir yang di-clone
+let lastHighlightSnapshot = ""; // innerHTML terakhir yang di-clone
+let highlightFontMetrics = null; // metrik font cache (dari getComputedStyle)
+let highlightLayerEl = null; // referensi .highlight-text-layer (cache query)
 
 /* ==========================================================================
    Mode Caret Baru
    ==========================================================================
    Daftar mode caret (lama + baru) yang punya "bentuk" sendiri di smooth-caret
    (dipakai untuk toggle class `mode-<nama>` pada elemen tunggal smooth-caret,
-   lihat positionSmoothCaret()). "highlight" tidak masuk sini karena mode itu
-   sama sekali tidak menggambar elemen caret (lihat pengecekan awal di
-   positionSmoothCaret()).
+   lihat positionSmoothCaret()). "highlight" tidak masuk sini tapi DIPERLAKUKAN
+   terpisah (class `mode-highlight` di-toggle manual di positionSmoothCaret()),
+   karena geometrinya kotak penuh kata, bukan batang/glow.
 */
 const CARET_SHAPE_MODES = [
   "box",
@@ -275,6 +286,12 @@ export function resetHighlightCache() {
   cancelCaretDecay();
   lastCaretMoveTs = null;
   lastCaretRect = null;
+  // Reset cache mode highlight supaya tidak "nyangkut" ke elemen kata dari
+  // tes sebelumnya (elemen kata lama sudah dibuang oleh renderAllLines()).
+  lastHighlightSourceEl = null;
+  lastHighlightSnapshot = "";
+  highlightFontMetrics = null;
+  highlightLayerEl = null;
 }
 
 /* ==========================================================================
@@ -308,6 +325,12 @@ function getCaretOverlay(textDisplayEl) {
     overlay.className = "caret-overlay";
     parent.appendChild(overlay);
   }
+  // Tandai #textDisplay sebagai container yang sudah memakai overlay caret.
+  // Dipakai CSS untuk MENGUBAH pseudo-element `.has-cursor::before/::after`
+  // (jalur caret lama yang masih descendant #textDisplay) hanya di halaman
+  // game sungguhan - PRATINJAUAN di settings.html punya salinan sendiri tanpa
+  // overlay dan masih memakai pseudo element itu (jangan ikut di-sembunyikan).
+  textDisplayEl.classList.add("caret-overlay-active");
   return overlay;
 }
 
@@ -316,8 +339,11 @@ function getOrCreateSmoothCaret(textDisplayEl) {
   if (smoothCaretEl && smoothCaretEl.parentElement === overlay) {
     return smoothCaretEl;
   }
-  // Parent lama sudah tidak valid (mis. overlay baru dibuat ulang), jadi
-  // buat ulang elemennya di parent yang baru.
+  // Parent lama sudah tidak valid (mis. overlay baru dibuat ulang). Hapus
+  // elemen lama supaya tidak ada .smooth-caret "nyangkut" yang tertinggal.
+  if (smoothCaretEl && smoothCaretEl.parentElement) {
+    smoothCaretEl.parentElement.removeChild(smoothCaretEl);
+  }
   smoothCaretEl = document.createElement("div");
   smoothCaretEl.className = "smooth-caret";
   overlay.appendChild(smoothCaretEl);
@@ -465,6 +491,12 @@ function computeSmoothCaretRect(referenceEl, targetEl, isBefore, mode, compensat
   const baseLeft = elRect.left - containerRect.left + scrollLeft;
   const baseTop = elRect.top - containerRect.top + scrollTop;
 
+  // Mode highlight mengelilingi SELURUH kata (bukan satu karakter): geometrinya
+  // kotak penuh elemen target (diisi currentWordEl oleh updateWordHighlighting).
+  if (mode === "highlight") {
+    return { left: baseLeft, top: baseTop, width: elRect.width, height: elRect.height };
+  }
+
   if (mode === "underline") {
     return {
       left: baseLeft,
@@ -513,7 +545,14 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
   const DOM = getGameDOMReferences();
   if (!DOM || !DOM.textDisplay) return;
 
-  if (smoothCaretDuration <= 0 || mode === "highlight" || mode === "hidden" || !targetEl) {
+  // Overlay caret dipakai SELALU untuk semua mode (kecuali hidden / tanpa
+  // target), TERPISAH dari smoothCaretDuration. smoothCaretDuration hanya
+  // mengontrol durasi transisi CSS (0ms = lompat instan, > 0 = sliding),
+  // BUKAN lagi "apakah pakai overlay". Dulu syarat `smoothCaretDuration <= 0`
+  // di sini membuat caret jatuh ke pseudo-element `.has-cursor::after` yang
+  // masih jadi descendant #textDisplay -> ikut ke-clip oleh mask. Sekarang
+  // overlay selalu aktif, jadi tidak ada lagi jalur caret yang kena mask.
+  if (mode === "hidden" || !targetEl) {
     hideSmoothCaret();
     return;
   }
@@ -528,6 +567,26 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
     /* compensateScroll */ !overlay
   );
 
+  // Kalau mode bukan highlight, buang sisa layer teks highlight (jangan sampai
+  // teks kata lama ikut tampil di kotak caret mode lain). Cache dulu
+  // referensinya, fallback ke query kalau cache null / layer milik el lain.
+  if (mode !== "highlight") {
+    const staleLayer =
+      (highlightLayerEl && highlightLayerEl.parentElement === el
+        ? highlightLayerEl
+        : null) ||
+      el.querySelector(":scope > .highlight-text-layer");
+    if (staleLayer) {
+      highlightLayerEl = null;
+      staleLayer.remove();
+      // Layer lama hilang -> paksa rebuild penuh next time mode highlight aktif
+      // lagi, walau targetEl/snapshot kebetulan sama seperti sebelum mode diganti
+      // (kalau tidak, kotak highlight tampil kosong sampai kata aktif berganti).
+      lastHighlightSourceEl = null;
+      lastHighlightSnapshot = "";
+    }
+  }
+
   // .smooth-caret sekarang tinggal di .caret-overlay, bukan descendant
   // #textDisplay lagi - mirror atribut/class/CSS-var yang dibutuhkan
   // selector & transition-nya supaya tetap berfungsi sama seperti dulu.
@@ -537,13 +596,86 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
       "cursor-no-blink",
       DOM.textDisplay.classList.contains("cursor-no-blink")
     );
-    overlay.style.setProperty(
-      "--caret-smooth-duration",
-      DOM.textDisplay.style.getPropertyValue("--caret-smooth-duration") || "0ms"
-    );
+    // --caret-smooth-duration tidak di-sinkronkan di sini (per-keystroke):
+    // nilainya hanya berubah saat setCaretSmoothness() dipanggil, dan fungsi
+    // itu sudah menuliskannya langsung ke overlay lewat getCaretOverlay().
+    // CSS fallback 0ms menutup kasus overlay yang baru dibuat tanpa durasi.
   }
 
   CARET_SHAPE_MODES.forEach((m) => el.classList.toggle(`mode-${m}`, mode === m));
+  // Mode highlight diperlakukan terpisah dari CARET_SHAPE_MODES (ada class
+  // mode-highlight sendiri pada elemen overlay).
+  el.classList.toggle("mode-highlight", mode === "highlight");
+
+  // Kotak highlight duduk di .caret-overlay (TANPA mask), sedangkan teks kata
+  // asli di #textDisplay masih descendant yang ikut ter-mask di baris teratas.
+  // Supaya glyph tidak ikut ke-clip, teks kata dirender ULANG di dalam kotak
+  // overlay (clone) dengan metrik & warna yang SAMA - kotak + teks klona ini
+  // yang jadi satu-satunya visual kata aktif. Klon hanya di-rebuild saat kata
+  // aktif berganti atau isi kata berubah (warna correct/wrong), sehingga
+  // warna dan karakter extra selalu sinkron dengan #textDisplay tanpa membawa
+  // beban cloneNode/getComputedStyle di setiap keystroke.
+  if (mode === "highlight") {
+    // Cache referensi layer supaya tidak query DOM tiap keystroke; re-query
+    // kalau elemen .smooth-caret (el) bukan lagi parent layer yang di-cache.
+    let highlightLayer =
+      highlightLayerEl && highlightLayerEl.parentElement === el
+        ? highlightLayerEl
+        : null;
+    if (!highlightLayer) {
+      highlightLayer = el.querySelector(":scope > .highlight-text-layer");
+      if (!highlightLayer) {
+        highlightLayer = document.createElement("span");
+        highlightLayer.className = "highlight-text-layer";
+        el.appendChild(highlightLayer);
+      }
+      highlightLayerEl = highlightLayer;
+    }
+
+    // Rebuild clone HANYA kalau kata aktif berganti ATAU isi kata (jumlah/
+    // warna karakter correct/wrong) berubah - bukan di setiap keystroke.
+    // getComputedStyle() (forced reflow) juga cuma diukur sekali, lalu metrik
+    // font-nya di-cache untuk semua clone berikutnya. Teks di dalam kotak
+    // highlight selalu sinkron dengan #textDisplay selama snapshot cocok.
+    const snapshot = targetEl.innerHTML;
+    if (targetEl !== lastHighlightSourceEl || snapshot !== lastHighlightSnapshot) {
+      if (!highlightFontMetrics) {
+        const cs = window.getComputedStyle(targetEl);
+        highlightFontMetrics = {
+          fontFamily: cs.fontFamily,
+          fontSize: cs.fontSize,
+          lineHeight: cs.lineHeight,
+          letterSpacing: cs.letterSpacing,
+          wordSpacing: cs.wordSpacing,
+          whiteSpace: cs.whiteSpace,
+          color: cs.color,
+        };
+      }
+      const clone = targetEl.cloneNode(true);
+      clone.classList.remove(
+        "current-word-target",
+        "has-cursor",
+        "cursor-before",
+        "cursor-after",
+        "current-space-target"
+      );
+      clone.removeAttribute("id");
+      clone.style.position = "absolute";
+      clone.style.left = "0";
+      clone.style.top = "0";
+      clone.style.fontFamily = highlightFontMetrics.fontFamily;
+      clone.style.fontSize = highlightFontMetrics.fontSize;
+      clone.style.lineHeight = highlightFontMetrics.lineHeight;
+      clone.style.letterSpacing = highlightFontMetrics.letterSpacing;
+      clone.style.wordSpacing = highlightFontMetrics.wordSpacing;
+      clone.style.whiteSpace = highlightFontMetrics.whiteSpace;
+      clone.style.color = highlightFontMetrics.color;
+      highlightLayer.innerHTML = "";
+      highlightLayer.appendChild(clone);
+      lastHighlightSourceEl = targetEl;
+      lastHighlightSnapshot = snapshot;
+    }
+  }
 
   // Ukur kecepatan gerak caret (velocity = jarak piksel / waktu) -> speedFactor
   // 0..1 (1 = gerak cepat, 0 = stabil/diam). Dipakai mode Lightsaber (panjang
@@ -605,8 +737,13 @@ export function setCaretSmoothness(level) {
     overlayForDuration.style.setProperty("--caret-smooth-duration", `${ms}ms`);
   }
 
+  // Ms <= 0 TIDAK lagi menyembunyikan caret: overlay tetap dipakai dengan
+  // transisi 0ms (instan). Jika tidak, caret akan "klip" lagi lewat jalur
+  // .has-cursor::after di dalam #textDisplay yang ter-mask.
   if (ms <= 0) {
-    hideSmoothCaret();
+    if (typeof window.updateWordHighlighting === "function") {
+      window.updateWordHighlighting();
+    }
     return;
   }
 
@@ -978,6 +1115,14 @@ export function updateWordHighlighting() {
     }
   }
 
+  // Mode highlight mengelilingi SELURUH kata, bukan satu karakter - target
+  // untuk overlay highlight harus elemen kata utuh (kotak penuh), diabaikan
+  // pola karakter-per-karakter di atas.
+  if (mode === "highlight") {
+    smoothCaretTarget = currentWordEl;
+    smoothCaretBefore = true;
+  }
+
   DOM.textDisplay.dataset.cursorMode = mode;
   // PENTING: settle dulu scroll/tinggi baris SEBELUM menghitung posisi
   // caret. .smooth-caret sekarang di .caret-overlay (unscrolled) dan
@@ -990,25 +1135,6 @@ export function updateWordHighlighting() {
   lockTextDisplayHeightTo3Lines();
   ensureScrollSync();
   positionSmoothCaret(smoothCaretTarget, smoothCaretBefore, mode);
-  // Jalur non-smooth (smoothCaretDuration <= 0, jadi positionSmoothCaret()
-  // di atas langsung return & memanggil hideSmoothCaret()): mode comet tetap
-  // harus menerima --caret-speed + data-caret-direction di elemen karakter
-  // target, supaya ekor non-smooth (.has-cursor::before) ikut reaktif terhadap
-  // kecepatan & arah — persis seperti versi smooth. Ditaruh SETELAH
-  // positionSmoothCaret() supaya nilainya tidak di-overwrite oleh reset yang
-  // dilakukan hideSmoothCaret(). Jalur smooth di-handle di dalam
-  // positionSmoothCaret() lewat updateCaretSpeed().
-  if (smoothCaretDuration <= 0 && mode === "comet" && smoothCaretTarget) {
-    const overlay = getCaretOverlay(DOM.textDisplay);
-    const rect = computeSmoothCaretRect(
-      overlay || DOM.textDisplay,
-      smoothCaretTarget,
-      smoothCaretBefore,
-      mode,
-      /* compensateScroll */ !overlay
-    );
-    updateCaretSpeed(smoothCaretTarget, rect);
-  }
   updateGhostHighlighting();
 }
 

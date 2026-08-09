@@ -58,7 +58,8 @@ function applyCursorModeClass(textDisplay, mode) {
     "caret-mode-active",
     "underline-mode-active",
     "box-mode-active",
-    "hidden-mode-active"
+    "hidden-mode-active",
+    "highlight-mode-active"
   );
   switch (mode) {
     case "caret":
@@ -72,6 +73,9 @@ function applyCursorModeClass(textDisplay, mode) {
       break;
     case "hidden":
       textDisplay.classList.add("hidden-mode-active");
+      break;
+    case "highlight":
+      textDisplay.classList.add("highlight-mode-active");
       break;
     default:
       break;

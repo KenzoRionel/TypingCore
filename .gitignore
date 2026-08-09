@@ -1,5 +1,6 @@
 .kilo/
-.vscode
-node_modules
-.wrangler
-dist
+.vscode/
+node_modules/
+todo/
+.wrangler/
+dist/
