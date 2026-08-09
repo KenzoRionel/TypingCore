@@ -36,6 +36,18 @@ const CARET_SMOOTH_LERP = {
 };
 let caretLerpFactor = 1; // di-set oleh setCaretSmoothness()
 
+// Toleransi (px) untuk menganggap posisi caret "ganti baris". Perbedaan
+// `top` di atas ini dianggap lompatan struktural (wrap ke baris berikutnya
+// / balik ke baris lain), BUKAN gerak halus dalam baris yang sama.
+const CARET_ROW_CHANGE_EPSILON_PX = 4;
+
+// Jarak horizontal (px) di atas ini dianggap "lompatan/teleport" walau
+// `top` kebetulan sama (mis. restart/retry yang balik ke baris yang posisi
+// layarnya sama). Nilainya sengaja jauh lebih besar dari jarak antar
+// karakter normal (biasanya < 30px), supaya gerak ketik biasa tidak
+// ke-deteksi sebagai lompatan.
+const CARET_TELEPORT_DISTANCE_PX = 120;
+
 let smoothCaretDuration = 0; // flag "smoothing aktif" (1 = aktif, 0 = off), bukan durasi ms lagi
 let smoothCaretEl = null;
 
@@ -783,10 +795,22 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
 
   caretTargetRect = rect;
 
-  if (caretLerpFactor >= 1 || !caretRenderedRect) {
-    // Level "off" (snap instan) ATAU posisi tampil belum pernah di-set
-    // (mis. caret baru pertama kali muncul) -> langsung taruh di posisi
-    // akhir, tidak perlu animasi loop.
+  let isStructuralJump = false;
+  if (caretRenderedRect) {
+    const dTop = Math.abs(rect.top - caretRenderedRect.top);
+    const dLeft = Math.abs(rect.left - caretRenderedRect.left);
+    isStructuralJump =
+      dTop > CARET_ROW_CHANGE_EPSILON_PX || dLeft > CARET_TELEPORT_DISTANCE_PX;
+  }
+
+  if (caretLerpFactor >= 1 || !caretRenderedRect || isStructuralJump) {
+    // Snap instan untuk: level "off", posisi pertama kali muncul, ATAU
+    // lompatan struktural (ganti baris / restart-retype ke baris lain).
+    // Lompatan seperti ini BUKAN bagian dari alur mengetik yang perlu
+    // "mengalir" -- kalau tetap dianimasikan, caret kelihatan terbang
+    // menyeberang baris karena jarak X dan/atau Y-nya jauh lebih besar
+    // dari gerak antar-karakter biasa.
+    stopCaretAnimationLoop(); // buang sisa loop lama supaya tidak menimpa posisi snap ini di frame berikutnya
     caretRenderedRect = { ...rect };
     applyCaretRect(el, caretRenderedRect);
   } else {
