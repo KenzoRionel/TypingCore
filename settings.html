@@ -693,7 +693,8 @@
         initPreviewSpeedometers();
 
         const PREVIEW_WORDS = ['Jadi', 'pengetik', 'sepuluh', 'jari', 'nomor', '1'];
-        const SMOOTH_DURATIONS = { off: 0, low: 90, medium: 160, high: 280 };
+        // Faktor interpolasi per-frame (0..1), identik dengan text-display.js.
+        const SMOOTH_LERP = { off: 1, low: 0.5, medium: 0.28, high: 0.15 };
 
         const TYPO_WORD_INDEX = 1; // kata "pengetik"
         const TYPO_CHAR_POS = 4; // typo terjadi menggantikan huruf ke-5 ("e")
@@ -729,7 +730,62 @@
         let typedLength = 0;
         let typedCharStatus = [];
         let smoothCaretEl = null;
+        let caretLerpFactor = SMOOTH_LERP[smoothLevel] ?? 1;
+        let caretTargetRect = null;
+        let caretRenderedRect = null;
+        let caretRafId = null;
+        let caretLastFrameTs = null;
         let typingAnimId = null;
+
+        function applyCaretRect(el, r) {
+          el.style.left = `${r.left}px`;
+          el.style.top = `${r.top}px`;
+          el.style.width = `${r.width}px`;
+          el.style.height = `${r.height}px`;
+        }
+
+        function stopCaretAnimationLoop() {
+          if (caretRafId) {
+            cancelAnimationFrame(caretRafId);
+            caretRafId = null;
+          }
+          caretLastFrameTs = null;
+        }
+
+        // Loop lerp per-frame, identik dengan text-display.js.
+        function startCaretAnimationLoop(el) {
+          if (caretRafId) return;
+          const EPSILON = 0.5;
+          const step = (ts) => {
+            if (!caretTargetRect || !caretRenderedRect || !el.isConnected) {
+              stopCaretAnimationLoop();
+              return;
+            }
+            const dtMs = caretLastFrameTs ? ts - caretLastFrameTs : 16.67;
+            caretLastFrameTs = ts;
+            const f = 1 - Math.pow(1 - caretLerpFactor, dtMs / 16.67);
+            caretRenderedRect = {
+              left: caretRenderedRect.left + (caretTargetRect.left - caretRenderedRect.left) * f,
+              top: caretRenderedRect.top + (caretTargetRect.top - caretRenderedRect.top) * f,
+              width: caretRenderedRect.width + (caretTargetRect.width - caretRenderedRect.width) * f,
+              height: caretRenderedRect.height + (caretTargetRect.height - caretRenderedRect.height) * f,
+            };
+            applyCaretRect(el, caretRenderedRect);
+            const done =
+              Math.abs(caretTargetRect.left - caretRenderedRect.left) < EPSILON &&
+              Math.abs(caretTargetRect.top - caretRenderedRect.top) < EPSILON &&
+              Math.abs(caretTargetRect.width - caretRenderedRect.width) < EPSILON &&
+              Math.abs(caretTargetRect.height - caretRenderedRect.height) < EPSILON;
+            if (done) {
+              caretRenderedRect = { ...caretTargetRect };
+              applyCaretRect(el, caretRenderedRect);
+              stopCaretAnimationLoop();
+              return;
+            }
+            caretRafId = requestAnimationFrame(step);
+          };
+          caretRafId = requestAnimationFrame(step);
+        }
 
         // --- Render struktur kata (sekali saja) ---
         function renderWords() {
@@ -770,12 +826,12 @@
         }
 
         function hideSmoothCaret() {
+          stopCaretAnimationLoop();
           if (smoothCaretEl) smoothCaretEl.classList.remove('is-visible');
         }
 
         function positionSmoothCaret(targetEl, isBefore) {
-          const duration = SMOOTH_DURATIONS[smoothLevel] || 0;
-          if (duration <= 0 || cursorMode === 'highlight' || cursorMode === 'hidden' || !targetEl) {
+          if (caretLerpFactor >= 1 || cursorMode === 'highlight' || cursorMode === 'hidden' || !targetEl) {
             hideSmoothCaret();
             return;
           }
@@ -817,10 +873,15 @@
             el.classList.add('tap');
           }
 
-          el.style.left = rect.left + 'px';
-          el.style.top = rect.top + 'px';
-          el.style.width = rect.width + 'px';
-          el.style.height = rect.height + 'px';
+          caretTargetRect = rect;
+
+          if (!caretRenderedRect) {
+            caretRenderedRect = { ...rect };
+            applyCaretRect(el, caretRenderedRect);
+          } else {
+            startCaretAnimationLoop(el);
+          }
+
           el.classList.add('is-visible');
         }
 
@@ -999,18 +1060,14 @@
           radio.addEventListener('change', () => {
             if (!radio.checked) return;
             smoothLevel = radio.value;
-            const ms = SMOOTH_DURATIONS[smoothLevel] || 0;
-            textDisplay.classList.toggle('smooth-caret-active', ms > 0);
-            textDisplay.style.setProperty('--caret-smooth-duration', `${ms}ms`);
-            if (smoothCaretEl) {
-              smoothCaretEl.style.transition = 'none';
-              requestAnimationFrame(() => { if (smoothCaretEl) smoothCaretEl.style.transition = ''; });
-            }
+            caretLerpFactor = SMOOTH_LERP[smoothLevel] ?? 1;
+            textDisplay.classList.toggle('smooth-caret-active', caretLerpFactor < 1);
+            stopCaretAnimationLoop();
+            caretRenderedRect = null;
             playTypingOnce();
           });
         });
-        textDisplay.classList.toggle('smooth-caret-active', (SMOOTH_DURATIONS[smoothLevel] || 0) > 0);
-        textDisplay.style.setProperty('--caret-smooth-duration', `${SMOOTH_DURATIONS[smoothLevel] || 0}ms`);
+        textDisplay.classList.toggle('smooth-caret-active', caretLerpFactor < 1);
 
         document.querySelectorAll('.font-choice-btn').forEach((btn) => {
           btn.addEventListener('click', () => requestAnimationFrame(playTypingOnce));

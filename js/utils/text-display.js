@@ -15,21 +15,97 @@ const MAX_OVERTYPED_CHARS_HIGHLIGHT = 5;
 
    Untuk membuat perpindahan kursor benar-benar mulus, kita pakai SATU
    elemen <div class="smooth-caret"> yang tetap sama sepanjang waktu; posisi
-   (left/top/width/height) elemen ini di-update lewat JS setiap kali kursor
-   berpindah, dan CSS transition yang membuatnya "meluncur" ke posisi baru.
+   (left/top/width/height) elemen ini di-update per-frame lewat loop
+   requestAnimationFrame yang meng-interpolasi (lerp) menuju posisi target,
+   bukan CSS transition per-keystroke -- sehingga gerakannya kontinu dan
+   tidak pernah "tersendat"/menumpuk lag saat keystroke datang lebih cepat
+   dari durasi animasi (lihat startCaretAnimationLoop()).
 
    Fitur ini opsional (default nonaktif) dan dikendalikan lewat Modal
    Pengaturan -> setCaretSmoothness().
 */
-const CARET_SMOOTH_DURATIONS = {
-  off: 0,
-  low: 90,
-  medium: 160,
-  high: 280,
+// Faktor interpolasi per-frame (0..1). Makin kecil = makin "mengejar
+// pelan-pelan" = makin halus/landai, TAPI tetap mengalir kontinu setiap
+// frame -- BUKAN durasi tetap per keystroke seperti sebelumnya, jadi tidak
+// ada lagi trade-off lag vs halus di kecepatan ketik tinggi.
+const CARET_SMOOTH_LERP = {
+  off: 1,      // 1 = langsung snap, tanpa interpolasi (identik perilaku lama)
+  low: 0.5,
+  medium: 0.28,
+  high: 0.15,
 };
+let caretLerpFactor = 1; // di-set oleh setCaretSmoothness()
 
-let smoothCaretDuration = 0; // 0 = transisi instan (bukan 0-lama: overlay tetap dipakai)
+let smoothCaretDuration = 0; // flag "smoothing aktif" (1 = aktif, 0 = off), bukan durasi ms lagi
 let smoothCaretEl = null;
+
+// State loop animasi caret (rAF + interpolasi lerp). Geometri
+// left/top/width/height kini digerakkan per-frame oleh loop ini, bukan CSS
+// transition -- lihat startCaretAnimationLoop() di bawah.
+let caretTargetRect = null;   // {left, top, width, height} tujuan saat ini
+let caretRenderedRect = null; // posisi yang sedang ditampilkan (hasil interpolasi)
+let caretRafId = null;
+let caretLastFrameTs = null;
+
+function applyCaretRect(el, r) {
+  el.style.left = `${r.left}px`;
+  el.style.top = `${r.top}px`;
+  el.style.width = `${r.width}px`;
+  el.style.height = `${r.height}px`;
+}
+
+function stopCaretAnimationLoop() {
+  if (caretRafId) {
+    cancelAnimationFrame(caretRafId);
+    caretRafId = null;
+  }
+  caretLastFrameTs = null;
+}
+
+// Loop tunggal yang jalan terus SELAMA posisi tampil belum "nempel" ke
+// target. Target boleh berubah kapan saja (tiap keystroke) TANPA me-restart
+// loop -- ini kunci supaya gerakan tidak pernah tersendat walau target
+// berpindah-pindah cepat.
+function startCaretAnimationLoop(el) {
+  if (caretRafId) return; // sudah berjalan, target baru otomatis dipakai frame berikutnya
+  const EPSILON = 0.5; // px, ambang "dianggap sampai" supaya loop bisa berhenti & hemat CPU
+
+  const step = (ts) => {
+    if (!caretTargetRect || !caretRenderedRect || !el.isConnected) {
+      stopCaretAnimationLoop();
+      return;
+    }
+    // Normalisasi faktor terhadap delta waktu antar-frame supaya kecepatan
+    // gerak konsisten di layar 60Hz maupun 120Hz+ (bukan makin cepat di
+    // refresh rate tinggi).
+    const dtMs = caretLastFrameTs ? ts - caretLastFrameTs : 16.67;
+    caretLastFrameTs = ts;
+    const f = 1 - Math.pow(1 - caretLerpFactor, dtMs / 16.67);
+
+    caretRenderedRect = {
+      left: caretRenderedRect.left + (caretTargetRect.left - caretRenderedRect.left) * f,
+      top: caretRenderedRect.top + (caretTargetRect.top - caretRenderedRect.top) * f,
+      width: caretRenderedRect.width + (caretTargetRect.width - caretRenderedRect.width) * f,
+      height: caretRenderedRect.height + (caretTargetRect.height - caretRenderedRect.height) * f,
+    };
+    applyCaretRect(el, caretRenderedRect);
+
+    const done =
+      Math.abs(caretTargetRect.left - caretRenderedRect.left) < EPSILON &&
+      Math.abs(caretTargetRect.top - caretRenderedRect.top) < EPSILON &&
+      Math.abs(caretTargetRect.width - caretRenderedRect.width) < EPSILON &&
+      Math.abs(caretTargetRect.height - caretRenderedRect.height) < EPSILON;
+
+    if (done) {
+      caretRenderedRect = { ...caretTargetRect };
+      applyCaretRect(el, caretRenderedRect);
+      stopCaretAnimationLoop();
+      return;
+    }
+    caretRafId = requestAnimationFrame(step);
+  };
+  caretRafId = requestAnimationFrame(step);
+}
 
 /* Cache mode highlight (.highlight-text-layer di dalam .smooth-caret).
    Rebuild clone kata (cloneNode + getComputedStyle + innerHTML) di SETIAP
@@ -355,6 +431,7 @@ export function hideSmoothCaret() {
   // jalan setelah caret disembunyikan, dan reset --caret-speed agar ekor
   // comet yang tersisa ikut hilang (jangan "nyangkut" di panjang terakhir).
   cancelCaretDecay();
+  stopCaretAnimationLoop();
   if (smoothCaretEl) {
     smoothCaretEl.style.setProperty("--caret-speed", "0");
     smoothCaretEl.classList.remove("is-visible");
@@ -546,12 +623,10 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
   if (!DOM || !DOM.textDisplay) return;
 
   // Overlay caret dipakai SELALU untuk semua mode (kecuali hidden / tanpa
-  // target), TERPISAH dari smoothCaretDuration. smoothCaretDuration hanya
-  // mengontrol durasi transisi CSS (0ms = lompat instan, > 0 = sliding),
-  // BUKAN lagi "apakah pakai overlay". Dulu syarat `smoothCaretDuration <= 0`
-  // di sini membuat caret jatuh ke pseudo-element `.has-cursor::after` yang
-  // masih jadi descendant #textDisplay -> ikut ke-clip oleh mask. Sekarang
-  // overlay selalu aktif, jadi tidak ada lagi jalur caret yang kena mask.
+  // target), TERPISAH dari smoothCaretDuration. smoothCaretDuration sekarang
+  // cuma flag boolean "smoothing aktif" (dipakai class smooth-caret-active),
+  // bukan lagi pengatur durasi transisi CSS (geometri digerakkan rAF loop).
+  // Overlay selalu aktif jadi tidak ada lagi jalur caret yang kena mask.
   if (mode === "hidden" || !targetEl) {
     hideSmoothCaret();
     return;
@@ -589,17 +664,15 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
 
   // .smooth-caret sekarang tinggal di .caret-overlay, bukan descendant
   // #textDisplay lagi - mirror atribut/class/CSS-var yang dibutuhkan
-  // selector & transition-nya supaya tetap berfungsi sama seperti dulu.
+  // selector & class mode-nya supaya tetap berfungsi sama seperti dulu.
+  // (Geometri digerakkan rAF loop, jadi tidak ada sinkronisasi durasi
+  // transisi per-keystroke di sini.)
   if (overlay) {
     overlay.dataset.cursorMode = mode;
     overlay.classList.toggle(
       "cursor-no-blink",
       DOM.textDisplay.classList.contains("cursor-no-blink")
     );
-    // --caret-smooth-duration tidak di-sinkronkan di sini (per-keystroke):
-    // nilainya hanya berubah saat setCaretSmoothness() dipanggil, dan fungsi
-    // itu sudah menuliskannya langsung ke overlay lewat getCaretOverlay().
-    // CSS fallback 0ms menutup kasus overlay yang baru dibuat tanpa durasi.
   }
 
   CARET_SHAPE_MODES.forEach((m) => el.classList.toggle(`mode-${m}`, mode === m));
@@ -708,10 +781,18 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
     el.classList.add("tap");
   }
 
-  el.style.left = `${rect.left}px`;
-  el.style.top = `${rect.top}px`;
-  el.style.width = `${rect.width}px`;
-  el.style.height = `${rect.height}px`;
+  caretTargetRect = rect;
+
+  if (caretLerpFactor >= 1 || !caretRenderedRect) {
+    // Level "off" (snap instan) ATAU posisi tampil belum pernah di-set
+    // (mis. caret baru pertama kali muncul) -> langsung taruh di posisi
+    // akhir, tidak perlu animasi loop.
+    caretRenderedRect = { ...rect };
+    applyCaretRect(el, caretRenderedRect);
+  } else {
+    startCaretAnimationLoop(el);
+  }
+
   el.classList.add("is-visible");
 }
 
@@ -720,42 +801,32 @@ function positionSmoothCaret(targetEl, isBefore, mode) {
  * @param {"off"|"low"|"medium"|"high"} level
  */
 export function setCaretSmoothness(level) {
-  const ms = CARET_SMOOTH_DURATIONS.hasOwnProperty(level)
-    ? CARET_SMOOTH_DURATIONS[level]
-    : 0;
-  smoothCaretDuration = ms;
+  caretLerpFactor = CARET_SMOOTH_LERP.hasOwnProperty(level)
+    ? CARET_SMOOTH_LERP[level]
+    : 1;
+  smoothCaretDuration = caretLerpFactor < 1 ? 1 : 0; // tetap dipakai sbg flag on/off utk class 'smooth-caret-active'
 
   const DOM = getGameDOMReferences();
   if (!DOM || !DOM.textDisplay) return;
 
-  DOM.textDisplay.classList.toggle("smooth-caret-active", ms > 0);
-  DOM.textDisplay.style.setProperty("--caret-smooth-duration", `${ms}ms`);
-  // .smooth-caret hidup di .caret-overlay (sibling), jadi tidak mewarisi
-  // custom property dari #textDisplay lewat CSS cascade - mirror manual.
-  const overlayForDuration = getCaretOverlay(DOM.textDisplay);
-  if (overlayForDuration) {
-    overlayForDuration.style.setProperty("--caret-smooth-duration", `${ms}ms`);
-  }
+  DOM.textDisplay.classList.toggle("smooth-caret-active", caretLerpFactor < 1);
 
-  // Ms <= 0 TIDAK lagi menyembunyikan caret: overlay tetap dipakai dengan
-  // transisi 0ms (instan). Jika tidak, caret akan "klip" lagi lewat jalur
-  // .has-cursor::after di dalam #textDisplay yang ter-mask.
-  if (ms <= 0) {
+  if (caretLerpFactor >= 1) {
+    // Off: hentikan loop yang mungkin masih jalan & buang posisi ter-render
+    // supaya keystroke berikutnya langsung snap, bukan "nyusul" ke tempat lama.
+    stopCaretAnimationLoop();
+    caretRenderedRect = null;
     if (typeof window.updateWordHighlighting === "function") {
       window.updateWordHighlighting();
     }
     return;
   }
 
-  // Saat baru diaktifkan / level baru saja diganti, lompat dulu ke posisi
-  // yang benar TANPA animasi (biar tidak "meluncur" dari pojok kiri-atas),
-  // baru transisi dinyalakan lagi untuk perpindahan berikutnya.
-  if (smoothCaretEl) {
-    smoothCaretEl.style.transition = "none";
-    requestAnimationFrame(() => {
-      if (smoothCaretEl) smoothCaretEl.style.transition = "";
-    });
-  }
+  // Ganti level saat animasi sedang jalan: buang posisi ter-render supaya
+  // frame berikutnya mulai lerp dari posisi TARGET saat ini (snap dulu),
+  // bukan "meluncur" jarak jauh dari posisi lama dengan faktor yang baru.
+  stopCaretAnimationLoop();
+  caretRenderedRect = null;
 
   if (typeof window.updateWordHighlighting === "function") {
     window.updateWordHighlighting();
