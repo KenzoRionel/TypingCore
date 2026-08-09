@@ -1,0 +1,16 @@
+{
+  "name": "typingcore",
+  "compatibility_date": "2025-08-09",
+  "assets": {
+    "directory": "./",
+    "not_include": [
+      "node_modules",
+      ".git",
+      ".kilo",
+      ".vscode",
+      ".wrangler",
+      "package-lock.json",
+      "package.json"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+node_modules
+.git
+.kilo
+.vscode
+.wrangler
