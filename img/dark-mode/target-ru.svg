@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="802.5" height="240"
+     viewBox="0 0 802.5 240"
+     preserveAspectRatio="xMidYMid meet">
+    <g font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="30" text-anchor="middle" dominant-baseline="central">
+        <g>
+            <rect x="36" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="68.5" y="111" fill="#fefefe">q</text>
+        </g>
+        <g>
+            <rect x="110" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="142.5" y="111" fill="#fefefe">w</text>
+        </g>
+        <g>
+            <rect x="184" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="216.5" y="111" fill="#fefefe">e</text>
+        </g>
+        <g>
+            <rect x="258" y="80" width="65" height="62" rx="10" fill="#00bf63" stroke="#00bf63" stroke-width="3"/>
+            <text x="290.5" y="111" fill="#ffffff">r</text>
+            <circle cx="290.5" cy="26" r="12" fill="#00bf63"/>
+            <circle cx="290.5" cy="26" r="4" fill="#ffffff"/>
+        </g>
+        <g>
+            <rect x="332" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="364.5" y="111" fill="#fefefe">t</text>
+        </g>
+        <g>
+            <rect x="406" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="438.5" y="111" fill="#fefefe">y</text>
+        </g>
+        <g>
+            <rect x="480" y="80" width="65" height="62" rx="10" fill="#00bf63" stroke="#00bf63" stroke-width="3"/>
+            <text x="512.5" y="111" fill="#ffffff">u</text>
+            <circle cx="512.5" cy="26" r="12" fill="#00bf63"/>
+            <circle cx="512.5" cy="26" r="4" fill="#ffffff"/>
+        </g>
+        <g>
+            <rect x="554" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="586.5" y="111" fill="#fefefe">i</text>
+        </g>
+        <g>
+            <rect x="628" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="660.5" y="111" fill="#fefefe">o</text>
+        </g>
+        <g>
+            <rect x="702" y="80" width="65" height="62" rx="10" fill="none" stroke="#fefefe" stroke-width="3"/>
+            <text x="734.5" y="111" fill="#fefefe">p</text>
+        </g>
+    </g>
+</svg>

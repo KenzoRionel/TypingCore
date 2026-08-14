@@ -115,7 +115,7 @@ function handleActiveState(keysToDisplay, activeIndex, highlightedKey, keyboardC
 
     if (highlightedKey) {
         highlightKeyOnKeyboard(keyboardContainer, highlightedKey);
-        setAnimatingKey(keyboardContainer.querySelector(`[data-key="${highlightedKey.toLowerCase()}"]`));
+        setAnimatingKey(keyboardContainer.querySelector(`.key[data-key="${highlightedKey.toLowerCase()}"]`));
         window.requestAnimationFrame(() => {
             renderHandVisualizer(highlightedKey);
         });
@@ -233,7 +233,7 @@ export function handleSimpleDrillInput({ e, domElements, animationFunctions, cur
     if (e.key.toLowerCase() === expectedKey.toLowerCase()) {
         clearWrongInputFeedback();
         
-        const keyboardKeyEl = domElements.keyboardContainer.querySelector(`[data-key="${expectedKey.toLowerCase()}"]`);
+        const keyboardKeyEl = domElements.keyboardContainer.querySelector(`.key[data-key="${expectedKey.toLowerCase()}"]`);
 
         if (keyboardKeyEl && animationFunctions?.animateJellyEffect) {
             animationFunctions.animateJellyEffect(keyboardKeyEl);

@@ -8,12 +8,14 @@ import { handleCharacterDrillInput } from './lesson-character-drill.js';
 // Perbaikan: Ganti getGameDOMReferences dengan getLessonDOMReferences
 import { getLessonDOMReferences } from './utils/dom-elements.js';
 import { 
-    setIsCorrectInputAnimationActive,
-    setAnimationSpeed,
-    animateJellyEffect,
-    animateAllBordersOnCorrectInput,
-    highlightWrongKeyOnKeyboard,
-} from './learn-typing-ui.js';
+     setIsCorrectInputAnimationActive,
+     setAnimationSpeed,
+     animateJellyEffect,
+     animateAllBordersOnCorrectInput,
+     highlightWrongKeyOnKeyboard,
+     highlightActiveKeyOnKeyboard,
+     clearActiveKeyHighlight,
+ } from './learn-typing-ui.js';
 
 let currentKeyDownHandler = null;
 let currentKeyUpHandler = null;
@@ -57,10 +59,15 @@ const handleKeyDown = (e) => {
         highlightWrongKeyOnKeyboard,
     };
 
-    // Mencegah perilaku default hanya untuk tombol yang relevan
-    if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ' || (currentLesson.requiredHoldKey && e.key.toLowerCase() === currentLesson.requiredHoldKey)) {
-        e.preventDefault();
-    }
+    // Mencegah perilaku default hanya untuk tombol yang relevan
+    if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ' || (currentLesson.requiredHoldKey && e.key.toLowerCase() === currentLesson.requiredHoldKey)) {
+        e.preventDefault();
+    }
+
+    // Sorot tombol yang sedang ditekan (feedback press) - konsisten dengan index.html
+    if (e.key.length === 1 || e.key === 'Backspace' || e.key === ' ') {
+        highlightActiveKeyOnKeyboard(domElements.keyboardContainer, e.key);
+    }
 
     const handlerProps = {
         e,
@@ -87,14 +94,18 @@ const handleKeyDown = (e) => {
 };
 
 const handleKeyUp = (e) => {
-    // Perbaikan: Panggil fungsi referensi yang benar
-    const domElements = getLessonDOMReferences();
+	// Perbaikan: Panggil fungsi referensi yang benar
+	const domElements = getLessonDOMReferences();
     // Perbaikan: Tambahkan validasi di sini
     if (!domElements) {
         return;
     }
-    const currentLessonIndex = getState('currentLessonIndex');
-    const currentLesson = lessons[currentLessonIndex];
+
+    // Hapus highlight tombol aktif saat keyup (dengan delay kecil agar animasi terlihat)
+    clearActiveKeyHighlight(domElements.keyboardContainer);
+
+    const currentLessonIndex = getState('currentLessonIndex');
+    const currentLesson = lessons[currentLessonIndex];
 
     if (!currentLesson) return;
 

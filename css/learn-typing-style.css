@@ -411,6 +411,7 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
 .lesson-keyboard-key.active {
     background: var(--lesson-key-active-bg);
     color: white !important;
+    font-weight: bold;
     border-radius: 4px;
     border-color: var(--lesson-key-active-border);
 }
@@ -428,12 +429,6 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
 }
 
 /* START ADDITION 4 */
-/* Animasi untuk elemen key di Pelajaran 2 */
-.lesson-keyboard-key.active {
-    font-weight: bold;
-    color: var(--primary-color);
-}
-
 /* Animasi Slide Up dan Fade Out */
 .lesson-keyboard-key.slide-up-fade-out {
     animation: slideUpFadeOut 0.3s forwards;
@@ -615,8 +610,8 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
 
 #hand-visualizer {
     position: absolute;
-    top: 90px;
-    left: 115px;
+    top: -10px;
+    left: -20px;
     pointer-events: none;
     z-index: 999;
     opacity: 0;
@@ -624,25 +619,32 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
     transition: opacity 0.3s ease;
 }
 
-#hand-visualizer .hand-image {
-    width: 550px;
-    height: auto;
-    position: absolute;
-    top: 0;
-    left: 0;
-    /* Ganti display: none; */
-    opacity: 0;
+#hand-visualizer .hands-root {
+    display: block;
 }
 
-/* Tampilkan hanya gambar tangan yang memiliki kelas 'active' */
-#hand-visualizer .hand-image.active {
-    /* Ganti display: block; */
-    opacity: 1;
-    /* PERUBAHAN: Hapus animasi fade-in dari sini */
+#hand-visualizer .hands-root svg {
+    width: 850px;
+    height: auto;
+    display: block;
+}
+
+/* Pose jari: default disembunyikan, tampil saat 'active' */
+#hand-visualizer .hand-finger[data-key] {
+    display: none;
+}
+
+#hand-visualizer .hand-finger[data-key].active {
+    display: block;
+}
+
+/* Versi base jari yang digantikan pose */
+#hand-visualizer .hand-finger.hide {
+    display: none;
 }
 
 /* PERUBAHAN: Terapkan animasi fade-in hanya untuk free-typing saat render awal */
-body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-image.active {
+body.lesson-type-free-typing.initial-fade-in #hand-visualizer .hand-finger[data-key].active {
     animation: fade-in-effect 0.4s ease-out;
 }
 

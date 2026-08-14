@@ -102,30 +102,10 @@ export function setIsCorrectInputAnimationActive(value) {
 }
 
 export function createHandVisualizerElement() {
-    const visualizerContainer = document.createElement('div');
-    visualizerContainer.id = 'hand-visualizer';
-    const handImages = [
-        { id: 'hand-f', src: 'img/hand_f.svg', alt: 'Tangan untuk tombol F' },
-        { id: 'hand-j', src: 'img/hand_j.svg', alt: 'Tangan untuk tombol J' },
-        { id: 'hand-space', src: 'img/hand_space.svg', alt: 'Tangan untuk tombol spasi' },
-        { id: 'hand-d', src: 'img/hand_d.svg', alt: 'Tangan untuk tombol D' },
-        { id: 'hand-k', src: 'img/hand_k.svg', alt: 'Tangan untuk tombol K' },
-        { id: 'hand-s', src: 'img/hand_s.svg', alt: 'Tangan untuk tombol S' },
-        { id: 'hand-l', src: 'img/hand_l.svg', alt: 'Tangan untuk tombol L' },
-        { id: 'hand-a', src: 'img/hand_a.svg', alt: 'Tangan untuk tombol A' },
-        { id: 'hand-;', src: 'img/hand_;png', alt: 'Tangan untuk tombol ;' },
-        { id: 'hand-h', src: 'img/hand_h.svg', alt: 'Tangan untuk tombol H' },
-        { id: 'hand-g', src: 'img/hand_g.svg', alt: 'Tangan untuk tombol G' }
-    ];
-    handImages.forEach(hand => {
-        const img = document.createElement('img');
-        img.id = hand.id;
-        img.classList.add('hand-image');
-        img.src = hand.src;
-        img.alt = hand.alt;
-        visualizerContainer.appendChild(img);
-    });
-    return visualizerContainer;
+    const visualizerContainer = document.createElement('div');
+    visualizerContainer.id = 'hand-visualizer';
+    // SVG tangan dimuat otomatis oleh hand-visualizer.js dari img/hands.svg.
+    return visualizerContainer;
 }
 
 export function createKeyboard(keyboardContainer, keyLayout) {
@@ -189,21 +169,53 @@ export function clearKeyboardHighlights(keyboardContainer) {
 }
 
 export function highlightKeyOnKeyboard(keyboardContainer, keyChar) {
-    if (!keyboardContainer) {
-        console.error("ERROR: keyboardContainer tidak ditemukan.");
-        return;
-    }
-    // Hapus highlight dari tombol sebelumnya sebelum menambahkan yang baru
-    const previousHighlightedKey = keyboardContainer.querySelector('.next-key');
-    if (previousHighlightedKey) {
-        previousHighlightedKey.classList.remove('next-key');
-    }
-    if (typeof keyChar === 'string' && keyChar.length > 0) {
-        const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
-        if (targetKeyElement) {
-            targetKeyElement.classList.add('next-key');
-        }
-    }
+	if (!keyboardContainer) {
+		console.error("ERROR: keyboardContainer tidak ditemukan.");
+		return;
+	}
+	// Hapus highlight dari tombol sebelumnya sebelum menambahkan yang baru
+	const previousHighlightedKey = keyboardContainer.querySelector('.next-key');
+	if (previousHighlightedKey) {
+		previousHighlightedKey.classList.remove('next-key');
+	}
+	if (typeof keyChar === 'string' && keyChar.length > 0) {
+		const targetKeyElement = keyboardContainer.querySelector(`.key[data-key="${keyChar.toLowerCase()}"]`);
+		if (targetKeyElement) {
+			targetKeyElement.classList.add('next-key');
+		}
+	}
+}
+
+let activeKeyTimeout = null;
+const ACTIVE_KEY_DELAY = 30;
+
+export function highlightActiveKeyOnKeyboard(keyboardContainer, keyChar) {
+	if (!keyboardContainer || !keyChar) return;
+	if (activeKeyTimeout) {
+		clearTimeout(activeKeyTimeout);
+		activeKeyTimeout = null;
+	}
+	keyboardContainer.querySelectorAll('.key.active').forEach(el => el.classList.remove('active'));
+	// Sasar tombol keyboard (.key) saja, bukan elemen SVG tangan yang juga
+	// memakai data-key (hand visualizer berada di dalam keyboardContainer).
+	const targetKeyElement = keyboardContainer.querySelector(`.key[data-key="${keyChar.toLowerCase()}"]`);
+	if (targetKeyElement) {
+		targetKeyElement.classList.add('active');
+	}
+}
+
+export function clearActiveKeyHighlight(keyboardContainer, delay = ACTIVE_KEY_DELAY) {
+	if (!keyboardContainer) return;
+	if (activeKeyTimeout) {
+		clearTimeout(activeKeyTimeout);
+		activeKeyTimeout = null;
+	}
+	activeKeyTimeout = setTimeout(() => {
+		keyboardContainer.querySelectorAll('.key.active').forEach(el => {
+			el.classList.remove('active');
+		});
+		activeKeyTimeout = null;
+	}, delay);
 }
 
 export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, lessonInstruction, keyboardContainer, setAnimatingKey, renderHandVisualizer) {
@@ -249,7 +261,7 @@ export function renderOtherLessons(lesson, currentCharIndex, lessonTextDisplay, 
 
     if (lesson.sequence && currentCharIndex < lesson.sequence.length) {
         const nextChar = lesson.sequence[currentCharIndex];
-        const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
+        const keyElement = keyboardContainer.querySelector(`.key[data-key="${nextChar.toLowerCase()}"]`);
         if (keyElement) {
             highlightKeyOnKeyboard(keyboardContainer, nextChar);
             if (setAnimatingKey) setAnimatingKey(keyElement);
@@ -396,7 +408,7 @@ export function showLessonCompleteNotification(lessons, currentLessonIdx, domEle
 
 export function highlightWrongKeyOnKeyboard(keyboardContainer, keyChar) {
     if (!keyboardContainer || !keyChar) return;
-    const targetKeyElement = keyboardContainer.querySelector(`[data-key="${keyChar.toLowerCase()}"]`);
+    const targetKeyElement = keyboardContainer.querySelector(`.key[data-key="${keyChar.toLowerCase()}"]`);
     if (targetKeyElement) {
         // Hanya tambahkan kelas kilat tanpa menghapus highlight yang sudah ada
         targetKeyElement.classList.add('wrong-key-flash');

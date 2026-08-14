@@ -307,6 +307,80 @@ export const lessons = [
         ],
         preview: ['g', 'h']
     },
+    {
+        title: "Pelajaran 22: Pengenalan Tombol R dan U",
+        type: "character-drill",
+        steps: [
+            {
+                key: 'r',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">r</span> menggunakan jari telunjuk kiri Anda.`
+            },
+            {
+                key: 'u',
+                instruction: `Tekan tombol <span class="keyboard-inline-key">u</span> menggunakan jari telunjuk kanan Anda.`
+            }
+        ],
+        preview: ['r', 'u']
+    },
+    {
+        title: "Pelajaran 23: Latihan Tombol R dan U",
+        type: "simple-drill",
+        image: 'target-ru.svg',
+        sequences: [
+            ['r', 'r', 'r', 'r', 'u', 'u'],
+            ['u', 'u', 'r', 'r', 'r', 'r'],
+            ['u', 'u', 'u', 'u', 'r', 'r'],
+            ['u', 'u', 'r', 'r', 'u', 'u'],
+            ['r', 'u', 'r', 'u', 'u', 'r'],
+            ['u', 'r', 'r', 'u', 'r', 'u'],
+        ],
+        keys: ['r', 'u'],
+        preview: ['r', 'u']
+    },
+    {
+        title: "Pelajaran 24: Test Mengetik R dan U",
+        type: "free-typing",
+        image: 'test-ru.svg',
+        sequence: [
+            // String 1
+            'f', 'r', ' ', 'j', 'u', ' ', 'f', 'r', ' ', 'j', 'u', ' ',
 
+            // String 2
+            'r', 'f', 'r', ' ', 'u', 'j', 'u', ' ', 'r', 'u', ' ', 'j', 'r', ' ',
+
+            // String 3
+            'f', 'r', 'j', 'u', ' ', 'j', 'u', 'f', 'r', ' ', 'r', 'r', 'f', ' ',
+
+            // String 4
+            'u', 'u', 'j', ' ', 'f', 'r', ' ', 'j', 'u', ' ', 'r', 'u', 'r', 'u', ' ',
+
+            // String 5
+            'f', 'j', 'r', 'u', ' ', 'r', 'f', 'u', 'j', ' ', 'u', 'r', 'j', 'f'
+        ],
+        preview: ['r', 'u']
+    },
+    {
+        title: "Pelajaran 25: Test Mengetik R dan U",
+        type: "free-typing",
+        image: 'test-ru.svg',
+        sequence: [
+            // String 1
+            'g', 'u', 'l', 'a', ' ', 'r', 'u', 's', 'a', ' ', 's', 'u', 'r', 'a', ' ',
+
+            // String 2
+            'k', 'u', 'r', 'a', ' ', 'j', 'u', 'r', 'u', ' ', 'h', 'a', 'r', 'a', ' ',
+
+            // String 3
+            'g', 'a', 'r', 'u', ' ', 'd', 'a', 'r', 'a', ' ', 'k', 'a', 's', 'u', 'r', ' ',
+
+            // String 4
+            'l', 'a', 'r', 'a', 's', ' ', 'r', 'u', 's', 'a', ' ', 'j', 'a', 'r', 'u', ' ',
+
+            // String 5
+            's', 'u', 'r', 'u', ' ', 'l', 'u', 'r', ' ', 'd', 'a', 'r', 'a', ' ',
+            'r', 'u', 's', 'a', ' ', 'h', 'a', 's', ' ', 'g', 'u', 'l', 'a'
+        ],
+        preview: ['r', 'u']
+    },
 ];
 

@@ -85,7 +85,7 @@ export function renderCharacterDrillLesson({ keyboardContainer, lessonInstructio
             }
 
             highlightKeyOnKeyboard(keyboardContainer, currentKey);
-            const keyElement = keyboardContainer.querySelector(`[data-key="${currentKey.toLowerCase()}"]`);
+            const keyElement = keyboardContainer.querySelector(`.key[data-key="${currentKey.toLowerCase()}"]`);
             setAnimatingKey(keyElement);
         } else {
             if (lessonInstruction) {

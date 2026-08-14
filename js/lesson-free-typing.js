@@ -203,7 +203,7 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
                 if (currentCharIndex < lesson.sequence.length) {
                     const nextChar = lesson.sequence[currentCharIndex];
                     highlightKeyOnKeyboard(keyboardContainer, nextChar);
-                    const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
+                    const keyElement = keyboardContainer.querySelector(`.key[data-key="${nextChar.toLowerCase()}"]`);
                     setAnimatingKey(keyElement);
                     requestAnimationFrame(() => renderHandVisualizer(nextChar));
                 }
@@ -307,7 +307,7 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                 document.body.classList.remove('lesson-overlay-active');
 
                 const nextChar = lesson.sequence[currentCharIndex];
-                const keyElement = keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`);
+                const keyElement = keyboardContainer.querySelector(`.key[data-key="${nextChar.toLowerCase()}"]`);
                 if (nextChar && keyElement) {
                     highlightKeyOnKeyboard(keyboardContainer, nextChar);
                     setAnimatingKey(keyElement);
@@ -483,7 +483,7 @@ export function handleFreeTypingInput({ e, domElements, animationFunctions, type
                 const nextChar = lesson.sequence[currentCharIndex];
                 if (nextChar) {
                     highlightKeyOnKeyboard(keyboardContainer, nextChar);
-                    setAnimatingKey(keyboardContainer.querySelector(`[data-key="${nextChar.toLowerCase()}"]`));
+                    setAnimatingKey(keyboardContainer.querySelector(`.key[data-key="${nextChar.toLowerCase()}"]`));
                     requestAnimationFrame(() => renderHandVisualizer(nextChar));
                 } else {
                     clearKeyboardHighlights(keyboardContainer);
