@@ -60,7 +60,7 @@ export function resetLessonState() {
             resetFreeTypingState();
             break;
         default:
-            updateState(lessonId, { currentCharIndex: 0, sequenceIndex: 0, isFinished: false });
+            updateState(lessonId, { currentCharIndex: 0, sequenceIndex: 0, isFinished: false, finished: false });
             break;
     }
 }
@@ -192,6 +192,10 @@ export function retryLesson() {
 }
 
 export function dispatchFinishedEvent(lessonIndex) {
+    const lessonId = `lesson${lessonIndex + 1}`;
+    if (getState(lessonId)?.finished) return;
+    updateState(lessonId, { finished: true });
+
     // 🚀 Sembunyikan stats biar ga ikut tampil di notifikasi
     const stats = document.getElementById("typing-stats");
     if (stats) stats.style.display = "none";

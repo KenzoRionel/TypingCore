@@ -279,6 +279,9 @@ export function renderFreeTypingLesson({ lesson, lessonInstruction, keyboardCont
 export function handleFreeTypingInput({ e, domElements, animationFunctions, type }) {
     const currentLessonIndex = getState('currentLessonIndex');
     const lessonId = `lesson${currentLessonIndex + 1}`;
+
+    if (getState(lessonId)?.finished) return;
+
     const lesson = lessons[currentLessonIndex];
     let lessonState = getLessonState(lessonId);
     let { currentCharIndex, userTypingHistory, isHoldKeyActive } = lessonState;

@@ -166,5 +166,5 @@ export function handleCharacterDrillInput({
 
 export function resetCharacterDrillState() {
     const lessonId = `lesson${getState('currentLessonIndex') + 1}`;
-    updateState(lessonId, { currentCharIndex: 0, isFinished: false });
+    updateState(lessonId, { currentCharIndex: 0, isFinished: false, finished: false });
 }
