@@ -450,7 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const old = document.getElementById("liveHud");
     if (old) old.remove();
 
-    const createStat = (id, label, initialValue) => {
+    const createStat = (id, initialValue) => {
       const stat = document.createElement("div");
       stat.className = "live-hud-stat";
 
@@ -459,11 +459,7 @@ document.addEventListener("DOMContentLoaded", () => {
       value.id = id;
       value.textContent = initialValue;
 
-      const labelEl = document.createElement("span");
-      labelEl.className = "live-hud-label";
-      labelEl.textContent = label;
-
-      stat.append(value, labelEl);
+      stat.append(value);
       return stat;
     };
 
@@ -474,8 +470,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const left = document.createElement("div");
     left.className = "live-hud-side live-hud-left";
     left.append(
-      createStat("liveChars", "karakter", "0"),
-      createStat("liveConsistency", "konsistensi", "0%")
+      createStat("liveChars", "0"),
+      createStat("liveConsistency", "0%")
     );
 
     const main = document.createElement("div");
@@ -484,16 +480,13 @@ document.addEventListener("DOMContentLoaded", () => {
     wpm.className = "live-hud-wpm";
     wpm.id = "liveWpm";
     wpm.textContent = "0";
-    const wpmLabel = document.createElement("span");
-    wpmLabel.className = "live-hud-wpm-label";
-    wpmLabel.textContent = "wpm";
-    main.append(wpm, wpmLabel);
+    main.append(wpm);
 
     const right = document.createElement("div");
     right.className = "live-hud-side live-hud-right";
     right.append(
-      createStat("liveTime", "waktu", "0s"),
-      createStat("liveAccuracy", "akurasi", "100%")
+      createStat("liveTime", "0s"),
+      createStat("liveAccuracy", "100%")
     );
 
     wrap.append(left, main, right);
