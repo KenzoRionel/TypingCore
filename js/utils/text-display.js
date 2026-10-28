@@ -212,6 +212,28 @@ function cancelCaretDecay() {
   }
 }
 
+const CARET_TYPING_IDLE_MS = 600;
+let caretTypingTimer = null;
+
+function setCaretTypingState(active) {
+  const DOM = getGameDOMReferences();
+  if (!DOM || !DOM.textDisplay) return;
+
+  DOM.textDisplay.classList.toggle("cursor-typing", active);
+  const overlay = getCaretOverlay(DOM.textDisplay);
+  if (overlay) overlay.classList.toggle("cursor-typing", active);
+}
+
+export function markCaretTyping() {
+  setCaretTypingState(true);
+  if (caretTypingTimer) clearTimeout(caretTypingTimer);
+  caretTypingTimer = setTimeout(() => {
+    caretTypingTimer = null;
+    setCaretTypingState(false);
+  }, CARET_TYPING_IDLE_MS);
+}
+window.markCaretTyping = markCaretTyping;
+
 /**
  * Fungsi tunggal penghitung kecepatan caret, dipanggil dari DUA jalur:
  * positionSmoothCaret() (Smooth Caret aktif) DAN jalur fallback non-smooth
@@ -372,6 +394,18 @@ export function resetHighlightCache() {
   // boleh "terbawa" ke tes baru (kalau tidak, keystroke pertama di tes baru
   // akan mengukur jarak palsu dari posisi caret lama).
   cancelCaretDecay();
+  if (caretTypingTimer) {
+    clearTimeout(caretTypingTimer);
+    caretTypingTimer = null;
+  }
+  const DOM = getGameDOMReferences();
+  if (DOM && DOM.textDisplay) {
+    DOM.textDisplay.classList.remove("cursor-typing");
+    const overlay = DOM.textDisplay.parentElement?.querySelector(
+      ":scope > .caret-overlay"
+    );
+    if (overlay) overlay.classList.remove("cursor-typing");
+  }
   lastCaretMoveTs = null;
   lastCaretRect = null;
   // Reset cache mode highlight supaya tidak "nyangkut" ke elemen kata dari

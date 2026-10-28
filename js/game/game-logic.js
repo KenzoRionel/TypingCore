@@ -338,9 +338,45 @@ export function processTypedWord() {
   gameState.currentWordCharLog = [];
 }
 
+function computeConsistency(keystrokeLog, startTime, durationSeconds) {
+  const perSecond = new Array(Math.max(0, durationSeconds)).fill(0);
+
+  (keystrokeLog || []).forEach((ts) => {
+    const sec = Math.floor((ts - startTime) / 1000);
+    if (sec >= 0 && sec < perSecond.length) {
+      perSecond[sec]++;
+    }
+  });
+
+  const wpmBySecond = perSecond.map((c) => Math.round((c / 5) * 60));
+  const nonZeroWPMs = wpmBySecond.filter((wpm) => wpm > 0);
+  let consistency = 0;
+
+  if (nonZeroWPMs.length > 1) {
+    const mean =
+      nonZeroWPMs.reduce((sum, wpm) => sum + wpm, 0) / nonZeroWPMs.length;
+    const stdDev = Math.sqrt(
+      nonZeroWPMs.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) /
+        nonZeroWPMs.length
+    );
+    if (mean > 0) {
+      consistency = Math.max(0, Math.round((1 - stdDev / mean) * 100));
+    }
+  }
+
+  return { consistency, wpmBySecond };
+}
+
 export function updateRealtimeStats() {
   const DOM = getGameDOMReferences();
   updateQuoteAuthorDisplay();
+
+  const liveWpmEl = document.getElementById("liveWpm");
+  const liveCharsEl = document.getElementById("liveChars");
+  const liveTimeEl = document.getElementById("liveTime");
+  const liveAccuracyEl = document.getElementById("liveAccuracy");
+  const liveConsistencyEl = document.getElementById("liveConsistency");
+
   if (!gameState.startTime) {
     try {
       setWpmSpeedometer(0);
@@ -350,6 +386,11 @@ export function updateRealtimeStats() {
     } catch (e) {}
     if (DOM.wpmDisplay) DOM.wpmDisplay.textContent = "0";
     if (DOM.accuracyDisplay) DOM.accuracyDisplay.textContent = "0%";
+    if (liveWpmEl) liveWpmEl.textContent = "0";
+    if (liveCharsEl) liveCharsEl.textContent = "0";
+    if (liveTimeEl) liveTimeEl.textContent = "0s";
+    if (liveAccuracyEl) liveAccuracyEl.textContent = "0%";
+    if (liveConsistencyEl) liveConsistencyEl.textContent = "0%";
     return;
   }
 
@@ -396,9 +437,21 @@ export function updateRealtimeStats() {
   
   const displayWPM = String(Math.round(gameState.smootherWPM || 0));
   const displayAcc = `${accuracyPercent}%`;
+  const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  const { consistency: liveConsistency } = computeConsistency(
+    gameState.keystrokeLog,
+    gameState.startTime,
+    Math.max(1, elapsedSeconds)
+  );
 
   if (wpmText) wpmText.textContent = displayWPM;
   if (accText) accText.textContent = displayAcc;
+
+  if (liveWpmEl) liveWpmEl.textContent = displayWPM;
+  if (liveCharsEl) liveCharsEl.textContent = String(totalTypedChars);
+  if (liveTimeEl) liveTimeEl.textContent = `${elapsedSeconds}s`;
+  if (liveAccuracyEl) liveAccuracyEl.textContent = displayAcc;
+  if (liveConsistencyEl) liveConsistencyEl.textContent = `${liveConsistency}%`;
 
   // Pertahankan update DOM reference lama jika masih dipakai
   if (DOM.wpmDisplay) DOM.wpmDisplay.textContent = displayWPM;
@@ -650,33 +703,12 @@ export function calculateAndDisplayFinalResults() {
       ? Math.round(totalTypedChars / 5 / totalTestMinutes)
       : 0;
 
-  /** ✅ Hitung Konsistensi berdasarkan keystroke */
-  let consistency = 0;
   const keystrokeLog = gameState.keystrokeLog || [];
-  const perSecond = new Array(actualTestDuration).fill(0);
-
-  keystrokeLog.forEach((ts) => {
-    const sec = Math.floor((ts - gameState.startTime) / 1000);
-    if (sec >= 0 && sec < perSecond.length) {
-      perSecond[sec]++;
-    }
-  });
-
-  const wpmBySecond = perSecond.map((c) => Math.round((c / 5) * 60));
-
-  // Filter hanya WPM > 0
-  const nonZeroWPMs = wpmBySecond.filter((wpm) => wpm > 0);
-  if (nonZeroWPMs.length > 1) {
-    const mean =
-      nonZeroWPMs.reduce((sum, wpm) => sum + wpm, 0) / nonZeroWPMs.length;
-    const stdDev = Math.sqrt(
-      nonZeroWPMs.map((x) => Math.pow(x - mean, 2)).reduce((a, b) => a + b) /
-        nonZeroWPMs.length
-    );
-    if (mean > 0) {
-      consistency = Math.max(0, Math.round((1 - stdDev / mean) * 100));
-    }
-  }
+  const { consistency, wpmBySecond } = computeConsistency(
+    keystrokeLog,
+    gameState.startTime,
+    actualTestDuration
+  );
 
   // ✅ Hitung XP: (WPM × Akurasi%) × (Lama Mengetik dalam Menit)
   const accuracyDecimal = finalAccuracy / 100;
@@ -903,7 +935,7 @@ export function endTest() {
 
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
-  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+  if (typeof window.resetLiveHud === "function") window.resetLiveHud();
 
 }
 
@@ -980,7 +1012,7 @@ export function invalidateTest(reason) {
 
 
   hideStatsContainer();
-  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+  if (typeof window.resetLiveHud === "function") window.resetLiveHud();
 }
 
 export function resetTestState(options = {}) {
@@ -1092,7 +1124,7 @@ export function resetTestState(options = {}) {
   if (DOM.finalIncorrectWords) DOM.finalIncorrectWords.textContent = "--";
 
   hideStatsContainer();
-  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+  if (typeof window.resetLiveHud === "function") window.resetLiveHud();
 
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");

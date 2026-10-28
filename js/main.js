@@ -89,15 +89,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.gameState.timeRemaining = initialTestDuration;
   }
 
-  let logoPopObserver = null;
-  let logoPopMouseMoveWired = false;
-
   // DOM.darkModeToggle (tombol trigger dropdown tema) tidak perlu di-pass
   // ke initTheme - Bootstrap yang menangani buka/tutup dropdown-nya lewat
   // atribut data-bs-toggle="dropdown" di index.html. initTheme hanya perlu
   // tahu container tempat grid pilihan tema dirender.
   initTheme({ pickerContainer: document.getElementById("themePickerContainer") });
-  setupLogoPop();
+  setupLiveHud();
 
   // Inisialisasi keyboard virtual untuk halaman index
   initIndexKeyboard({
@@ -129,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (DOM.restartButton) {
     DOM.restartButton.addEventListener("click", () => {
       resetTestState();
-      setupLogoPop();
+      setupLiveHud();
     });
   }
 
@@ -446,65 +443,71 @@ document.addEventListener("DOMContentLoaded", () => {
     statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
   });
 
-  function setupLogoPop() {
+  function setupLiveHud() {
     const container = document.querySelector(".text-display-container");
     if (!container) return;
 
-    // Hapus logo lama
-    const old = document.getElementById("logoPop");
+    const old = document.getElementById("liveHud");
     if (old) old.remove();
 
-    // Ambil src logo (ikut dark mode)
-    const navbarLogo = document.getElementById("logoWebsite");
-    const src = navbarLogo
-      ? navbarLogo.getAttribute("src")
-      : "img/TypingCore.svg";
+    const createStat = (id, label, initialValue) => {
+      const stat = document.createElement("div");
+      stat.className = "live-hud-stat";
+
+      const value = document.createElement("span");
+      value.className = "live-hud-value";
+      value.id = id;
+      value.textContent = initialValue;
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "live-hud-label";
+      labelEl.textContent = label;
+
+      stat.append(value, labelEl);
+      return stat;
+    };
 
     const wrap = document.createElement("div");
-    wrap.id = "logoPop";
-    wrap.className = "logo-pop";
-    const img = document.createElement("img");
-    img.alt = "TypingCore";
-    img.src = src;
-    wrap.appendChild(img);
+    wrap.id = "liveHud";
+    wrap.className = "live-hud";
+
+    const left = document.createElement("div");
+    left.className = "live-hud-side live-hud-left";
+    left.append(
+      createStat("liveChars", "karakter", "0"),
+      createStat("liveConsistency", "konsistensi", "0%")
+    );
+
+    const main = document.createElement("div");
+    main.className = "live-hud-main";
+    const wpm = document.createElement("span");
+    wpm.className = "live-hud-wpm";
+    wpm.id = "liveWpm";
+    wpm.textContent = "0";
+    const wpmLabel = document.createElement("span");
+    wpmLabel.className = "live-hud-wpm-label";
+    wpmLabel.textContent = "wpm";
+    main.append(wpm, wpmLabel);
+
+    const right = document.createElement("div");
+    right.className = "live-hud-side live-hud-right";
+    right.append(
+      createStat("liveTime", "waktu", "0s"),
+      createStat("liveAccuracy", "akurasi", "100%")
+    );
+
+    wrap.append(left, main, right);
     container.appendChild(wrap);
 
-    if (logoPopObserver) {
-      logoPopObserver.disconnect();
-      logoPopObserver = null;
-    }
-    logoPopObserver = new MutationObserver(() => {
-      const newSrc = navbarLogo?.getAttribute("src");
-      if (newSrc) img.src = newSrc;
-    });
-    if (navbarLogo)
-      logoPopObserver.observe(navbarLogo, {
-        attributes: true,
-        attributeFilter: ["src"],
-      });
-
-    // Expose global
-    window.triggerLogoPop = () => {
-      const el = document.getElementById("logoPop");
+    window.triggerLiveHud = () => {
+      const el = document.getElementById("liveHud");
       if (el) el.classList.add("pop");
     };
-
-    window.resetLogoPop = () => {
-      const el = document.getElementById("logoPop");
-      if (el) el.classList.remove("pop");
-    };
-
-    if (!logoPopMouseMoveWired) {
-      container.addEventListener("mousemove", () => {
-        if (typeof window.resetLogoPop === "function") window.resetLogoPop();
-      });
-      logoPopMouseMoveWired = true;
-    }
   }
-  window.resetLogoPop = resetLogoPop;
+  window.resetLiveHud = resetLiveHud;
 
-  function resetLogoPop() {
-    const el = document.getElementById("logoPop");
+  function resetLiveHud() {
+    const el = document.getElementById("liveHud");
     if (el) el.classList.remove("pop");
   }
 
@@ -543,9 +546,9 @@ document.addEventListener("visibilitychange", () => {
     if (DOM.menuButton) DOM.menuButton.classList.remove("hidden");
     if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
 
-    // Speedometer & logo tetap sembunyi
+    // Speedometer & HUD live tetap sembunyi
     hideStatsContainer();
-    if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+    if (typeof window.resetLiveHud === "function") window.resetLiveHud();
   }
 });
 
@@ -578,6 +581,6 @@ document.addEventListener("mousemove", () => {
   // Pointer gerak = fokus hilang, tandai lagi
   gameState.isTypingActive = false;
 
-  // Sembunyikan logo saat pointer bergerak
-  if (typeof window.resetLogoPop === "function") window.resetLogoPop();
+  // Sembunyikan HUD live saat pointer bergerak
+  if (typeof window.resetLiveHud === "function") window.resetLiveHud();
 });

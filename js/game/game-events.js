@@ -86,6 +86,8 @@ export function handleKeydown(e) {
   // meledak saat user melihat hasil -> teks "User AFK" muncul di layar hasil.
   startInactivityTimer();
 
+  if (typeof window.markCaretTyping === "function") window.markCaretTyping();
+
     // Mulai tes pada ketikan pertama (bukan spasi/kombinasi)
     if (
       e.key.length === 1 &&
@@ -98,16 +100,16 @@ export function handleKeydown(e) {
       if (!gameState.startTime) {
         gameState.startTime = Date.now();
         startTimer();
-        // Tampilkan logo dan speedometer saat mulai mengetik
-        if (typeof window.triggerLogoPop === 'function') window.triggerLogoPop();
+        // Tampilkan HUD live dan speedometer saat mulai mengetik
+        if (typeof window.triggerLiveHud === 'function') window.triggerLiveHud();
         showStatsContainer();
       }
 
       // Set typing mode aktif tiap kali user ngetik
       gameState.isTypingActive = true;
 
-      // Tampilkan kembali logo dan speedometer saat melanjutkan mengetik
-      if (typeof window.triggerLogoPop === 'function') window.triggerLogoPop();
+      // Tampilkan kembali HUD live dan speedometer saat melanjutkan mengetik
+      if (typeof window.triggerLiveHud === 'function') window.triggerLiveHud();
       showStatsContainer();
 
       // Hide header/menu dan restart button saat mulai mengetik
