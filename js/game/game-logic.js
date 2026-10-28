@@ -845,10 +845,16 @@ function removeSpaceScrollPrevention() {
 }
 
 export function endTest() {
+  // FIX double-finish: panggilan kedua dalam satu sesi adalah no-op.
+  // resetTestState() me-nol-kan window.isTestCompleted, jadi tes berikutnya tetap jalan.
+  if (window.isTestCompleted) {
+    return;
+  }
   const DOM = getGameDOMReferences();
   clearInterval(gameState.timerInterval);
   gameState.timerInterval = null;
   clearInterval(gameState.updateStatsInterval);
+  gameState.updateStatsInterval = null;
   clearTimeout(gameState.inactivityTimer);
   DOM.hiddenInput.disabled = true;
   
@@ -902,6 +908,10 @@ export function endTest() {
 
 
 export function invalidateTest(reason) {
+  // FIX AFK di layar hasil: jangan pernah batalkan/overwrite hasil tes yang
+  // sudah selesai (pengaman lapis ketiga, selain pemindahan startInactivityTimer
+  // dan guard di callback timer).
+  if (window.isTestCompleted) return;
   const DOM = getGameDOMReferences();
 
   // Set flag dan hentikan semua aktivitas
@@ -909,6 +919,7 @@ export function invalidateTest(reason) {
   clearInterval(gameState.timerInterval);
   gameState.timerInterval = null;
   clearInterval(gameState.updateStatsInterval);
+  gameState.updateStatsInterval = null;
   clearTimeout(gameState.inactivityTimer);
 
   // Disable input biar user nggak ngetik lagi
@@ -1005,6 +1016,7 @@ export function resetTestState(options = {}) {
   clearInterval(gameState.timerInterval);
   gameState.timerInterval = null;
   clearInterval(gameState.updateStatsInterval);
+  gameState.updateStatsInterval = null;
   clearTimeout(gameState.inactivityTimer);
   gameState.isTestInvalid = false;
 
@@ -1123,6 +1135,12 @@ export function startTimer() {
 
   const DOM = getGameDOMReferences();
   if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+  // FIX interval bocor: updateStatsInterval tidak pernah di-clear sebelum assign
+  // baru di kode lama, sehingga 2 interval 100ms bisa jalan bareng.
+  if (gameState.updateStatsInterval) {
+    clearInterval(gameState.updateStatsInterval);
+    gameState.updateStatsInterval = null;
+  }
   
   gameState.timerInterval = setInterval(() => {
     if (gameState.quoteMode) {
@@ -1159,6 +1177,10 @@ export function startTimer() {
 export function startInactivityTimer() {
   clearTimeout(gameState.inactivityTimer);
   gameState.inactivityTimer = setTimeout(() => {
+    // FIX AFK di layar hasil: timer basi (mis. dipersenjatai sebelum fix ini,
+    // atau dari sesi sebelumnya) tidak boleh membatalkan tes yang sudah selesai
+    // atau belum dimulai.
+    if (window.isTestCompleted || !gameState.startTime) return;
     invalidateTest("User AFK / Tidak ada aktivitas.");
   }, 30000);
 }
@@ -1169,6 +1191,14 @@ export function initGameListeners() {
   if (DOM.hiddenInput) {
     DOM.hiddenInput.addEventListener("keydown", (event) => {
       if (gameState.isTestInvalid) {
+        event.preventDefault();
+        return;
+      }
+      // FIX double-finish: abaikan keypress pasca-finish supaya tidak me-restart
+      // timer dengan timeRemaining basi (sebab endTest #2 + kontaminasi data).
+      // Listener utama di game-events.js sudah return lebih dulu untuk kasus ini;
+      // ini pengaman lapis kedua untuk listener stats ini.
+      if (window.isTestCompleted) {
         event.preventDefault();
         return;
       }

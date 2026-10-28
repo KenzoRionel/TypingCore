@@ -42,20 +42,29 @@ export function handleKeydown(e) {
     return;
   }
 
-  // Reset inactivity timer on any keydown
-  startInactivityTimer();
+  // FIX double-finish: setelah tes selesai, semua keypress diabaikan sampai
+  // resetTestState() (yang me-nol-kan window.isTestCompleted). Tanpa ini,
+  // keypress pasca-finish lolos (timerInterval sudah null sehingga cek lama
+  // di bawah tidak memblokir), masuk blok start di bawah, memanggil
+  // startTimer() dengan timeRemaining basi <= 0, lalu langsung endTest #2
+  // -> chart di-destroy dan dirender ulang (flicker).
+  if (window.isTestCompleted) {
+    e.preventDefault();
+    return;
+  }
 
   // ✅ Mode Quotes sengaja membiarkan timeRemaining di 0 (stopwatch naik,
   // bukan hitung mundur) - jangan pernah blokir keystroke di mode ini
-  // berdasarkan timeRemaining. Selain itu, gameState.timerInterval TIDAK
-  // pernah di-null-kan setelah clearInterval() (lihat endTest/invalidateTest/
-  // resetTestState di game-logic.js), jadi nilainya tetap "truthy" dari sisa
-  // interval id tes sebelumnya - itulah kenapa cek ini sempat memblokir
-  // SEMUA keystroke tes Quotes berikutnya setelah tes pertama pada page load.
+  // berdasarkan timeRemaining. Catatan: endTest()/invalidateTest()/
+  // resetTestState() kini me-null-kan timerInterval setelah clearInterval,
+  // jadi cek `gameState.timerInterval` saja TIDAK cukup untuk memblokir
+  // keypress pasca-finish (sudah null) - guard window.isTestCompleted di atas
+  // yang menanganinya. Cek timerInterval di bawah dipertahankan untuk
+  // kompatibilitas + dikombinasikan dengan isTestCompleted.
   if (
     !gameState.quoteMode &&
     gameState.timeRemaining <= 0 &&
-    gameState.timerInterval
+    (gameState.timerInterval || window.isTestCompleted)
   ) {
     e.preventDefault();
     return;
@@ -70,6 +79,12 @@ export function handleKeydown(e) {
     e.preventDefault();
     return;
   }
+
+  // Reset inactivity timer hanya untuk keypress tes yang AKTIF (semua guard
+  // di atas sudah lolos). Sebelumnya dipanggil di paling atas sehingga
+  // keypress pasca-finish ikut mempersenjatai timer AFK 30 detik yang lalu
+  // meledak saat user melihat hasil -> teks "User AFK" muncul di layar hasil.
+  startInactivityTimer();
 
     // Mulai tes pada ketikan pertama (bukan spasi/kombinasi)
     if (

@@ -164,15 +164,16 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
 
   const labels = Array.from({ length: totalTime }, (_, i) => String(i + 1));
 
-  // Hitung max axis
-  const wpmMaxCandidate = Math.max(
-    100,
-    finalWPM || 0,
-    ...rawWpmPerSecond,
-    ...netWpmData,
-    ...rawCumulativeData
-  );
-  const yWpmMax = Math.ceil(wpmMaxCandidate / 10) * 10;
+  // Hitung max axis secara robust: garis burst per-detik boleh punya satu-dua
+  // titik outlier (mis. 17 char dalam 1 detik = ~200 WPM) yang tidak boleh
+  // menarik seluruh skala sumbu-Y. Karena itu burst diwakili persentil-95
+  // (stabil untuk tes >= 6 detik; tes pendek tetap pakai max), sedangkan garis
+  // kumulatif (net/raw) yang stabil tetap pakai max. Headroom 15% di atasnya.
+  const netMax = netWpmData.length ? Math.max(...netWpmData) : 0;
+  const rawCumMax = rawCumulativeData.length ? Math.max(...rawCumulativeData) : 0;
+  const burstP95 = percentile95(rawWpmPerSecond || []);
+  const wpmMaxCandidate = Math.max(100, finalWPM || 0, netMax, rawCumMax, burstP95);
+  const yWpmMax = Math.ceil((wpmMaxCandidate * 1.15) / 10) * 10;
   const yErrMax = Math.max(6, ...errorCountsBySecond.filter((v) => v != null));
 
   const themeColors = getChartThemeColors();
@@ -485,6 +486,18 @@ function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = String(str ?? "");
   return div.innerHTML;
+}
+
+// Helper: persentil-95 dari array angka (abaikan null/undefined/NaN).
+// Untuk sampel kecil (< 6 titik) fallback ke max biasa karena persentil
+// tidak stabil. Dipakai agar satu titik burst outlier tidak menarik skala Y.
+function percentile95(arr) {
+  const vals = (arr || []).filter((v) => typeof v === "number" && Number.isFinite(v));
+  if (vals.length === 0) return 0;
+  if (vals.length < 6) return Math.max(...vals);
+  const sorted = vals.slice().sort((a, b) => a - b);
+  const idx = Math.min(sorted.length - 1, Math.floor(0.95 * sorted.length));
+  return sorted[idx];
 }
 
 // Helper
