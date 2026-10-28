@@ -872,7 +872,9 @@ export function endTest() {
   } catch (e) {
     console.error('DEBUG: endTest() - Error calling updateKeyboardVisibilityUI:', e);
   }
-  
+
+  hideStatsContainer();
+
   if (!gameState.isTestInvalid) {
     calculateAndDisplayFinalResults();
   }
@@ -898,7 +900,6 @@ export function endTest() {
 
   gameState.startTime = null;
   setTimerSpeedometer(0, gameState.TIMED_TEST_DURATION);
-  hideStatsContainer();
 
   if (DOM.header) DOM.header.classList.remove("hidden");
   if (DOM.restartButton) DOM.restartButton.classList.remove("hidden");
