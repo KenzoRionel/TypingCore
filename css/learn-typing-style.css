@@ -236,7 +236,7 @@ body.lesson-type-free-typing.initial-fade-in .key.next-key {
     background-color: var(--current-word-bg);
     border-bottom: 3px solid var(--caret);
     padding-bottom: 2px;
-    animation: blink 1s infinite;
+    animation: blink var(--caret-blink-duration, 1s) infinite;
 }
 
 @keyframes blink {

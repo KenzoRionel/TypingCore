@@ -54,6 +54,7 @@
      lihat text-display.css), jadi var medium/soft tidak pernah terpakai lagi. */
   --caret-trail-max-length: 56px;
   --caret-trail-blur: 1.5px;
+  --caret-blink-duration: 1s;
   --ghost-caret: var(--accent);
   --ghost-caret-shadow: color-mix(in srgb, var(--accent) 22%, transparent);
 

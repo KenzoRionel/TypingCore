@@ -39,8 +39,9 @@
     />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Fredoka&family=Noto+Serif+JP&family=Nunito&family=Quicksand&family=Shippori+Mincho&family=Special+Elite&family=VT323&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Fira+Code&family=Fredoka&family=IBM+Plex+Mono&family=JetBrains+Mono&family=Lora&family=Merriweather&family=Noto+Serif+JP&family=Nunito&family=Poppins&family=Quicksand&family=Roboto+Mono&family=Shippori+Mincho&family=Space+Mono&family=Special+Elite&family=VT323&display=swap"
     />
+    <link rel="stylesheet" href="fonts/typeface-minecraft-master/index.css" />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/text-display.css" />
@@ -292,6 +293,24 @@
                     </div>
                   </div>
 
+                  <!-- Kecepatan Kedip Kursor -->
+                  <div class="settings-block">
+                    <p class="settings-row-label no-margin">Kecepatan Kedip Kursor</p>
+                    <p class="settings-row-desc" style="margin-bottom: 0.6rem;">Atur seberapa cepat kursor berkedip saat aktif</p>
+                    <div class="settings-range-row">
+                      <input
+                        type="range"
+                        id="cursorBlinkSpeed"
+                        min="0.3"
+                        max="2"
+                        step="0.1"
+                        value="1"
+                        aria-label="Kecepatan kedip kursor dalam detik"
+                      >
+                      <span id="cursorBlinkSpeedValue" class="settings-range-value">1.0s</span>
+                    </div>
+                  </div>
+
                   <!-- Perpindahan Kursor Smooth -->
                   <div class="settings-block">
                     <p class="settings-row-label no-margin">Perpindahan Kursor Smooth</p>
@@ -325,6 +344,18 @@
                       <button type="button" class="chip-option font-choice-btn" data-font="monospace" style="font-family: monospace" role="radio" aria-checked="false">Monospace</button>
                       <button type="button" class="chip-option font-choice-btn" data-font="serif" style="font-family: serif" role="radio" aria-checked="false">Serif</button>
                       <button type="button" class="chip-option font-choice-btn" data-font="sans-serif" style="font-family: sans-serif" role="radio" aria-checked="false">Sans</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="minecraft" style="font-family: 'Minecraft', monospace" role="radio" aria-checked="false">Minecraft</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="jetbrains-mono" style="font-family: 'JetBrains Mono', monospace" role="radio" aria-checked="false">JetBrains Mono</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="fira-code" style="font-family: 'Fira Code', monospace" role="radio" aria-checked="false">Fira Code</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="ibm-plex-mono" style="font-family: 'IBM Plex Mono', monospace" role="radio" aria-checked="false">IBM Plex Mono</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="roboto-mono" style="font-family: 'Roboto Mono', monospace" role="radio" aria-checked="false">Roboto Mono</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="space-mono" style="font-family: 'Space Mono', monospace" role="radio" aria-checked="false">Space Mono</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="courier-prime" style="font-family: 'Courier Prime', monospace" role="radio" aria-checked="false">Courier Prime</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="vt323" style="font-family: 'VT323', monospace" role="radio" aria-checked="false">VT323</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="special-elite" style="font-family: 'Special Elite', monospace" role="radio" aria-checked="false">Special Elite</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="lora" style="font-family: 'Lora', serif" role="radio" aria-checked="false">Lora</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="merriweather" style="font-family: 'Merriweather', serif" role="radio" aria-checked="false">Merriweather</button>
+                      <button type="button" class="chip-option font-choice-btn" data-font="poppins" style="font-family: 'Poppins', sans-serif" role="radio" aria-checked="false">Poppins</button>
                     </div>
                   </div>
                 </div>
@@ -406,23 +437,23 @@
                 <div class="settings-group" id="group-interface" role="tabpanel" aria-labelledby="nav-interface">
                   <h2 class="settings-section-label">Statistik &amp; Interface</h2>
 
-                  <p class="settings-row-label">Tampilan Statistik</p>
-                  <div class="stat-toggle-grid">
-                    <button type="button" class="stat-toggle stats-mode-btn active" data-mode="speedometer" role="radio" aria-checked="true">
+                  <p class="settings-row-label">Tampilan</p>
+                  <div class="stat-toggle-grid" role="radiogroup" aria-label="Pilih tampilan statistik atau keyboard">
+                    <button type="button" class="stat-toggle stat-display-btn active" data-display-mode="speedometer" role="radio" aria-checked="true">
                       <span class="stat-toggle-left"><i class="fas fa-tachometer-alt"></i><span>Speedometer</span></span>
                     </button>
-                    <button type="button" class="stat-toggle stats-mode-btn" data-mode="text" role="radio" aria-checked="false">
-                      <span class="stat-toggle-left"><i class="fas fa-font"></i><span>Teks (WPM/Akurasi)</span></span>
+                    <button type="button" class="stat-toggle stat-display-btn" data-display-mode="keyboard" role="radio" aria-checked="false">
+                      <span class="stat-toggle-left"><i class="fas fa-keyboard"></i><span>Keyboard Virtual</span></span>
                     </button>
                   </div>
 
                   <div class="settings-row">
                     <div>
-                      <p class="settings-row-label no-margin">Tampilkan Keyboard Virtual</p>
-                      <p class="settings-row-desc">Menampilkan tombol aktif dan salah ketik</p>
+                      <p class="settings-row-label no-margin">Teks WPM/Akurasi</p>
+                      <p class="settings-row-desc">Tampilkan WPM, akurasi, waktu, dan karakter di atas teks latihan</p>
                     </div>
                     <div class="form-check form-switch settings-switch">
-                      <input class="form-check-input" type="checkbox" id="keyboardToggle">
+                      <input class="form-check-input" type="checkbox" id="liveHudToggle" checked>
                     </div>
                   </div>
                 </div>
@@ -435,13 +466,26 @@
                 <div class="preview-block">
                   <p class="preview-block-label">Teks &amp; Kursor</p>
                   <div class="preview-typing-box">
+                    <div class="preview-live-hud" id="previewLiveHud">
+                      <div class="preview-live-side preview-live-left">
+                        <span class="preview-live-value" id="previewLiveChars">0</span>
+                        <span class="preview-live-value" id="previewLiveConsistency">100%</span>
+                      </div>
+                      <div class="preview-live-main">
+                        <span class="preview-live-wpm" id="previewLiveWpm">0</span>
+                      </div>
+                      <div class="preview-live-side preview-live-right">
+                        <span class="preview-live-value" id="previewLiveTime">0s</span>
+                        <span class="preview-live-value" id="previewLiveAccuracy">100%</span>
+                      </div>
+                    </div>
                     <div class="text-display-container">
                       <div id="textDisplay" class="text-display" data-cursor-mode="highlight"></div>
                     </div>
                   </div>
                 </div>
 
-                <div class="preview-block">
+                <div class="preview-block preview-stats-block" id="previewStatsBlock">
                   <p class="preview-block-label">Statistik</p>
                   <div class="preview-stats">
                     <div class="preview-real-stats" id="previewRealStats">
@@ -479,24 +523,10 @@
                         </div>
                       </div>
                     </div>
-                    <div class="preview-stats-text" id="previewStatsText" style="display: none">
-                      <div class="preview-stat-item">
-                        <span class="preview-stat-num" id="previewStatsTextWpm">0</span>
-                        <span class="preview-stat-label">WPM</span>
-                      </div>
-                      <div class="preview-stat-item">
-                        <span class="preview-stat-num" id="previewStatsTextAccuracy">100%</span>
-                        <span class="preview-stat-label">Akurasi</span>
-                      </div>
-                      <div class="preview-stat-item">
-                        <span class="preview-stat-num" id="previewStatsTextTimer">0</span>
-                        <span class="preview-stat-label">Waktu</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
-                <div class="preview-block">
+                <div class="preview-block preview-keyboard-block" id="previewKeyboardBlock">
                   <p class="preview-block-label">Keyboard Virtual</p>
                   <div class="preview-keyboard" id="previewKeyboard"></div>
                 </div>
@@ -535,7 +565,6 @@
         createKeyboard,
         highlightActiveKeyOnKeyboard,
         clearKeyboardHighlights,
-        loadKeyboardVisibility,
       } from './js/index-keyboard.js';
 
       window.__previewHelpers = {
@@ -549,7 +578,6 @@
         createKeyboard,
         highlightActiveKeyOnKeyboard,
         clearKeyboardHighlights,
-        loadKeyboardVisibility,
       };
 
       document.addEventListener('DOMContentLoaded', () => {
@@ -584,6 +612,7 @@
         const PREVIEW_ACCURACY_START = 100;
         const PREVIEW_ACCURACY_TARGET = 83;
         const PREVIEW_TIMER_TARGET = 58;
+        const PREVIEW_TIMER_MAX = 60;
 
         function initPreviewSpeedometers() {
           const {
@@ -593,13 +622,12 @@
             getTimerTickColors,
             wpmMax,
             accuracyMax,
-            timerMax,
           } = helpers;
           if (!createSpeedometerTicks) return;
 
           createSpeedometerTicks(document.getElementById('previewWpmTicks'), 0, wpmMax, 5, wpmTickColors);
           createSpeedometerTicks(document.getElementById('previewAccuracyTicks'), 0, accuracyMax, 5, accuracyTickColors);
-          createSpeedometerTicks(document.getElementById('previewTimerTicks'), 0, timerMax, 5, getTimerTickColors(timerMax));
+          createSpeedometerTicks(document.getElementById('previewTimerTicks'), 0, PREVIEW_TIMER_MAX, 5, getTimerTickColors(PREVIEW_TIMER_MAX));
 
           // Posisi awal jarum (progres 0%) sebelum animasi mengetik mulai berjalan.
           updatePreviewSpeedometers(0);
@@ -648,7 +676,7 @@
         }
 
         function updatePreviewSpeedometers(progress, opts = {}) {
-          const { wpmMax, accuracyMax, timerMax } = helpers;
+          const { wpmMax, accuracyMax } = helpers;
           if (!wpmMax) return;
           const p = Math.max(0, Math.min(1, progress));
           const hasTypo = !!opts.hasTypo;
@@ -668,26 +696,34 @@
           }
 
           // Waktu: elapsed = waktu yang digunakan = TARGET * p
-          //         remaining = countdown untuk gauge = timerMax - elapsed (berkurang)
+          //         remaining = countdown untuk gauge = MAX - elapsed (berkurang)
           const elapsed = PREVIEW_TIMER_TARGET * p;
-          const remaining = Math.max(0, (timerMax || 60) - elapsed);
+          const remaining = Math.max(0, PREVIEW_TIMER_MAX - elapsed);
 
           // Gauge: WPM naik, Akurasi real, Timer countdown berkurang
           setPreviewGaugeNeedle('previewWpmNeedle', 'previewWpmValue', currentWpm, wpmMax, (v) => Math.round(v));
           setPreviewGaugeNeedle('previewAccuracyNeedle', 'previewAccuracyValue', currentAccuracy, accuracyMax, (v) => `${Math.round(v)}%`);
-          setPreviewGaugeNeedle('previewTimerNeedle', 'previewTimerValue', remaining, timerMax, (v) => Math.round(v));
+          setPreviewGaugeNeedle('previewTimerNeedle', 'previewTimerValue', remaining, PREVIEW_TIMER_MAX, (v) => Math.round(v));
 
-          const textTimerValue = PREVIEW_TIMER_TARGET * (1 - p); // 58 -> 0 berkurang
-          updatePreviewStatsText(currentWpm, currentAccuracy, textTimerValue, elapsed);
+          updatePreviewLiveHud(
+            currentWpm,
+            currentAccuracy,
+            elapsed,
+            opts.typedChars ?? totalOverall
+          );
         }
 
-        function updatePreviewStatsText(wpm, accuracy, timerRemaining, elapsed) {
-          const wpmEl = document.getElementById('previewStatsTextWpm');
-          const accuracyEl = document.getElementById('previewStatsTextAccuracy');
-          const timerEl = document.getElementById('previewStatsTextTimer');
+        function updatePreviewLiveHud(wpm, accuracy, elapsedSeconds, charsTyped) {
+          const wpmEl = document.getElementById('previewLiveWpm');
+          const accuracyEl = document.getElementById('previewLiveAccuracy');
+          const consistencyEl = document.getElementById('previewLiveConsistency');
+          const timerEl = document.getElementById('previewLiveTime');
+          const charsEl = document.getElementById('previewLiveChars');
           if (wpmEl) wpmEl.textContent = Math.round(wpm);
           if (accuracyEl) accuracyEl.textContent = `${Math.round(accuracy)}%`;
-          if (timerEl) timerEl.textContent = `${Math.round(timerRemaining)}s`;
+          if (consistencyEl) consistencyEl.textContent = `${Math.round(accuracy)}%`;
+          if (timerEl) timerEl.textContent = `${Math.round(elapsedSeconds)}s`;
+          if (charsEl) charsEl.textContent = charsTyped;
         }
 
         initPreviewSpeedometers();
@@ -831,7 +867,9 @@
         }
 
         function positionSmoothCaret(targetEl, isBefore) {
-          if (caretLerpFactor >= 1 || cursorMode === 'highlight' || cursorMode === 'hidden' || !targetEl) {
+          const usesOverlayCaret = cursorMode !== 'highlight' && cursorMode !== 'hidden';
+          textDisplay.classList.toggle('smooth-caret-active', usesOverlayCaret);
+          if (!usesOverlayCaret || !targetEl) {
             hideSmoothCaret();
             return;
           }
@@ -875,7 +913,8 @@
 
           caretTargetRect = rect;
 
-          if (!caretRenderedRect) {
+          if (caretLerpFactor >= 1 || !caretRenderedRect) {
+            stopCaretAnimationLoop();
             caretRenderedRect = { ...rect };
             applyCaretRect(el, caretRenderedRect);
           } else {
@@ -900,8 +939,9 @@
           const totalInCurrent = typedLength;
           const correctOverall = prevWordsLen + prevSpaces + correctInCurrent;
           const totalOverall = prevWordsLen + prevSpaces + totalInCurrent;
+          const typedChars = prevWordsLen + totalInCurrent;
 
-          updatePreviewSpeedometers(progress, { hasTypo: hasTypoNow, correctOverall, totalOverall });
+          updatePreviewSpeedometers(progress, { hasTypo: hasTypoNow, correctOverall, totalOverall, typedChars });
 
           textDisplay.querySelectorAll('.word-container, .space-char, .word-container span').forEach((el) => {
             el.classList.remove('current-word-target', 'has-cursor', 'cursor-before', 'cursor-after', 'current-space-target');
@@ -1002,6 +1042,9 @@
 
         function playTypingOnce() {
           stopTypingAnimation();
+          stopCaretAnimationLoop();
+          caretTargetRect = null;
+          caretRenderedRect = null;
           currentWordIndex = 0;
           typedLength = 0;
           typedCharStatus = [];
@@ -1010,7 +1053,7 @@
 
           function step() {
             if (scriptStepIndex >= typingScript.length) {
-              typingAnimId = null;
+              typingAnimId = setTimeout(playTypingOnce, 1800);
               return;
             }
             const { action } = typingScript[scriptStepIndex];
@@ -1061,46 +1104,35 @@
             if (!radio.checked) return;
             smoothLevel = radio.value;
             caretLerpFactor = SMOOTH_LERP[smoothLevel] ?? 1;
-            textDisplay.classList.toggle('smooth-caret-active', caretLerpFactor < 1);
             stopCaretAnimationLoop();
             caretRenderedRect = null;
             playTypingOnce();
           });
         });
-        textDisplay.classList.toggle('smooth-caret-active', caretLerpFactor < 1);
 
         document.querySelectorAll('.font-choice-btn').forEach((btn) => {
           btn.addEventListener('click', () => requestAnimationFrame(playTypingOnce));
         });
 
-        // --- Mode statistik (Speedometer / Teks) ---
-        const realStatsEl = document.getElementById('previewRealStats');
-        const statsTextEl = document.getElementById('previewStatsText');
+        // --- Tampilan: Speedometer / Keyboard Virtual + HUD teks ---
+        const previewStatsBlock = document.getElementById('previewStatsBlock');
+        const previewKeyboardBlock = document.getElementById('previewKeyboardBlock');
+        const previewLiveHud = document.getElementById('previewLiveHud');
 
-        function applyPreviewStatsMode(mode) {
-          const isText = mode === 'text';
-          if (realStatsEl) realStatsEl.style.display = isText ? 'none' : '';
-          if (statsTextEl) statsTextEl.style.display = isText ? 'flex' : 'none';
+        function applyPreviewDisplaySettings() {
+          const storedMode = localStorage.getItem('statsDisplayMode');
+          const mode = storedMode || (localStorage.getItem('typingCore_showKeyboard') === 'true' ? 'keyboard' : 'speedometer');
+          const keyboardMode = mode === 'keyboard';
+          if (previewStatsBlock) previewStatsBlock.style.display = keyboardMode ? 'none' : '';
+          if (previewKeyboardBlock) previewKeyboardBlock.style.display = keyboardMode ? '' : 'none';
+          if (previewKeyboard) previewKeyboard.classList.toggle('enabled', keyboardMode);
+          if (previewLiveHud) {
+            previewLiveHud.style.display = localStorage.getItem('showLiveHud') === 'false' ? 'none' : '';
+          }
         }
 
-        applyPreviewStatsMode(localStorage.getItem('statsMode') || 'speedometer');
-
-        document.querySelectorAll('.stats-mode-btn').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            applyPreviewStatsMode(btn.dataset.mode);
-          });
-        });
-
-        // --- Keyboard virtual (elemen & isinya sudah dibuat di awal script) ---
-        const keyboardToggle = document.getElementById('keyboardToggle');
-        function applyKeyboard() {
-          if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!(keyboardToggle && keyboardToggle.checked));
-        }
-        if (keyboardToggle) keyboardToggle.addEventListener('change', applyKeyboard);
-        const initialKeyboardOn = helpers.loadKeyboardVisibility
-          ? helpers.loadKeyboardVisibility()
-          : !!(keyboardToggle && keyboardToggle.checked);
-        if (previewKeyboard) previewKeyboard.classList.toggle('enabled', !!initialKeyboardOn);
+        applyPreviewDisplaySettings();
+        document.addEventListener('typingcore:display-settings-changed', applyPreviewDisplaySettings);
 
         window.addEventListener('resize', render);
       });

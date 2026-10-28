@@ -431,10 +431,6 @@ export function updateRealtimeStats() {
     setAccuracySpeedometer(accuracyPercent);
   } catch (e) {}
 
-// Update Tampilan Teks (Baru)
-  const wpmText = document.getElementById("wpmTextDisplay");
-  const accText = document.getElementById("accuracyTextDisplay");
-  
   const displayWPM = String(Math.round(gameState.smootherWPM || 0));
   const displayAcc = `${accuracyPercent}%`;
   const elapsedSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
@@ -443,9 +439,6 @@ export function updateRealtimeStats() {
     gameState.startTime,
     Math.max(1, elapsedSeconds)
   );
-
-  if (wpmText) wpmText.textContent = displayWPM;
-  if (accText) accText.textContent = displayAcc;
 
   if (liveWpmEl) liveWpmEl.textContent = displayWPM;
   if (liveCharsEl) liveCharsEl.textContent = String(totalTypedChars);
@@ -895,14 +888,9 @@ export function endTest() {
   console.log('DEBUG: endTest() - window.isTestCompleted set to true');
 
   try {
-    updateKeyboardVisibilityUI({
-      hideStats: hideStatsContainer,
-      showStats: showStatsContainer,
-      statsMode: gameState.statsMode || 'speedometer'
-    });
-    console.log('DEBUG: endTest() - updateKeyboardVisibilityUI called successfully');
+    updateKeyboardVisibilityUI();
   } catch (e) {
-    console.error('DEBUG: endTest() - Error calling updateKeyboardVisibilityUI:', e);
+    console.error('Error calling updateKeyboardVisibilityUI:', e);
   }
 
   hideStatsContainer();
@@ -1095,9 +1083,6 @@ export function resetTestState(options = {}) {
     gameState.quoteMode ? timerMax : gameState.TIMED_TEST_DURATION
   );
 
-  const timerTextDisplayEl = document.getElementById("timerTextDisplay");
-  if (timerTextDisplayEl) timerTextDisplayEl.textContent = gameState.timeRemaining;
-
   const resultsArea = document.getElementById("resultsDisplayArea");
   if (resultsArea) {
     resultsArea.style.display = "none";
@@ -1153,14 +1138,9 @@ export function resetTestState(options = {}) {
   // Update UI keyboard untuk menampilkan keyboard kembali jika user menginginkannya
   // Panggil setelah semua state direset dan window.isTestCompleted = false
   try {
-    updateKeyboardVisibilityUI({
-      hideStats: hideStatsContainer,
-      showStats: showStatsContainer,
-      statsMode: gameState.statsMode || 'speedometer'
-    });
-    console.log('DEBUG: resetTestState() - updateKeyboardVisibilityUI called successfully');
+    updateKeyboardVisibilityUI();
   } catch (e) {
-    console.error('DEBUG: resetTestState() - Error calling updateKeyboardVisibilityUI:', e);
+    console.error('Error calling updateKeyboardVisibilityUI:', e);
   }
 }
 
@@ -1178,8 +1158,6 @@ export function startTimer() {
   gameState.timerInterval = setInterval(() => {
     if (gameState.quoteMode) {
       gameState.timeRemaining++;
-      const timerText = document.getElementById("timerTextDisplay");
-      if (timerText) timerText.textContent = gameState.timeRemaining;
       setTimerSpeedometer(Math.min(gameState.timeRemaining, timerMax), timerMax);
       return;
     }
@@ -1188,10 +1166,6 @@ export function startTimer() {
     
     // Update Speedometer Timer
     setTimerSpeedometer(gameState.timeRemaining, gameState.TIMED_TEST_DURATION);
-    
-    // Update Teks Timer
-    const timerText = document.getElementById("timerTextDisplay");
-    if (timerText) timerText.textContent = gameState.timeRemaining;
 
     if (gameState.timeRemaining <= 0) {
       endTest();
@@ -1409,41 +1383,20 @@ export function initGameListeners() {
 export function showStatsContainer() {
   const DOM = getGameDOMReferences();
   if (!DOM || !DOM.statsContainer) return;
-  
-  // Cek apakah keyboard virtual aktif - jika ya, jangan tampilkan statistik
-  const keyboardVisible = localStorage.getItem('typingCore_showKeyboard') === 'true';
-  if (keyboardVisible) {
-    // Keyboard aktif, sembunyikan statistik
+
+  // Mode Keyboard Virtual menggantikan speedometer, jadi jangan tampilkan keduanya.
+  if (gameState.statsDisplayMode === "keyboard") {
     hideStatsContainer();
     return;
   }
-  
+
   DOM.statsContainer.classList.add("show");
-
-
-  // Sesuaikan tampilan berdasarkan mode statistik yang dipilih
-  const textStats = document.querySelector('.text-stats-container');
-  const speedContainers = document.querySelectorAll('.speedometer-container');
-
-  if (gameState.statsMode === 'text') {
-    if (textStats) textStats.style.display = 'flex';
-    speedContainers.forEach((el) => (el.style.display = 'none'));
-  } else {
-    if (textStats) textStats.style.display = 'none';
-    speedContainers.forEach((el) => (el.style.display = 'flex'));
-  }
 }
 
 export function hideStatsContainer() {
   const DOM = getGameDOMReferences();
   if (!DOM || !DOM.statsContainer) return;
   DOM.statsContainer.classList.remove("show");
-
-  // Pastikan semua sub-komponen statistik tersembunyi saat container disembunyikan
-  const textStats = document.querySelector('.text-stats-container');
-  const speedContainers = document.querySelectorAll('.speedometer-container');
-  if (textStats) textStats.style.display = 'none';
-  speedContainers.forEach((el) => (el.style.display = 'none'));
 }
 
 /**

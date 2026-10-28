@@ -142,3 +142,7 @@ body.dark-mode .word-wpm span:last-child {
   color: #ececec; /* abu-abu untuk pesan */
 }
 /*End WPM Per Teks*/
+/* Logo TypingCore tetap terbaca di tema gelap */
+body.dark-mode #logoWebsite {
+  filter: brightness(0) invert(1);
+}

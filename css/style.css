@@ -1030,3 +1030,15 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 
 
 /* ==================== END XP BAR STYLES ==================== */
+
+/* Logo TypingCore tetap terbaca di tema gelap */
+html[data-theme="dark"] #logoWebsite,
+html[data-theme="dracula"] #logoWebsite,
+html[data-theme="nord"] #logoWebsite,
+html[data-theme="minions-dark"] #logoWebsite,
+html[data-theme="deep-forest"] #logoWebsite,
+html[data-theme="moonlight"] #logoWebsite,
+body.dark-mode #logoWebsite,
+html.dark-mode #logoWebsite {
+  filter: brightness(0) invert(1);
+}

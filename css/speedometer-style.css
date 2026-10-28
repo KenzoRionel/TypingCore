@@ -160,3 +160,7 @@
         max-width: 200px; /* Batasi lebar agar tidak terlalu besar di ponsel */
     }
 }
+/* Mode Keyboard Virtual menggantikan speedometer */
+html.display-mode-keyboard #stats-container {
+  display: none !important;
+}

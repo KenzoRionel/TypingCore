@@ -364,7 +364,7 @@
 .blinking-cursor {
   position: absolute;
   background-color: var(--caret); /* Warna default */
-  animation: blink 1s infinite;
+  animation: blink var(--caret-blink-duration, 1s) infinite;
   transition: left 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
               top 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
               width 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
@@ -393,7 +393,7 @@
 
 /* Matikan animasi blink saat mode no-blink aktif */
 #textDisplay.cursor-no-blink .has-cursor::after {
-  animation: noBlinkCursor 1s infinite;
+  animation: noBlinkCursor var(--caret-blink-duration, 1s) infinite;
 }
 
 /* --- Aturan Spesifik untuk Mode Kursor "Caret" --- */
@@ -505,7 +505,7 @@
   content: "";
   position: absolute;
   background-color: var(--caret); /* Warna kursor */
-  animation: cursorBlink 1s infinite;
+  animation: cursorBlink var(--caret-blink-duration, 1s) infinite;
   pointer-events: none;
   z-index: 10;
   transition: left 0.13s cubic-bezier(0.4, 0.0, 0.2, 1), 
@@ -695,7 +695,7 @@
   height: 4px;
   background-color: var(--caret);
   border-radius: 2px;
-  animation: cursorBlink 1s infinite, typewriterTap 0.15s ease;
+  animation: cursorBlink var(--caret-blink-duration, 1s) infinite, typewriterTap 0.15s ease;
 }
 .smooth-caret.mode-typewriter {
   background-color: var(--caret);
@@ -860,7 +860,7 @@
 }
 .smooth-caret.is-visible {
   opacity: 1;
-  animation: cursorBlink 1s infinite;
+  animation: cursorBlink var(--caret-blink-duration, 1s) infinite;
 }
 .smooth-caret.mode-box {
   background-color: var(--caret-soft-bg);
@@ -874,7 +874,7 @@
    supaya dua selector ini tetap match (lihat getCaretOverlay() /
    positionSmoothCaret() di text-display.js). */
 .caret-overlay.cursor-no-blink .smooth-caret.is-visible {
-  animation: noBlinkCursor 1s infinite;
+  animation: noBlinkCursor var(--caret-blink-duration, 1s) infinite;
 }
 .caret-overlay.cursor-typing .smooth-caret.is-visible {
   animation: none;
@@ -931,4 +931,8 @@
 body.dark .ghost-caret {
   background-color: var(--ghost-caret);
   box-shadow: 0 0 0 1px var(--ghost-caret-shadow);
+}
+/* Sembunyikan HUD teks dari pengaturan */
+html.hide-live-hud .live-hud {
+  display: none !important;
 }

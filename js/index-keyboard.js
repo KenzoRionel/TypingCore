@@ -380,25 +380,13 @@ export function animateJellyEffect(keyElement) {
 
 /**
  * Mengupdate UI berdasarkan status visibilitas keyboard
- * @param {Object} options - Opsi tambahan
- * @param {Function} options.hideStats - Fungsi untuk menyembunyikan stats
- * @param {Function} options.showStats - Fungsi untuk menampilkan stats
- * @param {string} options.statsMode - Mode stats saat ini
  */
-export function updateKeyboardVisibilityUI(options = {}) {
-  console.log('DEBUG: updateKeyboardVisibilityUI called, showKeyboard:', showKeyboard, 'isTestCompleted:', window.isTestCompleted);
-  
+export function updateKeyboardVisibilityUI() {
   // Cek apakah tes sudah selesai - jika ya, sembunyikan keyboard
-  if (window.isTestCompleted) {
-    console.log('DEBUG: Test completed, forcing keyboard to hide');
-  }
-  
   const shouldShowKeyboard = showKeyboard && !window.isTestCompleted;
   const keyboardContainer = document.getElementById('virtual-keyboard-container');
-  const keyboardToggle = document.getElementById('keyboardToggle');
 
   if (keyboardContainer) {
-    console.log('DEBUG: keyboardContainer classes before update:', keyboardContainer.className);
     if (shouldShowKeyboard) {
       keyboardContainer.classList.remove('hidden');
       keyboardContainer.classList.add('visible');
@@ -408,85 +396,13 @@ export function updateKeyboardVisibilityUI(options = {}) {
       keyboardContainer.classList.add('hidden');
       keyboardContainer.style.display = 'none';
     }
-    console.log('DEBUG: keyboardContainer classes after update:', keyboardContainer.className);
-  } else {
-    console.log('DEBUG: keyboardContainer NOT found in updateKeyboardVisibilityUI');
-  }
-
-  if (keyboardToggle) {
-    keyboardToggle.checked = shouldShowKeyboard;
-  }
-
-  // Update stats visibility berdasarkan state keyboard
-  // Gunakan shouldShowKeyboard agar stats muncul saat tes selesai
-  updateStatsVisibilityBasedOnKeyboard({
-    ...options,
-    _forceShowStats: window.isTestCompleted
-  });
-}
-
-
-
-/**
- * Mengupdate visibilitas stats berdasarkan state keyboard
- * @param {Object} options - Opsi tambahan
- * @param {Function} options.hideStats - Fungsi untuk menyembunyikan stats
- * @param {Function} options.showStats - Fungsi untuk menampilkan stats
- * @param {string} options.statsMode - Mode stats saat ini
- */
-function updateStatsVisibilityBasedOnKeyboard(options = {}) {
-  const { hideStats, showStats, statsMode, _forceShowStats } = options;
-
-  // Jika tes sudah selesai, selalu tampilkan stats
-  if (_forceShowStats) {
-    if (typeof showStats === 'function') {
-      showStats();
-    }
-    return;
-  }
-
-  if (showKeyboard) {
-
-    // Nonaktifkan tampilan statistik ketika keyboard virtual aktif
-    if (typeof hideStats === 'function') {
-      hideStats();
-    }
-  } else {
-    // Aktifkan kembali tampilan statistik sesuai mode yang dipilih
-    const stored = localStorage.getItem('statsMode');
-    const modeToUse = statsMode || stored || 'speedometer';
-
-    const textStats = document.querySelector('.text-stats-container');
-    // Kecualikan gauge di panel pratinjau settings.html (markup preview
-    // sengaja memakai class "speedometer-container" yang sama dengan
-    // halaman tes sungguhan) - preview punya kontrol visibilitasnya sendiri
-    // yang tidak boleh ditimpa dari sini.
-    const speedContainers = Array.from(
-      document.querySelectorAll('.speedometer-container')
-    ).filter((el) => !el.closest('.settings-preview'));
-
-    if (modeToUse === 'text') {
-      if (textStats) textStats.style.display = 'flex';
-      speedContainers.forEach((el) => (el.style.display = 'none'));
-    } else {
-      if (textStats) textStats.style.display = 'none';
-      speedContainers.forEach((el) => (el.style.display = 'flex'));
-    }
-
-    if (typeof showStats === 'function') {
-      showStats();
-    }
   }
 }
 
 /**
  * Inisialisasi keyboard untuk halaman index
- * @param {Object} options - Opsi inisialisasi
- * @param {Function} options.hideStats - Fungsi untuk menyembunyikan stats
- * @param {Function} options.showStats - Fungsi untuk menampilkan stats
- * @param {string} options.statsMode - Mode stats saat ini
  */
-export function initIndexKeyboard(options = {}) {
+export function initIndexKeyboard() {
   // Load keyboard visibility preference
   loadKeyboardVisibility();
 
@@ -494,33 +410,17 @@ export function initIndexKeyboard(options = {}) {
   const keyboardContainer = document.getElementById('virtual-keyboard-container');
   if (keyboardContainer) {
     createKeyboard(keyboardContainer, keyLayout);
-    updateKeyboardVisibilityUI(options);
-  }
-
-  // Setup event listener untuk keyboard toggle di modal
-  const keyboardToggle = document.getElementById('keyboardToggle');
-  if (keyboardToggle) {
-    keyboardToggle.addEventListener('change', () => {
-      // Trigger save settings button to be enabled
-      const saveBtn = document.getElementById('saveSettings');
-      if (saveBtn) {
-        saveBtn.disabled = false;
-      }
-    });
+    updateKeyboardVisibilityUI();
   }
 }
 
 /**
  * Menyimpan pengaturan keyboard dan mengupdate UI
  * @param {boolean} shouldShowKeyboard - Apakah keyboard harus ditampilkan
- * @param {Object} options - Opsi tambahan
- * @param {Function} options.hideStats - Fungsi untuk menyembunyikan stats
- * @param {Function} options.showStats - Fungsi untuk menampilkan stats
- * @param {string} options.statsMode - Mode stats saat ini
  */
-export function saveKeyboardSettings(shouldShowKeyboard, options = {}) {
+export function saveKeyboardSettings(shouldShowKeyboard) {
   saveKeyboardVisibility(shouldShowKeyboard);
-  updateKeyboardVisibilityUI(options);
+  updateKeyboardVisibilityUI();
 }
 
 /**

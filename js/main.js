@@ -23,7 +23,6 @@ import {
   initGameListeners,
   invalidateTest,
   hideStatsContainer,
-  showStatsContainer,
 } from "./game/game-logic.js";
 
 import {
@@ -97,11 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupLiveHud();
 
   // Inisialisasi keyboard virtual untuk halaman index
-  initIndexKeyboard({
-    hideStats: hideStatsContainer,
-    showStats: showStatsContainer,
-    statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
-  });
+  initIndexKeyboard();
 
 
 
@@ -431,17 +426,10 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   if (defaultWordBtn) defaultWordBtn.classList.add("active");
 
-  initSettingsPanel({
-    hideStats: hideStatsContainer,
-    showStats: showStatsContainer,
-  });
+  initSettingsPanel();
 
   setKeyboardVisibility(loadKeyboardVisibility());
-  updateKeyboardVisibilityUI({
-    hideStats: hideStatsContainer,
-    showStats: showStatsContainer,
-    statsMode: window.gameState ? window.gameState.statsMode : 'speedometer'
-  });
+  updateKeyboardVisibilityUI();
 
   function setupLiveHud() {
     const container = document.querySelector(".text-display-container");

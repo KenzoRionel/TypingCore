@@ -285,6 +285,11 @@
   background: transparent;
 }
 
+.settings-page .settings-range-row input[type="range"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 .settings-page .settings-range-value {
   flex: 0 0 auto;
   min-width: 3.4rem;
@@ -614,6 +619,74 @@
   color: var(--sp-accent) !important;
 }
 
+/* Pratinjau tidak punya caret-overlay seperti halaman tes, jadi highlight
+   kata aktif digambar langsung di background-nya. */
+.settings-page .preview-typing-box #textDisplay.highlight-mode-active .word-container.current-word-target,
+.settings-page .preview-typing-box #textDisplay[data-cursor-mode="highlight"] .word-container.current-word-target {
+  background-color: var(--current-word-bg) !important;
+  color: var(--text) !important;
+}
+
+/* HUD teks di atas contoh teks (WPM, akurasi, waktu, karakter) */
+.settings-page .preview-live-hud {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--sp-border-soft);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  line-height: 1;
+}
+
+html.hide-live-hud .preview-live-hud {
+  display: none;
+}
+
+.settings-page .preview-live-side {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.settings-page .preview-live-left {
+  align-items: flex-end;
+  text-align: right;
+  justify-self: end;
+}
+
+.settings-page .preview-live-right {
+  align-items: flex-start;
+  text-align: left;
+  justify-self: start;
+}
+
+.settings-page .preview-live-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+}
+
+.settings-page .preview-live-value {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sp-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.settings-page .preview-live-wpm {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--sp-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Statistik: speedometer */
 .settings-page .preview-stats {
   display: flex;
@@ -659,32 +732,6 @@
 .settings-page .preview-speedo-scale .speedometer-center-pin {
   background-color: var(--sp-text-strong);
   border-color: var(--sp-text-strong);
-}
-
-/* Statistik: teks */
-.settings-page .preview-stats-text {
-  display: flex;
-  gap: 1.4rem;
-}
-
-.settings-page .preview-stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.settings-page .preview-stat-num {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--sp-text-strong);
-}
-
-.settings-page .preview-stat-label {
-  font-size: 0.64rem;
-  color: var(--sp-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 
 .settings-page .preview-keyboard {

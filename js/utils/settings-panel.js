@@ -16,8 +16,8 @@ import {
   top10000Words,
 } from "../data/default-words.js";
 import {
-  saveKeyboardSettings,
-  loadKeyboardVisibility,
+  saveKeyboardVisibility,
+  setKeyboardVisibility,
 } from "../index-keyboard.js";
 import { setCaretSmoothness } from "./text-display.js";
 
@@ -88,32 +88,53 @@ function applyWordSet(value) {
   else window.defaultKataKata = top200Words;
 }
 
+const FONT_STACKS = {
+  default: "",
+  theme: "var(--theme-font-family)",
+  monospace: "monospace",
+  serif: "serif",
+  "sans-serif": "sans-serif",
+  minecraft: '"Minecraft", monospace',
+  "jetbrains-mono": '"JetBrains Mono", monospace',
+  "fira-code": '"Fira Code", monospace',
+  "ibm-plex-mono": '"IBM Plex Mono", monospace',
+  "roboto-mono": '"Roboto Mono", monospace',
+  "space-mono": '"Space Mono", monospace',
+  "courier-prime": '"Courier Prime", monospace',
+  vt323: '"VT323", monospace',
+  "special-elite": '"Special Elite", monospace',
+  lora: '"Lora", serif',
+  merriweather: '"Merriweather", serif',
+  poppins: '"Poppins", sans-serif',
+};
+
+const SERIF_FONT_KEYS = new Set(["serif", "lora", "merriweather"]);
+const SANS_SERIF_FONT_KEYS = new Set(["sans-serif", "poppins"]);
+
 function applyFont(textDisplay, font) {
   if (!textDisplay) return;
-  textDisplay.style.fontFamily =
-    font === "default" ? "" : font === "theme" ? "var(--theme-font-family)" : font;
+  textDisplay.style.fontFamily = FONT_STACKS[font] ?? "";
   textDisplay.classList.toggle("font-theme", font === "theme");
-  textDisplay.classList.toggle("font-sans-serif", font === "sans-serif");
-  textDisplay.classList.toggle("font-serif", font === "serif");
+  textDisplay.classList.toggle("font-sans-serif", SANS_SERIF_FONT_KEYS.has(font));
+  textDisplay.classList.toggle("font-serif", SERIF_FONT_KEYS.has(font));
 }
 
-function applyStatsModeDisplay(mode) {
-  const textStats = document.querySelector(".text-stats-container");
-  // Kecualikan gauge yang ada di dalam panel pratinjau settings.html:
-  // markup preview-nya sengaja memakai class "speedometer-container" yang
-  // sama persis dengan halaman tes sungguhan, dan preview punya kontrol
-  // visibilitasnya sendiri (lihat script preview di settings.html) yang
-  // tidak boleh ditimpa oleh fungsi ini.
-  const speedContainers = Array.from(
-    document.querySelectorAll(".speedometer-container")
-  ).filter((el) => !el.closest(".settings-preview"));
-  if (mode === "text") {
-    if (textStats) textStats.style.display = "flex";
-    speedContainers.forEach((el) => (el.style.display = "none"));
-  } else {
-    if (textStats) textStats.style.display = "none";
-    speedContainers.forEach((el) => (el.style.display = "flex"));
-  }
+function applyStatsDisplayMode(mode) {
+  const keyboardMode = mode === "keyboard";
+  document.documentElement.classList.toggle("display-mode-keyboard", keyboardMode);
+  saveKeyboardVisibility(keyboardMode);
+  setKeyboardVisibility(keyboardMode);
+}
+
+function applyLiveHudVisibility(visible) {
+  document.documentElement.classList.toggle("hide-live-hud", !visible);
+}
+
+function applyCaretBlinkSpeed(seconds) {
+  document.documentElement.style.setProperty(
+    "--caret-blink-duration",
+    `${seconds}s`
+  );
 }
 
 /**
@@ -125,7 +146,7 @@ function applyStatsModeDisplay(mode) {
  * settings.html (standalone) benar-benar diterapkan saat mereka kembali
  * ke index.html, yang tidak memiliki markup panel pengaturan sama sekali.
  */
-function applyStoredPreferences(textDisplay, { hideStats, showStats } = {}) {
+function applyStoredPreferences(textDisplay) {
   const savedCursorMode = localStorage.getItem("cursorMode") || "highlight";
   if (window.gameState) window.gameState.cursorMode = savedCursorMode;
   applyCursorModeClass(textDisplay, savedCursorMode);
@@ -136,14 +157,27 @@ function applyStoredPreferences(textDisplay, { hideStats, showStats } = {}) {
   const savedFont = localStorage.getItem("selectedFont") || "default";
   applyFont(textDisplay, savedFont);
 
-  const storedStatsMode = localStorage.getItem("statsMode");
-  const initialStatsMode =
-    storedStatsMode || (window.gameState ? window.gameState.statsMode : "speedometer");
-  if (window.gameState) window.gameState.statsMode = initialStatsMode;
-  applyStatsModeDisplay(initialStatsMode);
+  const storedDisplayMode = localStorage.getItem("statsDisplayMode");
+  const savedDisplayMode =
+    storedDisplayMode ||
+    (localStorage.getItem("typingCore_showKeyboard") === "true"
+      ? "keyboard"
+      : "speedometer");
+  if (window.gameState) window.gameState.statsDisplayMode = savedDisplayMode;
+  applyStatsDisplayMode(savedDisplayMode);
+
+  const rawLiveHud = localStorage.getItem("showLiveHud");
+  const savedLiveHud = rawLiveHud === null ? true : rawLiveHud !== "false";
+  applyLiveHudVisibility(savedLiveHud);
 
   const savedBlink = localStorage.getItem("cursorBlink") !== "false";
   if (textDisplay) textDisplay.classList.toggle("cursor-no-blink", !savedBlink);
+
+  const rawBlinkSpeed = parseFloat(localStorage.getItem("cursorBlinkSpeed"));
+  const savedBlinkSpeed = Number.isFinite(rawBlinkSpeed)
+    ? Math.max(0.3, Math.min(2, rawBlinkSpeed))
+    : 1;
+  applyCaretBlinkSpeed(savedBlinkSpeed);
 
   const savedCaretSmoothness = localStorage.getItem("caretSmoothness") || "off";
   setCaretSmoothness(savedCaretSmoothness);
@@ -169,18 +203,26 @@ function applyStoredPreferences(textDisplay, { hideStats, showStats } = {}) {
     window.gameState.numberChance = savedNumberChance / 100;
   }
 
-  return { savedCursorMode, savedWordSet, savedFont, initialStatsMode, savedBlink, savedCaretSmoothness, savedPunctuationChance, savedNumberChance };
+  return {
+    savedCursorMode,
+    savedWordSet,
+    savedFont,
+    savedDisplayMode,
+    savedLiveHud,
+    savedBlink,
+    savedBlinkSpeed,
+    savedCaretSmoothness,
+    savedPunctuationChance,
+    savedNumberChance,
+  };
 }
 
 /**
  * Inisialisasi Panel Pengaturan: menerapkan preferensi tersimpan (selalu),
  * dan mengikat UI (nav/segmented control/toggle) bila markup-nya ada di
  * halaman ini (settings.html).
- * @param {Object} options
- * @param {Function} options.hideStats - fungsi untuk menyembunyikan panel statistik
- * @param {Function} options.showStats - fungsi untuk menampilkan panel statistik
  */
-export function initSettingsPanel({ hideStats, showStats } = {}) {
+export function initSettingsPanel() {
   // Ambil #textDisplay langsung (boleh null, mis. di settings.html yang
   // tidak punya area tes). Jangan pakai getGameDOMReferences() di sini —
   // fungsi itu mewajibkan elemen-elemen khusus halaman tes (textDisplay,
@@ -188,7 +230,7 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   // tidak memilikinya, sehingga seluruh panel pengaturan gagal ter-init.
   const textDisplay = document.getElementById("textDisplay");
 
-  const saved = applyStoredPreferences(textDisplay, { hideStats, showStats });
+  const saved = applyStoredPreferences(textDisplay);
 
   autosaveDot = document.getElementById("autosaveDot");
   autosaveText = document.getElementById("autosaveText");
@@ -317,40 +359,92 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
   });
 
   /* ---------------------------------------------------------------- */
-  /* Tampilan Statistik (Speedometer / Teks)                           */
+  /* Tampilan (Speedometer / Keyboard Virtual) + HUD Teks              */
   /* ---------------------------------------------------------------- */
-  document.querySelectorAll(".stats-mode-btn").forEach((btn) => {
-    const mode = btn.getAttribute("data-mode");
-    const isActive = mode === saved.initialStatsMode;
+  function notifyDisplaySettingsChanged() {
+    document.dispatchEvent(new CustomEvent("typingcore:display-settings-changed"));
+  }
+
+  document.querySelectorAll(".stat-display-btn").forEach((btn) => {
+    const mode = btn.getAttribute("data-display-mode");
+    const isActive = mode === saved.savedDisplayMode;
     btn.classList.toggle("active", isActive);
     btn.setAttribute("aria-checked", isActive ? "true" : "false");
 
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".stats-mode-btn").forEach((b) => {
+      document.querySelectorAll(".stat-display-btn").forEach((b) => {
         b.classList.remove("active");
         b.setAttribute("aria-checked", "false");
       });
       btn.classList.add("active");
       btn.setAttribute("aria-checked", "true");
-      if (window.gameState) window.gameState.statsMode = mode;
-      applyStatsModeDisplay(mode);
+      if (window.gameState) window.gameState.statsDisplayMode = mode;
+      applyStatsDisplayMode(mode);
       try {
-        localStorage.setItem("statsMode", mode);
+        localStorage.setItem("statsDisplayMode", mode);
       } catch (e) {}
       pulseAutosave();
-      try {
-        if (typeof showStats === "function") showStats();
-      } catch (e) {}
+      notifyDisplaySettingsChanged();
       restartCurrentTest();
     });
   });
+
+  const liveHudToggle = document.getElementById("liveHudToggle");
+  if (liveHudToggle) {
+    liveHudToggle.checked = saved.savedLiveHud;
+    liveHudToggle.addEventListener("change", () => {
+      const visible = liveHudToggle.checked;
+      applyLiveHudVisibility(visible);
+      try {
+        localStorage.setItem("showLiveHud", visible ? "true" : "false");
+      } catch (e) {}
+      pulseAutosave();
+      notifyDisplaySettingsChanged();
+    });
+  }
 
   /* ---------------------------------------------------------------- */
   /* Efek Kursor: Kursor Berkedip                                      */
   /* ---------------------------------------------------------------- */
   const cursorBlinkToggle = document.getElementById("cursorBlinkToggle");
+  const blinkSpeedRange = document.getElementById("cursorBlinkSpeed");
+  const blinkSpeedValue = document.getElementById("cursorBlinkSpeedValue");
+
+  function syncBlinkSpeedState() {
+    if (blinkSpeedRange) {
+      blinkSpeedRange.disabled = !(cursorBlinkToggle && cursorBlinkToggle.checked);
+    }
+  }
+
+  if (blinkSpeedRange) {
+    blinkSpeedRange.value = saved.savedBlinkSpeed.toFixed(1);
+    if (blinkSpeedValue) {
+      blinkSpeedValue.textContent = `${saved.savedBlinkSpeed.toFixed(1)}s`;
+    }
+
+    blinkSpeedRange.addEventListener("input", () => {
+      const seconds = parseFloat(blinkSpeedRange.value);
+      if (!Number.isFinite(seconds)) return;
+      applyCaretBlinkSpeed(seconds);
+      if (blinkSpeedValue) blinkSpeedValue.textContent = `${seconds.toFixed(1)}s`;
+    });
+
+    blinkSpeedRange.addEventListener("change", () => {
+      const seconds = parseFloat(blinkSpeedRange.value);
+      const clamped = Number.isFinite(seconds)
+        ? Math.max(0.3, Math.min(2, seconds))
+        : 1;
+      applyCaretBlinkSpeed(clamped);
+      try {
+        localStorage.setItem("cursorBlinkSpeed", String(clamped));
+      } catch (e) {}
+      pulseAutosave();
+    });
+  }
+
   if (cursorBlinkToggle) {
     cursorBlinkToggle.checked = saved.savedBlink;
+    syncBlinkSpeedState();
 
     cursorBlinkToggle.addEventListener("change", () => {
       const shouldBlink = cursorBlinkToggle.checked;
@@ -358,6 +452,7 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
       try {
         localStorage.setItem("cursorBlink", shouldBlink ? "true" : "false");
       } catch (e) {}
+      syncBlinkSpeedState();
       pulseAutosave();
     });
   }
@@ -383,23 +478,6 @@ export function initSettingsPanel({ hideStats, showStats } = {}) {
       pulseAutosave();
     });
   });
-
-  /* ---------------------------------------------------------------- */
-  /* Tampilan Keyboard Virtual                                         */
-  /* ---------------------------------------------------------------- */
-  const savedKeyboardVisibility = loadKeyboardVisibility();
-  const keyboardToggle = document.getElementById("keyboardToggle");
-  if (keyboardToggle) {
-    keyboardToggle.checked = savedKeyboardVisibility;
-    keyboardToggle.addEventListener("change", () => {
-      saveKeyboardSettings(keyboardToggle.checked, {
-        hideStats,
-        showStats,
-        statsMode: window.gameState ? window.gameState.statsMode : "speedometer",
-      });
-      pulseAutosave();
-    });
-  }
 
   /* ---------------------------------------------------------------- */
   /* Frekuensi Tanda Baca Mode Punctuation                            */
