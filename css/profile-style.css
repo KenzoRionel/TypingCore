@@ -1,56 +1,38 @@
 /* ==================== PROFILE PAGE STYLES ==================== */
 
+/* Semua token warna di bawah diturunkan dari tema aktif (css/theme.css).
+   Halaman profil tidak lagi punya mode "siang/malam" terpisah: pilihan tema
+   di navbar berlaku untuk seluruh halaman. */
 :root {
-  --bg-primary: #f4f7f6;
-  --bg-secondary: #ececec;
-  --bg-card: #ffffff;
-  --text-primary: #333;
-  --text-secondary: #666;
-  --text-muted: #888;
-  --text-light: #999;
-  --text-white: #e0e0e0;
-  --border-light: #e0e0e0;
-  --border-medium: #575757;
-  --border-dark: #444;
-  --bg-level-badge: #e2e2e24d;
-  --bg-xp-bar: #e0e0e0;
-  --bg-xp-fill: #333;
-  --success: #28a745;
-  --warning: #f0ad4e;
-  --danger: #dc3545;
-}
-
-body.dark-mode {
-  --bg-primary: #181a1b;
-  --bg-secondary: #23272a;
-  --bg-card: #2c2c2c;
-  --text-primary: #e0e0e0;
-  --text-secondary: #aaa;
-  --text-muted: #888;
-  --text-light: #666;
-  --text-white: #f0f0f0;
-  --border-light: #444;
-  --border-medium: #555;
-  --border-dark: #666;
-  --bg-level-badge: #4444;
-  --bg-xp-bar: #444;
-  --bg-xp-fill: #81C784;
-  --success: #71b12b;
-  --warning: #e6c82d;
-  --danger: #e04422;
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--surface);
+  --bg-card: var(--bg);
+  --text-primary: var(--text);
+  --text-secondary: var(--text-muted);
+  --text-light: color-mix(in srgb, var(--text-muted) 78%, var(--bg));
+  --text-white: var(--text);
+  --border-light: var(--border);
+  --border-medium: color-mix(in srgb, var(--border) 60%, var(--text-muted));
+  --border-dark: var(--border);
+  --bg-level-badge: color-mix(in srgb, var(--text) 8%, transparent);
+  --bg-xp-bar: color-mix(in srgb, var(--text) 12%, transparent);
+  --bg-xp-fill: var(--accent);
+  --success: var(--correct);
+  --warning: var(--tc-amber);
+  --danger: var(--incorrect);
 }
 
 /* ==================== KEYCAP HEADER TOKENS (Step 1) ====================
    Dipakai oleh .tc-* classes di profile.html (Header Section: avatar,
    level/XP bar, streak, 3 stat utama). Warna tier ("Rookie", "Speedster",
-   dst) sengaja sama di kedua tema karena itu warna brand/rank, bukan
-   warna tema. ======================================================== */
+   dst) sengaja tetap sama di semua tema karena itu warna brand/rank, bukan
+   warna tema. Permukaan kartu/keycap tetap diturunkan dari tema. */
 
 :root {
   --tc-card-bg: var(--bg-card);
-  --tc-key-bg: #eef1f2;
-  --tc-key-light-bg: #e7eaec;
-  --tc-key-border: var(--border-light);
+  --tc-key-bg: color-mix(in srgb, var(--bg-card) 94%, var(--text) 6%);
+  --tc-key-light-bg: color-mix(in srgb, var(--bg-card) 97%, var(--text) 3%);
+  --tc-key-border: var(--border);
   --tc-shadow-edge: rgba(0, 0, 0, 0.14);
   --tc-shadow-blur: rgba(0, 0, 0, 0.10);
   --tc-shadow-inset: rgba(255, 255, 255, 0.6);
@@ -73,11 +55,9 @@ body.dark-mode {
   --heatmap-3: rgba(40, 167, 69, 1);
 }
 
+/* Varian tema gelap: hanya shadow & warna brand/rank yang perlu penyesuaian,
+   sedangkan permukaan kartu/keycap sudah otomatis mengikuti tema. */
 body.dark-mode {
-  --tc-card-bg: #1a1d24;
-  --tc-key-bg: #262b34;
-  --tc-key-light-bg: #2c313b;
-  --tc-key-border: #333944;
   --tc-shadow-edge: rgba(0, 0, 0, 0.5);
   --tc-shadow-blur: rgba(0, 0, 0, 0.35);
   --tc-shadow-inset: rgba(255, 255, 255, 0.06);
@@ -689,5 +669,34 @@ body.dark-mode {
 @media (max-width: 720px) {
   .fun-stats-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== DESKTOP LAYOUT ====================
+   .profile-container sudah memakai lebar penuh (lihat profile.html), jadi
+   grid section di bawah tinggal menyesuaikan jumlah kolom saat layar lebar
+   supaya tidak ada ruang kosong besar di kanan/kiri. */
+
+@media (min-width: 1200px) {
+  .ats-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+
+  .progress-charts-grid {
+    gap: 20px;
+  }
+
+  .progress-chart-card,
+  .skill-analysis-card {
+    padding: 24px;
+  }
+
+  .achievement-grid {
+    gap: 16px;
+  }
+
+  .fun-stats-grid {
+    gap: 16px;
   }
 }

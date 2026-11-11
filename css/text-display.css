@@ -27,7 +27,9 @@
   line-height: 1.5em;
   max-height: none;
   /* diperlukan supaya .ghost-caret (position: absolute) menempatkan diri
-     relatif terhadap #textDisplay */
+     relatif terhadap #textDisplay. Ghost caret sendiri dipindah ke
+     .caret-overlay saat overlay tersedia (lihat updateGhostHighlighting di
+     text-display.js) supaya ujung atasnya tidak ter-mask. */
   position: relative;
   /* Biarkan tinggi otomatis */
   font-family: monospace;

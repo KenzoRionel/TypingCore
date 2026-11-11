@@ -4,6 +4,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Profil - TypingCore</title>
+    <!-- Anti-FOUC: set data-theme SEBELUM CSS lain di-render, supaya halaman
+         tidak "flash" tema default lalu berubah ke tema tersimpan. Logika ini
+         sengaja diduplikasi (bukan import js/theme.js) karena script inline
+         blocking di <head> tidak bisa pakai ES module secara sinkron. -->
+    <script>
+      (function () {
+        try {
+          var STORAGE_KEY = "typing-theme";
+          var LEGACY_STORAGE_KEY = "darkMode";
+          var theme = localStorage.getItem(STORAGE_KEY);
+
+          if (!theme) {
+            var legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+            if (legacy !== null) {
+              theme = legacy === "enabled" ? "dark" : "light";
+            }
+          }
+
+          if (!theme) {
+            var prefersDark =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches;
+            theme = prefersDark ? "dark" : "light";
+          }
+
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
     <link
@@ -11,7 +42,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
     />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="css/dark-mode.css" />
+    <link rel="stylesheet" href="css/theme.css" />
     <link rel="stylesheet" href="css/profile-style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -20,9 +51,10 @@
     />
     <style>
       .profile-container {
-        max-width: 900px;
-        margin: 20px 0 20px 0px;
-        padding: 20px;
+        width: 100%;
+        max-width: 1480px;
+        margin: 0 auto;
+        padding: 8px clamp(10px, 2vw, 32px) 56px;
       }
 
       /* ---- Keycap Header (Step 1) ---- */
@@ -533,43 +565,276 @@
         }
       }
 
+      /* ---- Last 10 Tests ---- */
+      .history-section {
+        margin-top: 32px;
+      }
+
+      .history-section-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+
       .history-section h3 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-bottom: 20px;
-        color: #ededed;
+        font-family: "Manrope", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--text);
+      }
+
+      .history-section-subtitle {
+        margin: 4px 0 0;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+      }
+
+      .history-section-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--tc-key-border);
+        background: var(--tc-key-light-bg);
+        color: var(--text-secondary);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+
+      .history-table-wrap {
+        background: var(--tc-card-bg);
+        border: 1px solid var(--tc-key-border);
+        border-radius: 20px;
+        padding: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        box-shadow:
+          inset 0 1px 0 var(--tc-shadow-inset),
+          0 4px 0 var(--tc-shadow-edge),
+          0 9px 16px var(--tc-shadow-blur);
       }
 
       .history-table {
         width: 100%;
-        max-width: 600px;
-        font-size: 1rem;
-      }
-
-      .history-table th,
-      .history-table td {
-        padding: 14px 0;
-        border-bottom: 1px solid #575757;
+        min-width: 560px;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.95rem;
       }
 
       .history-table th {
-        font-weight: 500;
-        color: #666;
+        padding: 12px 16px;
+        text-align: left;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--tc-key-border);
+        white-space: nowrap;
       }
 
-      .wpm-high { color: #28a745; }
-      .wpm-med { color: #f0ad4e; }
-      .wpm-low { color: #dc3545; }
+      .history-table th.is-num,
+      .history-table td.is-num {
+        text-align: right;
+      }
 
-      .empty-state {
-        color: #999;
-        padding: 30px 0;
+      .history-table td {
+        padding: 13px 16px;
+        border-bottom: 1px solid color-mix(in srgb, var(--tc-key-border) 60%, transparent);
+        color: var(--text);
+        vertical-align: middle;
+      }
+
+      .history-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .history-table tbody tr {
+        transition: background-color 0.15s ease;
+      }
+
+      .history-table tbody tr:hover td {
+        background: color-mix(in srgb, var(--tc-key-light-bg) 80%, transparent);
+      }
+
+      .history-table tbody tr:hover td:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+      }
+
+      .history-table tbody tr:hover td:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+      }
+
+      .history-date-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        white-space: nowrap;
+      }
+
+      .history-date-day {
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .history-date-time {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+
+      .history-mode-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: var(--text-secondary);
+        background: var(--tc-key-light-bg);
+        border: 1px solid var(--tc-key-border);
+        white-space: nowrap;
+      }
+
+      .history-mode-pill.is-quotes {
+        color: var(--tc-amber);
+        border-color: color-mix(in srgb, var(--tc-amber) 35%, transparent);
+        background: color-mix(in srgb, var(--tc-amber) 10%, transparent);
+      }
+
+      .history-wpm-pill {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        padding: 4px 11px;
+        border-radius: 999px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.95rem;
+        font-weight: 700;
+        line-height: 1.2;
+        border: 1px solid transparent;
+      }
+
+      .history-wpm-pill small {
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        opacity: 0.75;
+      }
+
+      .wpm-high {
+        color: var(--success);
+        background: color-mix(in srgb, var(--success) 12%, transparent);
+        border-color: color-mix(in srgb, var(--success) 32%, transparent);
+      }
+
+      .wpm-med {
+        color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 14%, transparent);
+        border-color: color-mix(in srgb, var(--warning) 34%, transparent);
+      }
+
+      .wpm-low {
+        color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+        border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+      }
+
+      .history-acc-value {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .history-acc-value.is-high {
+        color: var(--success);
+      }
+
+      .history-acc-value.is-mid {
+        color: var(--warning);
+      }
+
+      .history-acc-value.is-low {
+        color: var(--danger);
+      }
+
+      .history-xp-value {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--tc-amber);
+        white-space: nowrap;
+      }
+
+      .history-empty {
+        padding: 40px 16px;
+        text-align: center;
+        color: var(--text-muted);
+      }
+
+      .history-empty i {
+        display: block;
+        font-size: 1.6rem;
+        color: var(--tc-amber);
+        margin-bottom: 10px;
+        opacity: 0.85;
+      }
+
+      /* ---- Desktop: manfaatkan lebar layar sepenuhnya ---- */
+      @media (min-width: 1200px) {
+        .tc-stats-grid {
+          gap: 20px;
+        }
+
+        .tc-keycap {
+          padding: 24px 16px;
+        }
+
+        .tc-stat-value {
+          font-size: 2.35rem;
+        }
+
+        .pb-cards-grid {
+          gap: 18px;
+        }
+
+        .history-table {
+          min-width: 0;
+        }
+
+        .history-table th,
+        .history-table td {
+          padding-left: 22px;
+          padding-right: 22px;
+        }
       }
 
       @media (max-width: 768px) {
         .profile-container {
-          margin: 30px;
-          padding: 20px;
+          padding-left: 8px;
+          padding-right: 8px;
+        }
+
+        .history-table th,
+        .history-table td {
+          padding-left: 12px;
+          padding-right: 12px;
         }
       }
     </style>
@@ -633,17 +898,27 @@
                 id="navbarSupportedContent2"
               >
                 <ul class="navbar-nav align-items-center">
-                  <li class="nav-item">
+                  <li class="nav-item dropdown">
                     <button
                       id="darkModeToggle"
-                      class="dark-mode-slide-toggle nav-link"
-                      aria-label="Toggle Dark Mode"
+                      type="button"
+                      class="nav-link dropdown-toggle theme-picker-toggle"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      aria-label="Pilih Tema"
+                      title="Pilih Tema"
                     >
-                      <span class="slider">
-                        <span class="slider-icon sun">☀️</span>
-                        <span class="slider-icon moon">🌙</span>
-                      </span>
+                      <i class="fas fa-palette"></i>
+                      <span class="theme-picker-current-name">Tema</span>
                     </button>
+                    <div
+                      class="dropdown-menu dropdown-menu-end theme-picker-dropdown-menu"
+                      aria-labelledby="darkModeToggle"
+                    >
+                      <!-- Grid pilihan tema dirender di sini secara dinamis
+                           oleh renderThemePicker() (js/theme.js). -->
+                      <div id="themePickerContainer"></div>
+                    </div>
                   </li>
                   <li class="nav-item dropdown">
                     <a
@@ -782,24 +1057,38 @@
           <!-- diisi oleh js/history/FunStats.js (React) -->
           <div id="funStatsRoot" class="tc-fade" style="animation-delay: 520ms"></div>
 
-          <div class="history-section">
-            <h3>Last 10 Tests</h3>
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>WPM</th>
-                  <th>Acc</th>
-                  <th>XP</th>
-                </tr>
-              </thead>
-              <tbody id="historyTableBody">
-                <tr>
-                  <td colspan="4" class="empty-state">No history yet</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <section class="history-section tc-fade" style="animation-delay: 560ms">
+            <div class="history-section-header">
+              <div>
+                <h3>Last 10 Tests</h3>
+                <p class="history-section-subtitle">
+                  10 tes terakhir yang tersimpan di perangkat ini
+                </p>
+              </div>
+              <span class="history-section-count" id="historyCount">0 tes</span>
+            </div>
+            <div class="history-table-wrap">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Tanggal</th>
+                    <th scope="col">Mode</th>
+                    <th scope="col" class="is-num">WPM</th>
+                    <th scope="col" class="is-num">Akurasi</th>
+                    <th scope="col" class="is-num">XP</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                  <tr>
+                    <td colspan="5" class="history-empty">
+                      <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+                      Belum ada riwayat tes
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
       </main>
     </div>
@@ -808,6 +1097,7 @@
     <script type="module">
       import { getTypingScores } from './js/history/score-manager.js';
       import { buildUserData as buildProfileUserData } from './js/history/profile-stats.js';
+      import { initTheme } from './js/theme.js';
       // Rumus format ribuan untuk teks XP, mis. 3400 -> "3,400".
       const xpNumberFormat = new Intl.NumberFormat('en-US');
 
@@ -1024,51 +1314,116 @@
       function loadHistory() {
         const scores = getTypingScores();
         const tbody = document.getElementById('historyTableBody');
-        
+        const countEl = document.getElementById('historyCount');
+
+        if (!tbody) return;
+
         if (scores.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No history yet</td></tr>';
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="history-empty">
+                <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
+                Belum ada riwayat tes
+              </td>
+            </tr>
+          `;
+          if (countEl) countEl.textContent = '0 tes';
           return;
         }
 
         const last10 = scores.slice(-10).reverse();
-        
-        tbody.innerHTML = last10.map(score => {
-          const date = new Date(score.date).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'short'
-          });
-          
-          const accuracyDecimal = score.accuracy / 100;
-          const timeMinutes = score.time / 60;
-          const earnedXP = Math.round(score.wpm * accuracyDecimal * timeMinutes);
-          
+        if (countEl) {
+          countEl.textContent = `${last10.length} tes`;
+        }
+
+        tbody.innerHTML = '';
+
+        last10.forEach((score) => {
+          const date = new Date(score.date);
+          const hasValidDate = !Number.isNaN(date.getTime());
+
+          const row = document.createElement('tr');
+
+          // ---- Tanggal + jam ----
+          const dateCell = document.createElement('td');
+          const dateWrap = document.createElement('span');
+          dateWrap.className = 'history-date-cell';
+
+          const dayEl = document.createElement('span');
+          dayEl.className = 'history-date-day';
+          dayEl.textContent = hasValidDate
+            ? date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+            : '—';
+
+          const timeEl = document.createElement('span');
+          timeEl.className = 'history-date-time';
+          timeEl.textContent = hasValidDate
+            ? date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            : '';
+
+          dateWrap.append(dayEl, timeEl);
+          dateCell.appendChild(dateWrap);
+
+          // ---- Mode ----
+          const modeCell = document.createElement('td');
+          const modePill = document.createElement('span');
+          const isQuotes = score.mode === 'quotes';
+          modePill.className = `history-mode-pill${isQuotes ? ' is-quotes' : ''}`;
+          modePill.textContent = isQuotes ? 'Quotes' : 'Time';
+          modeCell.appendChild(modePill);
+
+          // ---- WPM ----
+          const wpm = Number(score.wpm) || 0;
+          const wpmCell = document.createElement('td');
+          wpmCell.className = 'is-num';
+          const wpmPill = document.createElement('span');
           let wpmClass = 'wpm-low';
-          if (score.wpm >= 80) wpmClass = 'wpm-high';
-          else if (score.wpm >= 50) wpmClass = 'wpm-med';
-          
-          return `
-            <tr>
-              <td>${date}</td>
-              <td class="${wpmClass}">${score.wpm}</td>
-              <td>${score.accuracy}%</td>
-              <td>+${earnedXP}</td>
-            </tr>
-          `;
-        }).join('');
+          if (wpm >= 80) wpmClass = 'wpm-high';
+          else if (wpm >= 50) wpmClass = 'wpm-med';
+          wpmPill.className = `history-wpm-pill ${wpmClass}`;
+          wpmPill.textContent = String(wpm);
+          const wpmUnit = document.createElement('small');
+          wpmUnit.textContent = 'WPM';
+          wpmPill.appendChild(wpmUnit);
+          wpmCell.appendChild(wpmPill);
+
+          // ---- Akurasi ----
+          const accuracy = Number(score.accuracy) || 0;
+          const accCell = document.createElement('td');
+          accCell.className = 'is-num';
+          const accEl = document.createElement('span');
+          let accClass = 'is-low';
+          if (accuracy >= 95) accClass = 'is-high';
+          else if (accuracy >= 85) accClass = 'is-mid';
+          accEl.className = `history-acc-value ${accClass}`;
+          accEl.textContent = `${Math.round(accuracy)}%`;
+          accCell.appendChild(accEl);
+
+          // ---- XP (rumus sama dengan penyimpanan skor) ----
+          const earnedXP = Math.round(
+            wpm * (accuracy / 100) * (Number(score.time) || 0) / 60
+          );
+          const xpCell = document.createElement('td');
+          xpCell.className = 'is-num';
+          const xpEl = document.createElement('span');
+          xpEl.className = 'history-xp-value';
+          xpEl.textContent = `+${xpNumberFormat.format(earnedXP)} XP`;
+          xpCell.appendChild(xpEl);
+
+          row.append(dateCell, modeCell, wpmCell, accCell, xpCell);
+          tbody.appendChild(row);
+        });
       }
 
       // Init profile features setelah DOM ready
       document.addEventListener('DOMContentLoaded', () => {
+        initTheme({ pickerContainer: document.getElementById('themePickerContainer') });
         renderProfileHeader(buildUserData());
         loadHistory();
 
         import('./js/history/pb-manager.js').then(({ renderPBCards }) => {
           renderPBCards(getTypingScores());
         });
-      });
-
-      // Dark mode integration
-      import('./js/utils/dark-mode.js').then(darkMode => {
-        darkMode.initDarkMode(document.getElementById('darkModeToggle'));
       });
     </script>
 
