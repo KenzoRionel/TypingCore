@@ -843,6 +843,10 @@ body.dark-mode {
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-x: auto;
+    /* Batas tinggi ini dipakai js/history/typing-replay.js untuk menghitung
+       jumlah baris utuh: tinggi kotak dibulatkan ke kelipatan line-height
+       (dengan batas ini) supaya tidak ada baris yang terpotong di tepi
+       atas/bawah saat teks di-scroll. */
     max-height: 150px;
     overflow-y: auto;
     /* Auto-scroll mengikuti kata aktif, jadi batang scroll tidak perlu tampil

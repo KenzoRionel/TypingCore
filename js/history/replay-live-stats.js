@@ -643,6 +643,14 @@ export class ReplayLiveStats {
             95
         );
         this._yAccMin = yAccuracyMin;
+        // Jaga jumlah label sumbu kanan tetap wajar (maks ~6) dengan langkah
+        // "bulat". Tanpa ini, rentang 90%..100% menghasilkan 11 tick sekaligus
+        // (setiap 1%) dan deretan tick mark-nya terlihat seperti garis-garis
+        // horizontal yang menonjol keluar dari tepi kanan grafik.
+        const accRange = Math.max(1, 100 - yAccuracyMin);
+        const niceSteps = [1, 2, 5, 10, 20, 25, 50];
+        const yAccStep =
+            niceSteps.find((step) => accRange / step <= 5) ?? 50;
 
         this.chart = new Chart(canvas, {
             type: 'line',
@@ -747,7 +755,9 @@ export class ReplayLiveStats {
                         position: 'left',
                         beginAtZero: true,
                         max: yWpmMax,
-                        grid: { color: colors.grid },
+                        // drawTicks: false -> garis grid berhenti tepat di tepi
+                        // area grafik, tidak menonjol keluar ke arah label.
+                        grid: { color: colors.grid, drawTicks: false, tickLength: 0 },
                         border: { display: false },
                         ticks: {
                             color: colors.text,
@@ -760,11 +770,23 @@ export class ReplayLiveStats {
                         position: 'right',
                         min: yAccuracyMin,
                         max: 100,
-                        grid: { drawOnChartArea: false },
+                        // Sumbu kanan tidak menggambar grid di area grafik,
+                        // tapi tick mark-nya tetap digambar secara default:
+                        // deretan garis horizontal pendek yang menonjol keluar
+                        // dari tepi kanan (dan ikut memperpanjang garis dasar
+                        // sumbu X) sehingga terlihat tidak menyatu dengan
+                        // sumbu. Matikan tick mark-nya.
+                        grid: {
+                            drawOnChartArea: false,
+                            drawTicks: false,
+                            tickLength: 0,
+                        },
                         border: { display: false },
                         ticks: {
                             color: colors.text,
                             precision: 0,
+                            stepSize: yAccStep,
+                            maxTicksLimit: 6,
                             font: { size: 10 },
                             padding: 4,
                             callback: (value) => `${value}%`,

@@ -530,14 +530,43 @@ class TypingRenderer {
       ? firstEl.getBoundingClientRect().height || lineHeight
       : lineHeight;
 
+    // Tinggi kotak HARUS kelipatan line-height. Sebelumnya tinggi dibatasi
+    // `max-height: 150px`, sedangkan satu baris tingginya 28.8px
+    // (150 / 28.8 = 5.2 baris). Akibatnya tepi bawah selalu memotong baris
+    // keenam di tengah glyph, jadi baris yang sedang di-scroll terlihat
+    // terpotong oleh batas kotak. Dengan tinggi = jumlah baris utuh, tepi
+    // atas dan bawah selalu jatuh tepat di antara dua baris.
+    const computedMaxHeight = computed ? parseFloat(computed.maxHeight) : 0;
+    const maxBoxHeight =
+      Number.isFinite(computedMaxHeight) && computedMaxHeight > 0
+        ? computedMaxHeight
+        : lineHeight * 5;
+
+    container.style.height = '';
+    container.style.paddingBottom = '';
+
+    // scrollHeight dibaca SEBELUM tinggi kotak dipangkas supaya jumlah baris
+    // yang dibutuhkan teks bisa dihitung dari isi aslinya. min-height CSS
+    // dinolkan sementara agar teks pendek tidak dihitung lebih tinggi dari
+    // isinya (min-height tetap berlaku saat kotak dirender).
+    container.style.minHeight = '0px';
+    const contentHeight = container.scrollHeight;
+    container.style.minHeight = '';
+    const maxLines = Math.max(1, Math.floor(maxBoxHeight / lineHeight));
+    const visibleLines = Math.max(
+      1,
+      Math.min(maxLines, Math.ceil(contentHeight / lineHeight))
+    );
+    const boxHeight = visibleLines * lineHeight;
+    container.style.height = `${boxHeight}px`;
+
     // Ruang kosong di bawah teks, hanya kalau teksnya memang lebih tinggi
     // dari viewport. Tanpa ini baris-baris terakhir tidak bisa lagi
     // diposisikan dengan satu baris konteks di atasnya (auto-scroll mentok
     // di dasar), sehingga baris paling atas terlihat terpotong.
-    container.style.paddingBottom = '';
-    const overflows = container.scrollHeight > container.clientHeight + 1;
+    const overflows = contentHeight > boxHeight + 1;
     if (overflows) {
-      const spacer = Math.max(0, Math.ceil(container.clientHeight - lineHeight * 2));
+      const spacer = Math.max(0, Math.ceil(boxHeight - lineHeight * 2));
       if (spacer > 0) container.style.paddingBottom = `${spacer}px`;
     }
 
@@ -940,8 +969,16 @@ class TypingPlayer {
 
     // cari currentIndex via upper bound linear (aman untuk jumlah keystrokes biasanya < 15k)
     // optimasi bisa binary search, tapi linear cukup aman karena seek jarang.
+    //
+    // Posisi 0 (tepat sebelum karakter pertama) ditangani khusus: timeline
+    // ternormalisasi selalu memberi timestamp 0 pada keystroke pertama,
+    // sehingga perbandingan `<=` langsung menerapkan keystroke itu. Saat
+    // reset, itu membuat satu karakter sudah tampil sebelum replay dimulai.
+    // Di titik nol belum ada karakter yang diketik, jadi index harus 0.
     let idx = 0;
-    while (idx < this.playbackTimestamps.length && this.playbackTimestamps[idx] <= targetVirtualTimeMs) idx++;
+    if (targetVirtualTimeMs > 0) {
+      while (idx < this.playbackTimestamps.length && this.playbackTimestamps[idx] <= targetVirtualTimeMs) idx++;
+    }
 
     this.currentIndex = Math.min(idx, keystrokes.length);
     this.currentVirtualTimeMs = targetVirtualTimeMs;
@@ -1623,11 +1660,6 @@ class TypingReplayApp {
     if (!this.replayer) return;
     this.replayer.pause();
 
-    // Seek ke awal = 0
-    const timeline = this.state.playbackTimestamps || [];
-    this.replayer.currentIndex = 0;
-    this.replayer.currentVirtualTimeMs = timeline[0] ?? 0;
-
     // Nyalakan lagi auto-scroll dan kembalikan scroll ke atas, karena replay
     // dimulai ulang dari awal teks.
     if (this.renderer?.cache) {
@@ -1638,10 +1670,13 @@ class TypingReplayApp {
       }
     }
 
-    // Render ulang langsung
-    this.replayer.seekVirtualTime(this.replayer.currentVirtualTimeMs, { keepPlaying: false });
+    // seek(0) = posisi tepat SEBELUM karakter pertama. Jangan set index
+    // manual lalu memanggil seekVirtualTime(0): jalur itu bisa menerapkan
+    // keystroke pertama (timestamp 0) sehingga satu karakter tertinggal di
+    // layar sebelum replay dijalankan lagi.
+    this.replayer.seek(0);
 
-    // Reset UI stats
+    // Reset UI stats (seek sudah merender ulang teks + progres).
     this.replayer.updateUIStats();
     this.replayer.updateProgressUI();
   }
