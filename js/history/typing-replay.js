@@ -484,9 +484,15 @@ class TypingRenderer {
       for (const el of wrongExtras) el.remove();
 
       const charSpans = this.cache.wordCharSpans[wordIdx];
+      const targetWord = this.cache.targetWords?.[wordIdx] ?? '';
       if (charSpans) {
-        for (const charSpan of charSpans) {
+        for (let i = 0; i < charSpans.length; i++) {
+          const charSpan = charSpans[i];
           charSpan.className = 'replay-char untyped';
+          // Kembalikan glyph ke huruf target: saat playback maju, posisi yang
+          // salah menampilkan huruf yang diketik, jadi harus dipulihkan.
+          charSpan.textContent = targetWord[i] ?? '';
+          charSpan.removeAttribute('title');
         }
       }
 
@@ -640,8 +646,19 @@ class TypingRenderer {
           if (i < typedWord.length) {
             const isCorrect = typedWord[i] === targetWord[i];
             charSpan.className = `replay-char ${isCorrect ? 'correct' : 'wrong'}`;
+            // Tampilkan huruf yang BENAR-BENAR diketik pada posisi salah.
+            // Sebelumnya span selalu berisi huruf target, sehingga replay bisa
+            // memperlihatkan huruf kapital yang tidak pernah user ketik.
+            charSpan.textContent = isCorrect ? targetWord[i] : typedWord[i];
+            if (isCorrect) {
+              charSpan.removeAttribute('title');
+            } else {
+              charSpan.title = `Kamu mengetik "${typedWord[i]}", seharusnya "${targetWord[i]}"`;
+            }
           } else {
             charSpan.className = 'replay-char untyped';
+            charSpan.textContent = targetWord[i];
+            charSpan.removeAttribute('title');
           }
 
           charSpan.classList.toggle('cursor', isCurrentWord && i === typedWord.length);
@@ -1312,15 +1329,15 @@ class TypingReplayApp {
               <strong id="replay-live-accuracy" class="replay-live-value">0%</strong>
             </div>
             <div class="replay-live-stat">
-              <span class="replay-live-label">Diketik</span>
+              <span class="replay-live-label">Karakter Diketik</span>
               <strong id="replay-live-typed" class="replay-live-value">0</strong>
             </div>
             <div class="replay-live-stat">
-              <span class="replay-live-label">Benar</span>
+              <span class="replay-live-label">Karakter Benar</span>
               <strong id="replay-live-correct" class="replay-live-value is-good">0</strong>
             </div>
             <div class="replay-live-stat">
-              <span class="replay-live-label">Salah</span>
+              <span class="replay-live-label">Karakter Salah</span>
               <strong id="replay-live-wrong" class="replay-live-value">0</strong>
             </div>
             <div class="replay-live-stat">

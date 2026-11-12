@@ -1228,11 +1228,13 @@ body.dark-mode {
 }
 
 .replay-live-key.is-error::before {
-    width: 7px;
-    height: 7px;
+    content: "×";
+    width: auto;
+    height: auto;
     border-top: 0;
-    border-radius: 50%;
-    background: currentColor;
+    font-size: 0.85rem;
+    font-weight: 900;
+    line-height: 1;
 }
 
 .replay-live-clock {

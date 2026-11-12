@@ -605,7 +605,8 @@ export class ReplayLiveStats {
 
         if (errorDataset) {
             errorDataset.borderColor = colors.incorrect;
-            errorDataset.backgroundColor = colors.incorrect;
+            errorDataset.pointBorderColor = colors.incorrect;
+            errorDataset.backgroundColor = 'transparent';
         }
 
         const { x, yWpm, yAcc } = this.chart.options.scales;
@@ -699,18 +700,21 @@ export class ReplayLiveStats {
                         yAxisID: 'yAcc',
                     },
                     {
-                        // Titik error: satu titik di kurva akurasi pada
-                        // detik terjadinya salah ketik.
+                        // Titik error: tanda x di kurva akurasi pada detik
+                        // terjadinya salah ketik.
                         label: 'Error',
                         data: [],
                         borderColor: colors.incorrect,
-                        backgroundColor: colors.incorrect,
+                        backgroundColor: 'transparent',
                         showLine: false,
-                        pointRadius: 3.5,
-                        pointHoverRadius: 6,
-                        pointBorderWidth: 0,
-                        pointHitRadius: 8,
-                        clip: 10,
+                        pointStyle: 'crossRot',
+                        pointRadius: 4.5,
+                        pointHoverRadius: 7,
+                        pointBorderWidth: 1.8,
+                        pointBorderColor: colors.incorrect,
+                        pointBackgroundColor: 'transparent',
+                        pointHitRadius: 10,
+                        clip: 12,
                         yAxisID: 'yAcc',
                     },
                 ],
