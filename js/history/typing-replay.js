@@ -25,7 +25,7 @@ const REPLAY_SETTINGS_KEY = 'replaySettings';
 const DEFAULT_REPLAY_SETTINGS = Object.freeze({
   highlight: true, // sorot kata yang sedang diketik
   typingMode: false, // karakter muncul setelah diketik (bukan semua tampil)
-  liveStats: false, // grafik + metrik detail selama replay
+  liveStats: true, // grafik + metrik detail selama replay
 });
 
 function loadReplaySettings() {
@@ -34,7 +34,9 @@ function loadReplaySettings() {
     return {
       highlight: raw.highlight !== false,
       typingMode: raw.typingMode === true,
-      liveStats: raw.liveStats === true,
+      // Default aktif untuk pengguna baru; pilihan "mati" yang pernah
+      // disimpan tetap dihormati.
+      liveStats: raw.liveStats !== false,
     };
   } catch (err) {
     console.warn('Gagal membaca pengaturan replay:', err);
