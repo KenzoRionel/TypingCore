@@ -26,6 +26,10 @@ function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 
+function lerp(from, to, ratio) {
+    return from + (to - from) * ratio;
+}
+
 /**
  * Rata-rata bergerak simetris (jendela 2*radius+1). Dipakai untuk garis
  * grafik live supaya naik-turun per detik tidak terlihat patah-patah;
@@ -81,6 +85,7 @@ function getColors() {
         grid: toRgba(cssVar('--border', '#e2e2e4'), 0.8),
         accent: cssVar('--accent', '#3e63dd'),
         correct: cssVar('--correct', '#15803d'),
+        incorrect: cssVar('--incorrect', '#dc2626'),
         surface: cssVar('--surface', '#f5f5f6'),
         card: cssVar('--bg', '#ffffff'),
     };
@@ -90,12 +95,12 @@ function getColors() {
 const nowMarkerPlugin = {
     id: 'replayNowMarker',
     afterDatasetsDraw(chart) {
-        const second = chart.$replayNowSecond;
+        const time = chart.$replayNowTime;
         const area = chart.chartArea;
-        if (typeof second !== 'number' || second < 0 || !area) return;
+        if (typeof time !== 'number' || !Number.isFinite(time) || !area) return;
 
         const colors = getColors();
-        const x = chart.scales.x.getPixelForValue(second);
+        const x = chart.scales.x.getPixelForValue(time);
         if (!Number.isFinite(x)) return;
 
         chart.ctx.save();
@@ -117,7 +122,9 @@ export class ReplayLiveStats {
         this.chart = null;
         this.attached = false;
         this._lastSignature = '';
-        this._lastSecond = -1;
+        this._letterErrorCounts = new Map();
+        this._heatIndex = 0;
+        this._yAccMin = 0;
 
         this._onThemeChange = () => this.refreshTheme();
         document.addEventListener('themechange', this._onThemeChange);
@@ -142,7 +149,7 @@ export class ReplayLiveStats {
      *  waktu karena data skor lama bisa menyimpan timestamp absolut, sehingga
      *  pengelompokan per detik dari timestamp mentah tidak pernah cocok.
      */
-    load(keystrokes, { timeline = null, totalDurationSec = 0, key = '' } = {}) {
+    load(keystrokes, { timeline = null, totalDurationSec = 0, key = '', targetText = '' } = {}) {
         const list = Array.isArray(keystrokes) ? keystrokes : [];
         const total = list.length;
 
@@ -193,6 +200,79 @@ export class ReplayLiveStats {
             cumTyped[i + 1] = typed;
             cumCorrect[i + 1] = correct;
             cumWrong[i + 1] = wrong;
+        }
+
+        // ---- Kata benar/salah, titik error, dan peta salah ketik ----------
+        // Replay mengetik per kata: spasi meng-commit kata yang sedang
+        // diketik (lihat processTypedWord() di game-logic.js). Simulasi di
+        // bawah meniru urutan itu supaya hitungan kata live konsisten dengan
+        // hasil akhir tes, termasuk saat ada backspace sebelum spasi.
+        const targetWords = String(targetText || '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .split(' ')
+            .filter(Boolean);
+
+        const cumWordCorrect = new Array(total + 1).fill(0);
+        const cumWordWrong = new Array(total + 1).fill(0);
+        const errorLetters = new Array(total).fill(null);
+        const errorPoints = [];
+
+        let wordIndex = 0;
+        let wordTyped = '';
+        let wordCorrect = 0;
+        let wordWrong = 0;
+
+        for (let i = 0; i < total; i++) {
+            const entry = list[i] || {};
+
+            if (entry.isDeletion) {
+                if (wordTyped.length > 0) wordTyped = wordTyped.slice(0, -1);
+            } else {
+                const ch = typeof entry.char === 'string' ? entry.char : '';
+
+                if (ch === ' ') {
+                    if (wordTyped) {
+                        const target = targetWords[wordIndex] || '';
+                        if (wordTyped === target) wordCorrect += 1;
+                        else wordWrong += 1;
+                        wordIndex += 1;
+                        wordTyped = '';
+                    }
+                } else if (ch) {
+                    const target = targetWords[wordIndex] || '';
+                    const expected = target[wordTyped.length] || '';
+                    wordTyped += ch;
+
+                    if (!entry.isCorrect) {
+                        // Peta keyboard menyorot huruf yang BENAR-BENAR
+                        // ditekan saat salah (sama seperti analisis skill di
+                        // halaman profil), supaya terlihat tombol mana yang
+                        // sering tertekan keliru.
+                        const letter = /^[a-z]$/i.test(ch)
+                            ? ch.toLowerCase()
+                            : /^[a-z]$/i.test(expected)
+                                ? expected.toLowerCase()
+                                : null;
+                        errorLetters[i] = letter;
+
+                        const accuracyAfter =
+                            cumTyped[i + 1] > 0
+                                ? (cumCorrect[i + 1] / cumTyped[i + 1]) * 100
+                                : 100;
+                        errorPoints.push({
+                            // x mengikuti label sumbu X: detik ke-1..N.
+                            x: times[i] / 1000 + 1,
+                            y: accuracyAfter,
+                            char: ch,
+                            expected: expected || null,
+                        });
+                    }
+                }
+            }
+
+            cumWordCorrect[i + 1] = wordCorrect;
+            cumWordWrong[i + 1] = wordWrong;
         }
 
         const maxTime = total > 0 ? Math.max(times[total - 1], 0) : 0;
@@ -274,6 +354,10 @@ export class ReplayLiveStats {
             cumTyped,
             cumCorrect,
             cumWrong,
+            cumWordCorrect,
+            cumWordWrong,
+            errorLetters,
+            errorPoints,
             speedSeries,
             accuracySeries,
             // Garis grafik dihaluskan (rata-rata 5 titik) supaya gerakannya
@@ -286,10 +370,12 @@ export class ReplayLiveStats {
         };
 
         this._lastSignature = '';
-        this._lastSecond = -1;
+        this._letterErrorCounts.clear();
+        this._heatIndex = 0;
 
         if (this.chart) this._buildChart();
         this.refreshTheme();
+        this._syncKeymap();
     }
 
     attach() {
@@ -303,7 +389,6 @@ export class ReplayLiveStats {
         this.chart?.destroy();
         this.chart = null;
         this._lastSignature = '';
-        this._lastSecond = -1;
     }
 
     destroy() {
@@ -320,19 +405,23 @@ export class ReplayLiveStats {
 
         const data = this.data;
         const safeIndex = clamp(Math.round(num(index)), 0, data.keystrokes.length);
-        const second = clamp(
-            Math.floor(num(timeMs) / 1000),
-            0,
-            data.totalSeconds - 1
-        );
+        const maxTip = Math.max(0, data.totalSeconds - 1);
+        // Waktu pecahan (bukan hanya detik bulat) supaya ujung garis bisa
+        // bergerak mulus di antara dua titik, bukan meloncat per detik.
+        const tipSeconds = clamp(num(timeMs) / 1000, 0, maxTip);
+        const second = clamp(Math.floor(tipSeconds), 0, maxTip);
 
-        const signature = `${safeIndex}|${second}`;
+        // ~24 fps: cukup mulus untuk mata, jauh lebih ringan daripada 60 fps.
+        const bucket = Math.round(tipSeconds * 24);
+        const signature = `${safeIndex}|${second}|${bucket}`;
         if (signature === this._lastSignature) return;
         this._lastSignature = signature;
 
         const typed = data.cumTyped[safeIndex];
         const correct = data.cumCorrect[safeIndex];
         const wrong = data.cumWrong[safeIndex];
+        const wordsCorrect = data.cumWordCorrect[safeIndex] || 0;
+        const wordsWrong = data.cumWordWrong[safeIndex] || 0;
         const last = safeIndex > 0 ? data.keystrokes[safeIndex - 1] : null;
 
         // WPM kumulatif memakai snapshot recorder; kalau snapshot kosong/0
@@ -354,6 +443,8 @@ export class ReplayLiveStats {
         this._setText(this._el('replay-live-typed'), String(typed));
         this._setText(this._el('replay-live-correct'), String(correct));
         this._setText(this._el('replay-live-wrong'), String(wrong));
+        this._setText(this._el('replay-live-words-correct'), String(wordsCorrect));
+        this._setText(this._el('replay-live-words-wrong'), String(wordsWrong));
         this._setText(this._el('replay-live-consistency'), `${consistency}%`);
         this._setText(
             this._el('replay-live-clock'),
@@ -369,37 +460,153 @@ export class ReplayLiveStats {
         const wrongEl = this._el('replay-live-wrong');
         if (wrongEl) wrongEl.classList.toggle('is-bad', wrong > 0);
 
+        const wordsCorrectEl = this._el('replay-live-words-correct');
+        if (wordsCorrectEl) wordsCorrectEl.classList.toggle('is-good', wordsCorrect > 0);
+
+        const wordsWrongEl = this._el('replay-live-words-wrong');
+        if (wordsWrongEl) wordsWrongEl.classList.toggle('is-bad', wordsWrong > 0);
+
         const consistencyEl = this._el('replay-live-consistency');
         if (consistencyEl) {
             consistencyEl.classList.toggle('is-good', consistency >= 80);
             consistencyEl.classList.toggle('is-bad', consistency > 0 && consistency < 60);
         }
 
+        this._advanceLetterCounts(safeIndex);
+
         if (!this.chart) return;
-        if (second === this._lastSecond) return;
-        this._lastSecond = second;
+        this._renderChart(tipSeconds);
+    }
 
-        const speedData = data.plotSpeedSeries.map((value, i) => (i <= second ? value : null));
-        const accuracyData = data.plotAccuracySeries.map((value, i) =>
-            i <= second ? value : null
-        );
+    /**
+     * Bangun ulang data grafik untuk posisi waktu saat ini.
+     *
+     * Titik data disimpan sebagai {x, y} pada sumbu X linear, dan titik
+     * terdepan diberi nilai interpolasi di antara dua detik. Hasilnya ujung
+     * garis bergerak kontinu mengikuti waktu replay, bukan melompat dari
+     * titik ke titik.
+     */
+    _renderChart(tipSeconds) {
+        const data = this.data;
+        const count = data.totalSeconds;
+        const lastIndex = count - 1;
+        const base = clamp(Math.floor(tipSeconds), 0, lastIndex);
+        const frac = clamp(tipSeconds - base, 0, 1);
 
-        this.chart.data.datasets[0].data = speedData;
-        this.chart.data.datasets[1].data = accuracyData;
-        this.chart.$replayNowSecond = second;
+        const speed = [];
+        const accuracy = [];
+        for (let i = 0; i <= base; i++) {
+            speed.push({ x: i + 1, y: data.plotSpeedSeries[i] });
+            accuracy.push({ x: i + 1, y: data.plotAccuracySeries[i] });
+        }
+
+        if (frac > 0.002 && base < lastIndex) {
+            const tipX = tipSeconds + 1;
+            speed.push({
+                x: tipX,
+                y: lerp(data.plotSpeedSeries[base], data.plotSpeedSeries[base + 1], frac),
+            });
+            accuracy.push({
+                x: tipX,
+                y: lerp(data.plotAccuracySeries[base], data.plotAccuracySeries[base + 1], frac),
+            });
+        }
+
+        // Titik error hanya yang sudah "terjadi" pada posisi replay ini.
+        const errors = [];
+        for (const point of data.errorPoints) {
+            if (point.x > tipSeconds + 1.0001) break;
+            errors.push({
+                x: point.x,
+                // Jaga titik tetap terlihat walau akurasi saat error berada
+                // di luar rentang sumbu akurasi (mis. error di detik pertama).
+                y: clamp(point.y, this._yAccMin + 1.5, 99.5),
+                char: point.char,
+                expected: point.expected,
+            });
+        }
+
+        this.chart.data.datasets[0].data = speed;
+        this.chart.data.datasets[1].data = accuracy;
+        this.chart.data.datasets[2].data = errors;
+        this.chart.$replayTipIndex = speed.length - 1;
+        this.chart.$replayNowTime = tipSeconds + 1;
         this.chart.update('none');
+    }
+
+    /** Tambah hitungan huruf salah secara inkremental (atau reset saat seek mundur). */
+    _advanceLetterCounts(index) {
+        if (index === this._heatIndex) return;
+
+        if (index < this._heatIndex) {
+            this._letterErrorCounts.clear();
+            this._heatIndex = 0;
+        }
+
+        for (let i = this._heatIndex; i < index; i++) {
+            const letter = this.data.errorLetters[i];
+            if (!letter) continue;
+            this._letterErrorCounts.set(letter, (this._letterErrorCounts.get(letter) || 0) + 1);
+        }
+
+        this._heatIndex = index;
+        this._syncKeymap();
+    }
+
+    /** Terapkan heat warna ke peta keyboard + daftar huruf paling sering salah. */
+    _syncKeymap() {
+        const board = this._el('replay-keymap');
+        if (!board) return;
+
+        let max = 0;
+        for (const count of this._letterErrorCounts.values()) {
+            if (count > max) max = count;
+        }
+
+        board.querySelectorAll('[data-key]').forEach((el) => {
+            const key = el.dataset.key;
+            const count = this._letterErrorCounts.get(key) || 0;
+            // Akar kuadrat: error yang jarang tetap terlihat, tapi urutan
+            // "makin sering = makin pekat" tetap terjaga.
+            const ratio = max > 0 && count > 0
+                ? Math.max(0.16, Math.sqrt(count / max))
+                : 0;
+
+            el.style.setProperty('--heat', `${Math.round(ratio * 100)}%`);
+            el.classList.toggle('is-hot', ratio >= 0.6);
+            el.title = count > 0
+                ? `${key.toUpperCase()}: ${count} salah ketik`
+                : `${key.toUpperCase()}: belum ada salah ketik`;
+        });
+
+        const top = [...this._letterErrorCounts.entries()]
+            .filter(([, count]) => count > 0)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+
+        this._setText(
+            this._el('replay-keymap-top'),
+            top.length > 0
+                ? `Sering salah: ${top.map(([key, count]) => `${key.toUpperCase()} (${count})`).join(' · ')}`
+                : 'Belum ada salah ketik'
+        );
     }
 
     refreshTheme() {
         if (!this.chart) return;
 
         const colors = getColors();
-        const [wpmDataset, accuracyDataset] = this.chart.data.datasets;
+        const [wpmDataset, accuracyDataset, errorDataset] = this.chart.data.datasets;
 
         wpmDataset.borderColor = colors.accent;
         wpmDataset.pointBackgroundColor = colors.card;
         wpmDataset.pointBorderColor = colors.accent;
         accuracyDataset.borderColor = colors.correct;
+
+        if (errorDataset) {
+            errorDataset.borderColor = colors.incorrect;
+            errorDataset.backgroundColor = colors.incorrect;
+        }
 
         const { x, yWpm, yAcc } = this.chart.options.scales;
         x.ticks.color = colors.text;
@@ -426,9 +633,7 @@ export class ReplayLiveStats {
 
         const colors = getColors();
         const data = this.data;
-        const labels = Array.from({ length: data.totalSeconds }, (_, index) =>
-            String(index + 1)
-        );
+        const xMax = Math.max(2, data.totalSeconds);
 
         const yWpmMax = Math.max(40, Math.ceil((data.maxSpeed * 1.2) / 10) * 10);
         const yAccuracyMin = clamp(
@@ -436,15 +641,15 @@ export class ReplayLiveStats {
             0,
             95
         );
+        this._yAccMin = yAccuracyMin;
 
         this.chart = new Chart(canvas, {
             type: 'line',
             data: {
-                labels,
                 datasets: [
                     {
                         label: 'WPM',
-                        data: new Array(data.totalSeconds).fill(null),
+                        data: [],
                         borderColor: colors.accent,
                         backgroundColor: (context) => {
                             const { ctx, chartArea } = context.chart;
@@ -467,8 +672,9 @@ export class ReplayLiveStats {
                         // Monotone: kurva mulus lewat tiap titik tanpa
                         // overshoot, jadi tidak terlihat patah/patah.
                         cubicInterpolationMode: 'monotone',
+                        clip: 10,
                         pointRadius: (context) =>
-                            context.dataIndex === context.chart.$replayNowSecond ? 4 : 0,
+                            context.dataIndex === context.chart.$replayTipIndex ? 4 : 0,
                         pointBackgroundColor: colors.card,
                         pointBorderColor: colors.accent,
                         pointBorderWidth: 2,
@@ -478,17 +684,33 @@ export class ReplayLiveStats {
                     },
                     {
                         label: 'Akurasi',
-                        data: new Array(data.totalSeconds).fill(null),
+                        data: [],
                         borderColor: colors.correct,
                         backgroundColor: 'transparent',
                         borderWidth: 1.5,
                         borderDash: [5, 4],
                         tension: 0.35,
                         cubicInterpolationMode: 'monotone',
+                        clip: 10,
                         pointRadius: 0,
                         pointHitRadius: 10,
                         fill: false,
                         spanGaps: false,
+                        yAxisID: 'yAcc',
+                    },
+                    {
+                        // Titik error: satu titik di kurva akurasi pada
+                        // detik terjadinya salah ketik.
+                        label: 'Error',
+                        data: [],
+                        borderColor: colors.incorrect,
+                        backgroundColor: colors.incorrect,
+                        showLine: false,
+                        pointRadius: 3.5,
+                        pointHoverRadius: 6,
+                        pointBorderWidth: 0,
+                        pointHitRadius: 8,
+                        clip: 10,
                         yAxisID: 'yAcc',
                     },
                 ],
@@ -497,11 +719,13 @@ export class ReplayLiveStats {
                 responsive: true,
                 maintainAspectRatio: false,
                 animation: false,
-                interaction: { mode: 'index', intersect: false },
-                layout: { padding: { top: 4, right: 4 } },
+                interaction: { mode: 'x', intersect: false },
+                layout: { padding: { top: 4, right: 6, left: 2 } },
                 scales: {
                     x: {
-                        offset: true,
+                        type: 'linear',
+                        min: 1,
+                        max: xMax,
                         grid: { display: false },
                         border: { color: colors.border },
                         ticks: {
@@ -509,8 +733,10 @@ export class ReplayLiveStats {
                             autoSkip: true,
                             maxRotation: 0,
                             maxTicksLimit: 8,
+                            precision: 0,
                             font: { size: 10 },
                             padding: 4,
+                            callback: (value) => `${Math.round(value)}`,
                         },
                     },
                     yWpm: {
@@ -553,11 +779,22 @@ export class ReplayLiveStats {
                         cornerRadius: 8,
                         displayColors: false,
                         callbacks: {
-                            title: (items) => `Detik ${items[0].dataIndex + 1}`,
-                            label: (context) =>
-                                context.dataset.yAxisID === 'yAcc'
+                            title: (items) =>
+                                `Detik ${Math.round(items[0].parsed.x)}`,
+                            label: (context) => {
+                                const raw = context.raw || {};
+
+                                if (context.dataset.label === 'Error') {
+                                    const expected = raw.expected
+                                        ? ` (harusnya "${raw.expected}")`
+                                        : '';
+                                    return `Salah: "${raw.char}"${expected}`;
+                                }
+
+                                return context.dataset.yAxisID === 'yAcc'
                                     ? `Akurasi: ${Math.round(context.parsed.y)}%`
-                                    : `WPM: ${Math.round(context.parsed.y)}`,
+                                    : `WPM: ${Math.round(context.parsed.y)}`;
+                            },
                         },
                     },
                 },
@@ -565,6 +802,7 @@ export class ReplayLiveStats {
             plugins: [nowMarkerPlugin],
         });
 
-        this.chart.$replayNowSecond = -1;
+        this.chart.$replayTipIndex = -1;
+        this.chart.$replayNowTime = 1;
     }
 }

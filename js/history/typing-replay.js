@@ -1243,6 +1243,7 @@ class TypingReplayApp {
             <span class="replay-live-legend">
               <span class="replay-live-key is-wpm">WPM</span>
               <span class="replay-live-key is-accuracy">Akurasi</span>
+              <span class="replay-live-key is-error">Error</span>
             </span>
           </div>
           <span id="replay-live-clock" class="replay-live-clock">0s / 0s</span>
@@ -1251,8 +1252,55 @@ class TypingReplayApp {
           Pilih skor yang punya replay untuk melihat statistik live.
         </p>
         <div id="replay-live-body" class="replay-live-body" hidden>
-          <div class="replay-live-chart">
-            <canvas id="replay-live-chart" role="img" aria-label="Grafik WPM dan akurasi selama replay"></canvas>
+          <div class="replay-live-main">
+            <div class="replay-live-chart">
+              <canvas id="replay-live-chart" role="img" aria-label="Grafik WPM, akurasi, dan titik error selama replay"></canvas>
+            </div>
+            <div class="replay-keymap" aria-label="Peta huruf yang sering salah ketik">
+              <div class="replay-keymap-head">
+                <span class="replay-keymap-title">Peta Salah Ketik</span>
+                <span id="replay-keymap-top" class="replay-keymap-top">Belum ada salah ketik</span>
+              </div>
+              <div id="replay-keymap" class="replay-keymap-board" aria-hidden="true">
+                <div class="replay-keymap-row">
+                  <span class="replay-keymap-key" data-key="q">Q</span>
+                  <span class="replay-keymap-key" data-key="w">W</span>
+                  <span class="replay-keymap-key" data-key="e">E</span>
+                  <span class="replay-keymap-key" data-key="r">R</span>
+                  <span class="replay-keymap-key" data-key="t">T</span>
+                  <span class="replay-keymap-key" data-key="y">Y</span>
+                  <span class="replay-keymap-key" data-key="u">U</span>
+                  <span class="replay-keymap-key" data-key="i">I</span>
+                  <span class="replay-keymap-key" data-key="o">O</span>
+                  <span class="replay-keymap-key" data-key="p">P</span>
+                </div>
+                <div class="replay-keymap-row">
+                  <span class="replay-keymap-key" data-key="a">A</span>
+                  <span class="replay-keymap-key" data-key="s">S</span>
+                  <span class="replay-keymap-key" data-key="d">D</span>
+                  <span class="replay-keymap-key" data-key="f">F</span>
+                  <span class="replay-keymap-key" data-key="g">G</span>
+                  <span class="replay-keymap-key" data-key="h">H</span>
+                  <span class="replay-keymap-key" data-key="j">J</span>
+                  <span class="replay-keymap-key" data-key="k">K</span>
+                  <span class="replay-keymap-key" data-key="l">L</span>
+                </div>
+                <div class="replay-keymap-row">
+                  <span class="replay-keymap-key" data-key="z">Z</span>
+                  <span class="replay-keymap-key" data-key="x">X</span>
+                  <span class="replay-keymap-key" data-key="c">C</span>
+                  <span class="replay-keymap-key" data-key="v">V</span>
+                  <span class="replay-keymap-key" data-key="b">B</span>
+                  <span class="replay-keymap-key" data-key="n">N</span>
+                  <span class="replay-keymap-key" data-key="m">M</span>
+                </div>
+              </div>
+              <div class="replay-keymap-legend">
+                <span>Jarang</span>
+                <i aria-hidden="true"></i>
+                <span>Sering</span>
+              </div>
+            </div>
           </div>
           <div class="replay-live-grid">
             <div class="replay-live-stat">
@@ -1276,12 +1324,20 @@ class TypingReplayApp {
               <strong id="replay-live-wrong" class="replay-live-value">0</strong>
             </div>
             <div class="replay-live-stat">
+              <span class="replay-live-label">Kata Benar</span>
+              <strong id="replay-live-words-correct" class="replay-live-value is-good">0</strong>
+            </div>
+            <div class="replay-live-stat">
+              <span class="replay-live-label">Kata Salah</span>
+              <strong id="replay-live-words-wrong" class="replay-live-value">0</strong>
+            </div>
+            <div class="replay-live-stat">
               <span class="replay-live-label">Konsistensi</span>
               <strong id="replay-live-consistency" class="replay-live-value">0%</strong>
             </div>
           </div>
           <p class="replay-live-foot">
-            WPM: kecepatan 3 detik terakhir (dihaluskan) &middot; Konsistensi: 15 detik terakhir
+            WPM: kecepatan 3 detik terakhir (dihaluskan) &middot; Konsistensi: 15 detik terakhir &middot; Kata dihitung saat spasi
           </p>
         </div>
       </div>
@@ -1461,6 +1517,7 @@ class TypingReplayApp {
         timeline: this.state.playbackTimestamps,
         totalDurationSec: this.state.totalDurationSec,
         key,
+        targetText: this.state.replayData?.targetText || '',
       });
       this._liveMountedKey = key;
     }

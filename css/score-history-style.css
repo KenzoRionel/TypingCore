@@ -1223,6 +1223,18 @@ body.dark-mode {
     border-top-style: dashed;
 }
 
+.replay-live-key.is-error {
+    color: var(--incorrect);
+}
+
+.replay-live-key.is-error::before {
+    width: 7px;
+    height: 7px;
+    border-top: 0;
+    border-radius: 50%;
+    background: currentColor;
+}
+
 .replay-live-clock {
     font-family: "JetBrains Mono", monospace;
     font-size: 0.7rem;
@@ -1240,10 +1252,16 @@ body.dark-mode {
     text-align: center;
 }
 
+.replay-live-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
 .replay-live-chart {
     position: relative;
     height: 190px;
-    margin-bottom: 12px;
 }
 
 .replay-live-chart canvas {
@@ -1251,9 +1269,120 @@ body.dark-mode {
     height: 100% !important;
 }
 
+@media (min-width: 980px) {
+    .replay-live-main {
+        grid-template-columns: minmax(0, 1.85fr) minmax(280px, 0.9fr);
+        align-items: stretch;
+    }
+
+    .replay-live-chart {
+        height: 230px;
+    }
+}
+
+/* ---- Peta salah ketik (keyboard heatmap) ---- */
+
+.replay-keymap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--score-card-bg);
+}
+
+.replay-keymap-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 10px;
+}
+
+.replay-keymap-title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.replay-keymap-top {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.replay-keymap-board {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+}
+
+.replay-keymap-row {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.replay-keymap-row:nth-child(2) {
+    width: 92%;
+    margin: 0 auto;
+}
+
+.replay-keymap-row:nth-child(3) {
+    width: 84%;
+    margin: 0 auto;
+}
+
+.replay-keymap-key {
+    --heat: 0%;
+    display: inline-flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    height: 24px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--incorrect) var(--heat), var(--score-card-bg));
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.replay-keymap-key.is-hot {
+    border-color: transparent;
+    color: var(--score-card-bg);
+}
+
+.replay-keymap-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem;
+    color: var(--text-muted);
+}
+
+.replay-keymap-legend i {
+    flex: 1;
+    height: 6px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--score-card-bg), var(--incorrect));
+}
+
 .replay-live-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
@@ -1266,9 +1395,15 @@ body.dark-mode {
     text-align: center;
 }
 
-@media (min-width: 760px) {
+@media (min-width: 560px) {
     .replay-live-grid {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1200px) {
+    .replay-live-grid {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
     }
 }
 
