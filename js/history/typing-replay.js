@@ -15,7 +15,17 @@
 
 /* eslint-disable no-console */
 
-const DEFAULT_DELAY_CAP_MS = 2000;
+/**
+ * Pengaman data rusak (mis. timestamp kacau/overflow), BUKAN pemotong jeda asli.
+ *
+ * Sebelumnya ada cap 2000ms per jeda antar keystroke. Efeknya replay
+ * memampatkan semua jeda > 2 detik, jadi total durasi replay lebih pendek
+ * daripada durasi asli dan posisi progress bar/Waktu tidak lagi cocok dengan
+ * timestamp asli. Sekarang jeda diputar apa adanya (realtime persis); hanya
+ * jeda yang jelas-jelas mustahil (data korup) yang dibatasi.
+ */
+const MAX_SANE_GAP_MS = 5 * 60 * 1000;
+
 const DEFAULT_PLAYBACK_SPEED = 1; // 1 = realtime
 
 // Kecepatan berbasis multiplier:
@@ -66,45 +76,124 @@ class TypingRecorder {
   static computePlaybackTimestamps(keystrokes) {
     if (!Array.isArray(keystrokes) || keystrokes.length === 0) return [];
 
-    // Ambil timestamp yang valid. Kita tidak crash jika ada timestamp corrupt.
-    const validTimestamps = [];
-    for (let i = 0; i < keystrokes.length; i++) {
-      const t = keystrokes[i]?.timestamp;
-      validTimestamps[i] = typeof t === 'number' && Number.isFinite(t) ? t : null;
-    }
-
     // Cari timestamp pertama yang valid
     let firstValidIdx = 0;
-    while (firstValidIdx < validTimestamps.length && validTimestamps[firstValidIdx] === null) firstValidIdx++;
-    if (firstValidIdx >= validTimestamps.length) return [];
+    while (firstValidIdx < keystrokes.length) {
+      const t = keystrokes[firstValidIdx]?.timestamp;
+      if (typeof t === 'number' && Number.isFinite(t)) break;
+      firstValidIdx++;
+    }
+    if (firstValidIdx >= keystrokes.length) return [];
 
-    // timeline virtual: akumulasi delay antar timestamp yang valid.
+    // timeline virtual = selisih timestamp asli terhadap keystroke pertama.
+    // Tidak ada pemampatan: jeda 5 detik tetap 5 detik, sama seperti saat mengetik.
     const timeline = new Array(keystrokes.length).fill(0);
-    const firstTs = validTimestamps[firstValidIdx];
-    let prevTs = firstTs;
+    let prevTs = keystrokes[firstValidIdx].timestamp;
     let acc = 0;
 
     for (let i = firstValidIdx; i < keystrokes.length; i++) {
-      const ts = validTimestamps[i];
-      if (ts === null) {
-        // Timestamp corrupt/blank: kita skip secara aman dengan memakai timestamp sebelumnya.
+      const ts = keystrokes[i]?.timestamp;
+
+      // Timestamp corrupt/blank: diam di waktu terakhir yang valid.
+      if (typeof ts !== 'number' || !Number.isFinite(ts)) {
         timeline[i] = acc;
         continue;
       }
 
       const rawDelay = ts - prevTs;
-      // delay negatif/corrupt -> clamp ke 0
-      const delay = Math.min(Math.max(0, rawDelay), DEFAULT_DELAY_CAP_MS);
-      acc += delay;
+
+      // Timestamp tidak monoton (data rusak): jangan pernah mundur waktu.
+      // prevTs sengaja tidak diturunkan supaya jeda berikutnya tetap dihitung
+      // dari timestamp tertinggi yang pernah dilihat.
+      if (rawDelay < 0) {
+        timeline[i] = acc;
+        continue;
+      }
+
+      acc += Math.min(rawDelay, MAX_SANE_GAP_MS);
       timeline[i] = acc;
       prevTs = ts;
     }
 
-    // Untuk indeks sebelum firstValidIdx, jadikan 0 (tidak mempengaruhi karena player tidak akan seek ke sana dengan target waktu valid)
+    // Indeks sebelum keystroke pertama yang valid tidak pernah dituju player,
+    // tapi harus tetap terdefinisi supaya seek/progress tidak menghasilkan NaN.
     for (let i = 0; i < firstValidIdx; i++) timeline[i] = 0;
 
     timeline[0] = 0;
     return timeline;
+  }
+
+  /**
+   * Terapkan satu keystroke ke state input (string yang sedang diketik).
+   *
+   * Dipakai untuk menghitung state AKHIR dari keystroke terakhir, karena
+   * `inputState` yang direkam selalu berisi state SEBELUM tombol diproses.
+   *
+   * @param {string} inputState
+   * @param {Keystroke|undefined} keystroke
+   * @returns {string}
+   */
+  static applyKeystrokeToInputState(inputState, keystroke) {
+    const base = typeof inputState === 'string' ? inputState : '';
+    if (!keystroke) return base;
+
+    if (keystroke.isDeletion) {
+      // Backspace tidak bisa melewati batas kata (hidden input hanya berisi
+      // kata aktif), jadi kalau kata aktif sudah kosong tidak ada yang dihapus.
+      const lastSpace = base.lastIndexOf(' ');
+      const currentWordLength = base.length - lastSpace - 1;
+      if (currentWordLength <= 0) return base;
+      return base.slice(0, -1);
+    }
+
+    const ch = typeof keystroke.char === 'string' ? keystroke.char : '';
+    if (!ch) return base;
+
+    // Spasi hanya memindahkan kata kalau ada kata yang sedang diketik.
+    if (ch === ' ') {
+      if (!base || base.endsWith(' ')) return base;
+      return `${base} `;
+    }
+
+    return base + ch;
+  }
+
+  /**
+   * State input yang HARUS tampil setelah `typedCount` keystroke diproses.
+   *
+   * Kenapa tidak langsung `keystrokes[typedCount - 1].inputState`?
+   * Karena recorder mengambil snapshot `inputState` di event keydown, yaitu
+   * SEBELUM karakter baru masuk ke input. Dengan cara lama, teks replay selalu
+   * tertinggal satu karakter dari jumlah keystroke yang sudah diputar (dan
+   * karakter terakhir tidak pernah muncul sama sekali).
+   *
+   * `keystrokes[typedCount].inputState` = state tepat sebelum keystroke
+   * berikutnya = state setelah keystroke ke-(typedCount-1). Jadi itulah state
+   * yang benar untuk posisi saat ini. Untuk posisi paling akhir (tidak ada
+   * keystroke berikutnya) state dihitung dengan menerapkan keystroke terakhir.
+   *
+   * @param {Keystroke[]} keystrokes
+   * @param {number} typedCount
+   * @returns {string}
+   */
+  static resolveInputState(keystrokes, typedCount) {
+    if (!Array.isArray(keystrokes) || keystrokes.length === 0) return '';
+
+    const n = keystrokes.length;
+    const count = Math.max(0, Math.min(typedCount, n));
+    if (count === 0) return '';
+
+    // Data normal: ambil snapshot "sebelum keystroke berikutnya".
+    if (count < n) {
+      const next = keystrokes[count];
+      if (next && typeof next.inputState === 'string') return next.inputState;
+    }
+
+    // Fallback (data lama tanpa inputState berikutnya): pakai state terakhir
+    // yang tersimpan lalu terapkan keystroke terakhir yang sudah diputar.
+    const last = keystrokes[count - 1];
+    const base = typeof last?.inputState === 'string' ? last.inputState : '';
+    return TypingRecorder.applyKeystrokeToInputState(base, last);
   }
 
   /**
@@ -163,7 +252,9 @@ class TypingRenderer {
 
     // Flag internal untuk membedakan scroll yang kita set sendiri (programmatic)
     // vs scroll yang dilakukan user (wheel/touch/drag scrollbar).
-    this._suppressNextScrollEvent = false;
+    // Diisi nilai scrollTop hasil auto-scroll kita; scroll event yang posisinya
+    // sama dengan nilai ini diabaikan.
+    this._programmaticScrollTop = null;
 
     this._attachManualScrollDetection();
   }
@@ -186,34 +277,41 @@ class TypingRenderer {
   }
 
   /**
-   * Deteksi scroll manual dari user (wheel, touch drag, drag scrollbar).
-   * Begitu terdeteksi, followMode dimatikan supaya auto-scroll tidak
-   * menimpa posisi scroll yang sedang dibaca user.
+   * Deteksi scroll manual dari user (wheel, touch drag, drag scrollbar, keyboard).
+   * Begitu posisi scroll berubah bukan karena auto-scroll kita, followMode
+   * dimatikan supaya auto-scroll tidak menimpa posisi yang sedang dibaca user.
    * followMode dinyalakan lagi otomatis kalau user scroll balik ke dekat
    * baris yang sedang aktif diketik.
+   *
+   * Catatan: listener wheel/touchmove tidak dipakai lagi. Dulu setiap wheel di
+   * atas area replay langsung mematikan followMode -- bahkan saat area itu tidak
+   * ikut ter-scroll (mis. halaman yang di-scroll) -- sehingga auto-scroll bisa
+   * mati tanpa user benar-benar menggeser teks replay.
    */
   _attachManualScrollDetection() {
     const el = this.containerEl;
-    if (!el || el._replayScrollWired) return;
-    el._replayScrollWired = true;
+    if (!el) return;
 
-    const disableFollow = () => {
-      this.cache.followMode = false;
-    };
+    // Bisa dipanggil ulang kalau TypingRenderer dibuat lagi untuk elemen yang
+    // sama (mis. initReplayContainer() kedua kali). Handler lama dilepas dulu
+    // supaya tidak ada dua renderer yang mendengarkan elemen yang sama.
+    if (el._replayScrollHandler) {
+      el.removeEventListener('scroll', el._replayScrollHandler);
+    }
 
-    el.addEventListener('wheel', disableFollow, { passive: true });
-    el.addEventListener('touchmove', disableFollow, { passive: true });
-
-    el.addEventListener('scroll', () => {
-      if (this._suppressNextScrollEvent) {
-        // Ini scroll hasil auto-scroll kita sendiri, abaikan.
-        this._suppressNextScrollEvent = false;
+    el._replayScrollHandler = () => {
+      // Abaikan scroll yang berasal dari auto-scroll kita sendiri.
+      if (this._programmaticScrollTop !== null &&
+          Math.abs(el.scrollTop - this._programmaticScrollTop) < 2) {
         return;
       }
-      // Scroll yang bukan dari auto-scroll kita (termasuk drag scrollbar/keyboard).
+
+      // Scroll yang bukan dari auto-scroll kita = user.
       this.cache.followMode = false;
       this._maybeResumeFollow();
-    }, { passive: true });
+    };
+
+    el.addEventListener('scroll', el._replayScrollHandler, { passive: true });
   }
 
   /**
@@ -230,8 +328,9 @@ class TypingRenderer {
 
     const container = this.containerEl;
     const topWithinView = wordTop - container.scrollTop;
+    const viewportHeight = container.clientHeight || lineHeight * 3;
 
-    if (topWithinView >= 0 && topWithinView < lineHeight * 1.5) {
+    if (topWithinView >= -2 && topWithinView <= viewportHeight - lineHeight) {
       this.cache.followMode = true;
     }
   }
@@ -252,8 +351,7 @@ class TypingRenderer {
       this.cache.lastRenderedWordIdx = -1;
       this.cache.lastScrolledWordIdx = -1;
       this.cache.followMode = true;
-      this._suppressNextScrollEvent = true;
-      this.containerEl.scrollTop = 0;
+      this._setScrollTop(0);
       return;
     }
 
@@ -309,8 +407,7 @@ class TypingRenderer {
 
     // Cache posisi (1x forced reflow)
     this.recomputeWordPositionCache();
-    this._suppressNextScrollEvent = true;
-    this.containerEl.scrollTop = 0;
+    this._setScrollTop(0);
   }
 
   /**
@@ -363,9 +460,35 @@ class TypingRenderer {
     const wordElements = this.cache.wordElements;
     if (!wordElements.length) return;
 
-    // offsetTop/offsetHeight adalah read -> dilakukan sekali
-    this.cache.wordTops = wordElements.map((el) => el?.offsetTop ?? 0);
-    this.cache.lineHeight = wordElements[0]?.offsetHeight ?? 0;
+    const container = this.containerEl;
+    if (!container) return;
+
+    // PENTING: offsetTop diukur terhadap offsetParent, dan offsetParent dari
+    // span kata di sini adalah <body> (bukan kotak replay), sehingga nilainya
+    // berisi jarak kotak replay dari atas halaman. Dulu nilai itu dipakai
+    // langsung sebagai posisi di dalam kotak scroll -> auto-scroll selalu
+    // salah dan kata aktif tidak pernah benar-benar masuk viewport.
+    // Sekarang posisi dihitung relatif terhadap kotak scroll itu sendiri.
+    const containerRect = container.getBoundingClientRect();
+    const contentTop = containerRect.top + container.clientTop;
+    const scrollTop = container.scrollTop;
+
+    this.cache.wordTops = new Array(wordElements.length).fill(0);
+    for (let i = 0; i < wordElements.length; i++) {
+      const el = wordElements[i];
+      if (!el) continue;
+      this.cache.wordTops[i] = el.getBoundingClientRect().top - contentTop + scrollTop;
+    }
+
+    const firstEl = wordElements[0];
+    let lineHeight = firstEl ? firstEl.offsetHeight : 0;
+    if (!lineHeight) {
+      // Fallback kalau elemen belum punya tinggi terukur (mis. font belum siap).
+      const computed = firstEl ? window.getComputedStyle(firstEl) : null;
+      const parsed = computed ? parseFloat(computed.lineHeight) : 0;
+      lineHeight = Number.isFinite(parsed) && parsed > 0 ? parsed : 24;
+    }
+    this.cache.lineHeight = lineHeight;
   }
 
   /**
@@ -389,7 +512,10 @@ class TypingRenderer {
     if (!targetWords?.length) return;
 
     const safeIndex = Math.max(0, Math.min(currentIndex, keystrokes.length));
-    const currentInput = safeIndex > 0 ? (keystrokes[safeIndex - 1]?.inputState || '') : '';
+    // State input setelah `safeIndex` keystroke diproses (bukan state sebelum
+    // keystroke terakhir -- lihat catatan resolveInputState soal snapshot
+    // keydown yang membuat replay tertinggal satu karakter).
+    const currentInput = TypingRecorder.resolveInputState(keystrokes, safeIndex);
 
     const currentWords = currentInput.length ? currentInput.split(' ') : [''];
     const currentWordIdx = Math.max(0, currentWords.length - 1);
@@ -499,6 +625,18 @@ class TypingRenderer {
     }
   }
 
+  /**
+   * Set scrollTop sambil mencatat nilainya sebagai scroll "programmatic",
+   * supaya listener scroll tahu ini bukan scroll manual user.
+   * Nilai dibaca ulang setelah assignment karena browser bisa meng-clamp.
+   */
+  _setScrollTop(value) {
+    const container = this.containerEl;
+    if (!container) return;
+    container.scrollTop = value;
+    this._programmaticScrollTop = container.scrollTop;
+  }
+
   ensureScrollSync(wordIdx) {
     const container = this.containerEl;
     if (!container) return;
@@ -516,16 +654,16 @@ class TypingRenderer {
 
     let newScrollTop = null;
     if (topWithinView >= lineHeight) {
+      // Kata aktif sudah turun ke baris kedua -> geser satu baris supaya
+      // selalu ada satu baris konteks di atasnya.
       newScrollTop = wordTop - lineHeight;
     } else if (topWithinView < 0) {
+      // Kata aktif berada di atas viewport (mis. setelah seek/restart).
       newScrollTop = Math.max(0, wordTop);
     }
 
     if (newScrollTop !== null) {
-      // Tandai scroll berikutnya sebagai hasil auto-scroll kita sendiri,
-      // supaya listener 'scroll' tidak salah mengira ini scroll manual user.
-      this._suppressNextScrollEvent = true;
-      container.scrollTop = newScrollTop;
+      this._setScrollTop(newScrollTop);
     }
   }
 }
@@ -588,6 +726,8 @@ class TypingPlayer {
     this._renderToken = 0;
     this._rafId = null;
     this._wasPlayingBeforeHidden = false;
+    this._progressEls = null;
+    this._lastProgressWidth = null;
   }
 
   loadTimeline(playbackTimestamps, { startIndex = 0 } = {}) {
@@ -809,17 +949,30 @@ class TypingPlayer {
     }
   }
 
+  _getProgressElements() {
+    const cached = this._progressEls;
+    if (cached && cached.bar?.isConnected && cached.handle?.isConnected) return cached;
+    this._progressEls = {
+      bar: document.getElementById('replay-progress-bar'),
+      handle: document.getElementById('replay-progress-handle'),
+    };
+    return this._progressEls;
+  }
+
   updateProgressUI() {
-    const track = document.getElementById('replay-progress-track');
-    const progressBar = document.getElementById('replay-progress-bar');
-    if (!progressBar || !this.playbackTimestamps?.length) return;
+    const { bar, handle } = this._getProgressElements();
+    if (!bar || !this.playbackTimestamps?.length) return;
 
     const totalVirtualTime = this.playbackTimestamps[this.playbackTimestamps.length - 1] || 1;
-    const progress = Math.min(100, (this.currentVirtualTimeMs / totalVirtualTime) * 100);
+    const progress = Math.min(100, Math.max(0, (this.currentVirtualTimeMs / totalVirtualTime) * 100));
+    const width = `${progress.toFixed(2)}%`;
 
-    progressBar.style.width = `${progress}%`;
-    const handle = document.getElementById('replay-progress-handle');
-    if (handle) handle.style.left = `${progress}%`;
+    // Tulis DOM hanya kalau nilainya berubah (hemat style recalc tiap frame).
+    if (this._lastProgressWidth === width) return;
+    this._lastProgressWidth = width;
+
+    bar.style.width = width;
+    if (handle) handle.style.left = width;
   }
 
   finish() {
@@ -832,6 +985,10 @@ class TypingPlayer {
     // pastikan waktu 0s di UI
     this.currentIndex = this.getKeystrokes().length;
     this.currentVirtualTimeMs = this.playbackTimestamps[this.playbackTimestamps.length - 1] ?? 0;
+
+    // Render state akhir: tanpa ini karakter terakhir yang diketik tidak pernah
+    // muncul di layar karena loop berhenti tepat setelah keystroke terakhir.
+    this.renderCurrent();
 
     this.updateUIStats();
     this.updateProgressUI();
@@ -988,6 +1145,10 @@ class TypingReplayApp {
       clearTimeout(resizeDebounceId);
       resizeDebounceId = setTimeout(() => {
         this.renderer?.recomputeWordPositionCache();
+        // Posisi kata berubah setelah resize -> paksa auto-scroll menyinkronkan
+        // ulang ke kata aktif (kalau tidak, kata aktif bisa berada di luar
+        // viewport sampai kata berikutnya datang).
+        if (this.renderer?.cache) this.renderer.cache.lastScrolledWordIdx = -1;
         // render ulang jika ada aktif state
         if (this.state.replayData) this.renderer?.render({
           keystrokes: this.state.replayData.keystrokes || [],
@@ -1119,8 +1280,7 @@ class TypingReplayApp {
       this.renderer.cache.followMode = true;
       this.renderer.cache.lastScrolledWordIdx = -1;
       if (this.renderer.containerEl) {
-        this.renderer._suppressNextScrollEvent = true;
-        this.renderer.containerEl.scrollTop = 0;
+        this.renderer._setScrollTop(0);
       }
     }
 
