@@ -1,6 +1,6 @@
 // js/history/score-manager.js
 import { getHistoryDOMReferences } from '../utils/dom-elements.js';
-import { renderScoreTable } from './history-dom.js';
+import { renderScoreList, renderEmptyScoreState } from './history-dom.js';
 import { renderProgressCharts, destroyCharts } from './history-chart.js';
 import {
     ensureAccumulatorInitialized,
@@ -132,18 +132,23 @@ export function displayFullScoreHistory() {
     console.log('Scores with replayData:', scoresWithReplay.length);
 
     if (!scores.length) {
-        if (DOM.noHistoryMessage) DOM.noHistoryMessage.style.display = 'block';
-        if (DOM.scoreHistoryList) {
-            DOM.scoreHistoryList.innerHTML = '<p class="no-history">Belum ada riwayat skor. Mulai mengetik untuk menyimpan skor!</p>';
-        }
+        const chartsEl = document.getElementById('historyCharts');
+        if (chartsEl) chartsEl.hidden = true;
+        const replayEl = document.getElementById('replay-container');
+        if (replayEl) replayEl.hidden = true;
+
+        renderEmptyScoreState();
         destroyCharts();
         return;
     }
 
-    if (DOM.noHistoryMessage) DOM.noHistoryMessage.style.display = 'none';
+    const chartsEl = document.getElementById('historyCharts');
+    if (chartsEl) chartsEl.hidden = false;
+    const replayEl = document.getElementById('replay-container');
+    if (replayEl) replayEl.hidden = false;
 
-    // Render table
-    renderScoreTable(scores, formatDate);
+    // Render daftar skor (kartu, terbaru di atas)
+    renderScoreList(scores, formatDate);
 
     // Render charts
     renderProgressCharts(scores, formatDate);

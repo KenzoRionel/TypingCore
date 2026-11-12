@@ -6,13 +6,59 @@ import { getHistoryDOMReferences } from '../utils/dom-elements.js';
 let wpmChart;
 let accuracyChart;
 
-// Helper function to get chart colors based on dark mode
+// Ambil nilai token warna dari tema aktif (css/theme.css). Dengan cara ini
+// grafik ikut berubah untuk SEMUA tema, bukan cuma light/dark.
+function cssVar(name, fallback) {
+    const value = getComputedStyle(document.documentElement)
+        .getPropertyValue(name)
+        .trim();
+    return value || fallback;
+}
+
+// Chart.js butuh warna solid/rgba, bukan color-mix(), jadi token hex dari
+// tema dikonversi manual ke rgba untuk area fill dan garis grid.
+function toRgba(color, alpha) {
+    const value = (color || '').trim();
+    if (!value.startsWith('#')) return value;
+
+    let hex = value.slice(1);
+    if (hex.length === 3) {
+        hex = hex
+            .split('')
+            .map((char) => char + char)
+            .join('');
+    }
+    if (hex.length !== 6) return value;
+
+    const num = parseInt(hex, 16);
+    if (!Number.isFinite(num)) return value;
+
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function getChartColors() {
-    const isDarkMode = document.body.classList.contains('dark-mode');
+    const textColor = cssVar('--text-muted', '#666666');
+    const titleColor = cssVar('--text', '#333333');
+    const borderColor = cssVar('--border', 'rgba(0,0,0,0.1)');
+    const accent = cssVar('--accent', '#3e63dd');
+    const correct = cssVar('--correct', '#15803d');
+    const surface = cssVar('--bg', '#ffffff');
+
     return {
-        textColor: isDarkMode ? '#e0e0e0' : '#666666',
-        gridColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-        titleColor: isDarkMode ? '#ffffff' : '#333333'
+        textColor,
+        titleColor,
+        gridColor: toRgba(borderColor, 0.75),
+        wpmColor: accent,
+        wpmFill: toRgba(accent, 0.14),
+        accuracyColor: correct,
+        accuracyFill: toRgba(correct, 0.14),
+        pointFill: surface,
+        tooltipBg: surface,
+        tooltipText: titleColor,
+        tooltipBorder: borderColor,
     };
 }
 
@@ -37,6 +83,18 @@ export function renderProgressCharts(scores) {
 
     const colors = getChartColors();
 
+    // Default Chart.js juga diturunkan dari tema supaya tooltip/teks tidak
+    // tetap memakai warna bawaan (hitam/putih) di tema tertentu.
+    Chart.defaults.color = colors.textColor;
+    Chart.defaults.borderColor = colors.gridColor;
+    Chart.defaults.plugins.tooltip.backgroundColor = colors.tooltipBg;
+    Chart.defaults.plugins.tooltip.titleColor = colors.tooltipText;
+    Chart.defaults.plugins.tooltip.bodyColor = colors.tooltipText;
+    Chart.defaults.plugins.tooltip.borderColor = colors.tooltipBorder;
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.displayColors = false;
+
     // Ganti nama properti DOM
 	wpmChart = new Chart(DOM.wpmProgressChart, {
 
@@ -44,15 +102,18 @@ export function renderProgressCharts(scores) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'WPM',
-                data: wpmData,
-                borderColor: '#007bff',
-                backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                tension: 0.3,
-                fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 8
-            }]
+                label: 'WPM',
+                data: wpmData,
+                borderColor: colors.wpmColor,
+                backgroundColor: colors.wpmFill,
+                pointBackgroundColor: colors.pointFill,
+                pointBorderColor: colors.wpmColor,
+                pointBorderWidth: 2,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            }]
         },
         options: {
             responsive: true,
@@ -113,8 +174,11 @@ export function renderProgressCharts(scores) {
             datasets: [{
                 label: 'Akurasi (%)',
                 data: accuracyData,
-                borderColor: '#28a745',
-                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                borderColor: colors.accuracyColor,
+                backgroundColor: colors.accuracyFill,
+                pointBackgroundColor: colors.pointFill,
+                pointBorderColor: colors.accuracyColor,
+                pointBorderWidth: 2,
                 tension: 0.3,
                 fill: true,
                 pointRadius: 5,

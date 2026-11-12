@@ -1,98 +1,683 @@
+/* ==========================================================================
+   score-history-style.css
+   Halaman Riwayat Skor — seluruh warna diturunkan dari css/theme.css, jadi
+   halaman ini otomatis mengikuti tema aktif (light, dark, dracula, dll).
+
+   Token lokal di bawah hanya untuk aksen "Terbaik" (emas) yang memang warna
+   pencapaian/brand, bukan warna tema.
+   ========================================================================== */
+
+:root {
+    /* Kartu memakai --bg supaya terangkat dari --surface milik .main-content */
+    --score-card-bg: var(--bg);
+    --score-card-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    --score-card-shadow-hover: 0 12px 26px rgba(0, 0, 0, 0.12);
+    --score-soft: color-mix(in srgb, var(--text) 5%, transparent);
+    --score-soft-border: var(--border);
+
+    --score-gold: #b7791f;
+    --score-gold-soft: rgba(183, 121, 31, 0.12);
+    --score-gold-border: rgba(183, 121, 31, 0.35);
+}
+
+body.dark-mode {
+    --score-card-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    --score-card-shadow-hover: 0 14px 30px rgba(0, 0, 0, 0.5);
+
+    --score-gold: #fbbf24;
+    --score-gold-soft: rgba(251, 191, 36, 0.14);
+    --score-gold-border: rgba(251, 191, 36, 0.38);
+}
+
+/* ==================== PAGE LAYOUT ==================== */
+
+#score-history-section {
+    width: 100%;
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 8px clamp(4px, 1vw, 16px) 48px;
+}
+
+#score-history-section h1,
+#score-history-section h2,
+#score-history-section h3 {
+    color: var(--text);
+}
+
+/* `hidden` harus menang atas display:grid/flex milik komponen di bawah. */
+.history-charts[hidden],
+.replay-container[hidden] {
+    display: none !important;
+}
+
+/* ==================== HERO / PAGE TITLE ==================== */
+
+.history-hero {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+    padding: 28px clamp(20px, 3vw, 36px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background:
+        radial-gradient(
+            120% 180% at 100% 0%,
+            color-mix(in srgb, var(--accent) 20%, transparent) 0%,
+            transparent 62%
+        ),
+        var(--score-card-bg);
+    box-shadow: var(--score-card-shadow);
+}
+
+.history-hero-text {
+    position: relative;
+    max-width: 640px;
+}
+
+.history-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.history-hero h1 {
+    margin: 0 0 8px;
+    font-family: "Manrope", sans-serif;
+    font-size: clamp(1.65rem, 3.4vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.history-hero p {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+}
+
+/* ==================== CHARTS ==================== */
+
+.history-charts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
 .chart-container {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px; /* Jarak antar chart atau dari tabel */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    /* Atur tinggi maksimal untuk chart agar responsif */
-    max-height: 400px; /* Contoh: Tinggi maksimal untuk chart */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Pusatkan h2 dan canvas */
+    min-width: 0;
+    padding: 20px 20px 16px;
+    background: var(--score-card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--score-card-shadow);
 }
 
 .chart-container h2 {
-    margin-top: 0;
-    color: #333;
-    font-size: 1.5em;
-    margin-bottom: 15px;
+    margin: 0 0 14px;
+    font-family: "Manrope", sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
 }
 
 .chart-container canvas {
-    width: 100% !important; /* Pastikan canvas mengambil lebar penuh container */
-    height: 350px !important; /* Atur tinggi spesifik untuk canvas */
-    max-width: 1300px; /* Maksimum lebar chart untuk layar lebar */
+    width: 100% !important;
+    height: 300px !important;
+    max-width: 100%;
 }
+
+@media (min-width: 992px) {
+    .history-charts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+}
+
+/* ==================== LIST HEADER & SUMMARY ==================== */
+
+.history-list-section {
+    margin-top: 4px;
+}
+
+.history-list-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.history-list-header h2 {
+    margin: 0;
+    font-family: "Manrope", sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.history-list-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.history-count {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border: 1px solid var(--score-soft-border);
+    border-radius: 999px;
+    background: var(--score-soft);
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.history-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.history-summary-item {
+    padding: 12px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--score-card-bg));
+}
+
+.history-summary-label {
+    display: block;
+    margin-bottom: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.history-summary-value {
+    display: block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ==================== SCORE CARDS ==================== */
 
 .score-list {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    overflow-x: auto; /* Untuk tabel yang bisa digulir di mobile */
+    display: block;
 }
 
-.score-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-.score-table th,
-.score-table td {
-    border: 1px solid #eee;
-    padding: 10px 12px;
-    text-align: left;
-    white-space: nowrap; /* Mencegah teks pecah baris di tabel */
-}
-
-.score-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    color: #555;
-    text-transform: uppercase;
-    font-size: 0.9em;
-}
-
-.score-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.score-table tr:hover {
-    background-color: #f0f0f0;
-}
-
-.no-history {
-    font-style: italic;
-    color: #777;
-    text-align: center;
-    padding: 15px;
+.score-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-/* Replay Container Styles */
+.score-card {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-areas:
+        "rank main action"
+        "details details details"
+        "meta meta meta";
+    gap: 14px 16px;
+    align-items: center;
+    padding: 16px;
+    background: var(--score-card-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid transparent;
+    border-radius: 16px;
+    box-shadow: var(--score-card-shadow);
+    transition:
+        transform 0.16s ease,
+        border-color 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+.score-card.is-clickable {
+    cursor: pointer;
+}
+
+.score-card.is-clickable:hover,
+.score-card.is-clickable:focus-visible {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    border-left-color: var(--accent);
+    box-shadow: var(--score-card-shadow-hover);
+}
+
+.score-card.is-clickable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Skor dengan WPM tertinggi diberi aksen emas (warna pencapaian). */
+.score-card.is-best {
+    border-left-color: var(--score-gold);
+}
+
+.score-card.is-best.is-clickable:hover,
+.score-card.is-best.is-clickable:focus-visible {
+    border-left-color: var(--score-gold);
+}
+
+/* ---- Nomor tes ---- */
+.score-rank {
+    grid-area: rank;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--score-soft);
+}
+
+.score-card.is-best .score-rank {
+    border-color: var(--score-gold-border);
+    background: var(--score-gold-soft);
+}
+
+.score-rank-number {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.score-card.is-best .score-rank-number {
+    color: var(--score-gold);
+}
+
+.score-rank-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+/* ---- WPM & akurasi ---- */
+.score-main {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.score-wpm {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.score-wpm-value {
+    font-family: "JetBrains Mono", monospace;
+    font-size: clamp(1.7rem, 3.2vw, 2.15rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.score-wpm-value.is-high {
+    color: var(--correct);
+}
+
+.score-wpm-value.is-mid {
+    color: var(--score-gold);
+}
+
+.score-wpm-value.is-low {
+    color: var(--incorrect);
+}
+
+.score-wpm-unit {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.score-badge--best {
+    color: var(--score-gold);
+    background: var(--score-gold-soft);
+    border: 1px solid var(--score-gold-border);
+}
+
+.score-accuracy {
+    width: 100%;
+    max-width: 260px;
+    min-width: 0;
+}
+
+.score-accuracy-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.72rem;
+}
+
+.score-accuracy-label {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.score-accuracy-value {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+
+.score-accuracy-value.is-high {
+    color: var(--correct);
+}
+
+.score-accuracy-value.is-mid {
+    color: var(--score-gold);
+}
+
+.score-accuracy-value.is-low {
+    color: var(--incorrect);
+}
+
+.score-bar {
+    height: 6px;
+    margin-top: 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text) 12%, transparent);
+    overflow: hidden;
+}
+
+.score-bar-fill {
+    display: block;
+    height: 100%;
+    min-width: 2px;
+    border-radius: inherit;
+    background: var(--correct);
+}
+
+.score-bar-fill.is-mid {
+    background: var(--score-gold);
+}
+
+.score-bar-fill.is-low {
+    background: var(--incorrect);
+}
+
+/* ---- Detail angka ---- */
+.score-details {
+    grid-area: details;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.score-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--score-soft);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.score-detail i {
+    font-size: 0.7rem;
+    color: var(--accent);
+    opacity: 0.85;
+}
+
+/* ---- Tanggal & tag ---- */
+.score-meta {
+    grid-area: meta;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.score-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.score-date i {
+    opacity: 0.7;
+}
+
+.score-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.score-tag {
+    display: inline-flex;
+    align-items: center;
+    max-width: 230px;
+    padding: 3px 9px;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.score-tag--muted {
+    border-color: var(--border);
+    background: var(--score-soft);
+    color: var(--text-muted);
+}
+
+/* ---- Tombol replay ---- */
+.score-action {
+    grid-area: action;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.score-action.is-available {
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.score-card.is-clickable:hover .score-action.is-available,
+.score-card.is-clickable:focus-visible .score-action.is-available {
+    background: var(--accent-hover);
+}
+
+.score-action.is-unavailable {
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--text-muted);
+}
+
+/* ---- Layout horizontal di layar lebar ---- */
+@media (min-width: 900px) {
+    .score-card {
+        grid-template-columns:
+            56px minmax(180px, 220px) minmax(0, 1.15fr)
+            minmax(0, 1.05fr) auto;
+        grid-template-areas: "rank main details meta action";
+        gap: 16px;
+        padding: 16px 18px;
+    }
+
+    .score-main {
+        gap: 9px;
+    }
+}
+
+/* Teks tombol replay disembunyikan di layar sempit (ikon bulat saja). */
+@media (max-width: 899px) {
+    .score-action {
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 0.95rem;
+    }
+
+    .score-action-text {
+        display: none;
+    }
+}
+
+/* ==================== EMPTY STATE ==================== */
+
+.score-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: clamp(32px, 6vw, 56px) 20px;
+    border: 1px dashed var(--border);
+    border-radius: 18px;
+    background: var(--score-card-bg);
+    text-align: center;
+}
+
+.score-empty > i {
+    margin-bottom: 10px;
+    font-size: 2rem;
+    color: var(--accent);
+    opacity: 0.9;
+}
+
+.score-empty h3 {
+    margin: 0;
+    font-family: "Manrope", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.score-empty p {
+    max-width: 420px;
+    margin: 6px 0 16px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.score-empty-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.score-empty-cta:hover,
+.score-empty-cta:focus-visible {
+    background: var(--accent-hover);
+    color: var(--bg);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+/* ==================== REPLAY PANEL ==================== */
+
 .replay-container {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
     margin-bottom: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 20px;
+    background: var(--score-card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--score-card-shadow);
 }
 
 .replay-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 15px;
 }
 
 .replay-header h3 {
     margin: 0;
-    color: #333;
-    font-size: 1.2em;
+    font-family: "Manrope", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
 }
 
 .replay-controls {
@@ -101,38 +686,44 @@
 }
 
 .replay-btn {
-    background-color: #0068bd;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
     padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--bg);
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
 .replay-btn:hover {
-    background-color: #0056a3;
+    background: var(--accent-hover);
 }
 
 .replay-btn:disabled {
-    background-color: #ccc;
+    background: color-mix(in srgb, var(--text) 14%, transparent);
+    color: var(--text-muted);
     cursor: not-allowed;
 }
 
 .replay-info {
     margin-bottom: 15px;
-    color: #555;
-    font-size: 0.9em;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .replay-stats {
     display: flex;
     justify-content: space-around;
     margin-bottom: 15px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    padding: 12px 10px;
+    background: var(--score-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
 }
 
 .replay-stat-item {
@@ -140,24 +731,25 @@
     flex-direction: column;
     align-items: center;
     /* Lebar tetap supaya kotak tidak melebar/menyempit saat jumlah digit
-       angkanya berubah (mis. "9" -> "72" -> "100") - itu yang sebelumnya
-       bikin teks WPM/Akurasi/Waktu terlihat bergeser kiri-kanan. */
+       angkanya berubah (mis. "9" -> "72" -> "100"). */
     min-width: 90px;
 }
 
 .replay-stat-label {
-    font-size: 0.75rem;
-    color: #777;
-    text-transform: uppercase;
     margin-bottom: 4px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 .replay-stat-value {
+    font-family: "JetBrains Mono", monospace;
     font-size: 1.25rem;
-    font-weight: bold;
-    color: #333;
-    /* Semua digit angka dapat lebar yang sama, jadi tidak ada micro-shift
-       antar digit saat angkanya berganti-ganti tiap keystroke. */
+    font-weight: 700;
+    color: var(--text);
     font-variant-numeric: tabular-nums;
 }
 
@@ -165,10 +757,10 @@
     padding: 0;
     min-height: 60px;
     margin-bottom: 15px;
-    /* Smaller font for replay text - make it even smaller so all text is visible */
+    font-family: monospace;
     font-size: 1.5em;
     line-height: 1.2;
-    font-family: monospace;
+    color: var(--text);
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-x: auto;
@@ -176,17 +768,16 @@
     overflow-y: auto;
     /* Auto-scroll mengikuti kata aktif, jadi batang scroll tidak perlu tampil
        dan tidak boleh memakan lebar teks. Area tetap bisa di-scroll manual. */
-    scrollbar-width: none;      /* Firefox */
-    -ms-overflow-style: none;   /* Edge/IE lama */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     overscroll-behavior: contain;
-    /* Jadikan kotak ini acuan posisi (offsetParent) untuk span kata di dalamnya. */
     position: relative;
 }
 
 .replay-text-display::-webkit-scrollbar {
     width: 0;
     height: 0;
-    display: none;              /* Chrome/Safari/Edge */
+    display: none;
 }
 
 .replay-char {
@@ -203,59 +794,53 @@
 
 .replay-word.completed-wrong {
     text-decoration: underline;
-    text-decoration-color: #f44336;
+    text-decoration-color: var(--incorrect);
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
 }
 
-/* Highlight untuk kata yang sedang diketik.
-   JS memakai class `active-word`; `current-word` dipertahankan untuk kompatibilitas.
-   Sengaja TANPA padding: padding mengubah lebar kata, sehingga saat highlight
-   berpindah kata teks bisa wrap ulang dan posisi kata yang sudah di-cache
-   (dipakai auto-scroll) jadi tidak akurat. */
+/* Highlight kata yang sedang diketik. Sengaja TANPA padding: padding
+   mengubah lebar kata sehingga auto-scroll bisa meleset. */
 .replay-word.active-word,
 .replay-word.current-word {
-    background-color: #e3f2fd;
+    background-color: var(--current-word-bg);
     border-radius: 3px;
 }
 
-
 .replay-char.correct {
-    color: #0068bd;
+    color: var(--correct);
 }
 
 .replay-char.wrong {
-    color: #f44336;
+    color: var(--incorrect);
 }
 
 .replay-char.untyped {
-    color: #999;
+    color: var(--text-muted);
+    opacity: 0.75;
 }
 
-/* Deleted character styling - shows strikethrough effect */
 .replay-char.deleted-char {
-    color: #f44336;
+    color: var(--incorrect);
     text-decoration: line-through;
-    text-decoration-color: #f44336;
+    text-decoration-color: var(--incorrect);
     text-decoration-thickness: 2px;
     opacity: 0.7;
     animation: deleteFlash 0.5s ease-in-out;
 }
 
-/* Pastikan cursor tidak muncul pada karakter yang dihapus */
 .replay-char.deleted-char.cursor::after {
     display: none;
 }
 
-
 @keyframes deleteFlash {
     0% {
         opacity: 1;
-        background-color: #ffebee;
+        background-color: var(--incorrect-bg);
     }
     50% {
         opacity: 0.5;
-        background-color: #ffcdd2;
+        background-color: var(--incorrect-bg);
     }
     100% {
         opacity: 0.7;
@@ -263,33 +848,23 @@
     }
 }
 
-
-
-
-
-@keyframes cursorBlink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
 .replay-progress {
-    width: 100%;
-    height: 16px;
-    background-color: #eee;
-    border-radius: 8px;
-    overflow: visible;
-    cursor: pointer;
     position: relative;
     display: flex;
     align-items: center;
+    width: 100%;
+    height: 16px;
+    background-color: color-mix(in srgb, var(--text) 12%, transparent);
+    border-radius: 8px;
+    overflow: visible;
+    cursor: pointer;
 }
 
 .replay-progress-bar {
+    width: 0;
     height: 8px;
-    background-color: #0068bd;
-    width: 0%;
-    /* Tanpa transition: batang progress harus mengikuti jam replay apa adanya.
-       Transition 0.1s membuat bar selalu tertinggal ~100ms dari teks. */
+    background-color: var(--accent);
+    /* Tanpa transition: batang progress harus mengikuti jam replay apa adanya. */
     border-radius: 0 4px 4px 0;
     pointer-events: none;
 }
@@ -297,51 +872,39 @@
 .replay-progress-handle {
     position: absolute;
     top: 50%;
-    left: 0%;
-    transform: translate(-50%, -50%);
+    left: 0;
     width: 16px;
     height: 16px;
-    background-color: #005bb5;
-    border: 2px solid #fff;
+    background-color: var(--accent);
+    border: 2px solid var(--score-card-bg);
     border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     pointer-events: none;
+    transform: translate(-50%, -50%);
 }
 
-.no-replay {
-    font-style: italic;
-    color: #777;
-    text-align: center;
-    margin: 0;
-}
-
-/* Media query untuk tabel di mobile agar lebih compact */
-@media (max-width: 768px) {
-    .score-table th,
-    .score-table td {
-        padding: 8px;
-        font-size: 0.85em;
-    }
-    
-    .replay-text-display {
-        font-size: 0.6em;
-    }
-}
-
-/* Deletion indicator styles for replay */
 .replay-deletion-info {
     margin-top: 10px;
     padding: 8px 12px;
-    background-color: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
+    background-color: color-mix(in srgb, var(--score-gold) 16%, transparent);
+    border: 1px solid var(--score-gold-border);
+    border-radius: 6px;
     animation: fadeIn 0.3s ease-in-out;
 }
 
 .deleted-indicator {
-    color: #856404;
-    font-weight: bold;
+    color: var(--text);
     font-size: 14px;
+    font-weight: 700;
+}
+
+.no-replay,
+.no-history {
+    margin: 0;
+    padding: 15px;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
 }
 
 @keyframes fadeIn {
@@ -355,189 +918,112 @@
     }
 }
 
-/* --- Dark Mode Styles for Score History --- */
+/* ==================== HEADER / NAVBAR ==================== */
 
-/* Chart containers */
-body.dark-mode .chart-container {
-    background-color: #2c2c2c;
-    border-color: #444;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.site-header .navbar .nav-link,
+.site-header .navbar .navbar-brand {
+    color: var(--text) !important;
 }
 
-body.dark-mode .chart-container h2 {
-    color: #ffffff;
+.site-header .navbar .nav-link i {
+    color: inherit;
 }
 
-/* Score list */
-body.dark-mode .score-list {
-    background-color: #2c2c2c;
-    border-color: #444;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.site-header .navbar .nav-link:hover,
+.site-header .navbar .nav-link:focus {
+    color: var(--accent) !important;
 }
 
-/* Score table */
-body.dark-mode .score-table th {
-    background-color: #383838;
-    color: #ffffff;
-    border-color: #555;
+.site-header .navbar .nav-link.active {
+    color: var(--accent) !important;
 }
 
-body.dark-mode .score-table td {
-    border-color: #444;
-    color: #e0e0e0;
+.site-header .navbar .dropdown-menu {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background-color: var(--surface);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
 }
 
-body.dark-mode .score-table tr:nth-child(even) {
-    background-color: #333333;
+.site-header .navbar .dropdown-item {
+    color: var(--text);
 }
 
-body.dark-mode .score-table tr:hover {
-    background-color: #404040;
+.site-header .navbar .dropdown-item:hover,
+.site-header .navbar .dropdown-item:focus {
+    background-color: var(--current-word-bg);
+    color: var(--text);
 }
 
-/* No history message */
-body.dark-mode .no-history {
-    color: #aaaaaa;
-}
-
-/* Replay container */
-body.dark-mode .replay-container {
-    background-color: #2c2c2c;
-    border-color: #444;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-body.dark-mode .replay-header h3 {
-    color: #ffffff;
-}
-
-/* Replay controls */
-body.dark-mode .replay-btn {
-    background-color: #0068bd;
-}
-
-body.dark-mode .replay-btn:hover {
-    background-color: #0056a3;
-}
-
-body.dark-mode .replay-btn:disabled {
-    background-color: #555;
-}
-
-/* Replay info */
-body.dark-mode .replay-info {
-    color: #aaaaaa;
-}
-
-/* Replay stats */
-body.dark-mode .replay-stats {
-    background-color: #383838;
-}
-
-body.dark-mode .replay-stat-label {
-    color: #888888;
-}
-
-body.dark-mode .replay-stat-value {
-    color: #ffffff;
-}
-
-/* Replay text display */
-body.dark-mode .replay-text-display {
-    color: #e0e0e0;
-}
-
-/* Replay characters */
-body.dark-mode .replay-char.correct {
-    color: #83f0f8;
-}
-
-body.dark-mode .replay-char.wrong {
-    color: #ff6b6b;
-}
-
-body.dark-mode .replay-char.untyped {
-    color: #666666;
-}
-
-body.dark-mode .replay-char.deleted-char {
-    color: #ff6b6b;
-}
-
-/* Current word highlight */
-body.dark-mode .replay-word.active-word,
-body.dark-mode .replay-word.current-word {
-    background-color: #3a4a5a;
-}
-
-/* Completed wrong word */
-body.dark-mode .replay-word.completed-wrong {
-    text-decoration-color: #ff6b6b;
-}
-
-/* Replay progress */
-body.dark-mode .replay-progress {
-    background-color: #444;
-}
-
-body.dark-mode .replay-progress-bar {
-    background-color: #0068bd;
-}
-
-body.dark-mode .replay-progress-handle {
-    background-color: #449be0;
-    border-color: #666;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-}
-
-/* No replay message */
-body.dark-mode .no-replay {
-    color: #aaaaaa;
-}
-
-/* Deletion info */
-body.dark-mode .replay-deletion-info {
-    background-color: #3a3a2a;
-    border-color: #665;
-}
-
-body.dark-mode .deleted-indicator {
-    color: #ccccaa;
-}
-
-/* Section heading */
-body.dark-mode #score-history-section h3 {
-    color: #ffffff;
-}
-
-/* Navbar icons in dark mode */
-body.dark-mode .main-header .nav-link i,
-body.dark-mode .navbar .nav-link i {
-    color: #ffffff !important;
-}
-
-body.dark-mode .navbar .dropdown-toggle {
-    color: #ffffff !important;
-}
-
-body.dark-mode .navbar .dropdown-menu {
-    background-color: #2c2c2c;
-    border-color: #444;
-}
-
-body.dark-mode .navbar .dropdown-item {
-    color: #ffffff !important;
-}
-
-body.dark-mode .navbar .dropdown-item:hover {
-    background-color: #383838;
-    color: #00ffff !important;
-}
-
-body.dark-mode .navbar .dropdown-divider {
-    border-color: #444;
+.site-header .navbar .dropdown-divider {
+    border-color: var(--border);
 }
 
 body.dark-mode .navbar-toggler-icon {
     filter: invert(1);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+    .history-hero {
+        padding: 22px 20px;
+    }
+
+    .chart-container {
+        padding: 16px 14px 12px;
+    }
+
+    .chart-container canvas {
+        height: 260px !important;
+    }
+
+    .replay-text-display {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 560px) {
+    .history-summary {
+        gap: 8px;
+    }
+
+    .history-summary-item {
+        padding: 10px 12px;
+    }
+
+    .history-summary-label {
+        font-size: 0.58rem;
+    }
+
+    .score-card {
+        grid-template-columns: 46px minmax(0, 1fr) auto;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .score-rank {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+    }
+
+    .score-action {
+        width: 38px;
+        height: 38px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .score-card,
+    .score-empty-cta,
+    .replay-btn {
+        transition: none;
+    }
+
+    .score-card.is-clickable:hover,
+    .score-card.is-clickable:focus-visible,
+    .score-empty-cta:hover {
+        transform: none;
+    }
 }

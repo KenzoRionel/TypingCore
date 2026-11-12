@@ -1,128 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Riwayat Skor Tes Mengetik</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="img/TypingCoreIcon.svg" width="256" height="256" type="image/x-icon">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"> <link rel="stylesheet" href="css/score-history-style.css">
-    <link rel="stylesheet" href="css/dark-mode.css">
-</head>
-<body>
+    <!-- Anti-FOUC: set data-theme SEBELUM CSS lain di-render, supaya halaman
+         tidak "flash" tema default lalu berubah ke tema tersimpan. Logika ini
+         sengaja diduplikasi (bukan import js/theme.js) karena script inline
+         blocking di <head> tidak bisa pakai ES module secara sinkron. Tetap
+         konsisten dengan resolveInitialTheme() di js/theme.js: localStorage
+         ('typing-theme') > migrasi key lama 'darkMode' > prefers-color-scheme
+         > default 'light'. -->
+    <script>
+      (function () {
+        try {
+          var STORAGE_KEY = "typing-theme";
+          var LEGACY_STORAGE_KEY = "darkMode";
+          var theme = localStorage.getItem(STORAGE_KEY);
+
+          if (!theme) {
+            var legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+            if (legacy !== null) {
+              theme = legacy === "enabled" ? "dark" : "light";
+            }
+          }
+
+          if (!theme) {
+            var prefersDark =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches;
+            theme = prefersDark ? "dark" : "light";
+          }
+
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" href="img/TypingCoreIcon.svg" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Manrope:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <!-- css/theme.css WAJIB dimuat sebelum CSS halaman supaya semua token
+         warna (--bg, --surface, --text, --accent, dst.) sudah tersedia. -->
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/score-history-style.css" />
+  </head>
+  <body>
     <div class="wrapper">
-        <main class="main-content">
-            <header class="main-header">
-                <nav class="navbar navbar-expand navbar-light flex-grow-1"> <div class="container-fluid">
-                        <button id="mainSidebarToggleBtn" class="navbar-toggler d-lg-none me-2" type="button" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
+      <main class="main-content">
+        <header id="header" class="site-header d-flex align-items-center">
+          <nav class="navbar navbar-expand navbar-light flex-grow-1">
+            <div class="container-fluid">
+              <button
+                id="mainSidebarToggleBtn"
+                class="navbar-toggler d-lg-none me-2"
+                type="button"
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+              >
+                <span class="navbar-toggler-icon"></span>
+              </button>
 
-                        <a class="navbar-brand py-0 me-auto" id="Brand" href="index.html">
-                            <img id="logoWebsite" src="img/TypingCore.svg" alt="Logo Website" style="height: 70px;">
-                        </a>
-                        <div class="navbar-collapse justify-content-start" id="navbarSupportedContent">
-                            <ul class="navbar-nav align-items-center">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="index.html"><i class="fas fa-keyboard"></i></a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="custom-text-test.html"><i class="fas fa-file-alt"></i></a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="score-history.html"><i class="fas fa-history"></i></a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="navbar-collapse justify-content-end" id="navbarSupportedContent">
-                            <ul class="navbar-nav align-items-center">
-                                <li class="nav-item">
-                                    <button id="darkModeToggle" class="dark-mode-slide-toggle nav-link" aria-label="Toggle Dark Mode">
-                                        <span class="slider">
-                                            <span class="slider-icon sun">☀️</span>
-                                            <span class="slider-icon moon">🌙</span>
-                                        </span>
-                                    </button>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLang" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-globe"></i> Bahasa
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownLang">
-                                        <li><a class="dropdown-item" href="#">Bahasa Indonesia</a></li>
-                                        <li><a class="dropdown-item" href="#">English</a></li>
-                                    </ul>
-                                </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-user-circle"></i> User
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-                                        <li><a class="dropdown-item" href="#">Profil</a></li>
-                                        <li><a class="dropdown-item" href="#">Pengaturan</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#">Logout</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
+              <a class="navbar-brand py-0 me-auto" id="Brand" href="index.html">
+                <img
+                  id="logoWebsite"
+                  src="img/TypingCore.svg"
+                  alt="Logo Website"
+                  style="height: 60px"
+                />
+              </a>
+
+              <div
+                class="navbar-collapse justify-content-between"
+                id="navbarSupportedContent"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <li class="nav-item">
+                    <a class="nav-link" href="index.html" title="Tes Mengetik">
+                      <i class="fas fa-keyboard"></i>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a
+                      class="nav-link"
+                      href="custom-text-test.html"
+                      title="Tes Teks Kustom"
+                    >
+                      <i class="fas fa-file-alt"></i>
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a
+                      class="nav-link active"
+                      href="score-history.html"
+                      title="Riwayat Skor"
+                      aria-current="page"
+                    >
+                      <i class="fas fa-history"></i>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+
+              <div
+                class="navbar-collapse justify-content-end"
+                id="navbarSupportedContent2"
+              >
+                <ul class="navbar-nav align-items-center">
+                  <!-- Pemilih tema: menggantikan toggle dark/light lama.
+                       id="darkModeToggle" dipertahankan supaya referensi lama
+                       tidak putus; elemen ini sekarang membuka dropdown berisi
+                       daftar tema dari js/theme.js. -->
+                  <li class="nav-item dropdown">
+                    <button
+                      id="darkModeToggle"
+                      type="button"
+                      class="nav-link dropdown-toggle theme-picker-toggle"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      aria-label="Pilih Tema"
+                      title="Pilih Tema"
+                    >
+                      <i class="fas fa-palette"></i>
+                      <span class="theme-picker-current-name">Tema</span>
+                    </button>
+                    <div
+                      class="dropdown-menu dropdown-menu-end theme-picker-dropdown-menu"
+                      aria-labelledby="darkModeToggle"
+                    >
+                      <div id="themePickerContainer"></div>
                     </div>
-                </nav>
-            </header>
-            <section id="score-history-section" class="page active">
-                <div class="chart-container">
-                    <h2>Progres WPM Anda</h2>
-                    <canvas id="wpmProgressChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h2>Progres Akurasi Anda</h2>
-                    <canvas id="accuracyProgressChart"></canvas>
-                </div>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdownLang"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-globe"></i> Bahasa
+                    </a>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="navbarDropdownLang"
+                    >
+                      <li><a class="dropdown-item" href="#">Bahasa Indonesia</a></li>
+                      <li><a class="dropdown-item" href="#">English</a></li>
+                    </ul>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdownUser"
+                      role="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i class="fas fa-user-circle"></i> User
+                    </a>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end"
+                      aria-labelledby="navbarDropdownUser"
+                    >
+                      <li><a class="dropdown-item" href="profile.html">Profil</a></li>
+                      <li><a class="dropdown-item" href="settings.html">Pengaturan</a></li>
+                      <li><hr class="dropdown-divider" /></li>
+                      <li><a class="dropdown-item" href="#">Logout</a></li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
+        </header>
 
-                <h3>Daftar Skor Lengkap</h3>
-                <div id="scoreHistoryList" class="score-list">
-                    <p class="no-history">Belum ada riwayat skor. Mulai mengetik untuk menyimpan skor!</p>
-                </div>
-            </section>
-        </main>
+        <section id="score-history-section" class="page active">
+          <div class="history-hero">
+            <div class="history-hero-text">
+              <span class="history-eyebrow">
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                Statistik Latihan
+              </span>
+              <h1>Riwayat Skor</h1>
+              <p>
+                Pantau perkembangan kecepatan dan akurasi mengetikmu, lalu
+                putar ulang sesi terbaik untuk melihat ritmenya.
+              </p>
+            </div>
+          </div>
+
+          <div class="history-charts" id="historyCharts">
+            <div class="chart-container">
+              <h2>Progres WPM Anda</h2>
+              <canvas id="wpmProgressChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <h2>Progres Akurasi Anda</h2>
+              <canvas id="accuracyProgressChart"></canvas>
+            </div>
+          </div>
+
+          <div class="history-list-section">
+            <div class="history-list-header">
+              <div>
+                <h2>Daftar Skor Lengkap</h2>
+                <p class="history-list-subtitle">
+                  Klik kartu yang memiliki replay untuk menonton ulang
+                  ketikanmu.
+                </p>
+              </div>
+              <span class="history-count" id="historyCount">0 tes</span>
+            </div>
+
+            <div class="history-summary" id="historySummary" hidden>
+              <div class="history-summary-item">
+                <span class="history-summary-label">Total Tes</span>
+                <strong class="history-summary-value" id="summaryTotal">0</strong>
+              </div>
+              <div class="history-summary-item">
+                <span class="history-summary-label">WPM Terbaik</span>
+                <strong class="history-summary-value" id="summaryBestWpm">0</strong>
+              </div>
+              <div class="history-summary-item">
+                <span class="history-summary-label">Rata-rata Akurasi</span>
+                <strong class="history-summary-value" id="summaryAvgAccuracy">0%</strong>
+              </div>
+            </div>
+
+            <div id="scoreHistoryList" class="score-list">
+              <div class="score-empty">
+                <i class="fas fa-keyboard" aria-hidden="true"></i>
+                <h3>Belum ada riwayat skor</h3>
+                <p>Selesaikan satu tes mengetik untuk mulai mengisi riwayatmu.</p>
+                <a class="score-empty-cta" href="index.html">
+                  <i class="fas fa-play" aria-hidden="true"></i>
+                  Mulai Mengetik
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="js/bootstrap/bootstrap.bundle.min.js"></script>
-<script src="js/history/score-manager.js" type="module"></script>
-<script src="js/history/typing-replay.js" type="module"></script>
-<script type="module">
-    import { initDarkMode } from './js/utils/dark-mode.js';
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        initDarkMode(darkModeToggle);
+    <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="js/history/score-manager.js" type="module"></script>
+    <script src="js/history/typing-replay.js" type="module"></script>
+    <script type="module">
+      import { initTheme } from './js/theme.js';
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initTheme({
+          pickerContainer: document.getElementById('themePickerContainer'),
+        });
+
         displayFullScoreHistory();
         initReplayContainer();
-        
-        // Watch for dark mode changes to refresh charts
-        const darkModeObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    const target = mutation.target;
-                    if (target.tagName === 'BODY' && target.classList.contains('dark-mode')) {
-                        // Re-render charts with dark mode colors
-                        displayFullScoreHistory();
-                    } else if (mutation.oldValue && mutation.oldValue.includes('dark-mode') && !target.classList.contains('dark-mode')) {
-                        // Re-render charts with light mode colors
-                        displayFullScoreHistory();
-                    }
-                }
-            });
+
+        // Grafik digambar di <canvas>, jadi warnanya tidak otomatis ikut
+        // berubah saat tema diganti. Re-render setelah tema baru dipilih.
+        // (Kartu daftar skor murni CSS, jadi tidak perlu di-render ulang.
+        // Sengaja hanya mendengar 'themechange', bukan 'themepreview', supaya
+        // hover di daftar tema tidak memicu rebuild grafik berulang-ulang.)
+        document.addEventListener('themechange', () => {
+          displayFullScoreHistory();
         });
-        
-        darkModeObserver.observe(document.body, {
-            attributes: true,
-            attributeOldValue: true,
-            attributeFilter: ['class']
-        });
-    });
-</script>
-</body>
+      });
+    </script>
+  </body>
 </html>
