@@ -15,6 +15,41 @@
 
 /* eslint-disable no-console */
 
+import { ReplayLiveStats } from './replay-live-stats.js';
+
+/**
+ * Preferensi tampilan replay. Disimpan di localStorage global (bukan per skor)
+ * supaya pilihan yang sama langsung dipakai saat membuka replay berikutnya.
+ */
+const REPLAY_SETTINGS_KEY = 'replaySettings';
+const DEFAULT_REPLAY_SETTINGS = Object.freeze({
+  highlight: true, // sorot kata yang sedang diketik
+  typingMode: false, // karakter muncul setelah diketik (bukan semua tampil)
+  liveStats: false, // grafik + metrik detail selama replay
+});
+
+function loadReplaySettings() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(REPLAY_SETTINGS_KEY) || '{}');
+    return {
+      highlight: raw.highlight !== false,
+      typingMode: raw.typingMode === true,
+      liveStats: raw.liveStats === true,
+    };
+  } catch (err) {
+    console.warn('Gagal membaca pengaturan replay:', err);
+    return { ...DEFAULT_REPLAY_SETTINGS };
+  }
+}
+
+function saveReplaySettings(settings) {
+  try {
+    localStorage.setItem(REPLAY_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.warn('Gagal menyimpan pengaturan replay:', err);
+  }
+}
+
 /**
  * Pengaman data rusak (mis. timestamp kacau/overflow), BUKAN pemotong jeda asli.
  *
@@ -1035,6 +1070,10 @@ class TypingReplayApp {
     this.replayer = null;
     this.renderer = null;
 
+    this.settings = loadReplaySettings();
+    this.liveStats = null;
+    this._liveMountedKey = '';
+
     this._isSeeking = false;
     this._boundOnMouseDown = null;
   }
@@ -1084,14 +1123,59 @@ class TypingReplayApp {
       <div class="replay-header">
         <h3>Tonton Replay Mengetik</h3>
         <div class="replay-controls">
-          <button id="replay-play-btn" class="replay-btn" title="Play/Pause">
+          <button
+            id="replay-settings-btn"
+            class="replay-btn replay-btn-icon"
+            type="button"
+            title="Pengaturan replay"
+            aria-label="Pengaturan replay"
+            aria-expanded="false"
+            aria-controls="replay-settings"
+          >
+            <i class="fas fa-sliders-h"></i>
+          </button>
+          <button id="replay-play-btn" class="replay-btn" title="Play/Pause" type="button">
             <i class="fas fa-play"></i>
           </button>
-          <button id="replay-reset-btn" class="replay-btn" title="Reset">
+          <button id="replay-reset-btn" class="replay-btn" title="Reset" type="button">
             <i class="fas fa-redo"></i>
           </button>
         </div>
       </div>
+
+      <div id="replay-settings" class="replay-settings" hidden>
+        <div class="replay-settings-head">
+          <span class="replay-settings-title">Pengaturan replay</span>
+          <span class="replay-settings-hint">Tersimpan otomatis</span>
+        </div>
+        <div class="replay-settings-list">
+          <label class="replay-toggle">
+            <span class="replay-toggle-copy">
+              <span class="replay-toggle-label">Sorot teks</span>
+              <span class="replay-toggle-desc">Tandai kata yang sedang diketik.</span>
+            </span>
+            <input type="checkbox" class="replay-toggle-input" data-replay-setting="highlight" role="switch" />
+            <span class="replay-toggle-switch" aria-hidden="true"></span>
+          </label>
+          <label class="replay-toggle">
+            <span class="replay-toggle-copy">
+              <span class="replay-toggle-label">Mode mengetik</span>
+              <span class="replay-toggle-desc">Karakter muncul setelah diketik, tidak semua sekaligus.</span>
+            </span>
+            <input type="checkbox" class="replay-toggle-input" data-replay-setting="typingMode" role="switch" />
+            <span class="replay-toggle-switch" aria-hidden="true"></span>
+          </label>
+          <label class="replay-toggle">
+            <span class="replay-toggle-copy">
+              <span class="replay-toggle-label">Statistik live</span>
+              <span class="replay-toggle-desc">Grafik dan metrik detail selama replay berjalan.</span>
+            </span>
+            <input type="checkbox" class="replay-toggle-input" data-replay-setting="liveStats" role="switch" />
+            <span class="replay-toggle-switch" aria-hidden="true"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="replay-stats">
         <div class="replay-stat-item">
           <span class="replay-stat-label">WPM</span>
@@ -1113,6 +1197,53 @@ class TypingReplayApp {
       <div class="replay-progress" id="replay-progress-track">
         <div id="replay-progress-bar" class="replay-progress-bar"></div>
         <div id="replay-progress-handle" class="replay-progress-handle"></div>
+      </div>
+
+      <div id="replay-live" class="replay-live" hidden>
+        <div class="replay-live-head">
+          <div class="replay-live-heading">
+            <h4>Statistik Live</h4>
+            <span class="replay-live-legend">
+              <span class="replay-live-key is-wpm">WPM</span>
+              <span class="replay-live-key is-accuracy">Akurasi</span>
+            </span>
+          </div>
+          <span id="replay-live-clock" class="replay-live-clock">0s / 0s</span>
+        </div>
+        <p id="replay-live-note" class="replay-live-note">
+          Pilih skor yang punya replay untuk melihat statistik live.
+        </p>
+        <div id="replay-live-body" class="replay-live-body" hidden>
+          <div class="replay-live-chart">
+            <canvas id="replay-live-chart" role="img" aria-label="Grafik WPM dan akurasi selama replay"></canvas>
+          </div>
+          <div class="replay-live-grid">
+            <div class="replay-live-stat">
+              <span class="replay-live-label">WPM</span>
+              <strong id="replay-live-wpm" class="replay-live-value">0</strong>
+            </div>
+            <div class="replay-live-stat">
+              <span class="replay-live-label">Akurasi</span>
+              <strong id="replay-live-accuracy" class="replay-live-value">0%</strong>
+            </div>
+            <div class="replay-live-stat">
+              <span class="replay-live-label">Diketik</span>
+              <strong id="replay-live-typed" class="replay-live-value">0</strong>
+            </div>
+            <div class="replay-live-stat">
+              <span class="replay-live-label">Benar</span>
+              <strong id="replay-live-correct" class="replay-live-value is-good">0</strong>
+            </div>
+            <div class="replay-live-stat">
+              <span class="replay-live-label">Salah</span>
+              <strong id="replay-live-wrong" class="replay-live-value">0</strong>
+            </div>
+            <div class="replay-live-stat">
+              <span class="replay-live-label">Konsistensi</span>
+              <strong id="replay-live-consistency" class="replay-live-value">0%</strong>
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -1169,6 +1300,10 @@ class TypingReplayApp {
       containerEl: textDisplay,
     });
 
+    this.liveStats = new ReplayLiveStats({
+      root: document.getElementById('replay-live'),
+    });
+
     this.replayer = new TypingPlayer({
       renderer: this.renderer,
       getKeystrokes: () => this.state.replayData?.keystrokes || [],
@@ -1177,11 +1312,18 @@ class TypingReplayApp {
       getFirstTimestampMs: () => this.state.firstTimestampMs,
       callbacks: {
         onUpdate: (currentTimeMs) => {
-          // hook future jika dibutuhkan
+          this.liveStats?.update(this.replayer?.currentIndex || 0, currentTimeMs);
         },
         onFinish: () => {
           const timeEl = document.getElementById('replay-time');
           if (timeEl) timeEl.textContent = '0s';
+
+          const keystrokes = this.state.replayData?.keystrokes || [];
+          const timeline = this.state.playbackTimestamps || [];
+          this.liveStats?.update(
+            keystrokes.length,
+            timeline[timeline.length - 1] ?? 0
+          );
         },
       },
       ui: {
@@ -1194,6 +1336,99 @@ class TypingReplayApp {
 
     // progress drag
     this._initProgressDrag();
+
+    this._wireSettings(replayContainer);
+  }
+
+  /**
+   * Pasang tombol + checkbox pengaturan replay, lalu terapkan preferensi
+   * yang tersimpan.
+   */
+  _wireSettings(replayContainer) {
+    const settingsButton = document.getElementById('replay-settings-btn');
+    const settingsPanel = document.getElementById('replay-settings');
+
+    if (settingsButton && settingsPanel) {
+      settingsButton.addEventListener('click', () => {
+        const willOpen = settingsPanel.hidden;
+        settingsPanel.hidden = !willOpen;
+        settingsButton.setAttribute('aria-expanded', String(willOpen));
+      });
+    }
+
+    replayContainer
+      .querySelectorAll('[data-replay-setting]')
+      .forEach((input) => {
+        const name = input.dataset.replaySetting;
+        input.checked = Boolean(this.settings[name]);
+
+        input.addEventListener('change', () => {
+          this.settings[name] = input.checked;
+          saveReplaySettings(this.settings);
+          this._applySettings();
+        });
+      });
+
+    this._applySettings();
+  }
+
+  /**
+   * Terapkan preferensi ke tampilan replay: highlight, mode ketik, dan
+   * panel statistik live.
+   */
+  _applySettings() {
+    const textDisplay = document.getElementById('replay-text-display');
+    if (textDisplay) {
+      textDisplay.classList.toggle('replay-typing-mode', this.settings.typingMode);
+      textDisplay.classList.toggle('replay-no-highlight', !this.settings.highlight);
+    }
+
+    const livePanel = document.getElementById('replay-live');
+    if (livePanel) livePanel.hidden = !this.settings.liveStats;
+
+    if (this.settings.liveStats) {
+      this._syncLiveStats();
+    } else {
+      this.liveStats?.detach();
+    }
+  }
+
+  /**
+   * Pastikan data statistik live cocok dengan replay yang sedang dipilih.
+   * Dipanggil saat load replay, saat replay di-reset, dan saat opsi diaktifkan.
+   */
+  _syncLiveStats() {
+    if (!this.settings.liveStats || !this.liveStats) return;
+
+    const note = document.getElementById('replay-live-note');
+    const body = document.getElementById('replay-live-body');
+
+    const keystrokes = this.state.replayData?.keystrokes || [];
+    const hasData = keystrokes.length > 0;
+
+    if (note) note.hidden = hasData;
+    if (body) body.hidden = !hasData;
+
+    if (!hasData) {
+      this.liveStats.detach();
+      this._liveMountedKey = '';
+      return;
+    }
+
+    const key = `${this.state.scoreId}:${keystrokes.length}`;
+    if (key !== this._liveMountedKey) {
+      this.liveStats.load(keystrokes, {
+        totalDurationSec: this.state.totalDurationSec,
+        key,
+      });
+      this._liveMountedKey = key;
+    }
+
+    this.liveStats.attach();
+    this.liveStats.update(
+      this.replayer?.currentIndex || 0,
+      this.replayer?.currentVirtualTimeMs || 0
+    );
   }
 
   loadReplay(scoreId) {
@@ -1239,6 +1474,10 @@ class TypingReplayApp {
     const playBtn = this.playButton;
     if (playBtn) playBtn.disabled = false;
     this._setPlayButtonIcon(false);
+
+    // Siapkan statistik live untuk skor yang baru dipilih.
+    this._liveMountedKey = '';
+    this._syncLiveStats();
   }
 
   // Sama seperti TypingPlayer.destroy(): tidak dipanggil di alur normal saat
