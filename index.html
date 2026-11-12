@@ -349,8 +349,19 @@
                     <div class="xp-bar-progress" id="xpBarProgress"></div>
                   </div>
                 </div>
-                <div class="chart-container">
-                  <canvas id="resultChart"></canvas>
+                <div class="chart-container result-chart-card">
+                  <div class="result-chart-head">
+                    <div class="result-chart-heading">
+                      <span class="result-chart-title">Grafik Hasil</span>
+                      <span class="result-chart-subtitle">per detik</span>
+                    </div>
+                    <!-- Legend interaktif (scale / pb / raw / burst / errors)
+                         diisi oleh setupCustomLegend() di result-chart.js. -->
+                    <div class="chart-legend-custom"></div>
+                  </div>
+                  <div class="result-chart-canvas">
+                    <canvas id="resultChart"></canvas>
+                  </div>
                 </div>
                 <div class="results-summary">
                   <div class="summary-details">

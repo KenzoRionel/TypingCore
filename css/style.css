@@ -424,6 +424,99 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
     margin-bottom: 25px;
 }
 
+/* ==================== RESULT CHART CARD ==================== */
+/* Kartu grafik hasil tes. Dibuat menyerupai kartu "Statistik Live" pada
+   replay histori: panel membulat, judul kecil di kiri atas, dan legend
+   berbentuk chip di kanan atas. Tinggi dikelola oleh wrapper canvas supaya
+   Chart.js tetap responsif. */
+.chart-container.result-chart-card {
+    position: relative;
+    height: auto;
+    margin-bottom: 18px;
+    padding: 14px 16px 10px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background:
+        radial-gradient(
+            130% 150% at 0% 0%,
+            color-mix(in srgb, var(--accent) 9%, transparent),
+            transparent 60%
+        ),
+        var(--bg);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 6%, transparent);
+    overflow: hidden;
+    animation: result-chart-card-in 0.4s ease-out both;
+}
+
+@keyframes result-chart-card-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chart-container.result-chart-card {
+        animation: none;
+    }
+}
+
+.result-chart-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    margin-bottom: 8px;
+}
+
+.result-chart-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.result-chart-title {
+    font-family: "Manrope", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--text);
+}
+
+.result-chart-subtitle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.result-chart-canvas {
+    position: relative;
+    height: 280px;
+}
+
+.result-chart-canvas canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@media (max-width: 640px) {
+    .chart-container.result-chart-card {
+        padding: 12px 12px 8px;
+    }
+
+    .result-chart-canvas {
+        height: 230px;
+    }
+}
+
 .results-summary {
     display: flex;
     flex-direction: column;

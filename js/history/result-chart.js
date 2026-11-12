@@ -17,37 +17,61 @@ function getChartThemeColors() {
     incorrect: getThemeColor("--incorrect") || "#ff6b6b",
     border: getThemeColor("--border") || "#3f3f3f",
     surface: getThemeColor("--surface") || "#2a2a2a",
+    bg: getThemeColor("--bg") || "#ffffff",
+  };
+}
+
+// Chart.js butuh rgba solid, bukan color-mix(), jadi token hex tema
+// dikonversi manual - sama seperti yang dipakai grafik replay.
+function toRgba(color, alpha) {
+  const value = String(color || "").trim();
+  if (!value.startsWith("#")) return value;
+
+  let hex = value.slice(1);
+  if (hex.length === 3) {
+    hex = hex
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+  if (hex.length !== 6) return value;
+
+  const parsed = parseInt(hex, 16);
+  if (!Number.isFinite(parsed)) return value;
+
+  const r = (parsed >> 16) & 255;
+  const g = (parsed >> 8) & 255;
+  const b = parsed & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// Scriptable gradient: dihitung saat gambar supaya selalu ikut warna tema
+// aktif tanpa perlu rebuild chart. Warna aksen diambil ulang tiap frame.
+function accentAreaGradient(topAlpha = 0.3) {
+  return (context) => {
+    const { ctx, chartArea } = context.chart;
+    const accent = getChartThemeColors().accent;
+
+    if (!chartArea) return toRgba(accent, topAlpha * 0.4);
+
+    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    gradient.addColorStop(0, toRgba(accent, topAlpha));
+    gradient.addColorStop(0.55, toRgba(accent, topAlpha * 0.35));
+    gradient.addColorStop(1, toRgba(accent, 0));
+    return gradient;
   };
 }
 
 // ✅ BARU: auto-update chart warna saat tema berubah
 const _themeObserver = new MutationObserver(() => {
   if (!resultChartInstance) return;
-  const c = getChartThemeColors();
-  // update dataset colors
-  resultChartInstance.data.datasets[0].borderColor = c.accent;
-  resultChartInstance.data.datasets[0].backgroundColor = c.accent;
-  resultChartInstance.data.datasets[1].borderColor = c.accent;
-  resultChartInstance.data.datasets[1].backgroundColor = c.accent;
-  resultChartInstance.data.datasets[2].borderColor = c.textMuted;
-  resultChartInstance.data.datasets[2].backgroundColor = c.textMuted;
-  resultChartInstance.data.datasets[3].borderColor = c.incorrect;
-  resultChartInstance.data.datasets[3].backgroundColor = c.incorrect;
-  // update axis & grid
-  const x = resultChartInstance.options.scales.x;
-  x.title.color = c.textMuted;
-  x.ticks.color = c.textMuted;
-  x.grid.color = `${c.border}40`;
-  const yWpm = resultChartInstance.options.scales.yWpm;
-  yWpm.title.color = c.textMuted;
-  yWpm.ticks.color = c.textMuted;
-  yWpm.grid.color = `${c.border}40`;
-  const yErr = resultChartInstance.options.scales.yErr;
-  yErr.title.color = c.textMuted;
-  yErr.ticks.color = c.textMuted;
+  applyChartTheme(resultChartInstance);
   resultChartInstance.update("none");
 });
-_themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+_themeObserver.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ["data-theme"],
+});
 
 // ✅ BARU: state untuk animasi "reveal" (garis bergerak dari kiri ke kanan)
 let revealProgress = 0; // 0 -> 1
@@ -101,6 +125,83 @@ function startRevealAnimation(chart) {
   revealAnimationId = requestAnimationFrame(step);
 }
 
+/**
+ * Gambar persegi panjang dengan sudut membulat (dipakai label PB).
+ * ctx.roundRect belum tentu ada di semua browser, jadi fallback manual.
+ */
+function roundedRect(ctx, x, y, width, height, radius) {
+  if (typeof ctx.roundRect === "function") {
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+
+/**
+ * Samakan warna seluruh dataset + sumbu dengan tema aktif. Dipakai oleh
+ * observer tema dan saat chart pertama dibuat, supaya elemen yang tidak
+ * scriptable (mis. borderColor garis) tetap ikut berubah.
+ */
+function applyChartTheme(chart) {
+  if (!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
+
+  const colors = getChartThemeColors();
+  const [wpmDataset, rawDataset, burstDataset, errorDataset] = chart.data.datasets;
+
+  if (wpmDataset) {
+    wpmDataset.borderColor = colors.accent;
+    wpmDataset.backgroundColor = accentAreaGradient(0.3);
+    wpmDataset.pointBackgroundColor = colors.bg;
+    wpmDataset.pointBorderColor = colors.accent;
+    wpmDataset.pointHoverBackgroundColor = colors.accent;
+  }
+  if (rawDataset) {
+    rawDataset.borderColor = toRgba(colors.accent, 0.65);
+    rawDataset.backgroundColor = toRgba(colors.accent, 0.65);
+  }
+  if (burstDataset) {
+    burstDataset.borderColor = toRgba(colors.textMuted, 0.85);
+    burstDataset.backgroundColor = toRgba(colors.textMuted, 0.85);
+  }
+  if (errorDataset) {
+    errorDataset.borderColor = colors.incorrect;
+    errorDataset.backgroundColor = colors.incorrect;
+  }
+
+  const scales = chart.options.scales || {};
+
+  if (scales.x) {
+    scales.x.title.color = colors.textMuted;
+    scales.x.ticks.color = colors.textMuted;
+    if (scales.x.border) scales.x.border.color = toRgba(colors.border, 0.9);
+  }
+  if (scales.yWpm) {
+    scales.yWpm.title.color = colors.textMuted;
+    scales.yWpm.ticks.color = colors.textMuted;
+    scales.yWpm.grid.color = toRgba(colors.border, 0.55);
+  }
+  if (scales.yErr) {
+    scales.yErr.title.color = colors.textMuted;
+    scales.yErr.ticks.color = colors.textMuted;
+  }
+
+  const tooltip = chart.options.plugins && chart.options.plugins.tooltip;
+  if (tooltip) {
+    tooltip.backgroundColor = colors.surface;
+    tooltip.titleColor = colors.text;
+    tooltip.bodyColor = colors.textMuted;
+    tooltip.borderColor = toRgba(colors.border, 0.9);
+  }
+}
+
 // ✅ PERUBAHAN: Sekarang fungsi menerima `rawWpmPerSecond` DAN `correctCharsPerSecond`,
 // serta (opsional) `quoteAuthor` - nama sumber quote yang sedang aktif (mode Quotes),
 // ditampilkan sebagai item non-interaktif di legend hasil, di samping tombol
@@ -136,30 +237,30 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
   // di-update saat keystroke terjadi). Dengan menggunakan data.startTime,
   // error dan karakter benar kini berada di basis waktu yang selaras,
   // sehingga garis raw WPM kumulatif lebih akurat.
-  historyData.forEach(data => {
-      const startSecond = Math.floor((data.startTime - (historyData[0]?.startTime || 0)) / 1000);
-      const errorCount = data.errorCount != null ? data.errorCount : computeErrorCount(data);
-      if (errorCount > 0 && startSecond >= 0 && startSecond < totalTime) {
-          errorCountsBySecond[startSecond] = (errorCountsBySecond[startSecond] || 0) + errorCount;
-      }
+  historyData.forEach((data) => {
+    const startSecond = Math.floor((data.startTime - (historyData[0]?.startTime || 0)) / 1000);
+    const errorCount = data.errorCount != null ? data.errorCount : computeErrorCount(data);
+    if (errorCount > 0 && startSecond >= 0 && startSecond < totalTime) {
+      errorCountsBySecond[startSecond] = (errorCountsBySecond[startSecond] || 0) + errorCount;
+    }
   });
 
   // ✅ PERUBAHAN: Gunakan `correctCharsPerSecond` untuk menghitung Net WPM,
   // dan tambahkan karakter salah per detik untuk menghitung "raw" kumulatif
   for (let i = 0; i < totalTime; i++) {
-      cumulativeCorrectChars += correctCharsPerSecond[i] || 0;
-      cumulativeIncorrectChars += errorCountsBySecond[i] || 0;
+    cumulativeCorrectChars += correctCharsPerSecond[i] || 0;
+    cumulativeIncorrectChars += errorCountsBySecond[i] || 0;
 
-      const cumulativeTimeMs = (i + 1) * 1000;
-      const elapsedMinutes = cumulativeTimeMs / 60000;
+    const cumulativeTimeMs = (i + 1) * 1000;
+    const elapsedMinutes = cumulativeTimeMs / 60000;
 
-      const netWpm = elapsedMinutes > 0 ? Math.round(cumulativeCorrectChars / 5 / elapsedMinutes) : 0;
-      netWpmData.push(netWpm);
+    const netWpm = elapsedMinutes > 0 ? Math.round(cumulativeCorrectChars / 5 / elapsedMinutes) : 0;
+    netWpmData.push(netWpm);
 
-      const rawCumulative = elapsedMinutes > 0
-        ? Math.round((cumulativeCorrectChars + cumulativeIncorrectChars) / 5 / elapsedMinutes)
-        : 0;
-      rawCumulativeData.push(rawCumulative);
+    const rawCumulative = elapsedMinutes > 0
+      ? Math.round((cumulativeCorrectChars + cumulativeIncorrectChars) / 5 / elapsedMinutes)
+      : 0;
+    rawCumulativeData.push(rawCumulative);
   }
 
   const labels = Array.from({ length: totalTime }, (_, i) => String(i + 1));
@@ -182,25 +283,50 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
     id: "pbLine",
     afterDatasetsDraw(chart) {
       if (!pbLineVisible) return;
-      const {
-        ctx,
-        chartArea: { left, right },
-        scales: { yWpm },
-      } = chart;
+      const chartArea = chart.chartArea;
+      const yWpm = chart.scales && chart.scales.yWpm;
+      if (!chartArea || !yWpm) return;
+
       const colors = getChartThemeColors();
       const y = yWpm.getPixelForValue(finalWPM);
+      if (!Number.isFinite(y)) return;
+
+      const { ctx } = chart;
+      const { left, right, top } = chartArea;
+
       ctx.save();
+      // Garis putus-putus tipis penanda rekor pribadi.
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = colors.textMuted;
+      ctx.strokeStyle = toRgba(colors.textMuted, 0.75);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(left, y);
       ctx.lineTo(right, y);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = colors.textMuted;
-      ctx.font = "12px sans-serif";
-      ctx.fillText(`PB: ${finalWPM}`, right - 70, y - 6);
+
+      // Label "PB xxx" dalam pill kecil di ujung kanan, senada dengan
+      // chip legend supaya terlihat menyatu dengan desain.
+      const label = `PB ${finalWPM}`;
+      ctx.font = "700 10px 'JetBrains Mono', monospace";
+      const textWidth = ctx.measureText(label).width;
+      const pillWidth = textWidth + 12;
+      const pillHeight = 17;
+      const pillX = right - pillWidth - 2;
+      let pillY = y - pillHeight - 5;
+      if (pillY < top + 2) pillY = y + 5;
+
+      roundedRect(ctx, pillX, pillY, pillWidth, pillHeight, 8);
+      ctx.fillStyle = colors.surface;
+      ctx.fill();
+      ctx.strokeStyle = toRgba(colors.textMuted, 0.4);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = toRgba(colors.textMuted, 0.95);
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      ctx.fillText(label, pillX + pillWidth / 2, pillY + pillHeight / 2 + 0.5);
       ctx.restore();
     },
   };
@@ -219,34 +345,53 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           label: "wpm",
           data: netWpmData,
           borderColor: themeColors.accent,
-          backgroundColor: themeColors.accent,
-          borderWidth: 3,
-          tension: 0.25,
-          pointRadius: 2,
-          pointHoverRadius: 3,
+          backgroundColor: accentAreaGradient(0.3),
+          borderWidth: 2.6,
+          tension: 0.35,
+          // Monotone: kurva mulus lewat tiap titik tanpa overshoot, sama
+          // seperti grafik replay supaya tidak terlihat "patah".
+          cubicInterpolationMode: "monotone",
+          clip: 10,
+          fill: true,
+          // Titik hanya muncul di ujung garis (tip), mengikuti referensi.
+          pointRadius: (context) =>
+            context.dataIndex === context.dataset.data.length - 1 ? 4 : 0,
+          pointHoverRadius: 6,
+          pointHitRadius: 12,
+          pointBackgroundColor: themeColors.bg,
+          pointBorderColor: themeColors.accent,
+          pointBorderWidth: 2,
+          pointHoverBorderWidth: 2.5,
+          pointHoverBackgroundColor: themeColors.accent,
           yAxisID: "yWpm",
         },
         {
           label: "raw",
           data: rawCumulativeData,
-          borderColor: themeColors.accent,
-          backgroundColor: themeColors.accent,
+          borderColor: toRgba(themeColors.accent, 0.65),
+          backgroundColor: toRgba(themeColors.accent, 0.65),
           borderWidth: 1.5,
-          borderDash: [5, 3],
-          tension: 0.25,
+          borderDash: [5, 4],
+          tension: 0.35,
+          cubicInterpolationMode: "monotone",
           pointRadius: 0,
-          pointHoverRadius: 2,
+          pointHoverRadius: 3,
+          pointHitRadius: 10,
+          fill: false,
           yAxisID: "yWpm",
         },
         {
           label: "burst",
           data: rawWpmPerSecond,
-          borderColor: themeColors.textMuted,
-          backgroundColor: themeColors.textMuted,
-          borderWidth: 2,
-          tension: 0.25,
-          pointRadius: 2,
+          borderColor: toRgba(themeColors.textMuted, 0.85),
+          backgroundColor: toRgba(themeColors.textMuted, 0.85),
+          borderWidth: 1.5,
+          tension: 0.35,
+          cubicInterpolationMode: "monotone",
+          pointRadius: 0,
           pointHoverRadius: 3,
+          pointHitRadius: 10,
+          fill: false,
           yAxisID: "yWpm",
           spanGaps: true,
         },
@@ -255,10 +400,13 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
           data: errorCountsBySecond,
           type: "scatter",
           pointStyle: "crossRot",
-          radius: 4,
-          borderWidth: 1,
+          radius: 4.5,
+          pointHoverRadius: 7,
+          borderWidth: 1.8,
           backgroundColor: themeColors.incorrect,
           borderColor: themeColors.incorrect,
+          pointHitRadius: 10,
+          clip: 12,
           yAxisID: "yErr",
         },
       ],
@@ -268,49 +416,97 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
       maintainAspectRatio: false,
       animation: false,
       interaction: { mode: "index", intersect: false },
+      layout: { padding: { top: 8, right: 6, left: 2 } },
       scales: {
         x: {
-          title: { display: true, text: `Waktu (detik)`, color: themeColors.textMuted },
+          offset: false,
+          title: {
+            display: true,
+            text: `Waktu (detik)`,
+            color: themeColors.textMuted,
+            font: { size: 11, weight: "600" },
+          },
           ticks: {
             autoSkip: true,
             maxTicksLimit: 10,
+            maxRotation: 0,
             stepSize: xInterval,
             callback: (value) => `${value + 1}`,
             color: themeColors.textMuted,
+            padding: 6,
+            font: { size: 10 },
           },
-          grid: { color: `${themeColors.border}40` },
+          grid: { display: false },
+          border: { color: toRgba(themeColors.border, 0.9) },
         },
         yWpm: {
           type: "linear",
           position: "left",
           beginAtZero: true,
           max: yWpmMax,
-          title: { display: true, text: "Kata per Menit", color: themeColors.textMuted },
-          ticks: { stepSize: Math.ceil(yWpmMax / 5), color: themeColors.textMuted },
-          grid: { color: `${themeColors.border}40` },
+          title: {
+            display: true,
+            text: "Kata per Menit",
+            color: themeColors.textMuted,
+            font: { size: 11, weight: "600" },
+          },
+          ticks: {
+            stepSize: Math.ceil(yWpmMax / 5),
+            color: themeColors.textMuted,
+            padding: 6,
+            font: { size: 10 },
+          },
+          grid: { color: toRgba(themeColors.border, 0.55) },
+          border: { display: false },
         },
         yErr: {
           position: "right",
           min: 0,
           max: yErrMax,
-          title: { display: true, text: "Eror", color: themeColors.textMuted },
-          ticks: { color: themeColors.textMuted },
+          title: {
+            display: true,
+            text: "Eror",
+            color: themeColors.textMuted,
+            font: { size: 11, weight: "600" },
+          },
+          ticks: {
+            color: themeColors.textMuted,
+            padding: 6,
+            font: { size: 10 },
+          },
           grid: { drawOnChartArea: false },
+          border: { display: false },
         },
       },
       plugins: {
-        // ✅ Legend bawaan Chart.js dimatikan, diganti legend ikon kustom di bawah grafik
+        // ✅ Legend bawaan Chart.js dimatikan, diganti legend chip kustom di atas grafik
         legend: { display: false },
         tooltip: {
+          backgroundColor: themeColors.surface,
+          titleColor: themeColors.text,
+          bodyColor: themeColors.textMuted,
+          borderColor: toRgba(themeColors.border, 0.9),
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+          titleFont: { weight: "700", size: 12 },
+          bodyFont: { size: 12 },
           itemSort: (a, b) =>
             (tooltipOrder[a.dataset.label] ?? 99) - (tooltipOrder[b.dataset.label] ?? 99),
           callbacks: {
             title: (context) => {
               const idx = context[0].dataIndex;
-              return `${idx + 1}`;
+              return `Detik ${idx + 1}`;
             },
             label: (context) => {
-              const label = context.dataset.label;
+              const labelsMap = {
+                wpm: "WPM",
+                raw: "Raw",
+                burst: "Burst",
+                errors: "Error",
+              };
+              const label = labelsMap[context.dataset.label] || context.dataset.label;
               const value = context.parsed.y;
               return `${label}: ${Math.round(value)}`;
             },
@@ -327,19 +523,26 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
   startRevealAnimation(resultChartInstance);
 }
 
-// ✅ BARU: legend ikon interaktif (scale, pb, raw, burst, errors) mengikuti konsep pada gambar acuan
+// ✅ BARU: legend chip interaktif (scale, pb, raw, burst, errors) di header
+// kartu grafik - bahasa visualnya mengikuti chip legend grafik replay.
 function setupCustomLegend(chart) {
   const canvas = document.getElementById("resultChart");
-  const chartContainer = canvas ? canvas.closest(".chart-container") : null;
-  if (!chartContainer || !chartContainer.parentElement) return;
+  const card = canvas ? canvas.closest(".result-chart-card") : null;
+  if (!card) return;
 
   injectLegendStyles();
 
-  let legend = chartContainer.parentElement.querySelector(".chart-legend-custom");
+  let legend = card.querySelector(".chart-legend-custom");
   if (!legend) {
-    legend = document.createElement("div");
-    legend.className = "chart-legend-custom";
-    chartContainer.insertAdjacentElement("afterend", legend);
+    // Fallback kalau markup lama dipakai: tetap tampilkan legend di bawah chart.
+    const chartContainer = canvas.closest(".chart-container");
+    if (!chartContainer || !chartContainer.parentElement) return;
+    legend = chartContainer.parentElement.querySelector(".chart-legend-custom");
+    if (!legend) {
+      legend = document.createElement("div");
+      legend.className = "chart-legend-custom";
+      chartContainer.insertAdjacentElement("afterend", legend);
+    }
   }
 
   // ✅ BARU: item author quote (mode Quotes) - non-interaktif (bukan <button>,
@@ -414,48 +617,61 @@ function injectLegendStyles() {
   style.textContent = `
     .chart-legend-custom {
       display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 18px;
       flex-wrap: wrap;
-      margin: 6px 4px 10px;
-      font-size: 0.78rem;
-      font-family: inherit;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      margin: 0;
+      font-size: 0.62rem;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--text-muted, #9aa0a6);
     }
     .chart-legend-custom .legend-item {
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      padding: 3px 9px;
+      border: 1px solid transparent;
+      border-radius: 999px;
       background: transparent;
-      border: none;
       color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
       cursor: pointer;
       opacity: 0.45;
-      padding: 2px 4px;
-      transition: opacity 0.15s ease;
+      transition: opacity 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
     }
     .chart-legend-custom .legend-item[data-active="true"] {
       opacity: 1;
+      border-color: var(--border, rgba(255,255,255,0.12));
+      background: color-mix(in srgb, var(--text) 7%, transparent);
     }
     .chart-legend-custom .legend-item:hover {
-      opacity: 0.85;
+      opacity: 0.9;
+    }
+    .chart-legend-custom .legend-item:focus-visible {
+      outline: 2px solid var(--accent, #f4c20d);
+      outline-offset: 1px;
     }
     .chart-legend-custom .legend-item i {
-      font-size: 0.85rem;
+      font-size: 0.72rem;
     }
     .chart-legend-custom .legend-line {
       display: inline-block;
-      width: 18px;
+      width: 14px;
       height: 0;
       border-top: 2px solid var(--accent, #f4c20d);
     }
     .chart-legend-custom .legend-line-dashed {
       border-top-style: dashed;
+      opacity: 0.7;
     }
     .chart-legend-custom .legend-line-solid {
       border-top-style: solid;
-      border-top-width: 3px;
+      border-top-width: 2px;
     }
     .chart-legend-custom .legend-line-burst {
       border-top-color: var(--text-muted, #9aa0a6);
@@ -464,15 +680,15 @@ function injectLegendStyles() {
       color: var(--incorrect, #ff6b6b);
     }
     .chart-legend-custom .legend-quote-author {
-      opacity: 0.85;
       cursor: default;
       font-style: italic;
-      margin-left: auto;
-      padding-left: 10px;
-      border-left: 1px solid var(--border, rgba(255,255,255,0.12));
+      text-transform: none;
+      letter-spacing: 0.01em;
+      padding: 3px 2px;
+      margin-left: 2px;
     }
     .chart-legend-custom .legend-quote-author i {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       opacity: 0.7;
     }
   `;
