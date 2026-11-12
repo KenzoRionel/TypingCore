@@ -116,8 +116,15 @@ export class ReplayLiveStats {
     /**
      * Bangun seluruh seri data dari skor yang dipilih.
      * O(n) sekali per load, update berikutnya cukup O(1) per frame.
+     *
+     * @param {Array} keystrokes
+     * @param {{ timeline?: number[], totalDurationSec?: number, key?: string }} options
+     *  `timeline` adalah waktu virtual replay (ms, sudah dinormalisasi
+     *  TypingRecorder.computePlaybackTimestamps). Wajib dipakai sebagai basis
+     *  waktu karena data skor lama bisa menyimpan timestamp absolut, sehingga
+     *  pengelompokan per detik dari timestamp mentah tidak pernah cocok.
      */
-    load(keystrokes, { totalDurationSec = 0, key = '' } = {}) {
+    load(keystrokes, { timeline = null, totalDurationSec = 0, key = '' } = {}) {
         const list = Array.isArray(keystrokes) ? keystrokes : [];
         const total = list.length;
 
@@ -125,23 +132,43 @@ export class ReplayLiveStats {
         const cumCorrect = new Array(total + 1).fill(0);
         const cumWrong = new Array(total + 1).fill(0);
         const charsPerSecond = [];
+        const times = new Array(total).fill(0);
+
+        // Basis waktu: timeline replay. Fallback hanya dipakai kalau timeline
+        // tidak tersedia -- timestamp dinormalisasi ke keystroke pertama supaya
+        // tetap relatif terhadap awal tes.
+        let firstTimestamp = null;
+        for (let i = 0; i < total; i++) {
+            const raw = Number(list[i]?.timestamp);
+            if (Number.isFinite(raw)) {
+                firstTimestamp = raw;
+                break;
+            }
+        }
 
         let typed = 0;
         let correct = 0;
         let wrong = 0;
-        let maxTimestamp = 0;
 
         for (let i = 0; i < total; i++) {
             const entry = list[i] || {};
-            const timestamp = Math.max(0, num(entry.timestamp));
-            if (timestamp > maxTimestamp) maxTimestamp = timestamp;
+
+            const fromTimeline = Number(timeline?.[i]);
+            const rawTimestamp = Number(entry.timestamp);
+            times[i] = Number.isFinite(fromTimeline)
+                ? Math.max(0, fromTimeline)
+                : Number.isFinite(rawTimestamp) && Number.isFinite(firstTimestamp)
+                    ? Math.max(0, rawTimestamp - firstTimestamp)
+                    : i > 0
+                        ? times[i - 1]
+                        : 0;
 
             if (!entry.isDeletion) {
                 typed += 1;
                 if (entry.isCorrect) correct += 1;
                 else wrong += 1;
 
-                const second = Math.floor(timestamp / 1000);
+                const second = Math.floor(times[i] / 1000);
                 charsPerSecond[second] = (charsPerSecond[second] || 0) + 1;
             }
 
@@ -150,68 +177,89 @@ export class ReplayLiveStats {
             cumWrong[i + 1] = wrong;
         }
 
+        const maxTime = total > 0 ? Math.max(times[total - 1], 0) : 0;
+        const durationFallback = num(totalDurationSec) > 0 ? num(totalDurationSec) * 1000 : 0;
         const totalSeconds = clamp(
-            Math.ceil(Math.max(maxTimestamp, num(totalDurationSec) * 1000) / 1000),
+            Math.ceil(Math.max(maxTime, durationFallback, 1000) / 1000),
             DEFAULT_SECONDS,
             MAX_SECONDS
         );
 
-        // Snapshot kumulatif pada akhir tiap detik (WPM & akurasi).
-        const wpmSeries = new Array(totalSeconds).fill(0);
+        // Grafik WPM memakai kecepatan WINDOW_SECONDS terakhir, bukan WPM
+        // kumulatif: WPM kumulatif langsung "mendarat" di satu nilai dan
+        // terlihat datar hampir sepanjang replay. Jendela pendek membuat
+        // garisnya benar-benar mengikuti kecepatan mengetik.
+        const WINDOW_SECONDS = 3;
+        const speedSeries = new Array(totalSeconds).fill(0);
         const accuracySeries = new Array(totalSeconds).fill(100);
+
         let cursor = 0;
-        let lastIndex = -1;
-
         for (let second = 0; second < totalSeconds; second++) {
-            while (cursor < total) {
-                const timestamp = Math.max(0, num(list[cursor]?.timestamp));
-                if (Math.floor(timestamp / 1000) <= second) {
-                    lastIndex = cursor;
-                    cursor += 1;
-                } else {
-                    break;
-                }
+            const start = Math.max(0, second - (WINDOW_SECONDS - 1));
+            let windowChars = 0;
+            for (let s = start; s <= second; s++) {
+                windowChars += charsPerSecond[s] || 0;
             }
+            const windowSeconds = second - start + 1;
+            speedSeries[second] = Math.round((windowChars / 5) / (windowSeconds / 60));
 
-            if (lastIndex >= 0) {
-                wpmSeries[second] = Math.round(num(list[lastIndex]?.wpm));
-                accuracySeries[second] = Math.round(num(list[lastIndex]?.accuracy, 100));
+            // Akurasi kumulatif sampai akhir detik ini, dihitung dari data
+            // keystroke (bukan snapshot lama yang bisa tidak konsisten).
+            while (cursor < total && Math.floor(times[cursor] / 1000) <= second) {
+                cursor += 1;
             }
+            accuracySeries[second] =
+                cursor > 0 && cumTyped[cursor] > 0
+                    ? Math.round((cumCorrect[cursor] / cumTyped[cursor]) * 100)
+                    : 100;
         }
 
-        // Konsistensi berjalan: stddev WPM per detik (detik kosong diabaikan,
-        // sama seperti computeConsistency() pada tes live).
+        // Konsistensi live memakai jendela 15 detik terakhir. Versi kumulatif
+        // terkunci di satu nilai setelah ~20 detik sehingga terlihat tidak
+        // bergerak; jendela bergulir membuat angkanya hidup selama replay.
+        const CONSISTENCY_WINDOW_SECONDS = 15;
         const consistencySeries = new Array(totalSeconds).fill(0);
-        let seenSeconds = 0;
-        let mean = 0;
-        let squaredDeviation = 0;
 
         for (let second = 0; second < totalSeconds; second++) {
-            const wpm = Math.round(((charsPerSecond[second] || 0) / 5) * 60);
-            if (wpm > 0) {
-                seenSeconds += 1;
-                const delta = wpm - mean;
-                mean += delta / seenSeconds;
-                squaredDeviation += delta * (wpm - mean);
+            const start = Math.max(0, second - (CONSISTENCY_WINDOW_SECONDS - 1));
+            const values = [];
+            for (let s = start; s <= second; s++) {
+                const wpm = Math.round(((charsPerSecond[s] || 0) / 5) * 60);
+                if (wpm > 0) values.push(wpm);
             }
-
-            if (seenSeconds > 1 && mean > 0) {
-                const stdDev = Math.sqrt(squaredDeviation / seenSeconds);
-                consistencySeries[second] = Math.max(0, Math.round((1 - stdDev / mean) * 100));
+            if (values.length > 1) {
+                const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+                const variance =
+                    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+                consistencySeries[second] =
+                    mean > 0 ? Math.max(0, Math.round((1 - Math.sqrt(variance) / mean) * 100)) : 0;
             }
         }
+
+        // Puncak kecepatan: persentil-95 supaya satu burst tidak menarik
+        // seluruh skala Y; tes pendek (< 6 detik) pakai nilai maksimum.
+        const positiveSpeeds = speedSeries.filter((value) => value > 0).sort((a, b) => a - b);
+        const peakSpeed =
+            positiveSpeeds.length === 0
+                ? 0
+                : positiveSpeeds.length < 6
+                    ? positiveSpeeds[positiveSpeeds.length - 1]
+                    : positiveSpeeds[
+                        Math.min(positiveSpeeds.length - 1, Math.floor(0.95 * positiveSpeeds.length))
+                    ];
 
         this.data = {
             key,
             keystrokes: list,
+            times,
             totalSeconds,
             cumTyped,
             cumCorrect,
             cumWrong,
-            wpmSeries,
+            speedSeries,
             accuracySeries,
             consistencySeries,
-            maxWpm: Math.max(...wpmSeries, 0),
+            maxSpeed: peakSpeed,
             minAccuracy: Math.min(...accuracySeries, 100),
         };
 
@@ -264,7 +312,18 @@ export class ReplayLiveStats {
         const correct = data.cumCorrect[safeIndex];
         const wrong = data.cumWrong[safeIndex];
         const last = safeIndex > 0 ? data.keystrokes[safeIndex - 1] : null;
-        const wpm = Math.round(num(last?.wpm));
+
+        // WPM kumulatif memakai snapshot recorder; kalau snapshot kosong/0
+        // (data lama), hitung ulang dari karakter benar dan waktu berjalan.
+        let wpm = Math.round(num(last?.wpm));
+        if (wpm <= 0 && correct > 0 && safeIndex > 0) {
+            const elapsedMs = data.times[safeIndex - 1] || 0;
+            const elapsedMinutes = elapsedMs / 60000;
+            if (elapsedMinutes > 0.00833) {
+                wpm = Math.round(correct / 5 / elapsedMinutes);
+            }
+        }
+
         const accuracy = typed > 0 ? Math.round((correct / typed) * 100) : 100;
         const consistency = data.consistencySeries[second] || 0;
 
@@ -298,10 +357,10 @@ export class ReplayLiveStats {
         if (second === this._lastSecond) return;
         this._lastSecond = second;
 
-        const wpmData = data.wpmSeries.map((value, i) => (i <= second ? value : null));
+        const speedData = data.speedSeries.map((value, i) => (i <= second ? value : null));
         const accuracyData = data.accuracySeries.map((value, i) => (i <= second ? value : null));
 
-        this.chart.data.datasets[0].data = wpmData;
+        this.chart.data.datasets[0].data = speedData;
         this.chart.data.datasets[1].data = accuracyData;
         this.chart.$replayNowSecond = second;
         this.chart.update('none');
@@ -347,7 +406,7 @@ export class ReplayLiveStats {
             String(index + 1)
         );
 
-        const yWpmMax = Math.max(40, Math.ceil((data.maxWpm * 1.2) / 10) * 10);
+        const yWpmMax = Math.max(40, Math.ceil((data.maxSpeed * 1.2) / 10) * 10);
         const yAccuracyMin = clamp(
             Math.min(95, Math.floor((data.minAccuracy - 5) / 5) * 5),
             0,
@@ -470,7 +529,7 @@ export class ReplayLiveStats {
                             label: (context) =>
                                 context.dataset.yAxisID === 'yAcc'
                                     ? `Akurasi: ${Math.round(context.parsed.y)}%`
-                                    : `WPM: ${Math.round(context.parsed.y)}`,
+                                    : `WPM 3 dtk: ${Math.round(context.parsed.y)}`,
                         },
                     },
                 },

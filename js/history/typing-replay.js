@@ -278,6 +278,7 @@ class TypingRenderer {
       wordSpaceSpans: [], // cache referensi <span> spasi setelah tiap kata
       wordTops: [],
       lineHeight: 0,
+      lineGlyphHeight: 0,
       lastRenderedWordIdx: -1,
       lastScrolledWordIdx: -1,
       containerBuilt: false,
@@ -306,6 +307,7 @@ class TypingRenderer {
       wordSpaceSpans: [],
       wordTops: [],
       lineHeight: 0,
+      lineGlyphHeight: 0,
       lastRenderedWordIdx: -1,
       lastScrolledWordIdx: -1,
       containerBuilt: false,
@@ -500,6 +502,39 @@ class TypingRenderer {
     const container = this.containerEl;
     if (!container) return;
 
+    const firstEl = wordElements[0];
+    // line-height dari computed style adalah tinggi baris sebenarnya
+    // (mis. 1.2 x 24px = 28.8px). Sebelumnya dipakai offsetHeight span inline,
+    // yang hanya setinggi kotak font -- lebih kecil dari jarak antar-baris,
+    // sehingga posisi auto-scroll lama-kelamaan meleset dan memotong baris
+    // paling atas.
+    const computed = firstEl ? window.getComputedStyle(firstEl) : null;
+    const computedLineHeight = computed ? parseFloat(computed.lineHeight) : 0;
+    const lineHeight =
+      Number.isFinite(computedLineHeight) && computedLineHeight > 0
+        ? computedLineHeight
+        : firstEl
+          ? firstEl.offsetHeight || 24
+          : 24;
+    this.cache.lineHeight = lineHeight;
+    // Tinggi kotak glyph (bukan line box). Dipakai untuk menentukan posisi
+    // scroll paling atas yang masih menampilkan satu baris penuh tanpa
+    // memperlihatkan potongan baris di atasnya.
+    this.cache.lineGlyphHeight = firstEl
+      ? firstEl.getBoundingClientRect().height || lineHeight
+      : lineHeight;
+
+    // Ruang kosong di bawah teks, hanya kalau teksnya memang lebih tinggi
+    // dari viewport. Tanpa ini baris-baris terakhir tidak bisa lagi
+    // diposisikan dengan satu baris konteks di atasnya (auto-scroll mentok
+    // di dasar), sehingga baris paling atas terlihat terpotong.
+    container.style.paddingBottom = '';
+    const overflows = container.scrollHeight > container.clientHeight + 1;
+    if (overflows) {
+      const spacer = Math.max(0, Math.ceil(container.clientHeight - lineHeight * 2));
+      if (spacer > 0) container.style.paddingBottom = `${spacer}px`;
+    }
+
     // PENTING: offsetTop diukur terhadap offsetParent, dan offsetParent dari
     // span kata di sini adalah <body> (bukan kotak replay), sehingga nilainya
     // berisi jarak kotak replay dari atas halaman. Dulu nilai itu dipakai
@@ -516,16 +551,6 @@ class TypingRenderer {
       if (!el) continue;
       this.cache.wordTops[i] = el.getBoundingClientRect().top - contentTop + scrollTop;
     }
-
-    const firstEl = wordElements[0];
-    let lineHeight = firstEl ? firstEl.offsetHeight : 0;
-    if (!lineHeight) {
-      // Fallback kalau elemen belum punya tinggi terukur (mis. font belum siap).
-      const computed = firstEl ? window.getComputedStyle(firstEl) : null;
-      const parsed = computed ? parseFloat(computed.lineHeight) : 0;
-      lineHeight = Number.isFinite(parsed) && parsed > 0 ? parsed : 24;
-    }
-    this.cache.lineHeight = lineHeight;
   }
 
   /**
@@ -687,16 +712,26 @@ class TypingRenderer {
 
     if (wordTop === undefined || !lineHeight) return;
 
-    const topWithinView = wordTop - container.scrollTop;
+    // Posisi paling atas yang masih menampilkan satu baris penuh: glyph baris
+    // konteks diletakkan tepat di bawah tepi, sehingga tidak ada potongan
+    // baris sebelumnya yang ikut terlihat di tepi atas.
+    const lineGlyphHeight = this.cache.lineGlyphHeight || lineHeight;
+    const topInset = Math.max(0, Math.min(4, lineHeight - lineGlyphHeight));
+
+    // Indeks baris kata aktif relatif terhadap viewport (0 = baris teratas).
+    // Posisi tujuan dihitung absolut dari wordTop (bukan menambah langkah),
+    // jadi pembulatan subpiksel tidak menumpuk jadi drift.
+    const lineIndex = Math.round((wordTop - container.scrollTop - topInset) / lineHeight);
 
     let newScrollTop = null;
-    if (topWithinView >= lineHeight) {
-      // Kata aktif sudah turun ke baris kedua -> geser satu baris supaya
-      // selalu ada satu baris konteks di atasnya.
-      newScrollTop = wordTop - lineHeight;
-    } else if (topWithinView < 0) {
+    if (lineIndex >= 2) {
+      // Kata aktif sudah turun ke baris ketiga -> posisikan tepat satu baris
+      // konteks di atasnya, plus inset supaya glyph baris konteks tidak
+      // terpotong tepi atas kotak scroll.
+      newScrollTop = wordTop - lineHeight - topInset;
+    } else if (lineIndex < 0) {
       // Kata aktif berada di atas viewport (mis. setelah seek/restart).
-      newScrollTop = Math.max(0, wordTop);
+      newScrollTop = Math.max(0, wordTop - topInset);
     }
 
     if (newScrollTop !== null) {
@@ -1245,6 +1280,9 @@ class TypingReplayApp {
               <strong id="replay-live-consistency" class="replay-live-value">0%</strong>
             </div>
           </div>
+          <p class="replay-live-foot">
+            WPM: kecepatan 3 detik terakhir &middot; Konsistensi: 15 detik terakhir
+          </p>
         </div>
       </div>
     `;
@@ -1420,6 +1458,7 @@ class TypingReplayApp {
     const key = `${this.state.scoreId}:${keystrokes.length}`;
     if (key !== this._liveMountedKey) {
       this.liveStats.load(keystrokes, {
+        timeline: this.state.playbackTimestamps,
         totalDurationSec: this.state.totalDurationSec,
         key,
       });
