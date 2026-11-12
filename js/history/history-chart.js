@@ -191,13 +191,15 @@ function applyChartDefaults(colors) {
 /**
  * Opsi skala yang dipakai kedua grafik.
  *
- * `offset: true` memberi jarak setengah kategori di kiri & kanan, sehingga
- * label "Tes 1"/"Tes terakhir" tidak lagi terpotong tepi area gambar.
+ * `offset: false` menempelkan titik pertama tepat di sumbu Y dan titik
+ * terakhir di ujung kanan area gambar -- dulu `offset: true` menyisakan
+ * setengah lebar kategori di kiri, sehingga garis seolah dimulai dari
+ * tengah grafik.
  */
 function buildScales(colors, yAxis) {
     return {
         x: {
-            offset: true,
+            offset: false,
             grid: { display: false },
             border: { color: colors.grid },
             title: {
@@ -288,6 +290,9 @@ export function renderProgressCharts(scores) {
             backgroundColor: areaGradient(colors.accent, 0.3),
             fill: true,
             tension: 0.32,
+            // Titik pertama/terakhir menempel tepi area gambar; beri ruang
+            // klip supaya marker setengah lingkaran di ujung tidak terpotong.
+            clip: 12,
             borderWidth: 2.5,
             pointRadius: total > 24 ? 0 : 4,
             pointHoverRadius: 7,
@@ -308,6 +313,7 @@ export function renderProgressCharts(scores) {
             borderWidth: 2,
             borderDash: [6, 5],
             tension: 0.35,
+            clip: 12,
             fill: false,
             pointRadius: 0,
             pointHoverRadius: 0,
@@ -405,6 +411,7 @@ export function renderProgressCharts(scores) {
             backgroundColor: areaGradient(colors.correct, 0.26),
             fill: true,
             tension: 0.32,
+            clip: 12,
             borderWidth: 2.5,
             pointRadius: total > 24 ? 0 : 4,
             pointHoverRadius: 7,
@@ -425,6 +432,7 @@ export function renderProgressCharts(scores) {
             borderWidth: 2,
             borderDash: [6, 5],
             tension: 0.35,
+            clip: 12,
             fill: false,
             pointRadius: 0,
             pointHoverRadius: 0,

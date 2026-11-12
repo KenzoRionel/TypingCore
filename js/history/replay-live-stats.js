@@ -26,6 +26,24 @@ function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
 }
 
+/**
+ * Rata-rata bergerak simetris (jendela 2*radius+1). Dipakai untuk garis
+ * grafik live supaya naik-turun per detik tidak terlihat patah-patah;
+ * nilai statistik di kartu tetap memakai data mentah.
+ */
+function smoothSeries(values, radius = 2) {
+    const total = values.length;
+    if (total === 0) return [];
+
+    return values.map((_, index) => {
+        const start = Math.max(0, index - radius);
+        const end = Math.min(total - 1, index + radius);
+        let sum = 0;
+        for (let i = start; i <= end; i++) sum += values[i];
+        return Math.round(sum / (end - start + 1));
+    });
+}
+
 function cssVar(name, fallback = '') {
     const value = getComputedStyle(document.documentElement)
         .getPropertyValue(name)
@@ -258,6 +276,10 @@ export class ReplayLiveStats {
             cumWrong,
             speedSeries,
             accuracySeries,
+            // Garis grafik dihaluskan (rata-rata 5 titik) supaya gerakannya
+            // tidak patah-patah; statistik & skala tetap dari data mentah.
+            plotSpeedSeries: smoothSeries(speedSeries),
+            plotAccuracySeries: smoothSeries(accuracySeries),
             consistencySeries,
             maxSpeed: peakSpeed,
             minAccuracy: Math.min(...accuracySeries, 100),
@@ -357,8 +379,10 @@ export class ReplayLiveStats {
         if (second === this._lastSecond) return;
         this._lastSecond = second;
 
-        const speedData = data.speedSeries.map((value, i) => (i <= second ? value : null));
-        const accuracyData = data.accuracySeries.map((value, i) => (i <= second ? value : null));
+        const speedData = data.plotSpeedSeries.map((value, i) => (i <= second ? value : null));
+        const accuracyData = data.plotAccuracySeries.map((value, i) =>
+            i <= second ? value : null
+        );
 
         this.chart.data.datasets[0].data = speedData;
         this.chart.data.datasets[1].data = accuracyData;
@@ -439,7 +463,10 @@ export class ReplayLiveStats {
                         },
                         fill: true,
                         borderWidth: 2.5,
-                        tension: 0.3,
+                        tension: 0.35,
+                        // Monotone: kurva mulus lewat tiap titik tanpa
+                        // overshoot, jadi tidak terlihat patah/patah.
+                        cubicInterpolationMode: 'monotone',
                         pointRadius: (context) =>
                             context.dataIndex === context.chart.$replayNowSecond ? 4 : 0,
                         pointBackgroundColor: colors.card,
@@ -456,7 +483,8 @@ export class ReplayLiveStats {
                         backgroundColor: 'transparent',
                         borderWidth: 1.5,
                         borderDash: [5, 4],
-                        tension: 0.3,
+                        tension: 0.35,
+                        cubicInterpolationMode: 'monotone',
                         pointRadius: 0,
                         pointHitRadius: 10,
                         fill: false,
@@ -529,7 +557,7 @@ export class ReplayLiveStats {
                             label: (context) =>
                                 context.dataset.yAxisID === 'yAcc'
                                     ? `Akurasi: ${Math.round(context.parsed.y)}%`
-                                    : `WPM 3 dtk: ${Math.round(context.parsed.y)}`,
+                                    : `WPM: ${Math.round(context.parsed.y)}`,
                         },
                     },
                 },

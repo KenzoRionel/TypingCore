@@ -1281,7 +1281,7 @@ class TypingReplayApp {
             </div>
           </div>
           <p class="replay-live-foot">
-            WPM: kecepatan 3 detik terakhir &middot; Konsistensi: 15 detik terakhir
+            WPM: kecepatan 3 detik terakhir (dihaluskan) &middot; Konsistensi: 15 detik terakhir
           </p>
         </div>
       </div>
