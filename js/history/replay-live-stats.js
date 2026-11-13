@@ -49,19 +49,25 @@ function smoothSeries(values, radius = 2) {
 }
 
 /**
- * Langkah label "bulat" (1/2/5 x 10^n).
+ * Langkah label "bulat" (1/2/2,5/5 x 10^n).
  *
  * Dipakai untuk menentukan langkah tick sekaligus batas sumbu, supaya batas
  * sumbu selalu kelipatan langkah itu. Kalau keduanya dihitung terpisah,
  * Chart.js menambahkan satu tick parsial di ujung (mis. 0,20,...,100,110)
  * sehingga jarak antar label tidak seragam.
+ *
+ * `halves` menyalakan kelipatan 2,5 (jadi 25, 250, ...) yang membuat sumbu
+ * lebih rapat di kecepatan tinggi: tanpa itu, puncak 117 WPM berakhir dengan
+ * langkah 50 dan batas atas 200, sehingga separuh grafik kosong. Jangan
+ * dipakai untuk sumbu persen (labelnya jadi 92,5%).
  */
-function niceStep(range, targetTicks = 5) {
+function niceStep(range, targetTicks = 5, halves = false) {
     const safeRange = Number.isFinite(range) && range > 0 ? range : 1;
     const raw = safeRange / Math.max(1, targetTicks);
     const power = 10 ** Math.floor(Math.log10(raw));
     const norm = raw / power;
-    const mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+    const mult =
+        norm <= 1 ? 1 : norm <= 2 ? 2 : halves && norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10;
     return mult * power;
 }
 
@@ -652,9 +658,12 @@ export class ReplayLiveStats {
         const speedPeak = plotSpeed.length > 0 ? Math.max(...plotSpeed) : 0;
         const accuracyFloor = plotAccuracy.length > 0 ? Math.min(...plotAccuracy) : 100;
 
-        const yWpmStep = niceStep(Math.max(40, speedPeak * 1.05));
+        // Batas atas: langkah bulat terdekat, lalu batas di-snap ke kelipatan
+        // langkah itu. Minimal 3 langkah supaya sumbu tidak tinggal dua label
+        // saat kecepatannya sangat rendah.
+        const yWpmStep = niceStep(Math.max(40, speedPeak * 1.05), 5, true);
         const yWpmMax = Math.max(
-            yWpmStep * 4,
+            yWpmStep * 3,
             Math.ceil((speedPeak * 1.05) / yWpmStep) * yWpmStep
         );
 
