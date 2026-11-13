@@ -67,7 +67,7 @@ export function resetStatisticsPanel() {
   statisticsPanelState.lastTestData = null;
 }
 
-export function renderStatisticsPanel(historyData, finalWPM, totalTime, testContext) {
+export function renderStatisticsPanel(historyData, finalWPM, totalTime, testContext, expSummary = null) {
   const panel = document.getElementById('statisticsPanel');
   if (!panel) return;
 
@@ -76,7 +76,8 @@ export function renderStatisticsPanel(historyData, finalWPM, totalTime, testCont
     historyData,
     finalWPM,
     totalTime,
-    testContext
+    testContext,
+    expSummary
   };
 
   // Calculate all statistics
@@ -84,9 +85,12 @@ export function renderStatisticsPanel(historyData, finalWPM, totalTime, testCont
   const perfStats = calculatePerformanceStats(historyData, finalWPM, totalTime);
   const contextStats = calculateContextStats(testContext);
   const progressStats = calculateProgressStats(finalWPM, testContext);
+  // ✅ Kartu "EXP & AFK" (dari exp-system.js via game-logic.js) — boleh null
+  // untuk pemanggil lama; kartunya otomatis tidak dirender.
+  const expStats = calculateExpStats(expSummary);
 
   // Render the panel
-  const panelHTML = createPanelHTML(errorStats, perfStats, contextStats, progressStats);
+  const panelHTML = createPanelHTML(errorStats, perfStats, contextStats, progressStats, expStats);
   panel.innerHTML = panelHTML;
 
   // Show statistics button (lihat catatan class 'show' + inline !important di resetStatisticsPanel)
@@ -369,6 +373,38 @@ function calculateAccuracyTimeline(historyData, totalTime) {
   return timeline;
 }
 
+// =============== EXP & AFK STATISTICS ===============
+
+// Format detik menjadi "Xm Yd" (menit + detik), dipakai kartu waktu aktif/AFK.
+function formatSeconds(totalSeconds) {
+  const total = Math.max(0, Math.round(Number(totalSeconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  if (minutes <= 0) return `${seconds}d`;
+  return `${minutes}m ${seconds}d`;
+}
+
+/**
+ * Normalisasi ringkasan EXP & AFK dari game-logic.js (exp-system.js).
+ * Mengembalikan null kalau data tidak tersedia supaya kartu dilewati,
+ * bukan menampilkan kotak kosong menyesatkan.
+ */
+function calculateExpStats(expSummary) {
+  if (!expSummary || typeof expSummary !== 'object') return null;
+  const { xpEarned, xpBreakdown, afkSeconds, activeSeconds, afkPercent, activePercent } = expSummary;
+  if (!Number.isFinite(Number(xpEarned)) && !Number.isFinite(Number(afkPercent))) {
+    return null;
+  }
+  return {
+    xpEarned: Number(xpEarned) || 0,
+    xpBreakdown: xpBreakdown || null,
+    afkSeconds: Number(afkSeconds) || 0,
+    activeSeconds: Number(activeSeconds) || 0,
+    afkPercent: Number(afkPercent) || 0,
+    activePercent: Number(activePercent) || 0,
+  };
+}
+
 // =============== CONTEXT STATISTICS ===============
 
 function calculateContextStats(testContext) {
@@ -443,10 +479,20 @@ function buildKeyboardHeatmap(charErrors) {
 
 // =============== UI RENDERING ===============
 
-function createPanelHTML(errorStats, perfStats, contextStats, progressStats) {
+function createPanelHTML(errorStats, perfStats, contextStats, progressStats, expStats = null) {
   return `
     <div class="statistics-content">
       <h3 class="stats-section-title">Statistik Rinci</h3>
+
+      <!-- EXP & AFK Section (hanya render kalau datanya tersedia) -->
+      ${expStats ? `
+      <div class="stats-section">
+        <h4 class="stats-section-header">EXP & AFK</h4>
+        <div class="stats-grid">
+          ${createExpCards(expStats)}
+        </div>
+      </div>
+      ` : ''}
 
       <!-- Error Analysis Section -->
       <div class="stats-section">
@@ -477,6 +523,77 @@ function createPanelHTML(errorStats, perfStats, contextStats, progressStats) {
         <h4 class="stats-section-header">Progress</h4>
         <div class="stats-grid">
           ${createProgressCards(progressStats)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function createExpCards(expStats) {
+  const { xpEarned, xpBreakdown, afkSeconds, activeSeconds, afkPercent, activePercent } = expStats;
+
+  const breakdownRows = xpBreakdown
+    ? `
+      <div class="stat-row">
+        <span class="stat-label">Dasar (karakter benar × aktif × akurasi)</span>
+        <span class="stat-value">${xpBreakdown.baseXP}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Bonus konsistensi</span>
+        <span class="stat-value">+${xpBreakdown.consistencyBonus}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Kata benar/salah</span>
+        <span class="stat-value">${xpBreakdown.wordBonus >= 0 ? '+' : ''}${xpBreakdown.wordBonus}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Penalti karakter salah</span>
+        <span class="stat-value">${xpBreakdown.errorPenalty > 0 ? `-${xpBreakdown.errorPenalty}` : '0'}</span>
+      </div>
+      ${xpBreakdown.difficultyMultiplier > 1 ? `
+      <div class="stat-row">
+        <span class="stat-label">Pengali mode</span>
+        <span class="stat-value">×${xpBreakdown.difficultyMultiplier}</span>
+      </div>` : ''}
+      ${xpBreakdown.perfectBonus > 0 ? `
+      <div class="stat-row">
+        <span class="stat-label">Bonus akurasi sempurna</span>
+        <span class="stat-value">+${xpBreakdown.perfectBonus}</span>
+      </div>` : ''}
+      ${xpBreakdown.marathonBonus > 0 ? `
+      <div class="stat-row">
+        <span class="stat-label">Bonus maraton</span>
+        <span class="stat-value">+${xpBreakdown.marathonBonus}</span>
+      </div>` : ''}
+    `
+    : '';
+
+  return `
+    <div class="stat-card">
+      <h5>EXP Didapat</h5>
+      <div class="stat-list">
+        <div class="stat-row">
+          <span class="stat-label">Total</span>
+          <span class="stat-value">+${xpEarned} XP</span>
+        </div>
+        ${breakdownRows}
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <h5>Waktu Aktif vs AFK</h5>
+      <div class="stat-list">
+        <div class="stat-row">
+          <span class="stat-label">Waktu aktif mengetik</span>
+          <span class="stat-value">${formatSeconds(activeSeconds)} (${activePercent}%)</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Waktu AFK / jeda</span>
+          <span class="stat-value">${formatSeconds(afkSeconds)} (${afkPercent}%)</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Catatan</span>
+          <span class="stat-value">Jeda &gt;2s dihitung AFK</span>
         </div>
       </div>
     </div>

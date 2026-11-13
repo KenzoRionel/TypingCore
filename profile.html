@@ -1075,12 +1075,13 @@
                     <th scope="col">Mode</th>
                     <th scope="col" class="is-num">WPM</th>
                     <th scope="col" class="is-num">Akurasi</th>
+                    <th scope="col" class="is-num">Konsistensi</th>
                     <th scope="col" class="is-num">XP</th>
                   </tr>
                 </thead>
                 <tbody id="historyTableBody">
                   <tr>
-                    <td colspan="5" class="history-empty">
+                    <td colspan="6" class="history-empty">
                       <i class="fas fa-clock-rotate-left" aria-hidden="true"></i>
                       Belum ada riwayat tes
                     </td>
@@ -1089,6 +1090,23 @@
               </table>
             </div>
           </section>
+
+          <!-- ==================== Statistik Detail ====================
+               Analisis lanjutan seluruh histori tes: tren performa (10 vs 10),
+               volume kata/karakter, kebiasaan latihan, dan ringkasan EXP.
+               Diisi oleh renderDetailStats() di bawah, datanya dari
+               getExtendedStats() (js/history/profile-stats.js). -->
+          <section class="history-section tc-fade" style="animation-delay: 600ms">
+            <div class="history-section-header">
+              <div>
+                <h3>Statistik Detail</h3>
+                <p class="history-section-subtitle">
+                  Analisis mendalam seluruh riwayat tes untuk rencana latihan berikutnya
+                </p>
+              </div>
+            </div>
+            <div id="detailStatsRoot"></div>
+          </section>
         </div>
       </main>
     </div>
@@ -1096,7 +1114,13 @@
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script type="module">
       import { getTypingScores } from './js/history/score-manager.js';
-      import { buildUserData as buildProfileUserData } from './js/history/profile-stats.js';
+      import {
+        buildUserData as buildProfileUserData,
+        getExtendedStats,
+      } from './js/history/profile-stats.js';
+      // Fallback XP untuk skor LAMA (sebelum field `xp` tersimpan di skor):
+      // rumus yang sama dengan yang dipakai saat entry itu disimpan.
+      import { estimateLegacyXP } from './js/utils/exp-system.js';
       import { initTheme } from './js/theme.js';
       // Rumus format ribuan untuk teks XP, mis. 3400 -> "3,400".
       const xpNumberFormat = new Intl.NumberFormat('en-US');
@@ -1399,10 +1423,24 @@
           accEl.textContent = `${Math.round(accuracy)}%`;
           accCell.appendChild(accEl);
 
-          // ---- XP (rumus sama dengan penyimpanan skor) ----
-          const earnedXP = Math.round(
-            wpm * (accuracy / 100) * (Number(score.time) || 0) / 60
-          );
+          // ---- Konsistensi (hanya skor baru yang menyimpan field ini) ----
+          const consistency = Number(score.consistency);
+          const consCell = document.createElement('td');
+          consCell.className = 'is-num';
+          const consEl = document.createElement('span');
+          consEl.className = 'history-acc-value';
+          consEl.textContent = Number.isFinite(consistency) ? `${Math.round(consistency)}%` : '—';
+          consCell.appendChild(consEl);
+
+          // ---- XP: pakai nilai yang BENAR-BENAR diterima saat tes (field
+          // `xp`, ditulis game-logic.js sejak exp-system.js). Skor lama tanpa
+          // field `xp` diestimasi dengan rumus lama (wpm × akurasi × menit)
+          // supaya kolom tetap terisi — itu memang rumus yang dipakai ketika
+          // entry tersebut dibuat.
+          const storedXP = Number(score.xp);
+          const earnedXP = Number.isFinite(storedXP)
+            ? storedXP
+            : estimateLegacyXP(score);
           const xpCell = document.createElement('td');
           xpCell.className = 'is-num';
           const xpEl = document.createElement('span');
@@ -1410,9 +1448,122 @@
           xpEl.textContent = `+${xpNumberFormat.format(earnedXP)} XP`;
           xpCell.appendChild(xpEl);
 
-          row.append(dateCell, modeCell, wpmCell, accCell, xpCell);
+          row.append(dateCell, modeCell, wpmCell, accCell, consCell, xpCell);
           tbody.appendChild(row);
         });
+      }
+
+      // ==================== Statistik Detail ====================
+      // Section analisis lanjutan di bawah tabel riwayat. Data dari
+      // getExtendedStats() (profile-stats.js) yang menggabungkan accumulator
+      // all-time + array skor. Dua kotak "tren" diberi warna hijau/merah
+      // sesuai arah perubahan supaya arah perkembangan terbaca sekilas.
+      function renderDetailStats(scores) {
+        const root = document.getElementById('detailStatsRoot');
+        if (!root) return;
+
+        if (!scores.length) {
+          root.innerHTML = `
+            <div class="tc-card detail-empty">
+              <i class="fas fa-chart-line" aria-hidden="true"></i>
+              Selesaikan tes pertamamu untuk melihat statistik detail.
+            </div>
+          `;
+          return;
+        }
+
+        const s = getExtendedStats(scores);
+        const fmtHour = (h) => `${String(h).padStart(2, '0')}.00`;
+        const trend = (value, unit, goodWhenUp = true) => {
+          if (!Number.isFinite(value) || value === 0) {
+            return `<span class="detail-trend detail-trend-flat">± stabil</span>`;
+          }
+          const good = goodWhenUp ? value > 0 : value < 0;
+          const arrow = value > 0 ? '▲' : '▼';
+          return `<span class="detail-trend ${good ? 'detail-trend-up' : 'detail-trend-down'}">${arrow} ${value > 0 ? '+' : ''}${value}${unit} vs 10 sebelumnya</span>`;
+        };
+        const dash = '—';
+
+        const cell = (label, value, sub = '') => `
+          <div class="ats-cell detail-cell">
+            <div class="ats-cell-label">${label}</div>
+            <div class="ats-cell-value">${value}</div>
+            ${sub ? `<div class="detail-sub">${sub}</div>` : ''}
+          </div>
+        `;
+
+        const mostActiveDayLabel = s.practice.mostActiveDay
+          ? new Date(`${s.practice.mostActiveDay.date}T00:00:00`).toLocaleDateString('id-ID', {
+              day: 'numeric', month: 'short', year: 'numeric',
+            })
+          : dash;
+        const firstTestLabel = s.practice.firstTestDate
+          ? new Date(s.practice.firstTestDate).toLocaleDateString('id-ID', {
+              day: 'numeric', month: 'short', year: 'numeric',
+            })
+          : dash;
+        const bestXpLabel = s.exp.bestXpTest
+          ? `+${xpNumberFormat.format(Math.round(s.exp.bestXpTest.xp))} XP (${s.exp.bestXpTest.wpm} WPM · ${s.exp.bestXpTest.accuracy}%)`
+          : dash;
+
+        root.innerHTML = `
+          <div class="tc-card">
+            <h4 class="detail-group-title"><i class="fas fa-gauge-high" aria-hidden="true"></i> Performa</h4>
+            <div class="ats-grid detail-grid">
+              ${cell('Rata-rata WPM (All-Time)', `${s.performance.avgWpm} WPM`, trend(s.performance.wpmTrend, ' WPM'))}
+              ${cell('Rata-rata Akurasi (All-Time)', `${s.performance.avgAccuracy}%`, trend(s.performance.accTrend, '%'))}
+              ${cell('Rata-rata Konsistensi', s.performance.avgConsistency > 0 ? `${s.performance.avgConsistency}%` : dash, s.performance.bestConsistency > 0 ? `Terbaik: ${s.performance.bestConsistency}%` : '')}
+              ${cell('WPM Terbaik', `${s.performance.bestWpm} WPM`, s.performance.bestWpmDate ? `Diraih ${new Date(s.performance.bestWpmDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : '')}
+            </div>
+
+            <h4 class="detail-group-title"><i class="fas fa-layer-group" aria-hidden="true"></i> Volume Latihan</h4>
+            <div class="ats-grid detail-grid">
+              ${cell('Total Tes', `${s.volume.testCount} tes`)}
+              ${cell('Total Waktu Mengetik', s.volume.durationLabel)}
+              ${cell('Kata Benar / Salah', `${idFmt(s.volume.correctWords)} / ${idFmt(s.volume.incorrectWords)}`)}
+              ${cell('Karakter Benar / Salah', `${idFmt(s.volume.correctChars)} / ${idFmt(s.volume.incorrectChars)}`)}
+              ${cell('Total Waktu AFK', s.volume.afkSeconds > 0 ? `${s.volume.afkLabel} <span class="detail-sub-inline">(${afkPercentLabel(s.volume)})</span>` : '0m')}
+              ${cell('Tes Pertama', firstTestLabel)}
+            </div>
+
+            <h4 class="detail-group-title"><i class="fas fa-calendar-check" aria-hidden="true"></i> Kebiasaan Latihan</h4>
+            <div class="ats-grid detail-grid">
+              ${cell('Hari Aktif', `${s.practice.activeDays} hari`)}
+              ${cell('Rata-rata Tes per Hari Aktif', `${s.practice.avgTestsPerActiveDay} tes`)}
+              ${cell('Hari Paling Produktif', mostActiveDayLabel, s.practice.mostActiveDay ? `${s.practice.mostActiveDay.tests} tes · rata-rata ${s.practice.mostActiveDay.avgWpm} WPM` : '')}
+              ${cell('Jam Paling Sering Latihan', s.practice.mostActiveHour !== null ? fmtHour(s.practice.mostActiveHour) : dash)}
+            </div>
+
+            <h4 class="detail-group-title"><i class="fas fa-star" aria-hidden="true"></i> EXP</h4>
+            <div class="ats-grid detail-grid">
+              ${cell('Total XP', `${xpNumberFormat.format(s.exp.xpTotal)} XP`)}
+              ${cell('XP 7 Hari Terakhir', `${xpNumberFormat.format(s.exp.xpLast7)} XP`)}
+              ${cell('XP 30 Hari Terakhir', `${xpNumberFormat.format(s.exp.xpLast30)} XP`)}
+              ${cell('Rata-rata XP per Tes', `${xpNumberFormat.format(s.exp.avgXpPerTest)} XP`)}
+              ${cell('Tes Paling Menguntungkan', bestXpLabel)}
+            </div>
+
+            <p class="detail-note">
+              <i class="fas fa-circle-info" aria-hidden="true"></i>
+              EXP dihitung dari: karakter benar (dasar), akurasi, konsistensi (bonus maks +10%),
+              kata benar/salah, penalti karakter salah, rasio waktu aktif vs AFK, pengali mode
+              (punctuation +10%, numbers +10%, quotes +5%), plus bonus akurasi sempurna (+25 XP)
+              dan maraton ≥10 menit (+50 XP).
+            </p>
+          </div>
+        `;
+      }
+
+      function idFmt(n) {
+        return Math.round(n || 0).toLocaleString('id-ID');
+      }
+
+      function afkPercentLabel(volume) {
+        // Persentase AFK dari total durasi latihan (butuh durasi > 0).
+        const duration = Number(volume.totalDurationSeconds) || 0;
+        if (duration <= 0) return '0% AFK';
+        const pct = Math.round(((Number(volume.afkSeconds) || 0) / duration) * 100);
+        return `${pct}% AFK`;
       }
 
       // Init profile features setelah DOM ready
@@ -1420,6 +1571,7 @@
         initTheme({ pickerContainer: document.getElementById('themePickerContainer') });
         renderProfileHeader(buildUserData());
         loadHistory();
+        renderDetailStats(getTypingScores());
 
         import('./js/history/pb-manager.js').then(({ renderPBCards }) => {
           renderPBCards(getTypingScores());

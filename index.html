@@ -348,6 +348,11 @@
                   <div class="xp-bar-wrapper">
                     <div class="xp-bar-progress" id="xpBarProgress"></div>
                   </div>
+                  <!-- Rincian komponen XP (dasar, bonus konsistensi, kata
+                       benar/salah, penalti karakter salah, pengali mode,
+                       bonus). Diisi oleh renderXpBreakdown() di game-logic.js
+                       setiap tes selesai; dikosongkan lagi saat tes direset. -->
+                  <div class="xp-breakdown" id="xpBreakdown"></div>
                 </div>
                 <div class="chart-container result-chart-card">
                   <div class="result-chart-head">
@@ -380,6 +385,14 @@
                     <div class="details-item">
                       <span class="details-label">Konsistensi</span>
                       <span id="finalConsistency">--%</span>
+                    </div>
+                    <div class="details-item">
+                      <span class="details-label">Waktu AFK</span>
+                      <span id="finalAfk">--%</span>
+                    </div>
+                    <div class="details-item">
+                      <span class="details-label">XP Didapat</span>
+                      <span id="finalXP">--</span>
                     </div>
                   </div>
                 </div>

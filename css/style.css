@@ -1032,6 +1032,63 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
    di aturan dasarnya (lihat di atas) yang otomatis benar untuk KEENAM tema,
    bukan cuma light/dark biner seperti override manual sebelumnya. */
 
+/* ==================== XP BREAKDOWN (rincian komponen XP di layar hasil) ====================
+   Diisi oleh renderXpBreakdown() di game-logic.js: daftar kecil komponen
+   EXP (dasar karakter benar, bonus konsistensi, kata benar/salah, penalti
+   karakter salah, pengali mode, bonus) tepat di bawah bar XP. Posisinya
+   mengikuti .xp-bar-container (absolute kanan-atas), jadi cukup rata kanan
+   dan dibatasi lebarnya agar tidak menutupi grafik. */
+.xp-breakdown {
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    min-width: 230px;
+    max-width: 300px;
+}
+
+.xp-breakdown.show {
+    display: flex;
+}
+
+.xp-breakdown-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    font-size: 0.78em;
+    line-height: 1.35;
+}
+
+.xp-breakdown-label {
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.xp-breakdown-value {
+    font-weight: 700;
+    font-family: "JetBrains Mono", monospace;
+    white-space: nowrap;
+}
+
+.xp-breakdown-pos {
+    color: var(--correct);
+}
+
+.xp-breakdown-neg {
+    color: var(--incorrect);
+}
+
+.xp-breakdown-zero {
+    color: var(--text-muted);
+}
+
 /* ==================== LEVEL UP TOAST ==================== */
 .tc-toast-container {
     position: fixed;

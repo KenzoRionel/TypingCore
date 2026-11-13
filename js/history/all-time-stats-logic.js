@@ -153,6 +153,45 @@ export function getAllTimeStats(scores = [], accumulator = null) {
       ? Math.round(scores.reduce((sum, s) => sum + (s.wpm || 0), 0) / scores.length)
       : 0;
 
+  // ✅ SCHEMA v2: agregat tambahan dari accumulator (semua dengan fallback ke
+  // `scores` supaya tetap jalan kalau accumulator gagal dibaca). Field-field
+  // ini dipakai section "Statistik Detail" di profile.html.
+  const testCount = accumulator ? accumulator.testCount : scores.length;
+  const bestWpm = accumulator
+    ? accumulator.bestWpm || 0
+    : scores.reduce((best, s) => Math.max(best, s.wpm || 0), 0);
+  const bestWpmDate = accumulator ? accumulator.bestWpmDate || null : null;
+  const allTimeAvgAccuracy =
+    accumulator && accumulator.testCount
+      ? Math.round(accumulator.accuracySum / accumulator.testCount)
+      : scores.length
+      ? Math.round(scores.reduce((sum, s) => sum + (s.accuracy || 0), 0) / scores.length)
+      : 0;
+  // Konsistensi hanya dihitung dari skor yang MEMANG menyimpan field
+  // `consistency` (sebelum exp-system.js, field ini tidak ada) — rata-rata
+  // yang mencampur skor tanpa data (dianggap 0) akan menyesatkan.
+  const consistencySamples = scores.filter(
+    (s) => Number.isFinite(Number(s.consistency))
+  );
+  const allTimeAvgConsistency = consistencySamples.length
+    ? Math.round(
+        consistencySamples.reduce((sum, s) => sum + Number(s.consistency), 0) /
+          consistencySamples.length
+      )
+    : 0;
+  const bestConsistency = accumulator
+    ? accumulator.bestConsistency || 0
+    : consistencySamples.reduce((best, s) => Math.max(best, Number(s.consistency) || 0), 0);
+  const correctWords = accumulator
+    ? accumulator.correctWordsSum || 0
+    : scores.reduce((sum, s) => sum + (s.correctWords || 0), 0);
+  const incorrectWords = accumulator
+    ? accumulator.incorrectWordsSum || 0
+    : scores.reduce((sum, s) => sum + (s.incorrectWords || 0), 0);
+  const afkSeconds = accumulator ? accumulator.afkSecondsSum || 0 : scores.reduce((sum, s) => sum + (s.afkSeconds || 0), 0);
+  const xpTotal = accumulator ? accumulator.xpTotal || 0 : scores.reduce((sum, s) => sum + (s.xp || 0), 0);
+  const trackingSince = accumulator ? accumulator.trackingSince || null : null;
+
   return {
     totalDurationSeconds,
     totalDurationLabel: formatDuration(totalDurationSeconds),
@@ -167,5 +206,18 @@ export function getAllTimeStats(scores = [], accumulator = null) {
     avgLast10Wpm,
     allTimeAvgWpm,
     vsAllTimeDiff: avgLast10Wpm - allTimeAvgWpm,
+    // ✅ BARU (schema v2)
+    testCount,
+    bestWpm,
+    bestWpmDate,
+    allTimeAvgAccuracy,
+    allTimeAvgConsistency,
+    bestConsistency,
+    correctWords,
+    incorrectWords,
+    afkSeconds,
+    afkLabel: formatDuration(afkSeconds),
+    xpTotal,
+    trackingSince,
   };
 }

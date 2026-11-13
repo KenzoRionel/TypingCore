@@ -35,9 +35,9 @@ function cleanupOldScores(scores) {
     return scores;
 }
 
-export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null, language = 'id') {
+export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords, incorrectWords, replayData = null, language = 'id', extra = {}) {
     console.log('saveScore called with replayData:', replayData ? 'YES' : 'NO');
-    
+
     const scores = getTypingScores();
     const scoreEntry = {
         date: new Date().toISOString(),
@@ -45,6 +45,24 @@ export function saveScore(wpm, accuracy, time, errors, type, mode, correctWords,
         type, mode, language,
         correctWords, incorrectWords
     };
+
+    // ✅ Statistik tambahan per tes dari game-logic.js (exp-system.js):
+    // karakter benar/salah EKSAK, raw WPM, konsistensi, waktu AFK/aktif, dan
+    // XP yang benar-benar diterima (+ rinciannya). Field ini yang dipakai
+    // profil/All-Time Stats — sebelumnya karakter benar hanya bisa
+    // DIESTIMASI balik dari rumus WPM (kurang presisi), dan kolom XP di
+    // riwayat harus menghitung ulang dengan rumus yang rawan beda.
+    // Daftar field di-whitelist supaya objek `extra` yang tidak dikenal tidak
+    // ikut tersimpan dan membesarkan localStorage.
+    const EXTRA_FIELDS = [
+        'correctChars', 'incorrectChars', 'rawWpm', 'consistency',
+        'afkSeconds', 'activeSeconds', 'xp', 'xpBreakdown'
+    ];
+    EXTRA_FIELDS.forEach((field) => {
+        if (extra && extra[field] !== undefined && extra[field] !== null) {
+            scoreEntry[field] = extra[field];
+        }
+    });
     
     // Add replay data if available
     if (replayData) {

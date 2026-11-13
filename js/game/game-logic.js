@@ -26,6 +26,13 @@ import {
   getLevelInfo,
   getLevelName,
 } from "../utils/level-system.js";
+// ✅ EXP & AFK: logic perhitungan XP dipindah ke modul bersama exp-system.js
+// supaya rumus yang sama dipakai game-logic.js (saat menyimpan), profile.html
+// (saat menampilkan rincian), dan statistics-panel.js (kartu EXP & AFK).
+import {
+  calculateEarnedXP,
+  computeAfkStats,
+} from "../utils/exp-system.js";
 import { showLevelUpToast } from "../utils/toast.js";
 import { getRandomQuoteSync } from "../data/quotes-loader.js";
 
@@ -681,8 +688,13 @@ export function calculateAndDisplayFinalResults() {
       ? Math.round((finalCorrectChars / totalTypedChars) * 100)
       : 0;
 
+  // Catat waktu berakhir tes SEKALI di sini — dipakai bersama oleh durasi
+  // aktual (quoteMode), statistik AFK, dan perhitungan XP supaya ketiganya
+  // konsisten memakai basis waktu yang sama.
+  const testEndTime = Date.now();
+
   const actualTestDuration = gameState.quoteMode
-    ? Math.max(1, Math.round((Date.now() - gameState.startTime) / 1000))
+    ? Math.max(1, Math.round((testEndTime - gameState.startTime) / 1000))
     : gameState.TIMED_TEST_DURATION;
 
   const totalTestMinutes = actualTestDuration / 60;
@@ -703,16 +715,42 @@ export function calculateAndDisplayFinalResults() {
     actualTestDuration
   );
 
-  // ✅ Hitung XP: (WPM × Akurasi%) × (Lama Mengetik dalam Menit)
-  const accuracyDecimal = finalAccuracy / 100;
-  const earnedXP = Math.round(finalWPM * accuracyDecimal * totalTestMinutes);
-  
+  // ✅ Statistik AFK: seberapa lama user benar-benar mengetik vs diam.
+  // Dipakai untuk mengurangi EXP (waktu AFK tidak menghasilkan XP) dan
+  // ditampilkan di layar hasil + panel statistik.
+  const afkStats = computeAfkStats(
+    keystrokeLog,
+    gameState.startTime,
+    testEndTime,
+    actualTestDuration
+  );
+
+  // ✅ Hitung XP dengan rumus lengkap (lihat js/utils/exp-system.js):
+  // karakter benar/salah, kata benar/salah, akurasi, konsistensi, rasio waktu
+  // aktif (anti-AFK), pengali mode (punctuation/numbers/quotes), bonus
+  // akurasi sempurna & bonus maraton.
+  const expResult = calculateEarnedXP({
+    correctChars: finalCorrectChars,
+    incorrectChars: finalIncorrectChars,
+    correctWords: gameState.totalCorrectWords,
+    incorrectWords: gameState.totalIncorrectWords,
+    accuracy: finalAccuracy,
+    consistency,
+    durationSeconds: actualTestDuration,
+    activeSeconds: afkStats.activeSeconds,
+    punctuationMode: gameState.punctuationMode,
+    numberMode: gameState.numberMode,
+    quoteMode: gameState.quoteMode,
+  });
+  const earnedXP = expResult.total;
+  const xpBreakdown = expResult.breakdown;
+
   // Simpan XP ke localStorage
   const currentXP = parseInt(localStorage.getItem("userXP")) || 0;
   const newTotalXP = currentXP + earnedXP;
   localStorage.setItem("userXP", newTotalXP);
-  
-  console.log(`XP Earned: ${earnedXP}, Total XP: ${newTotalXP}`);
+
+  console.log(`XP Earned: ${earnedXP} (${JSON.stringify(xpBreakdown)}), Total XP: ${newTotalXP}`);
 
   // ✅ Update UI
   document.getElementById("finalWPM").textContent = finalWPM;
@@ -726,6 +764,15 @@ export function calculateAndDisplayFinalResults() {
   document.getElementById("finalConsistency").textContent = `${consistency}%`;
   const rawWpmEl = document.getElementById("finalRawWPM");
   if (rawWpmEl) rawWpmEl.textContent = String(finalRawWPM);
+
+  // ✅ AFK & XP di baris ringkasan hasil (samping RAW WPM / Waktu / dst.)
+  const finalAfkEl = document.getElementById("finalAfk");
+  if (finalAfkEl) finalAfkEl.textContent = `${afkStats.afkPercent}%`;
+  const finalXpEl = document.getElementById("finalXP");
+  if (finalXpEl) finalXpEl.textContent = `+${earnedXP}`;
+
+  // ✅ Rincian komponen XP (base, bonus, penalti) di bawah bar XP.
+  renderXpBreakdown(xpBreakdown);
 
   // ✅ Animate XP Bar
   animateXPBar(earnedXP);
@@ -786,7 +833,19 @@ export function calculateAndDisplayFinalResults() {
     historyData,
     finalWPM,
     actualTestDuration,
-    testContext
+    testContext,
+    // ✅ Kartu "EXP & AFK" di panel statistik butuh rincian tes ini.
+    {
+      xpEarned: earnedXP,
+      xpBreakdown,
+      afkSeconds: afkStats.afkSeconds,
+      activeSeconds: afkStats.activeSeconds,
+      afkPercent: afkStats.afkPercent,
+      activePercent: afkStats.activePercent,
+      correctWords: gameState.totalCorrectWords,
+      incorrectWords: gameState.totalIncorrectWords,
+      consistency,
+    }
   );
 
   const typedText = gameState.userTypedWords.filter(w => w && w.length > 0).join(' ');
@@ -834,7 +893,20 @@ export function calculateAndDisplayFinalResults() {
       gameState.totalCorrectWords,
       gameState.totalIncorrectWords,
       replayData,
-      languageCode
+      languageCode,
+      // ✅ Statistik tambahan per tes (karakter, konsistensi, AFK, XP) —
+      // disimpan ke entry skor supaya profil & grafik tidak perlu mengestimasi
+      // ulang dari rumus WPM (lihat score-manager.js saveScore()).
+      {
+        correctChars: finalCorrectChars,
+        incorrectChars: finalIncorrectChars,
+        rawWpm: finalRawWPM,
+        consistency,
+        afkSeconds: afkStats.afkSeconds,
+        activeSeconds: afkStats.activeSeconds,
+        xp: earnedXP,
+        xpBreakdown,
+      }
     );
   }
 
@@ -1107,6 +1179,17 @@ export function resetTestState(options = {}) {
   if (DOM.finalTotalWords) DOM.finalTotalWords.textContent = "--";
   if (DOM.finalCorrectWords) DOM.finalCorrectWords.textContent = "--";
   if (DOM.finalIncorrectWords) DOM.finalIncorrectWords.textContent = "--";
+
+  // ✅ Reset tampilan AFK/XP & rincian XP dari tes sebelumnya.
+  const finalAfkReset = document.getElementById("finalAfk");
+  if (finalAfkReset) finalAfkReset.textContent = "--%";
+  const finalXpReset = document.getElementById("finalXP");
+  if (finalXpReset) finalXpReset.textContent = "--";
+  const xpBreakdownReset = document.getElementById("xpBreakdown");
+  if (xpBreakdownReset) {
+    xpBreakdownReset.innerHTML = "";
+    xpBreakdownReset.classList.remove("show");
+  }
 
   hideStatsContainer();
   if (typeof window.resetLiveHud === "function") window.resetLiveHud();
@@ -1397,6 +1480,82 @@ export function hideStatsContainer() {
   const DOM = getGameDOMReferences();
   if (!DOM || !DOM.statsContainer) return;
   DOM.statsContainer.classList.remove("show");
+}
+
+/**
+ * Render rincian komponen XP di bawah bar XP layar hasil.
+ * Elemen target (#xpBreakdown) ada di index.html; kalau tidak ada (mis. halaman
+ * lain memakai game-logic), fungsi ini no-op supaya tidak melempar error.
+ * @param {Object} breakdown - hasil calculateEarnedXP().breakdown
+ */
+function renderXpBreakdown(breakdown) {
+  const container = document.getElementById("xpBreakdown");
+  if (!container || !breakdown) return;
+
+  const fmt = (n) => {
+    const v = Number(n) || 0;
+    // Tampilkan tanda +/- dan buang desial .0 (mis. 12 -> "12", 7.5 -> "+7.5")
+    const rounded = Math.round(v * 10) / 10;
+    const sign = rounded > 0 ? "+" : "";
+    return `${sign}${rounded}`;
+  };
+
+  const rows = [
+    {
+      label: `Dasar (${breakdown.correctChars} karakter benar, aktif ${breakdown.activePercent}%)`,
+      value: fmt(breakdown.baseXP),
+      tone: "pos",
+    },
+    {
+      label: `Bonus konsistensi ${breakdown.consistency}%`,
+      value: fmt(breakdown.consistencyBonus),
+      tone: breakdown.consistencyBonus > 0 ? "pos" : "zero",
+    },
+    {
+      label: `Kata benar/salah (${breakdown.correctWords}/${breakdown.incorrectWords})`,
+      value: fmt(breakdown.wordBonus),
+      tone:
+        breakdown.wordBonus > 0 ? "pos" : breakdown.wordBonus < 0 ? "neg" : "zero",
+    },
+    {
+      label: `Penalti ${breakdown.incorrectChars} karakter salah`,
+      value: fmt(-breakdown.errorPenalty),
+      tone: breakdown.errorPenalty > 0 ? "neg" : "zero",
+    },
+  ];
+
+  if (breakdown.difficultyMultiplier > 1) {
+    rows.push({
+      label: "Pengali mode (punctuation/numbers/quotes)",
+      value: `×${breakdown.difficultyMultiplier}`,
+      tone: "pos",
+    });
+  }
+  if (breakdown.perfectBonus > 0) {
+    rows.push({ label: "Bonus akurasi sempurna", value: `+${breakdown.perfectBonus}`, tone: "pos" });
+  }
+  if (breakdown.marathonBonus > 0) {
+    rows.push({ label: "Bonus maraton (≥10 menit)", value: `+${breakdown.marathonBonus}`, tone: "pos" });
+  }
+  if (breakdown.afkPercent > 0) {
+    rows.push({
+      label: `Waktu AFK ${breakdown.afkPercent}% (tidak menghasilkan XP)`,
+      value: "-",
+      tone: "zero",
+    });
+  }
+
+  container.innerHTML = rows
+    .map(
+      (r) => `
+        <div class="xp-breakdown-row">
+          <span class="xp-breakdown-label">${r.label}</span>
+          <span class="xp-breakdown-value xp-breakdown-${r.tone}">${r.value}</span>
+        </div>
+      `
+    )
+    .join("");
+  container.classList.add("show");
 }
 
 /**

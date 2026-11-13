@@ -32,6 +32,10 @@ export default function AllTimeStats({ scores = [] }) {
       ? '±0 WPM'
       : `${stats.vsAllTimeDiff > 0 ? '+' : ''}${stats.vsAllTimeDiff} WPM`;
 
+  const xpLabel = stats.xpTotal > 0
+    ? `${Math.round(stats.xpTotal).toLocaleString('id-ID')} XP`
+    : 'Belum ada data';
+
   return h(
     'section',
     { className: 'ats-section' },
@@ -44,7 +48,12 @@ export default function AllTimeStats({ scores = [] }) {
       h(StatCell, { label: 'Karakter', value: stats.charsLabel }),
       h(StatCell, { label: 'Top Burst', value: stats.topBurstLabel }),
       h(StatCell, { label: 'Rata-rata 10 Test', value: `${stats.avgLast10Wpm} WPM` }),
-      h(StatCell, { label: 'vs All-time', value: diffLabel })
+      h(StatCell, { label: 'vs All-time', value: diffLabel }),
+      // ✅ BARU (schema v2): akurasi rata-rata seumur hidup, total XP yang
+      // benar-benar diterima, dan total waktu AFK selama tes.
+      h(StatCell, { label: 'Rata-rata Akurasi', value: `${stats.allTimeAvgAccuracy}%` }),
+      h(StatCell, { label: 'Total XP', value: xpLabel }),
+      h(StatCell, { label: 'Total Waktu AFK', value: stats.afkSeconds > 0 ? stats.afkLabel : '0m' })
     )
   );
 }

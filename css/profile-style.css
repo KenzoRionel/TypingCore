@@ -700,3 +700,104 @@ body.dark-mode {
     gap: 16px;
   }
 }
+
+/* ==================== STATISTIK DETAIL (Section di bawah Last 10 Tests) ====================
+   Dipakai oleh renderDetailStats() di profile.html. Grid-nya sengaja
+   auto-fit (bukan ikut .ats-grid yang jadi 6 kolom di desktop) supaya
+   kelompok dengan 4-6 kotak tetap rapi tanpa baris nyaris kosong. */
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.detail-group-title {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 18px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-group-title i {
+  color: var(--tc-amber);
+  font-size: 0.9em;
+}
+
+.detail-group-title:first-of-type {
+  margin-top: 0;
+}
+
+.detail-cell .detail-sub {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.detail-sub-inline {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.detail-trend {
+  display: inline-block;
+  margin-top: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.detail-trend-up {
+  color: var(--success, #2e9e5b);
+}
+
+.detail-trend-down {
+  color: var(--danger, #d64545);
+}
+
+.detail-trend-flat {
+  color: var(--text-secondary);
+}
+
+.detail-note {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--tc-key-border);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.detail-note i {
+  margin-top: 2px;
+  color: var(--tc-amber);
+}
+
+.detail-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding: 32px 20px;
+}
+
+.detail-empty i {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--tc-amber);
+  margin-bottom: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-cell {
+    transition: none;
+  }
+}
