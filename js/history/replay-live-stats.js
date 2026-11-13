@@ -48,6 +48,23 @@ function smoothSeries(values, radius = 2) {
     });
 }
 
+/**
+ * Langkah label "bulat" (1/2/5 x 10^n).
+ *
+ * Dipakai untuk menentukan langkah tick sekaligus batas sumbu, supaya batas
+ * sumbu selalu kelipatan langkah itu. Kalau keduanya dihitung terpisah,
+ * Chart.js menambahkan satu tick parsial di ujung (mis. 0,20,...,100,110)
+ * sehingga jarak antar label tidak seragam.
+ */
+function niceStep(range, targetTicks = 5) {
+    const safeRange = Number.isFinite(range) && range > 0 ? range : 1;
+    const raw = safeRange / Math.max(1, targetTicks);
+    const power = 10 ** Math.floor(Math.log10(raw));
+    const norm = raw / power;
+    const mult = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+    return mult * power;
+}
+
 function cssVar(name, fallback = '') {
     const value = getComputedStyle(document.documentElement)
         .getPropertyValue(name)
@@ -334,18 +351,6 @@ export class ReplayLiveStats {
             }
         }
 
-        // Puncak kecepatan: persentil-95 supaya satu burst tidak menarik
-        // seluruh skala Y; tes pendek (< 6 detik) pakai nilai maksimum.
-        const positiveSpeeds = speedSeries.filter((value) => value > 0).sort((a, b) => a - b);
-        const peakSpeed =
-            positiveSpeeds.length === 0
-                ? 0
-                : positiveSpeeds.length < 6
-                    ? positiveSpeeds[positiveSpeeds.length - 1]
-                    : positiveSpeeds[
-                        Math.min(positiveSpeeds.length - 1, Math.floor(0.95 * positiveSpeeds.length))
-                    ];
-
         this.data = {
             key,
             keystrokes: list,
@@ -361,12 +366,11 @@ export class ReplayLiveStats {
             speedSeries,
             accuracySeries,
             // Garis grafik dihaluskan (rata-rata 5 titik) supaya gerakannya
-            // tidak patah-patah; statistik & skala tetap dari data mentah.
+            // tidak patah-patah; statistik kartu tetap dari data mentah,
+            // sedangkan skala sumbu mengikuti seri yang digambar ini.
             plotSpeedSeries: smoothSeries(speedSeries),
             plotAccuracySeries: smoothSeries(accuracySeries),
             consistencySeries,
-            maxSpeed: peakSpeed,
-            minAccuracy: Math.min(...accuracySeries, 100),
         };
 
         this._lastSignature = '';
@@ -636,21 +640,32 @@ export class ReplayLiveStats {
         const data = this.data;
         const xMax = Math.max(2, data.totalSeconds);
 
-        const yWpmMax = Math.max(40, Math.ceil((data.maxSpeed * 1.2) / 10) * 10);
-        const yAccuracyMin = clamp(
-            Math.min(95, Math.floor((data.minAccuracy - 5) / 5) * 5),
-            0,
-            95
+        // ---- Skala sumbu --------------------------------------------------
+        // Batas sumbu di-snap ke kelipatan langkah labelnya, dan dihitung dari
+        // seri yang benar-benar digambar (sudah dihaluskan) -- bukan dari data
+        // mentah. Dulu batas atas WPM (mis. 110 dengan langkah 20) tidak
+        // kelipatan langkah sehingga label teratas jadi setengah langkah
+        // (0,20,...,100,110), dan batas bawah akurasi bisa 10 poin di bawah
+        // garis sehingga garisnya menempel di atap grafik.
+        const plotSpeed = data.plotSpeedSeries;
+        const plotAccuracy = data.plotAccuracySeries;
+        const speedPeak = plotSpeed.length > 0 ? Math.max(...plotSpeed) : 0;
+        const accuracyFloor = plotAccuracy.length > 0 ? Math.min(...plotAccuracy) : 100;
+
+        const yWpmStep = niceStep(Math.max(40, speedPeak * 1.05));
+        const yWpmMax = Math.max(
+            yWpmStep * 4,
+            Math.ceil((speedPeak * 1.05) / yWpmStep) * yWpmStep
         );
+
+        // Padding 1 poin di bawah akurasi terendah, lalu snap ke bawah ke
+        // kelipatan langkah. Minimal 4 langkah supaya labelnya tidak tinggal
+        // dua (mis. akurasi 100% -> 99..100).
+        const accFloor = Math.max(0, Math.floor(accuracyFloor - 1));
+        const yAccStep = niceStep(Math.max(5, 100 - accFloor));
+        const accSteps = Math.max(4, Math.ceil((100 - accFloor) / yAccStep));
+        const yAccuracyMin = Math.max(0, 100 - accSteps * yAccStep);
         this._yAccMin = yAccuracyMin;
-        // Jaga jumlah label sumbu kanan tetap wajar (maks ~6) dengan langkah
-        // "bulat". Tanpa ini, rentang 90%..100% menghasilkan 11 tick sekaligus
-        // (setiap 1%) dan deretan tick mark-nya terlihat seperti garis-garis
-        // horizontal yang menonjol keluar dari tepi kanan grafik.
-        const accRange = Math.max(1, 100 - yAccuracyMin);
-        const niceSteps = [1, 2, 5, 10, 20, 25, 50];
-        const yAccStep =
-            niceSteps.find((step) => accRange / step <= 5) ?? 50;
 
         this.chart = new Chart(canvas, {
             type: 'line',
@@ -762,6 +777,9 @@ export class ReplayLiveStats {
                         ticks: {
                             color: colors.text,
                             precision: 0,
+                            // Langkah tetap supaya label seragam dari 0 sampai
+                            // yWpmMax (yang juga kelipatan langkah ini).
+                            stepSize: yWpmStep,
                             font: { size: 10 },
                             padding: 4,
                         },
