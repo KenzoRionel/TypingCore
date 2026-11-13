@@ -1296,6 +1296,8 @@ class TypingReplayApp {
             <h4>Statistik Live</h4>
             <span class="replay-live-legend">
               <span class="replay-live-key is-wpm">WPM</span>
+              <span class="replay-live-key is-raw">Raw</span>
+              <span class="replay-live-key is-burst">Burst</span>
               <span class="replay-live-key is-accuracy">Akurasi</span>
               <span class="replay-live-key is-error">Error</span>
             </span>
@@ -1391,7 +1393,7 @@ class TypingReplayApp {
             </div>
           </div>
           <p class="replay-live-foot">
-            WPM: kecepatan 3 detik terakhir (dihaluskan) &middot; Konsistensi: 15 detik terakhir &middot; Kata dihitung saat spasi
+            WPM: kumulatif (sama dengan kartu) &middot; Raw: semua karakter &middot; Burst: per detik &middot; Konsistensi: 15 dtk terakhir &middot; Kata dihitung saat spasi
           </p>
         </div>
       </div>

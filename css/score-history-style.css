@@ -1241,6 +1241,19 @@ body.dark-mode {
     line-height: 1;
 }
 
+.replay-live-key.is-raw {
+    color: var(--accent);
+    opacity: 0.65;
+}
+
+.replay-live-key.is-raw::before {
+    border-top-style: dashed;
+}
+
+.replay-live-key.is-burst {
+    color: var(--text-muted);
+}
+
 .replay-live-clock {
     font-family: "JetBrains Mono", monospace;
     font-size: 0.7rem;

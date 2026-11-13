@@ -71,6 +71,18 @@ function niceStep(range, targetTicks = 5, halves = false) {
     return mult * power;
 }
 
+/**
+ * Persentil-95 dari nilai positif (tes pendek < 6 titik pakai nilai maksimum).
+ * Dipakai untuk burst WPM: satu detik yang luar biasa cepat tidak boleh
+ * menarik seluruh skala sumbu Y.
+ */
+function percentile95(values) {
+    const list = Array.isArray(values) ? values.filter((value) => value > 0).sort((a, b) => a - b) : [];
+    if (list.length === 0) return 0;
+    if (list.length < 6) return list[list.length - 1];
+    return list[Math.min(list.length - 1, Math.floor(0.95 * list.length))];
+}
+
 function cssVar(name, fallback = '') {
     const value = getComputedStyle(document.documentElement)
         .getPropertyValue(name)
@@ -180,6 +192,7 @@ export class ReplayLiveStats {
         const cumCorrect = new Array(total + 1).fill(0);
         const cumWrong = new Array(total + 1).fill(0);
         const charsPerSecond = [];
+        const correctPerSecond = [];
         const times = new Array(total).fill(0);
 
         // Basis waktu: timeline replay. Fallback hanya dipakai kalau timeline
@@ -218,6 +231,9 @@ export class ReplayLiveStats {
 
                 const second = Math.floor(times[i] / 1000);
                 charsPerSecond[second] = (charsPerSecond[second] || 0) + 1;
+                if (entry.isCorrect) {
+                    correctPerSecond[second] = (correctPerSecond[second] || 0) + 1;
+                }
             }
 
             cumTyped[i + 1] = typed;
@@ -313,11 +329,14 @@ export class ReplayLiveStats {
         // garis dan angka kartu selalu menunjukkan angka yang sama, termasuk
         // saat pemain berhenti sejenak.
         const speedSeries = new Array(totalSeconds).fill(0);
+        const rawSeries = new Array(totalSeconds).fill(0);
+        const burstSeries = new Array(totalSeconds).fill(0);
         const accuracySeries = new Array(totalSeconds).fill(100);
 
         let cursor = 0;
         let accCursor = 0;
         let runningWpm = 0;
+        let runningRaw = 0;
         for (let second = 0; second < totalSeconds; second++) {
             // Nilai pada AWAL detik ini (t = second * 1000), karena titik
             // x = second + 1 memang digambar di waktu itu. Dengan begitu
@@ -334,9 +353,24 @@ export class ReplayLiveStats {
                             : 0;
                 }
                 if (value > 0) runningWpm = value;
+
+                // Raw WPM = semua karakter yang diketik (benar + salah) dibagi
+                // waktu, dihitung pada keystroke yang sama dengan WPM net
+                // supaya kedua garis selalu bersisian.
+                const typedSoFar = cumTyped[cursor + 1];
+                const rawMinutes = (times[cursor] || 0) / 60000;
+                if (typedSoFar > 0 && rawMinutes > 0.00833) {
+                    runningRaw = Math.round(typedSoFar / 5 / rawMinutes);
+                }
+
                 cursor += 1;
             }
             speedSeries[second] = runningWpm;
+            rawSeries[second] = runningRaw;
+
+            // Burst = WPM dari karakter BENAR pada detik itu saja (rumus yang
+            // sama dengan burstWPM di game-logic.js).
+            burstSeries[second] = Math.round(((correctPerSecond[second] || 0) / 5) * 60);
 
             // Akurasi kumulatif sampai akhir detik ini, dihitung dari data
             // keystroke (bukan snapshot lama yang bisa tidak konsisten).
@@ -384,6 +418,8 @@ export class ReplayLiveStats {
             errorLetters,
             errorPoints,
             speedSeries,
+            rawSeries,
+            burstSeries,
             accuracySeries,
             // Akurasi dihaluskan (rata-rata 5 titik) supaya garisnya tidak
             // patah-patah. WPM tidak dihaluskan: garisnya harus sama persis
@@ -459,6 +495,16 @@ export class ReplayLiveStats {
             }
         }
 
+        // Raw WPM saat ini: semua karakter yang diketik (benar + salah),
+        // dihitung pada waktu yang sama dengan WPM di atas.
+        let rawWpm = 0;
+        if (typed > 0 && safeIndex > 0) {
+            const rawMinutes = (data.times[safeIndex - 1] || 0) / 60000;
+            if (rawMinutes > 0.00833) {
+                rawWpm = Math.round(typed / 5 / rawMinutes);
+            }
+        }
+
         const accuracy = typed > 0 ? Math.round((correct / typed) * 100) : 100;
         const consistency = data.consistencySeries[second] || 0;
 
@@ -499,30 +545,38 @@ export class ReplayLiveStats {
         this._advanceLetterCounts(safeIndex);
 
         if (!this.chart) return;
-        this._renderChart(tipSeconds, wpm);
+        this._renderChart(tipSeconds, wpm, rawWpm);
     }
 
     /**
      * Bangun ulang data grafik untuk posisi waktu saat ini.
      *
      * Titik data disimpan sebagai {x, y} pada sumbu X linear (x = detik + 1).
-     * Titik terdepan memakai `tipWpm`, yaitu angka WPM kartu saat ini, supaya
-     * ujung garis dan angka kartu selalu sama; kalau tidak ada, dipakai
-     * interpolasi di antara dua detik seperti seri akurasi.
+     * Titik terdepan WPM memakai `tipWpm` dan raw memakai `tipRawWpm`, yaitu
+     * angka saat ini, supaya ujung garis sama dengan angka yang ditampilkan.
+     * Burst hanya digambar untuk detik yang sudah selesai, karena nilainya
+     * dihitung dari seluruh detik itu.
      */
-    _renderChart(tipSeconds, tipWpm = null) {
+    _renderChart(tipSeconds, tipWpm = null, tipRawWpm = null) {
         const data = this.data;
         const count = data.totalSeconds;
         const lastIndex = count - 1;
         const base = clamp(Math.floor(tipSeconds), 0, lastIndex);
         const frac = clamp(tipSeconds - base, 0, 1);
         const hasTipWpm = Number.isFinite(tipWpm);
+        const hasTipRaw = Number.isFinite(tipRawWpm);
 
         const speed = [];
+        const raw = [];
+        const burst = [];
         const accuracy = [];
         for (let i = 0; i <= base; i++) {
             speed.push({ x: i + 1, y: data.plotSpeedSeries[i] });
+            raw.push({ x: i + 1, y: data.rawSeries[i] });
             accuracy.push({ x: i + 1, y: data.plotAccuracySeries[i] });
+        }
+        for (let i = 0; i < base; i++) {
+            burst.push({ x: i + 1, y: data.burstSeries[i] });
         }
 
         if (frac > 0.002 && base < lastIndex) {
@@ -533,14 +587,21 @@ export class ReplayLiveStats {
                     ? tipWpm
                     : lerp(data.plotSpeedSeries[base], data.plotSpeedSeries[base + 1], frac),
             });
+            raw.push({
+                x: tipX,
+                y: hasTipRaw
+                    ? tipRawWpm
+                    : lerp(data.rawSeries[base], data.rawSeries[base + 1], frac),
+            });
             accuracy.push({
                 x: tipX,
                 y: lerp(data.plotAccuracySeries[base], data.plotAccuracySeries[base + 1], frac),
             });
         } else if (hasTipWpm) {
-            // Di ujung replay titik terakhir diganti angka kartu, supaya ujung
-            // garis tidak tertinggal beberapa WPM dari angka akhir.
+            // Di ujung replay titik terakhir diganti angka saat ini, supaya
+            // ujung garis tidak tertinggal dari angka akhir.
             speed[speed.length - 1] = { x: base + 1, y: tipWpm };
+            if (hasTipRaw) raw[raw.length - 1] = { x: base + 1, y: tipRawWpm };
         }
 
         // Titik error hanya yang sudah "terjadi" pada posisi replay ini.
@@ -558,8 +619,10 @@ export class ReplayLiveStats {
         }
 
         this.chart.data.datasets[0].data = speed;
-        this.chart.data.datasets[1].data = accuracy;
-        this.chart.data.datasets[2].data = errors;
+        this.chart.data.datasets[1].data = raw;
+        this.chart.data.datasets[2].data = burst;
+        this.chart.data.datasets[3].data = accuracy;
+        this.chart.data.datasets[4].data = errors;
         this.chart.$replayTipIndex = speed.length - 1;
         this.chart.$replayNowTime = tipSeconds + 1;
         this.chart.update('none');
@@ -627,11 +690,20 @@ export class ReplayLiveStats {
         if (!this.chart) return;
 
         const colors = getColors();
-        const [wpmDataset, accuracyDataset, errorDataset] = this.chart.data.datasets;
+        const [wpmDataset, rawDataset, burstDataset, accuracyDataset, errorDataset] =
+            this.chart.data.datasets;
 
         wpmDataset.borderColor = colors.accent;
         wpmDataset.pointBackgroundColor = colors.card;
         wpmDataset.pointBorderColor = colors.accent;
+        if (rawDataset) {
+            rawDataset.borderColor = toRgba(colors.accent, 0.65);
+            rawDataset.backgroundColor = toRgba(colors.accent, 0.65);
+        }
+        if (burstDataset) {
+            burstDataset.borderColor = toRgba(colors.text, 0.85);
+            burstDataset.backgroundColor = toRgba(colors.text, 0.85);
+        }
         accuracyDataset.borderColor = colors.correct;
 
         if (errorDataset) {
@@ -677,15 +749,21 @@ export class ReplayLiveStats {
         const plotSpeed = data.plotSpeedSeries;
         const plotAccuracy = data.plotAccuracySeries;
         const speedPeak = plotSpeed.length > 0 ? Math.max(...plotSpeed) : 0;
+        const rawPeak = data.rawSeries.length > 0 ? Math.max(...data.rawSeries) : 0;
+        // Burst boleh punya satu-dua detik outlier (mis. 17 huruf dalam 1 detik
+        // = ~200 WPM). Seperti grafik hasil tes, burst diwakili persentil-95
+        // supaya satu titik tidak menarik seluruh skala.
+        const burstPeak = percentile95(data.burstSeries);
+        const wpmPeak = Math.max(speedPeak, rawPeak, burstPeak);
         const accuracyFloor = plotAccuracy.length > 0 ? Math.min(...plotAccuracy) : 100;
 
         // Batas atas: langkah bulat terdekat, lalu batas di-snap ke kelipatan
         // langkah itu. Minimal 3 langkah supaya sumbu tidak tinggal dua label
         // saat kecepatannya sangat rendah.
-        const yWpmStep = niceStep(Math.max(40, speedPeak * 1.05), 5, true);
+        const yWpmStep = niceStep(Math.max(40, wpmPeak * 1.05), 5, true);
         const yWpmMax = Math.max(
             yWpmStep * 3,
-            Math.ceil((speedPeak * 1.05) / yWpmStep) * yWpmStep
+            Math.ceil((wpmPeak * 1.05) / yWpmStep) * yWpmStep
         );
 
         // Padding 1 poin di bawah akurasi terendah, lalu snap ke bawah ke
@@ -733,6 +811,40 @@ export class ReplayLiveStats {
                         pointBorderColor: colors.accent,
                         pointBorderWidth: 2,
                         pointHitRadius: 10,
+                        spanGaps: false,
+                        yAxisID: 'yWpm',
+                    },
+                    {
+                        // Raw WPM: semua karakter yang diketik (benar + salah)
+                        // dibagi waktu berjalan. Warnanya senada dengan WPM
+                        // tetapi putus-putus, sama seperti grafik hasil tes.
+                        label: 'Raw',
+                        data: [],
+                        borderColor: toRgba(colors.accent, 0.65),
+                        backgroundColor: toRgba(colors.accent, 0.65),
+                        borderWidth: 1.5,
+                        borderDash: [5, 4],
+                        tension: 0.35,
+                        cubicInterpolationMode: 'monotone',
+                        pointRadius: 0,
+                        pointHitRadius: 10,
+                        fill: false,
+                        spanGaps: false,
+                        yAxisID: 'yWpm',
+                    },
+                    {
+                        // Burst WPM: kecepatan pada detik itu saja (karakter
+                        // benar per detik), jadi garisnya naik-turun tajam.
+                        label: 'Burst',
+                        data: [],
+                        borderColor: toRgba(colors.text, 0.85),
+                        backgroundColor: toRgba(colors.text, 0.85),
+                        borderWidth: 1.5,
+                        tension: 0.35,
+                        cubicInterpolationMode: 'monotone',
+                        pointRadius: 0,
+                        pointHitRadius: 10,
+                        fill: false,
                         spanGaps: false,
                         yAxisID: 'yWpm',
                     },
@@ -865,9 +977,14 @@ export class ReplayLiveStats {
                                     return `Salah: "${raw.char}"${expected}`;
                                 }
 
-                                return context.dataset.yAxisID === 'yAcc'
-                                    ? `Akurasi: ${Math.round(context.parsed.y)}%`
-                                    : `WPM: ${Math.round(context.parsed.y)}`;
+                                if (context.dataset.yAxisID === 'yAcc') {
+                                    return `Akurasi: ${Math.round(context.parsed.y)}%`;
+                                }
+
+                                const value = Math.round(context.parsed.y);
+                                if (context.dataset.label === 'Raw') return `Raw: ${value} WPM`;
+                                if (context.dataset.label === 'Burst') return `Burst: ${value} WPM`;
+                                return `WPM: ${value}`;
                             },
                         },
                     },
