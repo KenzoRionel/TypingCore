@@ -870,7 +870,11 @@ export class ReplayLiveStats {
                         tension: 0.35,
                         cubicInterpolationMode: 'monotone',
                         clip: 10,
-                        pointRadius: 0,
+                        pointRadius: (context) =>
+                            context.dataIndex === context.chart.$replayTipIndex ? 4 : 0,
+                        pointBackgroundColor: colors.card,
+                        pointBorderColor: colors.correct,
+                        pointBorderWidth: 2,
                         pointHitRadius: 10,
                         fill: false,
                         spanGaps: false,
