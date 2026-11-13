@@ -32,7 +32,7 @@ function lerp(from, to, ratio) {
 
 /**
  * Rata-rata bergerak simetris (jendela 2*radius+1). Dipakai untuk garis
- * grafik live supaya naik-turun per detik tidak terlihat patah-patah;
+ * akurasi live supaya naik-turun per detik tidak terlihat patah-patah;
  * nilai statistik di kartu tetap memakai data mentah.
  */
 function smoothSeries(values, radius = 2) {
@@ -306,32 +306,46 @@ export class ReplayLiveStats {
             MAX_SECONDS
         );
 
-        // Grafik WPM memakai kecepatan WINDOW_SECONDS terakhir, bukan WPM
-        // kumulatif: WPM kumulatif langsung "mendarat" di satu nilai dan
-        // terlihat datar hampir sepanjang replay. Jendela pendek membuat
-        // garisnya benar-benar mengikuti kecepatan mengetik.
-        const WINDOW_SECONDS = 3;
+        // Grafik WPM memakai WPM KUMULATIF yang sama dengan angka di kartu:
+        // untuk tiap detik diambil keystroke terakhir pada detik itu (snapshot
+        // `wpm` dari recorder, dengan fallback hitung ulang seperti update()),
+        // lalu nilainya dibawa terus sampai keystroke berikutnya. Jadi titik
+        // garis dan angka kartu selalu menunjukkan angka yang sama, termasuk
+        // saat pemain berhenti sejenak.
         const speedSeries = new Array(totalSeconds).fill(0);
         const accuracySeries = new Array(totalSeconds).fill(100);
 
         let cursor = 0;
+        let accCursor = 0;
+        let runningWpm = 0;
         for (let second = 0; second < totalSeconds; second++) {
-            const start = Math.max(0, second - (WINDOW_SECONDS - 1));
-            let windowChars = 0;
-            for (let s = start; s <= second; s++) {
-                windowChars += charsPerSecond[s] || 0;
+            // Nilai pada AWAL detik ini (t = second * 1000), karena titik
+            // x = second + 1 memang digambar di waktu itu. Dengan begitu
+            // garis tidak "mendahului" replay satu detik.
+            const limit = second * 1000;
+            while (cursor < total && times[cursor] <= limit) {
+                let value = Math.round(num(list[cursor]?.wpm));
+                if (value <= 0) {
+                    const correctSoFar = cumCorrect[cursor + 1];
+                    const minutes = (times[cursor] || 0) / 60000;
+                    value =
+                        correctSoFar > 0 && minutes > 0.00833
+                            ? Math.round(correctSoFar / 5 / minutes)
+                            : 0;
+                }
+                if (value > 0) runningWpm = value;
+                cursor += 1;
             }
-            const windowSeconds = second - start + 1;
-            speedSeries[second] = Math.round((windowChars / 5) / (windowSeconds / 60));
+            speedSeries[second] = runningWpm;
 
             // Akurasi kumulatif sampai akhir detik ini, dihitung dari data
             // keystroke (bukan snapshot lama yang bisa tidak konsisten).
-            while (cursor < total && Math.floor(times[cursor] / 1000) <= second) {
-                cursor += 1;
+            while (accCursor < total && Math.floor(times[accCursor] / 1000) <= second) {
+                accCursor += 1;
             }
             accuracySeries[second] =
-                cursor > 0 && cumTyped[cursor] > 0
-                    ? Math.round((cumCorrect[cursor] / cumTyped[cursor]) * 100)
+                accCursor > 0 && cumTyped[accCursor] > 0
+                    ? Math.round((cumCorrect[accCursor] / cumTyped[accCursor]) * 100)
                     : 100;
         }
 
@@ -371,10 +385,10 @@ export class ReplayLiveStats {
             errorPoints,
             speedSeries,
             accuracySeries,
-            // Garis grafik dihaluskan (rata-rata 5 titik) supaya gerakannya
-            // tidak patah-patah; statistik kartu tetap dari data mentah,
-            // sedangkan skala sumbu mengikuti seri yang digambar ini.
-            plotSpeedSeries: smoothSeries(speedSeries),
+            // Akurasi dihaluskan (rata-rata 5 titik) supaya garisnya tidak
+            // patah-patah. WPM tidak dihaluskan: garisnya harus sama persis
+            // dengan angka kartu, dan seri kumulatifnya sudah mulus.
+            plotSpeedSeries: speedSeries,
             plotAccuracySeries: smoothSeries(accuracySeries),
             consistencySeries,
         };
@@ -485,23 +499,24 @@ export class ReplayLiveStats {
         this._advanceLetterCounts(safeIndex);
 
         if (!this.chart) return;
-        this._renderChart(tipSeconds);
+        this._renderChart(tipSeconds, wpm);
     }
 
     /**
      * Bangun ulang data grafik untuk posisi waktu saat ini.
      *
-     * Titik data disimpan sebagai {x, y} pada sumbu X linear, dan titik
-     * terdepan diberi nilai interpolasi di antara dua detik. Hasilnya ujung
-     * garis bergerak kontinu mengikuti waktu replay, bukan melompat dari
-     * titik ke titik.
+     * Titik data disimpan sebagai {x, y} pada sumbu X linear (x = detik + 1).
+     * Titik terdepan memakai `tipWpm`, yaitu angka WPM kartu saat ini, supaya
+     * ujung garis dan angka kartu selalu sama; kalau tidak ada, dipakai
+     * interpolasi di antara dua detik seperti seri akurasi.
      */
-    _renderChart(tipSeconds) {
+    _renderChart(tipSeconds, tipWpm = null) {
         const data = this.data;
         const count = data.totalSeconds;
         const lastIndex = count - 1;
         const base = clamp(Math.floor(tipSeconds), 0, lastIndex);
         const frac = clamp(tipSeconds - base, 0, 1);
+        const hasTipWpm = Number.isFinite(tipWpm);
 
         const speed = [];
         const accuracy = [];
@@ -514,12 +529,18 @@ export class ReplayLiveStats {
             const tipX = tipSeconds + 1;
             speed.push({
                 x: tipX,
-                y: lerp(data.plotSpeedSeries[base], data.plotSpeedSeries[base + 1], frac),
+                y: hasTipWpm
+                    ? tipWpm
+                    : lerp(data.plotSpeedSeries[base], data.plotSpeedSeries[base + 1], frac),
             });
             accuracy.push({
                 x: tipX,
                 y: lerp(data.plotAccuracySeries[base], data.plotAccuracySeries[base + 1], frac),
             });
+        } else if (hasTipWpm) {
+            // Di ujung replay titik terakhir diganti angka kartu, supaya ujung
+            // garis tidak tertinggal beberapa WPM dari angka akhir.
+            speed[speed.length - 1] = { x: base + 1, y: tipWpm };
         }
 
         // Titik error hanya yang sudah "terjadi" pada posisi replay ini.
@@ -648,11 +669,11 @@ export class ReplayLiveStats {
 
         // ---- Skala sumbu --------------------------------------------------
         // Batas sumbu di-snap ke kelipatan langkah labelnya, dan dihitung dari
-        // seri yang benar-benar digambar (sudah dihaluskan) -- bukan dari data
-        // mentah. Dulu batas atas WPM (mis. 110 dengan langkah 20) tidak
-        // kelipatan langkah sehingga label teratas jadi setengah langkah
-        // (0,20,...,100,110), dan batas bawah akurasi bisa 10 poin di bawah
-        // garis sehingga garisnya menempel di atap grafik.
+        // seri yang benar-benar digambar -- bukan dari data mentah lain. Dulu
+        // batas atas WPM (mis. 110 dengan langkah 20) tidak kelipatan langkah
+        // sehingga label teratas jadi setengah langkah (0,20,...,100,110), dan
+        // batas bawah akurasi bisa 10 poin di bawah garis sehingga garisnya
+        // menempel di atap grafik.
         const plotSpeed = data.plotSpeedSeries;
         const plotAccuracy = data.plotAccuracySeries;
         const speedPeak = plotSpeed.length > 0 ? Math.max(...plotSpeed) : 0;
