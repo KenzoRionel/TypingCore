@@ -574,8 +574,6 @@ export class ReplayLiveStats {
             speed.push({ x: i + 1, y: data.plotSpeedSeries[i] });
             raw.push({ x: i + 1, y: data.rawSeries[i] });
             accuracy.push({ x: i + 1, y: data.plotAccuracySeries[i] });
-        }
-        for (let i = 0; i < base; i++) {
             burst.push({ x: i + 1, y: data.burstSeries[i] });
         }
 
@@ -593,6 +591,10 @@ export class ReplayLiveStats {
                     ? tipRawWpm
                     : lerp(data.rawSeries[base], data.rawSeries[base + 1], frac),
             });
+            burst.push({
+                x: tipX,
+                y: lerp(data.burstSeries[base], data.burstSeries[base + 1], frac),
+            });
             accuracy.push({
                 x: tipX,
                 y: lerp(data.plotAccuracySeries[base], data.plotAccuracySeries[base + 1], frac),
@@ -602,6 +604,8 @@ export class ReplayLiveStats {
             // ujung garis tidak tertinggal dari angka akhir.
             speed[speed.length - 1] = { x: base + 1, y: tipWpm };
             if (hasTipRaw) raw[raw.length - 1] = { x: base + 1, y: tipRawWpm };
+            // Burst juga diperbarui di ujung replay (gunakan nilai detik terakhir yang selesai)
+            if (burst.length > 0) burst[burst.length - 1] = { x: base + 1, y: data.burstSeries[base] };
         }
 
         // Titik error hanya yang sudah "terjadi" pada posisi replay ini.
