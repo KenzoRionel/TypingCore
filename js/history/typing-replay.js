@@ -1161,6 +1161,13 @@ class TypingReplayApp {
     this.replayer = null;
     this.renderer = null;
 
+    // true = panel replay dipasang di halaman hasil tes (index.html) dan
+    // dibuka/ditutup lewat tombol "Replay Mengetik"; false = halaman riwayat.
+    this.inlineMode = false;
+    this.inlineSlot = null;
+    this._inlineOpenTimer = null;
+    this._inlineScrollTimer = null;
+
     this.settings = loadReplaySettings();
     this.liveStats = null;
     this._liveMountedKey = '';
@@ -1174,6 +1181,9 @@ class TypingReplayApp {
 
     const existingContainer = document.getElementById('replay-container');
     if (existingContainer) {
+      this.inlineMode =
+        !document.getElementById('scoreHistoryList') &&
+        Boolean(document.getElementById('resultReplayMount'));
       this._wireUI(existingContainer);
       this.isInitialized = true;
       return;
@@ -1181,26 +1191,24 @@ class TypingReplayApp {
 
     const DOM = {
       scoreHistoryList: document.getElementById('scoreHistoryList'),
+      resultReplayMount: document.getElementById('resultReplayMount'),
     };
 
-    // Panel replay ini HANYA relevan di halaman Riwayat Skor
-    // (score-history.html), yang punya #scoreHistoryList. Kalau elemen ini
-    // tidak ada (mis. di index.html / halaman tes mengetik), jangan sisipkan
-    // apa pun dan JANGAN tandai isInitialized, supaya tidak ada
-    // side-effect di halaman lain.
-    //
-    // Sebelumnya kode ini punya fallback ke `.chart-container` terakhir di
-    // halaman, dengan asumsi implisit ada elemen `.chart-container` kedua
-    // yang selalu tersembunyi di score-history.html untuk "menampung" panel
-    // ini secara tidak terlihat. Begitu duplikat itu dibersihkan (lihat
-    // catatan bonus fix di index.html), fallback tsb malah menempelkan
-    // panel replay ke `.chart-container` yang AKTIF/terlihat di index.html
-    // (area hasil tes mengetik) - itulah kenapa "Tonton Replay Mengetik"
-    // sempat nyasar muncul di halaman hasil tes, lengkap dengan
-    // WPM/akurasi/waktu 0 karena belum ada skor yang dipilih.
-    if (!DOM.scoreHistoryList) {
+    // Panel replay dipakai di DUA tempat:
+    //  1. Halaman Riwayat Skor (#scoreHistoryList) - panel disisipkan di atas
+    //     daftar skor, dipakai saat user memilih kartu yang punya replay.
+    //  2. Halaman hasil tes di index.html (#resultReplayMount) - panel tinggal
+    //     di dalam slot .result-replay-slot yang bisa membuka/menutup, dan
+    //     dibuka lewat tombol "Replay Mengetik" di baris tombol hasil.
+    // Kalau tidak ada keduanya, jangan sisipkan apa pun dan JANGAN tandai
+    // isInitialized supaya tidak ada side-effect di halaman lain.
+    if (!DOM.scoreHistoryList && !DOM.resultReplayMount) {
       return;
     }
+
+    // Mode inline = panel berada di halaman hasil tes (index.html), bukan di
+    // halaman riwayat. Di mode ini panel awalnya tertutup rapat (slot 0fr).
+    this.inlineMode = !DOM.scoreHistoryList && Boolean(DOM.resultReplayMount);
 
     // Hapus container duplikat
     const dups = document.querySelectorAll('#replay-container');
@@ -1214,6 +1222,16 @@ class TypingReplayApp {
       <div class="replay-header">
         <h3>Tonton Replay Mengetik</h3>
         <div class="replay-controls">
+          <button
+            id="replay-close-btn"
+            class="replay-btn replay-btn-icon replay-close-inline"
+            type="button"
+            title="Tutup replay"
+            aria-label="Tutup replay"
+            hidden
+          >
+            <i class="fas fa-times"></i>
+          </button>
           <button
             id="replay-settings-btn"
             class="replay-btn replay-btn-icon"
@@ -1399,7 +1417,9 @@ class TypingReplayApp {
       </div>
     `;
 
-    DOM.scoreHistoryList.before(replayContainer);
+    DOM.scoreHistoryList
+      ? DOM.scoreHistoryList.before(replayContainer)
+      : DOM.resultReplayMount.appendChild(replayContainer);
 
     this._wireUI(replayContainer);
     this.isInitialized = true;
@@ -1446,6 +1466,15 @@ class TypingReplayApp {
   _wireUI(replayContainer) {
     this.container = replayContainer;
     this.playButton = document.getElementById('replay-play-btn');
+    this.inlineSlot = this.inlineMode
+      ? document.getElementById('resultReplaySlot')
+      : null;
+
+    // Tombol tutup hanya relevan di halaman hasil tes: panel replay di sana
+    // bisa ditutup dari dalam panel, karena tombol toggle-nya berada jauh di
+    // bawah grafik setelah panel terbuka.
+    const closeBtn = document.getElementById('replay-close-btn');
+    if (closeBtn) closeBtn.hidden = !this.inlineMode;
 
     const textDisplay = document.getElementById('replay-text-display');
     this.renderer = new TypingRenderer({
@@ -1604,11 +1633,53 @@ class TypingReplayApp {
       return;
     }
 
+    this._applyReplayData(score.replayData, {
+      scoreId,
+      wpm: score.wpm,
+      accuracy: score.accuracy,
+      time: score.time,
+      date: score.date,
+    });
+  }
+
+  /**
+   * Muat replay LANGSUNG dari objek replayData (tanpa membaca localStorage).
+   * Dipakai halaman hasil tes: data tes yang baru selesai sudah ada di memori
+   * (gameState.ghostData), jadi tombol "Replay Mengetik" tidak perlu mencari
+   * skor di riwayat — dan tetap bekerja walau penyimpanan skor gagal.
+   *
+   * @param {ReplayData} replayData - { targetText, keystrokes[] }
+   * @param {Object} meta - { wpm, accuracy, time (detik), date, scoreId }
+   * @returns {boolean} true kalau timeline replay berhasil dimuat.
+   */
+  loadReplayFromData(replayData, meta = {}) {
+    if (
+      !replayData ||
+      typeof replayData.targetText !== 'string' ||
+      !Array.isArray(replayData.keystrokes) ||
+      replayData.keystrokes.length === 0
+    ) {
+      this._showNoReplayMessage('Replay tidak tersedia untuk tes ini.');
+      return false;
+    }
+
+    this._applyReplayData(replayData, {
+      ...meta,
+      scoreId: meta.scoreId ?? 'current-test',
+    });
+    return true;
+  }
+
+  /**
+   * Inti pemuatan replay yang dipakai bersama oleh halaman riwayat skor
+   * (loadReplay) dan halaman hasil tes (loadReplayFromData).
+   */
+  _applyReplayData(replayData, meta = {}) {
     // stop / pause aman
     if (this.replayer) this.replayer.pause();
 
-    this.state.scoreId = scoreId;
-    this.state.replayData = score.replayData;
+    this.state.scoreId = meta.scoreId ?? null;
+    this.state.replayData = replayData;
 
     const keystrokes = this.state.replayData.keystrokes || [];
 
@@ -1616,11 +1687,17 @@ class TypingReplayApp {
     this.state.playbackTimestamps = TypingRecorder.computePlaybackTimestamps(keystrokes);
     this.state.firstTimestampMs = TypingRecorder.computeFirstTimestamp(keystrokes);
 
-    // totalDuration: field di data score adalah "time" (sec). fallback 60.
-    const t = score.time;
-    this.state.totalDurationSec = typeof t === 'number' && Number.isFinite(t) ? t : 60;
+    // totalDuration: field "time" pada entry skor adalah detik. Kalau tidak
+    // ada (mis. data tes langsung dari memori), pakai durasi timeline replay.
+    const t = Number(meta.time);
+    const timeline = this.state.playbackTimestamps;
+    const timelineEndMs = timeline.length > 0 ? timeline[timeline.length - 1] : 0;
+    const fallbackDuration =
+      timelineEndMs > 0 ? Math.max(1, Math.round(timelineEndMs / 1000)) : 60;
+    this.state.totalDurationSec =
+      Number.isFinite(t) && t > 0 ? t : fallbackDuration;
 
-    this._updateReplayInfo(score);
+    this._updateReplayInfo(meta);
 
     // Load timeline ke player dengan index awal 0
     this.replayer.loadTimeline(this.state.playbackTimestamps, { startIndex: 0 });
@@ -1629,15 +1706,111 @@ class TypingReplayApp {
     if (playBtn) playBtn.disabled = false;
     this._setPlayButtonIcon(false);
 
-    // Siapkan statistik live untuk skor yang baru dipilih.
+    // Siapkan statistik live untuk replay yang baru dipilih.
     this._liveMountedKey = '';
     this._syncLiveStats();
+  }
+
+  /**
+   * Buka/tutup panel replay inline (halaman hasil tes). Membuka panel
+   * menganimasikan slot dari 0fr ke 1fr sehingga kartu grafik hasil di
+   * bawahnya bergeser turun.
+   */
+  setInlineOpen(open) {
+    if (!this.inlineMode) return;
+
+    const slot = this.inlineSlot || document.getElementById('resultReplaySlot');
+    if (!slot) return;
+    this.inlineSlot = slot;
+
+    const willOpen = Boolean(open);
+    slot.classList.toggle('is-open', willOpen);
+    slot.setAttribute('aria-hidden', String(!willOpen));
+    // Saat panel tertutup tingginya 0, tapi tombol-tombolnya masih ada di DOM.
+    // `inert` mengeluarkannya dari urutan Tab dan dari accessibility tree supaya
+    // fokus keyboard tidak "menyelip" ke panel yang tidak terlihat.
+    slot.inert = !willOpen;
+    this._syncReplayButtonState(willOpen);
+
+    clearTimeout(this._inlineOpenTimer);
+    clearTimeout(this._inlineScrollTimer);
+
+    if (!willOpen) {
+      this.replayer?.pause();
+      return;
+    }
+
+    // Tombol replay berada di bawah grafik, sedangkan panel muncul di ATAS
+    // grafik. Tanpa scroll, panel baru akan berada di luar viewport (scroll
+    // anchoring browser menahan posisi tombol). Jadi panel digulirkan ke atas
+    // layar tepat saat animasi buka mulai, supaya user melihat grafik turun.
+    this._inlineScrollTimer = setTimeout(() => {
+      const reduceMotion = window.matchMedia?.(
+        '(prefers-reduced-motion: reduce)'
+      )?.matches;
+      slot.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }, 30);
+
+    // Setelah transisi buka selesai, ukur ulang posisi kata (panel tadinya
+    // setinggi 0) dan sinkronkan ulang statistik live/grafik.
+    this._inlineOpenTimer = setTimeout(() => {
+      if (this.renderer?.cache) {
+        this.renderer.recomputeWordPositionCache();
+        this.renderer.cache.lastScrolledWordIdx = -1;
+      }
+      if (this.replayer) {
+        this.replayer.renderCurrent();
+        this.replayer.updateUIStats();
+        this.replayer.updateProgressUI();
+      }
+      this._syncLiveStats();
+    }, 470);
+  }
+
+  /** true kalau panel replay inline sedang terbuka. */
+  isInlineOpen() {
+    if (!this.inlineMode) return false;
+    const slot = this.inlineSlot || document.getElementById('resultReplaySlot');
+    return Boolean(slot?.classList.contains('is-open'));
+  }
+
+  /**
+   * Tampilkan replay tes terakhir di panel inline.
+   * @param {{replayData: ReplayData, wpm?:number, accuracy?:number, time?:number, date?:string}} payload
+   */
+  showResultReplay(payload = {}) {
+    if (!this.inlineMode) return false;
+
+    const replayData = payload.replayData || payload;
+    const loaded = this.loadReplayFromData(replayData, payload);
+
+    // Tetap buka panel walau data replay kosong, supaya pesan "Replay tidak
+    // tersedia" terlihat oleh user (bukan tombol yang diam saja).
+    this.setInlineOpen(true);
+    return loaded;
+  }
+
+  /** Tutup panel replay inline (tanpa menghapus data replay yang termuat). */
+  hideResultReplay() {
+    this.setInlineOpen(false);
+  }
+
+  _syncReplayButtonState(open) {
+    const btn = document.getElementById('replayTypingBtn');
+    if (!btn) return;
+    btn.classList.toggle('is-active', Boolean(open));
+    btn.setAttribute('aria-pressed', String(Boolean(open)));
   }
 
   // Sama seperti TypingPlayer.destroy(): tidak dipanggil di alur normal saat
   // ini (replayApp adalah singleton untuk satu halaman), tapi menyediakan
   // jalan keluar eksplisit untuk listener 'resize' dan player-nya.
   destroy() {
+    clearTimeout(this._inlineOpenTimer);
+    clearTimeout(this._inlineScrollTimer);
     if (this._onResize) window.removeEventListener('resize', this._onResize);
     this.replayer?.destroy();
   }
@@ -1646,6 +1819,12 @@ class TypingReplayApp {
     document.addEventListener('click', (e) => {
       const playBtn = e.target.closest('#replay-play-btn');
       const resetBtn = e.target.closest('#replay-reset-btn');
+      const closeBtn = e.target.closest('#replay-close-btn');
+
+      if (closeBtn) {
+        this.hideResultReplay();
+        return;
+      }
 
       if (playBtn) {
         if (!this.state.replayData) return;
@@ -1749,11 +1928,13 @@ class TypingReplayApp {
     this.replayer.seek(targetVirtual);
   }
 
-  _updateReplayInfo(score) {
+  _updateReplayInfo(score = {}) {
     const info = document.getElementById('replay-score-info');
     if (!info) return;
 
-    const date = new Date(score.date).toLocaleString('id-ID', {
+    const dateValue = score.date ? new Date(score.date) : new Date();
+    const safeDate = Number.isNaN(dateValue.getTime()) ? new Date() : dateValue;
+    const date = safeDate.toLocaleString('id-ID', {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric',
@@ -1761,10 +1942,30 @@ class TypingReplayApp {
       minute: '2-digit',
     });
 
-    info.textContent = `WPM: ${score.wpm} | Akurasi: ${score.accuracy}% | ${date}`;
+    const wpm = score.wpm ?? 0;
+    const accuracy = score.accuracy ?? 0;
+
+    info.textContent = `WPM: ${wpm} | Akurasi: ${accuracy}% | ${date}`;
   }
 
   _showNoReplayMessage(message) {
+    // Bersihkan state playback lama supaya tombol play tidak memutar ulang
+    // replay tes sebelumnya saat data yang baru tidak tersedia.
+    this.state.replayData = null;
+    this.state.playbackTimestamps = [];
+    this.state.firstTimestampMs = 0;
+
+    if (this.replayer) {
+      this.replayer.pause();
+      this.replayer.loadTimeline([], { startIndex: 0 });
+    } else if (this.renderer) {
+      this.renderer.clear();
+    }
+
+    if (this.playButton) this.playButton.disabled = true;
+    this.liveStats?.detach();
+    this._liveMountedKey = '';
+
     const textDisplay = document.getElementById('replay-text-display');
     if (textDisplay) textDisplay.innerHTML = `<p class="no-replay">${message}</p>`;
   }
@@ -1788,6 +1989,28 @@ export function loadReplay(scoreId) {
 // expose global untuk kompatibilitas existing code
 window.loadReplay = loadReplay;
 window.initReplayContainer = initReplayContainer;
+
+/**
+ * API panel replay di halaman hasil tes (index.html). Dipakai game-logic.js
+ * saat tombol "Replay Mengetik" diklik.
+ */
+export function showResultReplay(payload) {
+  return replayApp.showResultReplay(payload);
+}
+
+export function hideResultReplay() {
+  replayApp.hideResultReplay();
+}
+
+export function isResultReplayOpen() {
+  return replayApp.isInlineOpen();
+}
+
+window.resultReplayAPI = {
+  show: showResultReplay,
+  hide: hideResultReplay,
+  isOpen: isResultReplayOpen,
+};
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initReplayContainer, { once: true });

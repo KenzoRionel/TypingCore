@@ -630,6 +630,66 @@ function hideGhostPracticeButton() {
   updateGhostPracticeButton(false);
 }
 
+/* ==================== REPLAY MENGETIK (hasil tes) ==================== */
+// Payload replay tes TERAKHIR yang selesai. Disimpan di memori (bukan dibaca
+// ulang dari localStorage) supaya tombol Replay tetap bekerja walau skor gagal
+// tersimpan, dan supaya panel langsung memakai data yang persis sama dengan
+// yang baru saja dihitung di layar hasil.
+let lastReplayPayload = null;
+
+/**
+ * Tampilkan/sembunyikan tombol "Replay Mengetik" di baris tombol hasil.
+ * Selalu dipanggil bersamaan dengan tombol Ghost Mode karena keduanya butuh
+ * data replay dari tes yang baru selesai.
+ */
+function updateReplayTypingButton(show) {
+  const btn = document.getElementById("replayTypingBtn");
+  if (!btn) return;
+
+  if (show) {
+    btn.classList.add("show");
+    btn.style.setProperty("display", "flex", "important");
+  } else {
+    btn.classList.remove("show");
+    btn.classList.remove("is-active");
+    btn.setAttribute("aria-pressed", "false");
+    btn.style.setProperty("display", "none", "important");
+  }
+}
+
+/**
+ * Sembunyikan tombol replay + tutup panel replay yang mungkin sedang terbuka.
+ * Dipanggil saat tes direset/dibatalkan, supaya panel replay tes lama tidak
+ * tertinggal di atas grafik hasil tes berikutnya.
+ */
+function hideReplayTypingButton() {
+  updateReplayTypingButton(false);
+  lastReplayPayload = null;
+  if (typeof window.resultReplayAPI?.hide === "function") {
+    window.resultReplayAPI.hide();
+  }
+}
+
+/** Pasang listener klik pada tombol "Replay Mengetik" (toggle buka/tutup). */
+export function initReplayTypingButton() {
+  const btn = document.getElementById("replayTypingBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const api = window.resultReplayAPI;
+    if (!api) return;
+
+    // Klik kedua = tutup panel replay (grafik kembali naik).
+    if (api.isOpen()) {
+      api.hide();
+      return;
+    }
+
+    if (!lastReplayPayload) return;
+    api.show(lastReplayPayload);
+  });
+}
+
 export function startGhostPractice() {
   const data = gameState.ghostData;
   if (
@@ -879,6 +939,17 @@ export function calculateAndDisplayFinalResults() {
   gameState.ghostData = replayData;
   updateGhostPracticeButton(true);
 
+  // Data untuk tombol/panel "Replay Mengetik". Memakai replayData yang sama
+  // dengan Ghost Mode + angka final yang baru dihitung di atas.
+  lastReplayPayload = {
+    replayData,
+    wpm: finalWPM,
+    accuracy: finalAccuracy,
+    time: actualTestDuration,
+    date: new Date().toISOString(),
+  };
+  updateReplayTypingButton(true);
+
   if (typeof window.saveScore === "function") {
 
     const languageCode = selectedLangInput && selectedLangInput.value === 'en' ? 'en' : 'id';
@@ -1041,6 +1112,7 @@ export function invalidateTest(reason) {
   resetStatisticsPanel();
   hidePracticeWrongWordsButton();
   hideGhostPracticeButton();
+  hideReplayTypingButton();
 
   // ✅ Tes latihan kata salah yang dibatalkan (mis. user pindah tab) juga
   // dianggap berakhir: pulihkan word set asli, sama seperti di endTest().
@@ -1164,6 +1236,7 @@ export function resetTestState(options = {}) {
   resetStatisticsPanel();
   hidePracticeWrongWordsButton();
   hideGhostPracticeButton();
+  hideReplayTypingButton();
 
   const textDisplayContainer = document.querySelector(
     ".text-display-container"
@@ -1461,6 +1534,9 @@ export function initGameListeners() {
 
   // Initialize "Ulangi dengan Ghost Caret" button listener
   initGhostPracticeButton();
+
+  // Initialize "Replay Mengetik" button listener (panel replay di hasil tes)
+  initReplayTypingButton();
 }
 
 export function showStatsContainer() {

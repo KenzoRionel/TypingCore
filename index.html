@@ -54,6 +54,7 @@
     <link rel="stylesheet" href="css/text-display.css" />
     <link rel="stylesheet" href="css/speedometer-style.css" />
     <link rel="stylesheet" href="css/statistics-panel.css" />
+    <link rel="stylesheet" href="css/replay.css" />
     <link rel="stylesheet" href="css/time-mode-modal.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
@@ -354,6 +355,19 @@
                        setiap tes selesai; dikosongkan lagi saat tes direset. -->
                   <div class="xp-breakdown" id="xpBreakdown"></div>
                 </div>
+                <!-- Slot panel replay "Replay Mengetik". Saat tombol replay
+                     aktif, slot ini membuka (tinggi 0 -> konten) sehingga kartu
+                     grafik hasil di bawahnya bergeser turun. Panel replay-nya
+                     sendiri dibuat oleh js/history/typing-replay.js di dalam
+                     #resultReplayMount. -->
+                <div
+                  id="resultReplaySlot"
+                  class="result-replay-slot"
+                  aria-hidden="true"
+                  inert
+                >
+                  <div id="resultReplayMount" class="result-replay-mount"></div>
+                </div>
                 <div class="chart-container result-chart-card">
                   <div class="result-chart-head">
                     <div class="result-chart-heading">
@@ -455,6 +469,21 @@
                 >
                   <i class="fas fa-ghost fa-lg"></i>
                </button>
+               <!-- Tombol "Replay Mengetik": memutar ulang ketikan dari tes yang
+                    baru selesai. Hanya tampil bersama tombol Ghost Mode setelah
+                    tes selesai (lihat updateReplayTypingButton di
+                    game-logic.js). Saat ditekan, panel replay terbuka di atas
+                    grafik hasil dan grafik bergeser turun (animasi
+                    .result-replay-slot di css/replay.css). -->
+               <button
+                  id="replayTypingBtn"
+                  class="btn restart-btn result-only-btn replay-typing-btn d-flex align-items-center justify-content-center flex-shrink-0"
+                  aria-label="Replay Mengetik"
+                  aria-pressed="false"
+                  title="Putar ulang ketikan dari tes ini"
+                >
+                  <i class="fas fa-play-circle fa-lg"></i>
+               </button>
               </div>
               <!-- Statistics Panel: tepat setelah tombol Restart/Statistik, di bawah area grafik -->
               <div id="statisticsPanel" class="statistics-panel" style="display: none;">
@@ -509,6 +538,7 @@
     </div>
     <script src="js/history/score-manager.js" type="module"></script>
     <script src="js/history/result-chart.js" type="module"></script>
+    <script src="js/history/typing-replay.js" type="module"></script>
     <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="js/main.js" type="module"></script>
   </body>

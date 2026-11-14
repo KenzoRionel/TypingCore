@@ -573,13 +573,15 @@ body.dark-mode .caret-mode-active .word-container.current-word-target span.corre
    walaupun sama-sama !important. */
 #statisticsButton.result-only-btn,
 #practiceWrongWordsBtn.result-only-btn,
-#ghostPracticeBtn.result-only-btn {
+#ghostPracticeBtn.result-only-btn,
+#replayTypingBtn.result-only-btn {
     display: none !important;
 }
 
 #statisticsButton.result-only-btn.show,
 #practiceWrongWordsBtn.result-only-btn.show,
-#ghostPracticeBtn.result-only-btn.show {
+#ghostPracticeBtn.result-only-btn.show,
+#replayTypingBtn.result-only-btn.show {
     display: flex !important;
 }
 
