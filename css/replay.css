@@ -136,13 +136,17 @@ body.dark-mode #replay-container {
     color: var(--text);
     white-space: pre-wrap;
     word-wrap: break-word;
-    overflow-x: auto;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    overflow-x: hidden;
     /* Batas tinggi ini dipakai js/history/typing-replay.js untuk menghitung
        jumlah baris utuh: tinggi kotak dibulatkan ke kelipatan line-height
        (dengan batas ini) supaya tidak ada baris yang terpotong di tepi
        atas/bawah saat teks di-scroll. */
     max-height: 150px;
     overflow-y: auto;
+    max-width: 100%;
+    box-sizing: border-box;
     /* Auto-scroll mengikuti kata aktif, jadi batang scroll tidak perlu tampil
        dan tidak boleh memakan lebar teks. Area tetap bisa di-scroll manual. */
     scrollbar-width: none;

@@ -605,9 +605,11 @@ class TypingRenderer {
    * }} params
    */
   render(params) {
-    const { keystrokes, currentIndex, targetText } = params;
+    const { keystrokes, currentIndex, targetText, isPlaying } = params;
     if (!this.containerEl) return;
     if (!Array.isArray(keystrokes)) return;
+
+    const playing = Boolean(isPlaying);
 
     const targetWords = this.cache.targetWords;
     if (!targetWords?.length) return;
@@ -694,7 +696,7 @@ class TypingRenderer {
             charSpan.removeAttribute('title');
           }
 
-          charSpan.classList.toggle('cursor', this.isPlaying && isCurrentWord && i === typedWord.length);
+          charSpan.classList.toggle('cursor', playing && isCurrentWord && i === typedWord.length);
         }
       }
 
@@ -704,7 +706,7 @@ class TypingRenderer {
           const extraSpan = document.createElement('span');
           extraSpan.className = 'replay-char wrong wrong-extra';
           extraSpan.textContent = typedWord[i];
-          if (this.isPlaying && isCurrentWord && i === typedWord.length - 1) extraSpan.classList.add('cursor');
+          if (playing && isCurrentWord && i === typedWord.length - 1) extraSpan.classList.add('cursor');
           wordEl.appendChild(extraSpan);
         }
       }
@@ -1040,6 +1042,7 @@ class TypingPlayer {
       currentVirtualTimeMs: this.currentVirtualTimeMs,
       firstTimestampMs: this.getFirstTimestampMs(),
       totalDurationSec: this.getTotalDurationSec(),
+      isPlaying: this.isPlaying,
     });
   }
 
@@ -1470,7 +1473,8 @@ class TypingReplayApp {
         if (this.state.replayData) this.renderer?.render({
           keystrokes: this.state.replayData.keystrokes || [],
           currentIndex: this.replayer?.currentIndex || 0,
-          targetText: this.state.replayData.targetText || ''
+          targetText: this.state.replayData.targetText || '',
+          isPlaying: this.replayer?.isPlaying || false,
         });
       }, 150);
     };
