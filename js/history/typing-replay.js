@@ -697,6 +697,13 @@ class TypingRenderer {
           }
 
           charSpan.classList.toggle('cursor', playing && isCurrentWord && i === typedWord.length);
+          // Di mode mengetik, karakter pada posisi kursor hanya ditampilkan
+          // sebagai caret (bukan huruf target) supaya tidak ada huruf "stray"
+          // yang ikut berubah setiap pengetikan.
+          if (playing && isCurrentWord && i === typedWord.length &&
+              this.containerEl?.classList.contains('replay-typing-mode')) {
+            charSpan.textContent = '';
+          }
         }
       }
 
