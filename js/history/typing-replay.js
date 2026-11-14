@@ -694,7 +694,7 @@ class TypingRenderer {
             charSpan.removeAttribute('title');
           }
 
-          charSpan.classList.toggle('cursor', isCurrentWord && i === typedWord.length);
+          charSpan.classList.toggle('cursor', this.isPlaying && isCurrentWord && i === typedWord.length);
         }
       }
 
@@ -704,7 +704,7 @@ class TypingRenderer {
           const extraSpan = document.createElement('span');
           extraSpan.className = 'replay-char wrong wrong-extra';
           extraSpan.textContent = typedWord[i];
-          if (isCurrentWord && i === typedWord.length - 1) extraSpan.classList.add('cursor');
+          if (this.isPlaying && isCurrentWord && i === typedWord.length - 1) extraSpan.classList.add('cursor');
           wordEl.appendChild(extraSpan);
         }
       }
