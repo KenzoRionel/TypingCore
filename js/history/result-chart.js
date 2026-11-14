@@ -79,6 +79,11 @@ let revealAnimationId = null;
 const REVEAL_DURATION_MS = 2400; // durasi total animasi reveal
 const REVEAL_EASING = (t) => 1 - Math.pow(1 - t, 3); // ease-out cubic, biar di akhir agak melambat
 
+// ✅ BARU: saat replay panel dibuka di layar hasil, garis grafik digerakkan
+// mengikuti posisi replay (bukan animasi reveal sekali jalan). Nilai progress
+// datang dari event 'typingreplay:progress' yang dikirim typing-replay.js.
+let replayProgressActive = false;
+
 // ✅ BARU: plugin yang meng-clip area chart secara horizontal sesuai progress animasi,
 // sehingga garis & titik "muncul" dari kiri ke kanan mengikuti bentuknya sendiri.
 const revealClipPlugin = {
@@ -222,7 +227,13 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
     cancelAnimationFrame(revealAnimationId);
     revealAnimationId = null;
   }
+  // Clean up replay progress listener if chart is being re-rendered
+  if (window._typingReplayProgressHandler) {
+    window.removeEventListener('typingreplay:progress', window._typingReplayProgressHandler);
+    window._typingReplayProgressHandler = null;
+  }
   revealProgress = 0; // mulai dari 0 lagi tiap render baru
+  replayProgressActive = false;
 
   const netWpmData = [];
   const rawCumulativeData = []; // ✅ BARU: "raw" versi kumulatif (mengikuti bentuk "wpm", hanya berbeda saat ada error)
@@ -521,6 +532,33 @@ export function renderResultChart(historyData, finalWPM, totalTime, rawWpmPerSec
 
   // ✅ BARU: mulai animasi garis bergerak dari kiri ke kanan
   startRevealAnimation(resultChartInstance);
+
+  // ✅ BARU: listener untuk event replay progress dari typing-replay.js
+  // Saat replay aktif, garis grafik mengikuti progress replay real-time.
+  // Saat replay nonaktif, kembali ke animasi reveal normal.
+  if (!window._typingReplayProgressHandler) {
+    window._typingReplayProgressHandler = (e) => {
+      const { active, progress } = e.detail || {};
+      if (resultChartInstance) {
+        replayProgressActive = Boolean(active);
+        if (replayProgressActive) {
+          // Hentikan animasi reveal kalau sedang jalan
+          if (revealAnimationId) {
+            cancelAnimationFrame(revealAnimationId);
+            revealAnimationId = null;
+          }
+          // Gunakan progress replay langsung (0-1)
+          revealProgress = Math.min(1, Math.max(0, Number(progress) || 0));
+          resultChartInstance.update('none');
+        } else {
+          // Replay ditutup: reset ke reveal penuh (progress = 1)
+          revealProgress = 1;
+          resultChartInstance.update('none');
+        }
+      }
+    };
+    window.addEventListener('typingreplay:progress', window._typingReplayProgressHandler);
+  }
 }
 
 // ✅ BARU: legend chip interaktif (scale, pb, raw, burst, errors) di header

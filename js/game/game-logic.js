@@ -1261,7 +1261,6 @@ export function resetTestState(options = {}) {
   const xpBreakdownReset = document.getElementById("xpBreakdown");
   if (xpBreakdownReset) {
     xpBreakdownReset.innerHTML = "";
-    xpBreakdownReset.classList.remove("show");
   }
 
   hideStatsContainer();
@@ -1631,7 +1630,7 @@ function renderXpBreakdown(breakdown) {
       `
     )
     .join("");
-  container.classList.add("show");
+  // .show class no longer needed - CSS handles visibility via hover on .xp-bar-container
 }
 
 /**

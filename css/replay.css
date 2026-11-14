@@ -791,24 +791,21 @@ body.dark-mode #replay-container {
     .replay-btn {
         transition: none;
     }
-
-    .result-replay-slot,
-    .result-replay-slot .replay-container {
-        transition: none;
-    }
 }
 
 /* ==================== PANEL REPLAY DI HALAMAN HASIL TES ==================== */
 
-/* Slot di antara baris tombol hasil dan kartu grafik. Tingginya dianimasikan
-   dengan trik grid 0fr -> 1fr: saat dibuka, panel replay "muncul" dan kartu
-   grafik hasil otomatis bergeser turun (bukan overlay), persis seperti yang
-   diminta. Trik ini tidak butuh pengukuran tinggi manual lewat JS. */
+/* Slot di antara baris tombol hasil dan kartu grafik. Saat dibuka, panel replay
+   "muncul" dan kartu grafik hasil otomatis bergeser turun (bukan overlay).
+   Tingginya dianimasikan lewat JS (lihat _animateInlineSlot di
+   typing-replay.js), bukan CSS transition: animasi ini adalah inti interaksi
+   tombol replay, jadi harus tetap berjalan walau OS/browser melaporkan
+   prefers-reduced-motion (mis. Windows "Animation effects" dimatikan). */
 .result-replay-slot {
-    display: grid;
-    grid-template-rows: 0fr;
+    display: block;
+    height: 0;
+    overflow: hidden;
     margin-bottom: 0;
-    transition: grid-template-rows 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .result-replay-slot > .result-replay-mount {
@@ -817,7 +814,7 @@ body.dark-mode #replay-container {
 }
 
 .result-replay-slot.is-open {
-    grid-template-rows: 1fr;
+    height: auto;
 }
 
 .result-replay-slot .replay-container {

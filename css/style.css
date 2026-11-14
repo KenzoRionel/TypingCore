@@ -1037,25 +1037,35 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 /* ==================== XP BREAKDOWN (rincian komponen XP di layar hasil) ====================
    Diisi oleh renderXpBreakdown() di game-logic.js: daftar kecil komponen
    EXP (dasar karakter benar, bonus konsistensi, kata benar/salah, penalti
-   karakter salah, pengali mode, bonus) tepat di bawah bar XP. Posisinya
-   mengikuti .xp-bar-container (absolute kanan-atas), jadi cukup rata kanan
-   dan dibatasi lebarnya agar tidak menutupi grafik. */
+   karakter salah, pengali mode, bonus). Sesuai permintaan: info tampil
+   satu-satu di SEBELAH KIRI bar XP (bukan semua sekaligus dan tidak
+   menutupi grafik), sejajar dengan garis bar. Default: hanya baris
+   pertama yang terlihat; mengarahkan pointer ke informasi exp tersebut
+   membuka semua rincian satu per satu (stagger). */
 .xp-breakdown {
-    display: none;
+    position: absolute;
+    right: calc(100% + 14px); /* tepat di sebelah kiri bar XP */
+    bottom: 0; /* dasar kartu sejajar dengan dasar bar XP (elemen terakhir) */
+    display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 3px;
-    margin-top: 8px;
-    padding: 10px 12px;
+    padding: 6px 10px;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: color-mix(in srgb, var(--surface) 88%, transparent);
     min-width: 230px;
     max-width: 300px;
+    /* Sembunyikan overflow supaya baris tambahan tidak terlihat sebelum hover */
+    overflow: hidden;
+    max-height: 2.2em; /* Tinggi sekitar 1 baris */
+    transition: max-height 0.3s ease, padding 0.3s ease;
 }
 
-.xp-breakdown.show {
-    display: flex;
+/* Pointer diarahkan ke informasi exp -> semua rincian muncul */
+.xp-breakdown:hover {
+    max-height: 500px; /* Cukup besar untuk semua baris */
+    padding: 10px 12px;
 }
 
 .xp-breakdown-row {
@@ -1066,7 +1076,31 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
     width: 100%;
     font-size: 0.78em;
     line-height: 1.35;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
+
+/* Baris pertama selalu terlihat */
+.xp-breakdown-row:first-child {
+    opacity: 1;
+    transform: none;
+}
+
+/* Saat pointer di atas informasi exp, tampilkan semua baris dengan stagger */
+.xp-breakdown:hover .xp-breakdown-row {
+    opacity: 1;
+    transform: none;
+}
+
+.xp-breakdown:hover .xp-breakdown-row:nth-child(1) { transition-delay: 0ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(2) { transition-delay: 50ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(3) { transition-delay: 100ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(4) { transition-delay: 150ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(5) { transition-delay: 200ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(6) { transition-delay: 250ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(7) { transition-delay: 300ms; }
+.xp-breakdown:hover .xp-breakdown-row:nth-child(8) { transition-delay: 350ms; }
 
 .xp-breakdown-label {
     color: var(--text-muted);
@@ -1089,6 +1123,16 @@ body.dark-mode #virtual-keyboard-container .key.next-key {
 
 .xp-breakdown-zero {
     color: var(--text-muted);
+}
+
+/* Di layar sempit ruang di kiri bar XP tidak cukup untuk kartu rincian;
+   kembalikan ke alur normal (di bawah bar, tetap satu baris + hover). */
+@media (max-width: 640px) {
+    .xp-breakdown {
+        position: static;
+        margin-top: 8px;
+        align-self: flex-end;
+    }
 }
 
 /* ==================== LEVEL UP TOAST ==================== */

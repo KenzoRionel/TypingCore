@@ -73,6 +73,10 @@ const SPEED_MAX = 4;
 
 const RENDER_BATCH_LIMIT_WORDS = 64; // batas kata yang boleh di-render per frame untuk mencegah frame drop
 
+// Durasi animasi buka/tutup panel replay di layar hasil tes (ms). Dipakai oleh
+// _animateInlineSlot() dan timer sinkronisasi setelah animasi selesai.
+const INLINE_SLIDE_DURATION_MS = 480;
+
 /**
  * Satu sumber kebenaran untuk mengubah ikon tombol play/pause.
  * Dipakai baik oleh TypingPlayer (saat play/pause/finish) maupun
@@ -1167,6 +1171,7 @@ class TypingReplayApp {
     this.inlineSlot = null;
     this._inlineOpenTimer = null;
     this._inlineScrollTimer = null;
+    this._inlineAnimId = null;
 
     this.settings = loadReplaySettings();
     this.liveStats = null;
@@ -1417,6 +1422,18 @@ class TypingReplayApp {
       </div>
     `;
 
+    // Di halaman hasil tes, panel replay tidak menampilkan blok "Statistik Live"
+    // (grafik replay historis, peta salah ketik, dan kartu metrik). Statistik
+    // live-nya memakai kartu grafik hasil tes yang sudah ada di bawah panel,
+    // dan garisnya digerakkan mengikuti progres replay.
+    if (this.inlineMode) {
+      replayContainer.querySelector('#replay-live')?.remove();
+      replayContainer
+        .querySelector('[data-replay-setting="liveStats"]')
+        ?.closest('.replay-toggle')
+        ?.remove();
+    }
+
     DOM.scoreHistoryList
       ? DOM.scoreHistoryList.before(replayContainer)
       : DOM.resultReplayMount.appendChild(replayContainer);
@@ -1481,9 +1498,11 @@ class TypingReplayApp {
       containerEl: textDisplay,
     });
 
-    this.liveStats = new ReplayLiveStats({
-      root: document.getElementById('replay-live'),
-    });
+    // Di halaman hasil tes blok statistik live sengaja tidak dirender (lihat
+    // initReplayContainer), jadi objek ReplayLiveStats hanya dibuat kalau
+    // root-nya memang ada (halaman Riwayat Skor).
+    const liveRoot = document.getElementById('replay-live');
+    this.liveStats = liveRoot ? new ReplayLiveStats({ root: liveRoot }) : null;
 
     this.replayer = new TypingPlayer({
       renderer: this.renderer,
@@ -1494,6 +1513,8 @@ class TypingReplayApp {
       callbacks: {
         onUpdate: (currentTimeMs) => {
           this.liveStats?.update(this.replayer?.currentIndex || 0, currentTimeMs);
+          // Gerakkan garis grafik hasil tes mengikuti posisi replay.
+          this._syncResultChartReplay(currentTimeMs);
         },
         onFinish: () => {
           const timeEl = document.getElementById('replay-time');
@@ -1505,6 +1526,7 @@ class TypingReplayApp {
             keystrokes.length,
             timeline[timeline.length - 1] ?? 0
           );
+          this._syncResultChartReplay(timeline[timeline.length - 1] ?? 0);
         },
       },
       ui: {
@@ -1709,12 +1731,18 @@ class TypingReplayApp {
     // Siapkan statistik live untuk replay yang baru dipilih.
     this._liveMountedKey = '';
     this._syncLiveStats();
+
+    // Kalau panel inline sudah terbuka (mis. memuat replay lain), grafik hasil
+    // langsung ikut mundur ke awal timeline replay.
+    if (this.isInlineOpen()) {
+      this._syncResultChartReplay(this.replayer?.currentVirtualTimeMs || 0);
+    }
   }
 
   /**
-   * Buka/tutup panel replay inline (halaman hasil tes). Membuka panel
-   * menganimasikan slot dari 0fr ke 1fr sehingga kartu grafik hasil di
-   * bawahnya bergeser turun.
+   * Buka/tutup panel replay inline (halaman hasil tes). Slot dianimasikan
+   * tingginya dari 0 ke tinggi panel, sehingga kartu grafik hasil di bawahnya
+   * benar-benar bergerak turun dan teks replay muncul di antaranya.
    */
   setInlineOpen(open) {
     if (!this.inlineMode) return;
@@ -1724,7 +1752,6 @@ class TypingReplayApp {
     this.inlineSlot = slot;
 
     const willOpen = Boolean(open);
-    slot.classList.toggle('is-open', willOpen);
     slot.setAttribute('aria-hidden', String(!willOpen));
     // Saat panel tertutup tingginya 0, tapi tombol-tombolnya masih ada di DOM.
     // `inert` mengeluarkannya dari urutan Tab dan dari accessibility tree supaya
@@ -1737,8 +1764,13 @@ class TypingReplayApp {
 
     if (!willOpen) {
       this.replayer?.pause();
+      this._animateInlineSlot(false);
+      this._emitResultChartReplay(false, 1);
       return;
     }
+
+    this._animateInlineSlot(true);
+    this._syncResultChartReplay(this.replayer?.currentVirtualTimeMs || 0);
 
     // Tombol replay berada di bawah grafik, sedangkan panel muncul di ATAS
     // grafik. Tanpa scroll, panel baru akan berada di luar viewport (scroll
@@ -1754,7 +1786,7 @@ class TypingReplayApp {
       });
     }, 30);
 
-    // Setelah transisi buka selesai, ukur ulang posisi kata (panel tadinya
+    // Setelah animasi buka selesai, ukur ulang posisi kata (panel tadinya
     // setinggi 0) dan sinkronkan ulang statistik live/grafik.
     this._inlineOpenTimer = setTimeout(() => {
       if (this.renderer?.cache) {
@@ -1767,7 +1799,93 @@ class TypingReplayApp {
         this.replayer.updateProgressUI();
       }
       this._syncLiveStats();
-    }, 470);
+    }, INLINE_SLIDE_DURATION_MS + 30);
+  }
+
+  /**
+   * Animasi tinggi slot inline. Sengaja memakai rAF sendiri (bukan CSS
+   * transition) supaya pergerakan grafik hasil tetap terlihat meskipun OS
+   * mematikan animasi lewat prefers-reduced-motion — animasi ini adalah
+   * perilaku utama tombol replay, bukan hiasan.
+   */
+  _animateInlineSlot(open) {
+    const slot = this.inlineSlot;
+    if (!slot) return;
+
+    if (this._inlineAnimId) {
+      cancelAnimationFrame(this._inlineAnimId);
+      this._inlineAnimId = null;
+    }
+
+    const easing = (t) => 1 - Math.pow(1 - t, 3);
+    const duration = INLINE_SLIDE_DURATION_MS;
+
+    let from = 0;
+    let to = 0;
+
+    if (open) {
+      slot.classList.add('is-open');
+      slot.style.height = 'auto';
+      to = slot.scrollHeight;
+      slot.style.height = '0px';
+      slot.getBoundingClientRect(); // paksa reflow sebelum animasi
+    } else {
+      from = slot.getBoundingClientRect().height;
+      to = 0;
+      slot.classList.remove('is-open');
+      slot.style.height = `${from}px`;
+      slot.getBoundingClientRect();
+    }
+
+    const start = performance.now();
+
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const value = from + (to - from) * easing(t);
+      slot.style.height = `${Math.max(0, value)}px`;
+
+      if (t < 1) {
+        this._inlineAnimId = requestAnimationFrame(step);
+        return;
+      }
+
+      // Selesai: kembalikan ke tinggi otomatis (terbuka) atau 0 via CSS.
+      this._inlineAnimId = null;
+      slot.style.height = '';
+    };
+
+    this._inlineAnimId = requestAnimationFrame(step);
+  }
+
+  /**
+   * Kirim posisi replay ke grafik hasil tes (result-chart.js). Grafik memakai
+   * event ini untuk menggerakkan garisnya persis seperti grafik replay di
+   * halaman Riwayat Skor.
+   */
+  _syncResultChartReplay(currentTimeMs = 0) {
+    if (!this.inlineMode) return;
+
+    const timeline = this.state.playbackTimestamps || [];
+    const start = timeline.length ? timeline[0] : 0;
+    const end = timeline.length ? timeline[timeline.length - 1] : 0;
+    const span = end - start;
+    const progress = span > 0
+      ? Math.min(1, Math.max(0, (currentTimeMs - start) / span))
+      : 0;
+
+    this._emitResultChartReplay(this.isInlineOpen(), progress);
+  }
+
+  _emitResultChartReplay(active, progress = 0) {
+    if (!this.inlineMode) return;
+    window.dispatchEvent(
+      new CustomEvent('typingreplay:progress', {
+        detail: {
+          active: Boolean(active),
+          progress: Math.min(1, Math.max(0, Number(progress) || 0)),
+        },
+      })
+    );
   }
 
   /** true kalau panel replay inline sedang terbuka. */
@@ -1811,6 +1929,10 @@ class TypingReplayApp {
   destroy() {
     clearTimeout(this._inlineOpenTimer);
     clearTimeout(this._inlineScrollTimer);
+    if (this._inlineAnimId) {
+      cancelAnimationFrame(this._inlineAnimId);
+      this._inlineAnimId = null;
+    }
     if (this._onResize) window.removeEventListener('resize', this._onResize);
     this.replayer?.destroy();
   }
@@ -1965,6 +2087,9 @@ class TypingReplayApp {
     if (this.playButton) this.playButton.disabled = true;
     this.liveStats?.detach();
     this._liveMountedKey = '';
+
+    // Tidak ada replay untuk diputar: grafik hasil tes ditampilkan penuh lagi.
+    this._emitResultChartReplay(false, 1);
 
     const textDisplay = document.getElementById('replay-text-display');
     if (textDisplay) textDisplay.innerHTML = `<p class="no-replay">${message}</p>`;
