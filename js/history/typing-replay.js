@@ -1292,15 +1292,12 @@ class TypingReplayApp {
 
       <div class="replay-stats">
         <div class="replay-stat-item">
-          <span class="replay-stat-label">WPM</span>
           <span id="replay-wpm" class="replay-stat-value">0</span>
         </div>
         <div class="replay-stat-item">
-          <span class="replay-stat-label">Akurasi</span>
           <span id="replay-accuracy" class="replay-stat-value">0%</span>
         </div>
         <div class="replay-stat-item">
-          <span class="replay-stat-label">Waktu</span>
           <span id="replay-time" class="replay-stat-value">0s</span>
         </div>
       </div>
