@@ -685,8 +685,18 @@ export function initReplayTypingButton() {
       return;
     }
 
-    if (!lastReplayPayload) return;
-    api.show(lastReplayPayload);
+    let payload = lastReplayPayload;
+    if (!payload && gameState?.ghostData) {
+      payload = {
+        replayData: gameState.ghostData,
+        wpm: 0,
+        accuracy: 0,
+        time: 0,
+        date: new Date().toISOString(),
+      };
+    }
+    if (!payload) return;
+    api.show(payload);
   });
 }
 

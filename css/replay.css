@@ -805,7 +805,9 @@ body.dark-mode #replay-container {
     display: block;
     height: 0;
     overflow: hidden;
+    overflow-x: hidden;
     margin-bottom: 0;
+    max-width: 100%;
 }
 
 .result-replay-slot > .result-replay-mount {
